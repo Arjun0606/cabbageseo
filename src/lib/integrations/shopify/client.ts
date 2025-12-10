@@ -1,186 +1,211 @@
 /**
- * Shopify Storefront & Admin API Client
- * Handles publishing blog posts and product descriptions
+ * Shopify Storefront & Admin API Client for CabbageSEO
  * 
- * API Reference: https://shopify.dev/docs/api/admin-rest
+ * Full integration for:
+ * - Creating/updating blog posts
+ * - Managing blog articles
+ * - Product SEO optimization
+ * - Page meta management
+ * - Sitemap data
  */
 
-interface ShopifyConfig {
-  storeUrl: string;         // e.g., "your-store.myshopify.com"
-  accessToken: string;      // Admin API access token
-  apiVersion?: string;      // e.g., "2024-01"
+// ============================================
+// TYPES
+// ============================================
+
+export interface ShopifyConfig {
+  shopDomain: string;           // e.g., "mystore.myshopify.com" or "mystore"
+  accessToken: string;          // Admin API access token
+  apiVersion?: string;          // Default: "2024-01"
 }
 
-interface ShopifyBlog {
+export interface ShopifyBlog {
   id: number;
   handle: string;
   title: string;
-  commentable: "no" | "moderate" | "yes";
+  updated_at: string;
+  commentable: string;
   feedburner?: string;
   feedburner_location?: string;
-  created_at: string;
-  updated_at: string;
-  template_suffix?: string;
-  tags: string;
-  admin_graphql_api_id: string;
+  tags?: string;
 }
 
-interface ShopifyArticle {
-  id: number;
+export interface ShopifyArticle {
+  id?: number;
   title: string;
+  author: string;
   body_html: string;
   blog_id: number;
-  author: string;
-  handle: string;
-  published_at?: string;
-  created_at: string;
-  updated_at: string;
-  summary_html?: string;
-  template_suffix?: string;
-  tags: string;
+  created_at?: string;
+  updated_at?: string;
+  published_at?: string | null;
+  handle?: string;
   image?: {
     src: string;
     alt?: string;
-    width: number;
-    height: number;
   };
-  metafields?: Array<{
-    key: string;
-    value: string;
-    type: string;
-    namespace: string;
-  }>;
-  admin_graphql_api_id: string;
+  metafields?: ShopifyMetafield[];
+  summary_html?: string;
+  tags?: string;
+  template_suffix?: string;
 }
 
-interface ShopifyProduct {
+export interface ShopifyMetafield {
+  key: string;
+  namespace: string;
+  value: string;
+  type: string;
+}
+
+export interface ShopifyPage {
   id: number;
   title: string;
+  handle: string;
+  body_html: string;
+  author: string;
+  created_at: string;
+  updated_at: string;
+  published_at?: string;
+  template_suffix?: string;
+  metafields?: ShopifyMetafield[];
+}
+
+export interface ShopifyProduct {
+  id: number;
+  title: string;
+  handle: string;
   body_html: string;
   vendor: string;
   product_type: string;
-  handle: string;
-  status: "active" | "archived" | "draft";
-  tags: string;
   created_at: string;
   updated_at: string;
   published_at?: string;
+  tags: string;
+  status: "active" | "draft" | "archived";
+  metafields_global_title_tag?: string;
+  metafields_global_description_tag?: string;
 }
 
-interface CreateArticleData {
-  title: string;
-  body_html: string;
-  author?: string;
-  tags?: string;
-  summary_html?: string;
-  handle?: string;
-  published_at?: string | null;  // null = draft
-  image?: {
-    src: string;
-    alt?: string;
-  };
-  metafields?: Array<{
-    key: string;
-    value: string;
-    type: string;
-    namespace: string;
-  }>;
+export interface PublishResult {
+  success: boolean;
+  articleId?: number;
+  url?: string;
+  error?: string;
 }
 
-interface UpdateArticleData extends Partial<CreateArticleData> {
-  id: number;
-}
+// ============================================
+// SHOPIFY CLIENT
+// ============================================
 
 export class ShopifyClient {
-  private storeUrl: string;
+  private shopDomain: string;
   private accessToken: string;
   private apiVersion: string;
 
-  constructor(config?: ShopifyConfig) {
-    this.storeUrl = config?.storeUrl || process.env.SHOPIFY_STORE_URL || "";
-    this.accessToken = config?.accessToken || process.env.SHOPIFY_ACCESS_TOKEN || "";
-    this.apiVersion = config?.apiVersion || "2024-01";
-    
-    // Normalize store URL
-    if (this.storeUrl && !this.storeUrl.includes(".myshopify.com")) {
-      this.storeUrl = `${this.storeUrl}.myshopify.com`;
+  constructor(config: ShopifyConfig) {
+    // Normalize domain
+    let domain = config.shopDomain.replace(/https?:\/\//, "").replace(/\/$/, "");
+    if (!domain.includes(".myshopify.com")) {
+      domain = `${domain}.myshopify.com`;
+    }
+    this.shopDomain = domain;
+    this.accessToken = config.accessToken;
+    this.apiVersion = config.apiVersion || "2024-01";
+  }
+
+  /**
+   * Test connection
+   */
+  async testConnection(): Promise<{ success: boolean; shopName?: string; error?: string }> {
+    try {
+      const shop = await this.request<{ shop: { name: string } }>("/admin/api/shop.json");
+      return { success: true, shopName: shop.shop.name };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Connection failed",
+      };
     }
   }
 
   /**
-   * Check if API is configured
-   */
-  isConfigured(): boolean {
-    return Boolean(this.storeUrl && this.accessToken);
-  }
-
-  /**
-   * Get the base URL for API calls
-   */
-  private get baseUrl(): string {
-    return `https://${this.storeUrl}/admin/api/${this.apiVersion}`;
-  }
-
-  /**
-   * Make authenticated request to Shopify Admin API
+   * Make authenticated API request
    */
   private async request<T>(
     endpoint: string,
-    method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
-    body?: unknown
+    options: RequestInit = {}
   ): Promise<T> {
-    if (!this.isConfigured()) {
-      throw new Error("Shopify not configured. Set store URL and access token.");
-    }
+    const url = `https://${this.shopDomain}${endpoint.replace("/admin/api/", `/admin/api/${this.apiVersion}/`)}`;
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      method,
+    const response = await fetch(url, {
+      ...options,
       headers: {
         "X-Shopify-Access-Token": this.accessToken,
         "Content-Type": "application/json",
+        ...options.headers,
       },
-      body: body ? JSON.stringify(body) : undefined,
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Shopify API error: ${response.status} - ${error}`);
+      const error = await response.json().catch(() => ({}));
+      const errorMessage = error.errors
+        ? typeof error.errors === "string"
+          ? error.errors
+          : JSON.stringify(error.errors)
+        : `Shopify API error: ${response.status}`;
+      throw new Error(errorMessage);
     }
 
     return response.json();
   }
 
-  // ===============================
-  // Blog & Article Methods
-  // ===============================
+  // ============================================
+  // BLOGS
+  // ============================================
 
   /**
    * List all blogs
    */
   async listBlogs(): Promise<ShopifyBlog[]> {
-    const response = await this.request<{ blogs: ShopifyBlog[] }>("/blogs.json");
-    return response.blogs;
+    const response = await this.request<{ blogs: ShopifyBlog[] }>(
+      "/admin/api/blogs.json"
+    );
+    return response.blogs || [];
   }
 
   /**
-   * Get a specific blog
+   * Get a blog by ID
    */
   async getBlog(blogId: number): Promise<ShopifyBlog> {
-    const response = await this.request<{ blog: ShopifyBlog }>(`/blogs/${blogId}.json`);
-    return response.blog;
-  }
-
-  /**
-   * Create a new blog
-   */
-  async createBlog(title: string, commentable: "no" | "moderate" | "yes" = "no"): Promise<ShopifyBlog> {
     const response = await this.request<{ blog: ShopifyBlog }>(
-      "/blogs.json",
-      "POST",
-      { blog: { title, commentable } }
+      `/admin/api/blogs/${blogId}.json`
     );
     return response.blog;
   }
+
+  /**
+   * Find main blog (usually "News" or first blog)
+   */
+  async findMainBlog(): Promise<ShopifyBlog | null> {
+    const blogs = await this.listBlogs();
+    
+    // Look for common blog names
+    const mainBlogNames = ["news", "blog", "articles", "journal"];
+    
+    for (const name of mainBlogNames) {
+      const blog = blogs.find(
+        b => b.handle.toLowerCase() === name || 
+             b.title.toLowerCase().includes(name)
+      );
+      if (blog) return blog;
+    }
+
+    return blogs[0] || null;
+  }
+
+  // ============================================
+  // ARTICLES (Blog Posts)
+  // ============================================
 
   /**
    * List articles in a blog
@@ -189,32 +214,29 @@ export class ShopifyClient {
     blogId: number,
     options: {
       limit?: number;
-      since_id?: number;
-      created_at_min?: string;
-      created_at_max?: string;
-      updated_at_min?: string;
-      updated_at_max?: string;
-      published_status?: "published" | "unpublished" | "any";
-      handle?: string;
+      sinceId?: number;
+      createdAtMin?: string;
+      publishedStatus?: "published" | "unpublished" | "any";
     } = {}
   ): Promise<ShopifyArticle[]> {
     const params = new URLSearchParams();
     if (options.limit) params.set("limit", String(options.limit));
-    if (options.since_id) params.set("since_id", String(options.since_id));
-    if (options.published_status) params.set("published_status", options.published_status);
-    
+    if (options.sinceId) params.set("since_id", String(options.sinceId));
+    if (options.createdAtMin) params.set("created_at_min", options.createdAtMin);
+    if (options.publishedStatus) params.set("published_status", options.publishedStatus);
+
     const response = await this.request<{ articles: ShopifyArticle[] }>(
-      `/blogs/${blogId}/articles.json?${params.toString()}`
+      `/admin/api/blogs/${blogId}/articles.json?${params.toString()}`
     );
-    return response.articles;
+    return response.articles || [];
   }
 
   /**
-   * Get a specific article
+   * Get a single article
    */
   async getArticle(blogId: number, articleId: number): Promise<ShopifyArticle> {
     const response = await this.request<{ article: ShopifyArticle }>(
-      `/blogs/${blogId}/articles/${articleId}.json`
+      `/admin/api/blogs/${blogId}/articles/${articleId}.json`
     );
     return response.article;
   }
@@ -222,244 +244,380 @@ export class ShopifyClient {
   /**
    * Create a new article
    */
-  async createArticle(blogId: number, data: CreateArticleData): Promise<ShopifyArticle> {
-    const response = await this.request<{ article: ShopifyArticle }>(
-      `/blogs/${blogId}/articles.json`,
-      "POST",
-      { article: data }
-    );
-    return response.article;
+  async createArticle(
+    blogId: number,
+    article: Omit<ShopifyArticle, "id" | "created_at" | "updated_at" | "blog_id">
+  ): Promise<PublishResult> {
+    try {
+      const response = await this.request<{ article: ShopifyArticle }>(
+        `/admin/api/blogs/${blogId}/articles.json`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            article: {
+              ...article,
+              blog_id: blogId,
+            },
+          }),
+        }
+      );
+
+      const createdArticle = response.article;
+      const shopUrl = `https://${this.shopDomain.replace(".myshopify.com", "")}`;
+      const blog = await this.getBlog(blogId);
+
+      return {
+        success: true,
+        articleId: createdArticle.id,
+        url: `${shopUrl}/blogs/${blog.handle}/${createdArticle.handle}`,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to create article",
+      };
+    }
   }
 
   /**
    * Update an article
    */
-  async updateArticle(blogId: number, data: UpdateArticleData): Promise<ShopifyArticle> {
-    const response = await this.request<{ article: ShopifyArticle }>(
-      `/blogs/${blogId}/articles/${data.id}.json`,
-      "PUT",
-      { article: data }
-    );
-    return response.article;
+  async updateArticle(
+    blogId: number,
+    articleId: number,
+    article: Partial<ShopifyArticle>
+  ): Promise<PublishResult> {
+    try {
+      const response = await this.request<{ article: ShopifyArticle }>(
+        `/admin/api/blogs/${blogId}/articles/${articleId}.json`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ article }),
+        }
+      );
+
+      const updatedArticle = response.article;
+      const shopUrl = `https://${this.shopDomain.replace(".myshopify.com", "")}`;
+      const blog = await this.getBlog(blogId);
+
+      return {
+        success: true,
+        articleId: updatedArticle.id,
+        url: `${shopUrl}/blogs/${blog.handle}/${updatedArticle.handle}`,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to update article",
+      };
+    }
   }
 
   /**
    * Delete an article
    */
-  async deleteArticle(blogId: number, articleId: number): Promise<void> {
-    await this.request(`/blogs/${blogId}/articles/${articleId}.json`, "DELETE");
+  async deleteArticle(blogId: number, articleId: number): Promise<boolean> {
+    try {
+      await this.request(`/admin/api/blogs/${blogId}/articles/${articleId}.json`, {
+        method: "DELETE",
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
-  // ===============================
-  // Product Methods
-  // ===============================
+  // ============================================
+  // PAGES
+  // ============================================
+
+  /**
+   * List pages
+   */
+  async listPages(options: {
+    limit?: number;
+    publishedStatus?: "published" | "unpublished" | "any";
+  } = {}): Promise<ShopifyPage[]> {
+    const params = new URLSearchParams();
+    if (options.limit) params.set("limit", String(options.limit));
+    if (options.publishedStatus) params.set("published_status", options.publishedStatus);
+
+    const response = await this.request<{ pages: ShopifyPage[] }>(
+      `/admin/api/pages.json?${params.toString()}`
+    );
+    return response.pages || [];
+  }
+
+  /**
+   * Update page content
+   */
+  async updatePage(
+    pageId: number,
+    data: Partial<ShopifyPage>
+  ): Promise<boolean> {
+    try {
+      await this.request(`/admin/api/pages/${pageId}.json`, {
+        method: "PUT",
+        body: JSON.stringify({ page: data }),
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // ============================================
+  // PRODUCTS (SEO)
+  // ============================================
 
   /**
    * List products
    */
-  async listProducts(
-    options: {
-      limit?: number;
-      since_id?: number;
-      status?: "active" | "archived" | "draft";
-      product_type?: string;
-      vendor?: string;
-    } = {}
-  ): Promise<ShopifyProduct[]> {
+  async listProducts(options: {
+    limit?: number;
+    status?: "active" | "draft" | "archived";
+  } = {}): Promise<ShopifyProduct[]> {
     const params = new URLSearchParams();
     if (options.limit) params.set("limit", String(options.limit));
     if (options.status) params.set("status", options.status);
-    
+
     const response = await this.request<{ products: ShopifyProduct[] }>(
-      `/products.json?${params.toString()}`
+      `/admin/api/products.json?${params.toString()}`
     );
-    return response.products;
+    return response.products || [];
   }
 
   /**
-   * Get a specific product
+   * Update product SEO
    */
-  async getProduct(productId: number): Promise<ShopifyProduct> {
-    const response = await this.request<{ product: ShopifyProduct }>(
-      `/products/${productId}.json`
-    );
-    return response.product;
-  }
-
-  /**
-   * Update product description
-   */
-  async updateProductDescription(
+  async updateProductSEO(
     productId: number,
-    bodyHtml: string,
-    title?: string
-  ): Promise<ShopifyProduct> {
-    const data: Record<string, unknown> = { body_html: bodyHtml };
-    if (title) data.title = title;
-    
-    const response = await this.request<{ product: ShopifyProduct }>(
-      `/products/${productId}.json`,
-      "PUT",
-      { product: data }
-    );
-    return response.product;
+    seo: {
+      title?: string;
+      description?: string;
+      handle?: string;
+    }
+  ): Promise<boolean> {
+    try {
+      await this.request(`/admin/api/products/${productId}.json`, {
+        method: "PUT",
+        body: JSON.stringify({
+          product: {
+            id: productId,
+            metafields_global_title_tag: seo.title,
+            metafields_global_description_tag: seo.description,
+            handle: seo.handle,
+          },
+        }),
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
-  // ===============================
-  // CabbageSEO Convenience Methods
-  // ===============================
+  // ============================================
+  // METAFIELDS (Advanced SEO)
+  // ============================================
 
   /**
-   * Find the default blog or create one
+   * Set SEO metafields for an article
    */
-  async getOrCreateDefaultBlog(): Promise<ShopifyBlog> {
-    const blogs = await this.listBlogs();
-    
-    // Return existing blog if found
-    if (blogs.length > 0) {
-      // Prefer "News" or "Blog" named blogs
-      const defaultBlog = blogs.find(b => 
-        b.title.toLowerCase() === "news" ||
-        b.title.toLowerCase() === "blog"
-      ) || blogs[0];
-      return defaultBlog;
+  async setArticleSEOMetafields(
+    blogId: number,
+    articleId: number,
+    seo: {
+      title?: string;
+      description?: string;
     }
-    
-    // Create a new blog
-    return this.createBlog("Blog", "no");
+  ): Promise<boolean> {
+    try {
+      const metafields: ShopifyMetafield[] = [];
+
+      if (seo.title) {
+        metafields.push({
+          key: "title_tag",
+          namespace: "global",
+          value: seo.title,
+          type: "single_line_text_field",
+        });
+      }
+
+      if (seo.description) {
+        metafields.push({
+          key: "description_tag",
+          namespace: "global",
+          value: seo.description,
+          type: "multi_line_text_field",
+        });
+      }
+
+      for (const metafield of metafields) {
+        await this.request(`/admin/api/blogs/${blogId}/articles/${articleId}/metafields.json`, {
+          method: "POST",
+          body: JSON.stringify({ metafield }),
+        });
+      }
+
+      return true;
+    } catch {
+      return false;
+    }
   }
 
+  // ============================================
+  // HIGH-LEVEL PUBLISHING
+  // ============================================
+
   /**
-   * Create a blog post with SEO metadata
+   * Publish blog post with full SEO
    */
-  async createBlogPost(
-    post: {
-      title: string;
-      content: string;           // HTML content
-      excerpt?: string;
-      author?: string;
-      tags?: string[];
-      featuredImage?: string;
-      metaTitle?: string;
-      metaDescription?: string;
-      publishImmediately?: boolean;
-    },
-    blogId?: number
-  ): Promise<ShopifyArticle> {
-    // Get or find blog
-    let targetBlogId = blogId;
-    if (!targetBlogId) {
-      const blog = await this.getOrCreateDefaultBlog();
-      targetBlogId = blog.id;
-    }
+  async publishBlogPost(options: {
+    title: string;
+    content: string;
+    summary?: string;
+    author?: string;
+    tags?: string[];
+    imageUrl?: string;
+    imageAlt?: string;
+    seoTitle?: string;
+    seoDescription?: string;
+    publishNow?: boolean;
+    blogId?: number;
+  }): Promise<PublishResult> {
+    try {
+      // Find blog if not specified
+      let blogId = options.blogId;
+      if (!blogId) {
+        const mainBlog = await this.findMainBlog();
+        if (!mainBlog) {
+          return {
+            success: false,
+            error: "No blog found. Please create a blog first in Shopify.",
+          };
+        }
+        blogId = mainBlog.id;
+      }
 
-    const articleData: CreateArticleData = {
-      title: post.title,
-      body_html: post.content,
-      author: post.author || "CabbageSEO",
-      tags: post.tags?.join(", "),
-      summary_html: post.excerpt,
-      published_at: post.publishImmediately ? new Date().toISOString() : null,
-      handle: this.generateHandle(post.title),
-    };
+      // Create the article
+      const article: Omit<ShopifyArticle, "id" | "created_at" | "updated_at" | "blog_id"> = {
+        title: options.title,
+        body_html: options.content,
+        author: options.author || "CabbageSEO",
+        summary_html: options.summary,
+        tags: options.tags?.join(", "),
+        published_at: options.publishNow ? new Date().toISOString() : null,
+      };
 
-    // Add featured image if provided
-    if (post.featuredImage) {
-      articleData.image = {
-        src: post.featuredImage,
-        alt: post.title,
+      // Add image if provided
+      if (options.imageUrl) {
+        article.image = {
+          src: options.imageUrl,
+          alt: options.imageAlt || options.title,
+        };
+      }
+
+      const result = await this.createArticle(blogId, article);
+
+      // Set SEO metafields if provided
+      if (result.success && result.articleId && (options.seoTitle || options.seoDescription)) {
+        await this.setArticleSEOMetafields(blogId, result.articleId, {
+          title: options.seoTitle,
+          description: options.seoDescription,
+        });
+      }
+
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to publish",
       };
     }
-
-    // Add SEO metafields if provided
-    if (post.metaTitle || post.metaDescription) {
-      articleData.metafields = [];
-      
-      if (post.metaTitle) {
-        articleData.metafields.push({
-          key: "title_tag",
-          value: post.metaTitle,
-          type: "single_line_text_field",
-          namespace: "global",
-        });
-      }
-      
-      if (post.metaDescription) {
-        articleData.metafields.push({
-          key: "description_tag",
-          value: post.metaDescription,
-          type: "single_line_text_field",
-          namespace: "global",
-        });
-      }
-    }
-
-    return this.createArticle(targetBlogId, articleData);
   }
 
   /**
-   * Update a blog post
+   * Update existing blog post
    */
   async updateBlogPost(
     blogId: number,
     articleId: number,
-    post: {
+    options: {
       title?: string;
       content?: string;
-      excerpt?: string;
+      summary?: string;
       tags?: string[];
-      publish?: boolean;
+      seoTitle?: string;
+      seoDescription?: string;
     }
-  ): Promise<ShopifyArticle> {
-    const updateData: UpdateArticleData = { id: articleId };
+  ): Promise<PublishResult> {
+    const updateData: Partial<ShopifyArticle> = {};
     
-    if (post.title) updateData.title = post.title;
-    if (post.content) updateData.body_html = post.content;
-    if (post.excerpt) updateData.summary_html = post.excerpt;
-    if (post.tags) updateData.tags = post.tags.join(", ");
-    if (post.publish) updateData.published_at = new Date().toISOString();
-    
-    return this.updateArticle(blogId, updateData);
+    if (options.title) updateData.title = options.title;
+    if (options.content) updateData.body_html = options.content;
+    if (options.summary) updateData.summary_html = options.summary;
+    if (options.tags) updateData.tags = options.tags.join(", ");
+
+    const result = await this.updateArticle(blogId, articleId, updateData);
+
+    // Update SEO metafields
+    if (result.success && (options.seoTitle || options.seoDescription)) {
+      await this.setArticleSEOMetafields(blogId, articleId, {
+        title: options.seoTitle,
+        description: options.seoDescription,
+      });
+    }
+
+    return result;
   }
 
   /**
-   * Publish a draft article
+   * List all blog posts
    */
-  async publishArticle(blogId: number, articleId: number): Promise<ShopifyArticle> {
-    return this.updateArticle(blogId, {
-      id: articleId,
-      published_at: new Date().toISOString(),
+  async listBlogPosts(options: {
+    blogId?: number;
+    limit?: number;
+  } = {}): Promise<{
+    posts: Array<{
+      id: number;
+      title: string;
+      handle: string;
+      author: string;
+      publishedAt?: string;
+      tags?: string;
+    }>;
+    blogId: number;
+  }> {
+    let blogId = options.blogId;
+    if (!blogId) {
+      const mainBlog = await this.findMainBlog();
+      if (!mainBlog) {
+        return { posts: [], blogId: 0 };
+      }
+      blogId = mainBlog.id;
+    }
+
+    const articles = await this.listArticles(blogId, {
+      limit: options.limit || 50,
     });
-  }
 
-  /**
-   * Generate URL handle from title
-   */
-  private generateHandle(title: string): string {
-    return title
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .trim();
-  }
+    const posts = articles.map(article => ({
+      id: article.id!,
+      title: article.title,
+      handle: article.handle || "",
+      author: article.author,
+      publishedAt: article.published_at || undefined,
+      tags: article.tags,
+    }));
 
-  /**
-   * Test the connection
-   */
-  async testConnection(): Promise<{ success: boolean; shop?: { name: string }; error?: string }> {
-    try {
-      const response = await this.request<{ shop: { name: string } }>("/shop.json");
-      return { success: true, shop: response.shop };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Connection failed",
-      };
-    }
+    return { posts, blogId };
   }
 }
 
-// Export singleton instance
-export const shopify = new ShopifyClient();
+// ============================================
+// FACTORY FUNCTION
+// ============================================
 
+export function createShopifyClient(config: ShopifyConfig): ShopifyClient {
+  return new ShopifyClient(config);
+}

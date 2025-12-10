@@ -522,6 +522,148 @@ export const runAutopilot = inngest.createFunction(
 );
 
 // ============================================
+// PUBLISH CONTENT FUNCTION
+// ============================================
+
+export const publishContent = inngest.createFunction(
+  {
+    id: "publish-content",
+    name: "Publish Content to CMS",
+    retries: 2,
+  },
+  { event: "content/publish.requested" },
+  async ({ event, step }) => {
+    const { 
+      organizationId, 
+      siteId, 
+      contentId, 
+      cmsType,
+      publishOptions 
+    } = event.data;
+
+    // Step 1: Get content from database
+    const content = await step.run("get-content", async () => {
+      const supabase = createServiceClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from("content")
+        .select("*")
+        .eq("id", contentId)
+        .single();
+      return data;
+    });
+
+    if (!content) {
+      throw new Error("Content not found");
+    }
+
+    // Step 2: Get CMS credentials
+    const credentials = await step.run("get-credentials", async () => {
+      const supabase = createServiceClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from("integrations")
+        .select("credentials")
+        .eq("organization_id", organizationId)
+        .eq("type", cmsType)
+        .eq("status", "active")
+        .single();
+      return data?.credentials;
+    });
+
+    if (!credentials) {
+      throw new Error(`${cmsType} not connected`);
+    }
+
+    // Step 3: Publish to CMS
+    const publishResult = await step.run("publish", async () => {
+      const { createPublisherFromIntegration } = await import("@/lib/cms");
+      
+      const publisher = await createPublisherFromIntegration(cmsType, credentials);
+      if (!publisher) {
+        throw new Error("Invalid CMS credentials");
+      }
+
+      return publisher.publish({
+        title: content.title,
+        content: content.content,
+        slug: content.slug,
+        excerpt: content.excerpt,
+        seoTitle: content.seo_title,
+        metaDescription: content.meta_description,
+        focusKeyword: content.focus_keyword,
+        categories: content.categories,
+        tags: content.tags,
+        featuredImageUrl: content.featured_image,
+        status: publishOptions?.status || "publish",
+        publishDate: publishOptions?.scheduledDate,
+      });
+    });
+
+    // Step 4: Update content status
+    await step.run("update-status", async () => {
+      const supabase = createServiceClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from("content").update({
+        status: publishResult.success ? "published" : "failed",
+        published_url: publishResult.url,
+        published_at: publishResult.success ? new Date().toISOString() : null,
+        cms_post_id: publishResult.postId?.toString(),
+        publish_error: publishResult.error,
+        updated_at: new Date().toISOString(),
+      }).eq("id", contentId);
+    });
+
+    return {
+      success: publishResult.success,
+      url: publishResult.url,
+      postId: publishResult.postId,
+      error: publishResult.error,
+    };
+  }
+);
+
+// ============================================
+// BULK PUBLISH FUNCTION
+// ============================================
+
+export const bulkPublish = inngest.createFunction(
+  {
+    id: "bulk-publish",
+    name: "Bulk Publish Content",
+    retries: 1,
+  },
+  { event: "content/bulk-publish.requested" },
+  async ({ event, step }) => {
+    const { organizationId, siteId, contentIds, cmsType } = event.data;
+
+    const results = [];
+
+    for (const contentId of contentIds) {
+      const result = await step.run(`publish-${contentId}`, async () => {
+        await inngest.send({
+          name: "content/publish.requested",
+          data: {
+            organizationId,
+            siteId,
+            contentId,
+            cmsType,
+            publishOptions: { status: "publish" },
+          },
+        });
+        return { contentId, queued: true };
+      });
+      results.push(result);
+    }
+
+    return {
+      success: true,
+      queued: results.length,
+    };
+  }
+);
+
+// ============================================
 // SCHEDULED JOBS
 // ============================================
 
@@ -615,6 +757,8 @@ export const scheduledDailyAnalytics = inngest.createFunction(
 export const functions = [
   crawlSite,
   generateContent,
+  publishContent,
+  bulkPublish,
   keywordResearch,
   analyticsSync,
   runAutopilot,

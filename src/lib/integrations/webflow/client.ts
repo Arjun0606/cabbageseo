@@ -1,18 +1,24 @@
 /**
- * Webflow CMS API Client
- * Handles publishing content to Webflow CMS collections
+ * Webflow CMS API Client for CabbageSEO
  * 
- * API Reference: https://developers.webflow.com/reference
+ * Full integration for:
+ * - Creating/updating CMS items (blog posts)
+ * - Managing collections
+ * - Publishing to live site
+ * - Managing site domains
+ * - SEO meta fields
  */
 
-interface WebflowConfig {
-  apiKey?: string;
-  siteId?: string;
+// ============================================
+// TYPES
+// ============================================
+
+export interface WebflowConfig {
+  accessToken: string;  // OAuth access token or API token
 }
 
-interface WebflowSite {
+export interface WebflowSite {
   id: string;
-  workspaceId: string;
   displayName: string;
   shortName: string;
   previewUrl: string;
@@ -20,9 +26,15 @@ interface WebflowSite {
   createdOn: string;
   lastUpdated: string;
   lastPublished?: string;
+  customDomains: WebflowDomain[];
 }
 
-interface WebflowCollection {
+export interface WebflowDomain {
+  id: string;
+  url: string;
+}
+
+export interface WebflowCollection {
   id: string;
   displayName: string;
   singularName: string;
@@ -32,7 +44,7 @@ interface WebflowCollection {
   fields: WebflowField[];
 }
 
-interface WebflowField {
+export interface WebflowField {
   id: string;
   isEditable: boolean;
   isRequired: boolean;
@@ -40,116 +52,206 @@ interface WebflowField {
   slug: string;
   displayName: string;
   helpText?: string;
-  validations?: Record<string, unknown>;
-}
-
-interface WebflowItem {
-  id: string;
-  cmsLocaleId?: string;
-  lastPublished?: string;
-  lastUpdated: string;
-  createdOn: string;
-  isArchived: boolean;
-  isDraft: boolean;
-  fieldData: Record<string, unknown>;
-}
-
-interface CreateItemData {
-  isArchived?: boolean;
-  isDraft?: boolean;
-  fieldData: {
-    name: string;           // Required: item name
-    slug: string;           // Required: URL slug
-    [key: string]: unknown; // Dynamic fields based on collection schema
+  validations?: {
+    maxLength?: number;
+    minLength?: number;
+    pattern?: string;
   };
 }
 
-interface PublishItemsRequest {
-  itemIds: string[];
+export interface WebflowItem {
+  id?: string;
+  cmsLocaleId?: string;
+  lastPublished?: string;
+  lastUpdated?: string;
+  createdOn?: string;
+  isArchived?: boolean;
+  isDraft?: boolean;
+  fieldData: {
+    name: string;
+    slug: string;
+    [key: string]: unknown;
+  };
 }
 
+export interface WebflowItemCreate {
+  isArchived?: boolean;
+  isDraft?: boolean;
+  fieldData: {
+    name: string;
+    slug: string;
+    // SEO fields (if available in collection)
+    "seo-title"?: string;
+    "meta-description"?: string;
+    "open-graph-image"?: string;
+    // Content fields
+    "post-body"?: string;
+    "post-summary"?: string;
+    "thumbnail-image"?: string;
+    "author"?: string;
+    "category"?: string;
+    "publish-date"?: string;
+    [key: string]: unknown;
+  };
+}
+
+export interface PublishResult {
+  success: boolean;
+  itemId?: string;
+  url?: string;
+  error?: string;
+}
+
+// ============================================
+// WEBFLOW CLIENT
+// ============================================
+
 export class WebflowClient {
-  private apiKey: string;
+  private accessToken: string;
   private baseUrl = "https://api.webflow.com/v2";
-  private siteId?: string;
 
-  constructor(config?: WebflowConfig) {
-    this.apiKey = config?.apiKey || process.env.WEBFLOW_API_KEY || "";
-    this.siteId = config?.siteId;
+  constructor(config: WebflowConfig) {
+    this.accessToken = config.accessToken;
   }
 
   /**
-   * Check if API is configured
+   * Test connection
    */
-  isConfigured(): boolean {
-    return Boolean(this.apiKey);
+  async testConnection(): Promise<{ success: boolean; error?: string }> {
+    try {
+      await this.request<{ sites: WebflowSite[] }>("/sites");
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Connection failed",
+      };
+    }
   }
 
   /**
-   * Make authenticated request to Webflow API
+   * Make authenticated API request
    */
   private async request<T>(
     endpoint: string,
-    method: "GET" | "POST" | "PATCH" | "DELETE" = "GET",
-    body?: unknown
+    options: RequestInit = {}
   ): Promise<T> {
-    if (!this.apiKey) {
-      throw new Error("Webflow API key not configured");
-    }
-
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      method,
+      ...options,
       headers: {
-        "Authorization": `Bearer ${this.apiKey}`,
+        "Authorization": `Bearer ${this.accessToken}`,
         "Content-Type": "application/json",
-        "accept": "application/json",
+        "accept-version": "2.0.0",
+        ...options.headers,
       },
-      body: body ? JSON.stringify(body) : undefined,
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Webflow API error: ${response.status} - ${error}`);
+      const error = await response.json().catch(() => ({}));
+      throw new Error(
+        error.message || error.err || `Webflow API error: ${response.status}`
+      );
     }
 
-    return response.json();
+    // Handle empty responses
+    const text = await response.text();
+    if (!text) return {} as T;
+    
+    return JSON.parse(text);
   }
 
+  // ============================================
+  // SITES
+  // ============================================
+
   /**
-   * List all sites accessible with the API key
+   * List all sites
    */
   async listSites(): Promise<WebflowSite[]> {
     const response = await this.request<{ sites: WebflowSite[] }>("/sites");
-    return response.sites;
+    return response.sites || [];
   }
 
   /**
-   * Get a specific site by ID
+   * Get site by ID
    */
   async getSite(siteId: string): Promise<WebflowSite> {
     return this.request<WebflowSite>(`/sites/${siteId}`);
   }
 
   /**
-   * List all collections for a site
+   * Publish site (make changes live)
    */
-  async listCollections(siteId?: string): Promise<WebflowCollection[]> {
-    const id = siteId || this.siteId;
-    if (!id) {
-      throw new Error("Site ID required");
+  async publishSite(siteId: string, domains?: string[]): Promise<boolean> {
+    try {
+      await this.request(`/sites/${siteId}/publish`, {
+        method: "POST",
+        body: JSON.stringify({
+          publishToWebflowSubdomain: true,
+          customDomains: domains,
+        }),
+      });
+      return true;
+    } catch {
+      return false;
     }
-    const response = await this.request<{ collections: WebflowCollection[] }>(
-      `/sites/${id}/collections`
-    );
-    return response.collections;
   }
 
   /**
-   * Get a specific collection with its fields
+   * Get site domains
+   */
+  async getSiteDomains(siteId: string): Promise<WebflowDomain[]> {
+    const response = await this.request<{ customDomains: WebflowDomain[] }>(
+      `/sites/${siteId}/custom_domains`
+    );
+    return response.customDomains || [];
+  }
+
+  // ============================================
+  // COLLECTIONS
+  // ============================================
+
+  /**
+   * List collections for a site
+   */
+  async listCollections(siteId: string): Promise<WebflowCollection[]> {
+    const response = await this.request<{ collections: WebflowCollection[] }>(
+      `/sites/${siteId}/collections`
+    );
+    return response.collections || [];
+  }
+
+  /**
+   * Get collection details with fields
    */
   async getCollection(collectionId: string): Promise<WebflowCollection> {
     return this.request<WebflowCollection>(`/collections/${collectionId}`);
   }
+
+  /**
+   * Find blog/posts collection
+   */
+  async findBlogCollection(siteId: string): Promise<WebflowCollection | null> {
+    const collections = await this.listCollections(siteId);
+    
+    // Look for common blog collection names
+    const blogNames = ["blog", "posts", "articles", "news", "blog posts"];
+    
+    for (const name of blogNames) {
+      const collection = collections.find(
+        c => c.displayName.toLowerCase().includes(name) || 
+             c.slug.toLowerCase().includes(name)
+      );
+      if (collection) return collection;
+    }
+
+    // Return first collection as fallback
+    return collections[0] || null;
+  }
+
+  // ============================================
+  // COLLECTION ITEMS (CMS Items)
+  // ============================================
 
   /**
    * List items in a collection
@@ -160,33 +262,49 @@ export class WebflowClient {
       offset?: number;
       limit?: number;
     } = {}
-  ): Promise<{ items: WebflowItem[]; pagination: { total: number; offset: number; limit: number } }> {
+  ): Promise<{ items: WebflowItem[]; pagination: { total: number } }> {
     const params = new URLSearchParams();
     if (options.offset) params.set("offset", String(options.offset));
     if (options.limit) params.set("limit", String(options.limit || 100));
-    
-    return this.request<{
-      items: WebflowItem[];
-      pagination: { total: number; offset: number; limit: number };
-    }>(`/collections/${collectionId}/items?${params.toString()}`);
+
+    return this.request(`/collections/${collectionId}/items?${params.toString()}`);
   }
 
   /**
-   * Get a specific item
+   * Get a single item
    */
   async getItem(collectionId: string, itemId: string): Promise<WebflowItem> {
-    return this.request<WebflowItem>(`/collections/${collectionId}/items/${itemId}`);
+    return this.request(`/collections/${collectionId}/items/${itemId}`);
   }
 
   /**
-   * Create a new item in a collection
+   * Create a new item (blog post)
    */
-  async createItem(collectionId: string, data: CreateItemData): Promise<WebflowItem> {
-    return this.request<WebflowItem>(
-      `/collections/${collectionId}/items`,
-      "POST",
-      data
-    );
+  async createItem(
+    collectionId: string,
+    item: WebflowItemCreate,
+    live: boolean = false
+  ): Promise<PublishResult> {
+    try {
+      const endpoint = live 
+        ? `/collections/${collectionId}/items/live`
+        : `/collections/${collectionId}/items`;
+
+      const result = await this.request<WebflowItem>(endpoint, {
+        method: "POST",
+        body: JSON.stringify(item),
+      });
+
+      return {
+        success: true,
+        itemId: result.id,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to create item",
+      };
+    }
   }
 
   /**
@@ -195,197 +313,120 @@ export class WebflowClient {
   async updateItem(
     collectionId: string,
     itemId: string,
-    data: Partial<CreateItemData>
-  ): Promise<WebflowItem> {
-    return this.request<WebflowItem>(
-      `/collections/${collectionId}/items/${itemId}`,
-      "PATCH",
-      data
-    );
+    item: Partial<WebflowItemCreate>,
+    live: boolean = false
+  ): Promise<PublishResult> {
+    try {
+      const endpoint = live
+        ? `/collections/${collectionId}/items/${itemId}/live`
+        : `/collections/${collectionId}/items/${itemId}`;
+
+      const result = await this.request<WebflowItem>(endpoint, {
+        method: "PATCH",
+        body: JSON.stringify(item),
+      });
+
+      return {
+        success: true,
+        itemId: result.id,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to update item",
+      };
+    }
   }
 
   /**
    * Delete an item
    */
-  async deleteItem(collectionId: string, itemId: string): Promise<void> {
-    await this.request<void>(
-      `/collections/${collectionId}/items/${itemId}`,
-      "DELETE"
-    );
-  }
-
-  /**
-   * Publish items (make them live)
-   */
-  async publishItems(collectionId: string, itemIds: string[]): Promise<void> {
-    await this.request<void>(
-      `/collections/${collectionId}/items/publish`,
-      "POST",
-      { itemIds } as PublishItemsRequest
-    );
-  }
-
-  /**
-   * Publish the entire site
-   */
-  async publishSite(siteId?: string, domains?: string[]): Promise<void> {
-    const id = siteId || this.siteId;
-    if (!id) {
-      throw new Error("Site ID required");
+  async deleteItem(collectionId: string, itemId: string): Promise<boolean> {
+    try {
+      await this.request(`/collections/${collectionId}/items/${itemId}`, {
+        method: "DELETE",
+      });
+      return true;
+    } catch {
+      return false;
     }
-
-    await this.request<void>(
-      `/sites/${id}/publish`,
-      "POST",
-      domains ? { publishToWebflowSubdomain: true, customDomains: domains } : undefined
-    );
   }
 
-  // ===============================
-  // CabbageSEO Convenience Methods
-  // ===============================
-
   /**
-   * Find a blog/posts collection in the site
-   * Looks for common collection names
+   * Publish items (make staging changes live)
    */
-  async findBlogCollection(siteId?: string): Promise<WebflowCollection | null> {
-    const collections = await this.listCollections(siteId);
-    
-    // Common blog collection names
-    const blogNames = ["blog", "posts", "articles", "news", "blog-posts", "blog posts"];
-    
-    for (const collection of collections) {
-      const lowerName = collection.displayName.toLowerCase();
-      const lowerSlug = collection.slug.toLowerCase();
-      
-      if (blogNames.some(name => lowerName.includes(name) || lowerSlug.includes(name))) {
-        return collection;
-      }
+  async publishItems(collectionId: string, itemIds: string[]): Promise<boolean> {
+    try {
+      await this.request(`/collections/${collectionId}/items/publish`, {
+        method: "POST",
+        body: JSON.stringify({ itemIds }),
+      });
+      return true;
+    } catch {
+      return false;
     }
-    
-    return null;
   }
 
+  // ============================================
+  // HIGH-LEVEL PUBLISHING
+  // ============================================
+
   /**
-   * Create a blog post in Webflow
-   * Automatically maps common field names
+   * Map collection fields to our standard content format
    */
-  async createBlogPost(
-    collectionId: string,
-    post: {
+  private mapFieldsForCollection(
+    collection: WebflowCollection,
+    content: {
       title: string;
       slug: string;
-      content: string;           // Rich text / HTML
-      excerpt?: string;
+      body: string;
+      summary?: string;
+      seoTitle?: string;
+      metaDescription?: string;
       author?: string;
       category?: string;
-      tags?: string[];
-      featuredImage?: string;    // URL to image
-      metaTitle?: string;
-      metaDescription?: string;
-      publishDate?: Date;
-      isDraft?: boolean;
+      publishDate?: string;
+      thumbnailUrl?: string;
     }
-  ): Promise<WebflowItem> {
-    // Get collection schema to map fields correctly
-    const collection = await this.getCollection(collectionId);
-    const fieldMap = this.mapFieldsToSchema(collection.fields, post);
-
-    return this.createItem(collectionId, {
-      isArchived: false,
-      isDraft: post.isDraft ?? true,
-      fieldData: {
-        name: post.title,
-        slug: this.generateSlug(post.slug || post.title),
-        ...fieldMap,
-      },
-    });
-  }
-
-  /**
-   * Update a blog post
-   */
-  async updateBlogPost(
-    collectionId: string,
-    itemId: string,
-    post: {
-      title?: string;
-      content?: string;
-      excerpt?: string;
-      metaTitle?: string;
-      metaDescription?: string;
-      isDraft?: boolean;
-    }
-  ): Promise<WebflowItem> {
-    const collection = await this.getCollection(collectionId);
-    const fieldMap = this.mapFieldsToSchema(collection.fields, post);
-
-    const fieldData: Record<string, unknown> = { ...fieldMap };
-    
-    if (post.title) {
-      fieldData.name = post.title;
-    }
-
-    const updateData: Partial<CreateItemData> = {};
-    
-    if (Object.keys(fieldData).length > 0) {
-      updateData.fieldData = fieldData as CreateItemData["fieldData"];
-    }
-
-    if (post.isDraft !== undefined) {
-      updateData.isDraft = post.isDraft;
-    }
-
-    return this.updateItem(collectionId, itemId, updateData);
-  }
-
-  /**
-   * Publish a blog post (take it live)
-   */
-  async publishBlogPost(collectionId: string, itemId: string): Promise<void> {
-    // First, update the item to not be a draft
-    await this.updateItem(collectionId, itemId, { isDraft: false });
-    
-    // Then publish it
-    await this.publishItems(collectionId, [itemId]);
-  }
-
-  /**
-   * Map CabbageSEO post data to Webflow collection fields
-   */
-  private mapFieldsToSchema(
-    fields: WebflowField[],
-    post: Record<string, unknown>
-  ): Record<string, unknown> {
-    const fieldData: Record<string, unknown> = {};
-    
-    // Common field name mappings
-    const mappings: Record<string, string[]> = {
-      content: ["content", "body", "post-body", "post-content", "rich-text", "article-body"],
-      excerpt: ["excerpt", "summary", "description", "intro", "post-excerpt"],
-      author: ["author", "author-name", "writer"],
-      category: ["category", "categories", "post-category"],
-      tags: ["tags", "post-tags"],
-      featuredImage: ["featured-image", "main-image", "thumbnail", "hero-image", "image", "cover"],
-      metaTitle: ["meta-title", "seo-title", "page-title"],
-      metaDescription: ["meta-description", "seo-description"],
-      publishDate: ["publish-date", "date", "post-date", "published-on"],
+  ): WebflowItemCreate["fieldData"] {
+    const fieldData: WebflowItemCreate["fieldData"] = {
+      name: content.title,
+      slug: content.slug,
     };
 
-    for (const [postField, webflowFieldNames] of Object.entries(mappings)) {
-      if (post[postField] === undefined) continue;
-      
-      // Find matching field in collection
-      const matchingField = fields.find(f => 
-        webflowFieldNames.some(name => 
-          f.slug.toLowerCase() === name ||
-          f.displayName.toLowerCase().replace(/\s+/g, "-") === name
-        )
+    // Map fields based on what's available in the collection
+    const fieldMap: Record<string, string[]> = {
+      // Body/content field variants
+      body: ["post-body", "body", "content", "article-body", "main-content", "rich-text"],
+      // Summary/excerpt variants
+      summary: ["post-summary", "summary", "excerpt", "description", "intro"],
+      // SEO title variants
+      seoTitle: ["seo-title", "meta-title", "page-title"],
+      // Meta description variants
+      metaDescription: ["meta-description", "seo-description", "meta-desc"],
+      // Author variants
+      author: ["author", "author-name", "written-by"],
+      // Category variants
+      category: ["category", "categories", "topic"],
+      // Date variants
+      publishDate: ["publish-date", "date", "published-on", "post-date"],
+      // Image variants
+      thumbnail: ["thumbnail-image", "featured-image", "hero-image", "image", "cover"],
+    };
+
+    const collectionFieldSlugs = collection.fields.map(f => f.slug);
+
+    // Find matching fields
+    for (const [contentKey, possibleSlugs] of Object.entries(fieldMap)) {
+      const matchingSlug = possibleSlugs.find(slug => 
+        collectionFieldSlugs.includes(slug)
       );
-      
-      if (matchingField) {
-        fieldData[matchingField.slug] = post[postField];
+
+      if (matchingSlug) {
+        const value = content[contentKey as keyof typeof content];
+        if (value) {
+          fieldData[matchingSlug] = value;
+        }
       }
     }
 
@@ -393,32 +434,254 @@ export class WebflowClient {
   }
 
   /**
-   * Generate a URL-safe slug
+   * Publish blog post with full SEO setup
    */
-  private generateSlug(text: string): string {
-    return text
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .trim();
-  }
-
-  /**
-   * Test the connection
-   */
-  async testConnection(): Promise<{ success: boolean; sites?: WebflowSite[]; error?: string }> {
+  async publishBlogPost(
+    siteId: string,
+    content: {
+      title: string;
+      slug: string;
+      body: string;
+      summary?: string;
+      seoTitle?: string;
+      metaDescription?: string;
+      author?: string;
+      category?: string;
+      publishDate?: string;
+      thumbnailUrl?: string;
+    },
+    options: {
+      collectionId?: string;  // If known, use directly
+      publishLive?: boolean;  // Publish directly to live site
+      isDraft?: boolean;      // Save as draft
+    } = {}
+  ): Promise<PublishResult> {
     try {
-      const sites = await this.listSites();
-      return { success: true, sites };
+      // Find the blog collection
+      let collectionId = options.collectionId;
+      let collection: WebflowCollection;
+
+      if (!collectionId) {
+        const blogCollection = await this.findBlogCollection(siteId);
+        if (!blogCollection) {
+          return {
+            success: false,
+            error: "No blog collection found. Please specify collectionId.",
+          };
+        }
+        collectionId = blogCollection.id;
+        collection = blogCollection;
+      } else {
+        collection = await this.getCollection(collectionId);
+      }
+
+      // Map content to collection fields
+      const fieldData = this.mapFieldsForCollection(collection, content);
+
+      // Create the item
+      const item: WebflowItemCreate = {
+        isDraft: options.isDraft ?? false,
+        isArchived: false,
+        fieldData,
+      };
+
+      const result = await this.createItem(
+        collectionId,
+        item,
+        options.publishLive ?? false
+      );
+
+      if (result.success && result.itemId) {
+        // Get site URL for the published post
+        const site = await this.getSite(siteId);
+        const baseUrl = site.customDomains?.[0]?.url || site.previewUrl;
+        result.url = `${baseUrl}/${collection.slug}/${content.slug}`;
+      }
+
+      return result;
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Connection failed",
+        error: error instanceof Error ? error.message : "Failed to publish",
       };
     }
   }
+
+  /**
+   * Update existing blog post
+   */
+  async updateBlogPost(
+    collectionId: string,
+    itemId: string,
+    content: {
+      title?: string;
+      body?: string;
+      summary?: string;
+      seoTitle?: string;
+      metaDescription?: string;
+    },
+    options: {
+      publishLive?: boolean;
+    } = {}
+  ): Promise<PublishResult> {
+    try {
+      const collection = await this.getCollection(collectionId);
+      const existingItem = await this.getItem(collectionId, itemId);
+
+      // Build update data
+      const fieldData: Partial<WebflowItemCreate["fieldData"]> = {
+        ...existingItem.fieldData,
+      };
+
+      // Update fields that are provided
+      if (content.title) fieldData.name = content.title;
+
+      // Map other fields
+      const fieldMap: Record<string, string[]> = {
+        body: ["post-body", "body", "content"],
+        summary: ["post-summary", "summary", "excerpt"],
+        seoTitle: ["seo-title", "meta-title"],
+        metaDescription: ["meta-description", "seo-description"],
+      };
+
+      const collectionFieldSlugs = collection.fields.map(f => f.slug);
+
+      for (const [contentKey, possibleSlugs] of Object.entries(fieldMap)) {
+        const value = content[contentKey as keyof typeof content];
+        if (value) {
+          const matchingSlug = possibleSlugs.find(slug =>
+            collectionFieldSlugs.includes(slug)
+          );
+          if (matchingSlug) {
+            fieldData[matchingSlug] = value;
+          }
+        }
+      }
+
+      return this.updateItem(
+        collectionId,
+        itemId,
+        { fieldData: fieldData as WebflowItemCreate["fieldData"] },
+        options.publishLive ?? false
+      );
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to update",
+      };
+    }
+  }
+
+  /**
+   * List all blog posts
+   */
+  async listBlogPosts(
+    siteId: string,
+    options: {
+      collectionId?: string;
+      limit?: number;
+      offset?: number;
+    } = {}
+  ): Promise<{
+    posts: Array<{
+      id: string;
+      title: string;
+      slug: string;
+      isDraft: boolean;
+      lastUpdated?: string;
+    }>;
+    total: number;
+  }> {
+    let collectionId = options.collectionId;
+
+    if (!collectionId) {
+      const blogCollection = await this.findBlogCollection(siteId);
+      if (!blogCollection) {
+        return { posts: [], total: 0 };
+      }
+      collectionId = blogCollection.id;
+    }
+
+    const { items, pagination } = await this.listItems(collectionId, {
+      limit: options.limit,
+      offset: options.offset,
+    });
+
+    const posts = items.map(item => ({
+      id: item.id || "",
+      title: item.fieldData.name,
+      slug: item.fieldData.slug,
+      isDraft: item.isDraft ?? false,
+      lastUpdated: item.lastUpdated,
+    }));
+
+    return { posts, total: pagination.total };
+  }
+
+  // ============================================
+  // BULK OPERATIONS
+  // ============================================
+
+  /**
+   * Publish multiple items at once
+   */
+  async bulkPublish(
+    siteId: string,
+    collectionId: string,
+    itemIds: string[]
+  ): Promise<{
+    success: boolean;
+    publishedCount: number;
+    error?: string;
+  }> {
+    try {
+      await this.publishItems(collectionId, itemIds);
+      
+      // Also publish the site to make changes live
+      await this.publishSite(siteId);
+
+      return {
+        success: true,
+        publishedCount: itemIds.length,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        publishedCount: 0,
+        error: error instanceof Error ? error.message : "Bulk publish failed",
+      };
+    }
+  }
+
+  /**
+   * Archive multiple items
+   */
+  async bulkArchive(
+    collectionId: string,
+    itemIds: string[]
+  ): Promise<{ success: boolean; archivedCount: number }> {
+    let archivedCount = 0;
+
+    for (const itemId of itemIds) {
+      try {
+        await this.updateItem(collectionId, itemId, { isArchived: true });
+        archivedCount++;
+      } catch {
+        // Continue with other items
+      }
+    }
+
+    return {
+      success: archivedCount === itemIds.length,
+      archivedCount,
+    };
+  }
 }
 
-// Export singleton instance
-export const webflow = new WebflowClient();
+// ============================================
+// FACTORY FUNCTION
+// ============================================
+
+export function createWebflowClient(config: WebflowConfig): WebflowClient {
+  return new WebflowClient(config);
+}
