@@ -3,7 +3,8 @@
  * GET /api/admin/wallet - Get wallet status
  * POST /api/admin/wallet - Set wallet balance
  * 
- * This is admin-only! Add auth check in production.
+ * ⚠️ ADMIN ONLY - Never expose to users!
+ * Protected by secret admin key
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -13,11 +14,43 @@ import {
   formatWalletStatus,
   calculateTopUpAmount,
   shouldSendAlert,
-  sendWalletAlert,
 } from "@/lib/billing/wallet-monitor";
 
-// GET: Check wallet status
+// Admin secret key - set this in .env.local
+const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || "cabbageseo-admin-secret-change-me";
+
+/**
+ * Verify admin access
+ * Requires either:
+ * - Header: x-admin-key: <secret>
+ * - Query: ?admin_key=<secret>
+ */
+function verifyAdmin(request: NextRequest): boolean {
+  const headerKey = request.headers.get("x-admin-key");
+  const queryKey = new URL(request.url).searchParams.get("admin_key");
+  
+  return headerKey === ADMIN_SECRET || queryKey === ADMIN_SECRET;
+}
+
+/**
+ * Return 403 for unauthorized access
+ */
+function unauthorizedResponse(): NextResponse {
+  return NextResponse.json(
+    { 
+      error: "Unauthorized",
+      message: "Admin access required. This endpoint is not for users.",
+    },
+    { status: 403 }
+  );
+}
+
+// GET: Check wallet status (ADMIN ONLY)
 export async function GET(request: NextRequest) {
+  // 🔒 Admin auth check
+  if (!verifyAdmin(request)) {
+    return unauthorizedResponse();
+  }
   const { searchParams } = new URL(request.url);
   const monthlyRevenue = parseInt(searchParams.get("revenue") || "0");
   
@@ -47,8 +80,13 @@ export async function GET(request: NextRequest) {
   });
 }
 
-// POST: Update wallet balance
+// POST: Update wallet balance (ADMIN ONLY)
 export async function POST(request: NextRequest) {
+  // 🔒 Admin auth check
+  if (!verifyAdmin(request)) {
+    return unauthorizedResponse();
+  }
+  
   try {
     const body = await request.json();
     const { balanceCents, balanceDollars } = body;
