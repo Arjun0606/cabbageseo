@@ -1,448 +1,615 @@
 "use client";
 
-import { useState } from "react";
-import { DashboardHeader } from "@/components/dashboard/header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
-  Zap,
+  Sparkles,
   Play,
   Pause,
-  Settings,
+  Square,
+  RotateCcw,
   CheckCircle2,
   Clock,
-  AlertTriangle,
-  FileText,
-  Link2,
-  Target,
-  Search,
-  Bot,
-  Activity,
-  TrendingUp,
-  Calendar,
-  ArrowRight,
+  AlertCircle,
   Loader2,
-  RefreshCw,
-  Shield,
+  Zap,
+  FileText,
+  Search,
   Globe,
-  BarChart3,
+  AlertTriangle,
+  Settings,
+  Plus,
+  Trash2,
+  ChevronRight,
+  Bot,
+  Brain,
+  Target,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-// Types
+// ============================================
+// TYPES
+// ============================================
+
+type TaskStatus = "queued" | "running" | "completed" | "failed" | "paused";
+type TaskType = "content" | "keyword" | "audit" | "optimize" | "publish" | "analyze";
+
 interface AutopilotTask {
   id: string;
-  type: "content" | "optimization" | "technical" | "links" | "research";
+  type: TaskType;
   title: string;
   description: string;
-  status: "completed" | "in_progress" | "queued" | "failed";
-  timestamp: string;
-  impact?: string;
+  status: TaskStatus;
+  progress: number;
+  startedAt?: string;
+  completedAt?: string;
+  result?: string;
+  error?: string;
 }
 
-// Mock data
-const autopilotStats = {
-  isActive: true,
-  uptime: "14 days 6 hours",
-  tasksCompleted: 47,
-  trafficGrowth: "+23.5%",
-  contentGenerated: 8,
-  linksAdded: 34,
-  issuesFixed: 12,
-};
+interface AutopilotSettings {
+  autoPublish: boolean;
+  notifyOnComplete: boolean;
+  maxConcurrent: number;
+  pauseOnError: boolean;
+}
 
-const recentTasks: AutopilotTask[] = [
+// ============================================
+// MOCK DATA
+// ============================================
+
+const initialTasks: AutopilotTask[] = [
   {
     id: "1",
     type: "content",
-    title: "Generated article: 'AI SEO Tools Guide'",
-    description: "Created a 2,400 word comprehensive guide optimized for 'ai seo tools' keyword",
-    status: "completed",
-    timestamp: "2 hours ago",
-    impact: "+2,400 estimated monthly traffic",
+    title: "Generate: SEO Best Practices 2025",
+    description: "Creating 2,500-word article targeting 'seo best practices'",
+    status: "running",
+    progress: 65,
+    startedAt: "2 min ago",
   },
   {
     id: "2",
-    type: "links",
-    title: "Added 5 internal links to /blog/seo-tips",
-    description: "Connected related content to improve topical authority",
-    status: "completed",
-    timestamp: "4 hours ago",
-    impact: "+15% page authority",
+    type: "keyword",
+    title: "Research: Content Marketing Keywords",
+    description: "Finding keyword opportunities in content marketing niche",
+    status: "queued",
+    progress: 0,
   },
   {
     id: "3",
-    type: "technical",
-    title: "Fixed missing meta descriptions",
-    description: "Added optimized meta descriptions to 3 pages",
-    status: "completed",
-    timestamp: "6 hours ago",
-    impact: "+8% expected CTR",
+    type: "optimize",
+    title: "Optimize: Homepage Meta Tags",
+    description: "Improving title and description for better CTR",
+    status: "queued",
+    progress: 0,
   },
   {
     id: "4",
-    type: "optimization",
-    title: "Optimizing /services page",
-    description: "Improving content structure and keyword placement",
-    status: "in_progress",
-    timestamp: "Now",
+    type: "content",
+    title: "Generate: Link Building Guide",
+    description: "Creating comprehensive guide on link building strategies",
+    status: "completed",
+    progress: 100,
+    startedAt: "15 min ago",
+    completedAt: "5 min ago",
+    result: "3,200 words generated, SEO score: 94",
   },
   {
     id: "5",
-    type: "research",
-    title: "Keyword research for 'seo automation'",
-    description: "Analyzing competitors and finding content gaps",
-    status: "queued",
-    timestamp: "Scheduled",
-  },
-  {
-    id: "6",
-    type: "content",
-    title: "Generate comparison: CabbageSEO vs Surfer",
-    description: "Creating a comparison article targeting competitor keywords",
-    status: "queued",
-    timestamp: "Tomorrow",
+    type: "audit",
+    title: "Audit: Technical SEO Check",
+    description: "Scanning site for technical issues",
+    status: "completed",
+    progress: 100,
+    completedAt: "30 min ago",
+    result: "Found 5 issues, 3 auto-fixed",
   },
 ];
 
-const upcomingTasks = [
-  { title: "Write 'SEO Automation Guide'", type: "content", scheduled: "Tomorrow 9:00 AM" },
-  { title: "Add internal links to 5 pages", type: "links", scheduled: "Tomorrow 2:00 PM" },
-  { title: "Technical audit rescan", type: "technical", scheduled: "Dec 12, 9:00 AM" },
-  { title: "Keyword gap analysis", type: "research", scheduled: "Dec 13, 10:00 AM" },
-];
+// ============================================
+// TASK TYPE CONFIG
+// ============================================
 
-const automationSettings = [
-  { id: "content", label: "Content Generation", description: "Auto-generate SEO articles", enabled: true },
-  { id: "links", label: "Internal Linking", description: "Auto-add internal links", enabled: true },
-  { id: "technical", label: "Technical Fixes", description: "Auto-fix SEO issues", enabled: true },
-  { id: "research", label: "Keyword Research", description: "Auto-discover opportunities", enabled: true },
-  { id: "publish", label: "Auto-Publish", description: "Publish content without review", enabled: false },
-];
+const taskTypeConfig: Record<TaskType, { icon: React.ElementType; color: string }> = {
+  content: { icon: FileText, color: "text-blue-500 bg-blue-500/10" },
+  keyword: { icon: Search, color: "text-purple-500 bg-purple-500/10" },
+  audit: { icon: AlertTriangle, color: "text-yellow-500 bg-yellow-500/10" },
+  optimize: { icon: Zap, color: "text-orange-500 bg-orange-500/10" },
+  publish: { icon: Globe, color: "text-green-500 bg-green-500/10" },
+  analyze: { icon: Target, color: "text-pink-500 bg-pink-500/10" },
+};
 
-function getTaskIcon(type: string) {
-  switch (type) {
-    case "content": return FileText;
-    case "optimization": return Target;
-    case "technical": return Settings;
-    case "links": return Link2;
-    case "research": return Search;
-    default: return Zap;
-  }
+// ============================================
+// STATUS BADGE
+// ============================================
+
+function StatusBadge({ status }: { status: TaskStatus }) {
+  const config = {
+    queued: { label: "Queued", color: "bg-gray-500/10 text-gray-500", icon: Clock },
+    running: { label: "Running", color: "bg-blue-500/10 text-blue-500", icon: Loader2 },
+    completed: { label: "Completed", color: "bg-green-500/10 text-green-500", icon: CheckCircle2 },
+    failed: { label: "Failed", color: "bg-red-500/10 text-red-500", icon: AlertCircle },
+    paused: { label: "Paused", color: "bg-yellow-500/10 text-yellow-500", icon: Pause },
+  };
+
+  const { label, color, icon: Icon } = config[status];
+
+  return (
+    <Badge variant="secondary" className={color}>
+      <Icon className={`w-3 h-3 mr-1 ${status === "running" ? "animate-spin" : ""}`} />
+      {label}
+    </Badge>
+  );
 }
 
-function getTaskColor(type: string) {
-  switch (type) {
-    case "content": return "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400";
-    case "optimization": return "bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400";
-    case "technical": return "bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-400";
-    case "links": return "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400";
-    case "research": return "bg-pink-100 text-pink-600 dark:bg-pink-900 dark:text-pink-400";
-    default: return "bg-slate-100 text-slate-600";
-  }
+// ============================================
+// TASK CARD
+// ============================================
+
+function TaskCard({
+  task,
+  onRemove,
+  onRetry,
+}: {
+  task: AutopilotTask;
+  onRemove: () => void;
+  onRetry: () => void;
+}) {
+  const typeConfig = taskTypeConfig[task.type];
+  const Icon = typeConfig.icon;
+
+  return (
+    <Card className={`transition-all ${task.status === "running" ? "ring-2 ring-primary/50" : ""}`}>
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <div className={`p-2 rounded-lg ${typeConfig.color}`}>
+            <Icon className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <h4 className="font-medium truncate">{task.title}</h4>
+              <StatusBadge status={task.status} />
+            </div>
+            <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
+
+            {task.status === "running" && (
+              <div className="space-y-1">
+                <Progress value={task.progress} className="h-2" />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{task.progress}% complete</span>
+                  <span>Started {task.startedAt}</span>
+                </div>
+              </div>
+            )}
+
+            {task.status === "completed" && task.result && (
+              <div className="flex items-center gap-2 text-sm text-green-500">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{task.result}</span>
+              </div>
+            )}
+
+            {task.status === "failed" && task.error && (
+              <div className="flex items-center gap-2 text-sm text-red-500">
+                <AlertCircle className="w-4 h-4" />
+                <span>{task.error}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1">
+            {task.status === "failed" && (
+              <Button variant="ghost" size="icon" onClick={onRetry} className="h-8 w-8">
+                <RotateCcw className="w-4 h-4" />
+              </Button>
+            )}
+            {(task.status === "queued" || task.status === "failed") && (
+              <Button variant="ghost" size="icon" onClick={onRemove} className="h-8 w-8 text-red-500">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "completed":
-      return <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">Completed</Badge>;
-    case "in_progress":
-      return <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">In Progress</Badge>;
-    case "queued":
-      return <Badge className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">Queued</Badge>;
-    case "failed":
-      return <Badge className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">Failed</Badge>;
-    default:
-      return null;
-  }
-}
+// ============================================
+// MAIN PAGE
+// ============================================
 
 export default function AutopilotPage() {
-  const [isActive, setIsActive] = useState(autopilotStats.isActive);
-  const [settings, setSettings] = useState(automationSettings);
+  const searchParams = useSearchParams();
+  const initialTask = searchParams.get("task");
 
-  const toggleSetting = (id: string) => {
-    setSettings(settings.map(s => 
-      s.id === id ? { ...s, enabled: !s.enabled } : s
-    ));
+  const [isRunning, setIsRunning] = useState(true);
+  const [tasks, setTasks] = useState<AutopilotTask[]>(initialTasks);
+  const [newTaskPrompt, setNewTaskPrompt] = useState(initialTask || "");
+  const [settings, setSettings] = useState<AutopilotSettings>({
+    autoPublish: false,
+    notifyOnComplete: true,
+    maxConcurrent: 2,
+    pauseOnError: true,
+  });
+
+  // Stats
+  const runningTasks = tasks.filter((t) => t.status === "running").length;
+  const queuedTasks = tasks.filter((t) => t.status === "queued").length;
+  const completedTasks = tasks.filter((t) => t.status === "completed").length;
+
+  // Simulate task progress
+  useEffect(() => {
+    if (!isRunning) return;
+
+    const interval = setInterval(() => {
+      setTasks((prev) =>
+        prev.map((task) => {
+          if (task.status === "running" && task.progress < 100) {
+            const newProgress = Math.min(task.progress + Math.random() * 5, 100);
+            if (newProgress >= 100) {
+              return {
+                ...task,
+                progress: 100,
+                status: "completed" as TaskStatus,
+                completedAt: "Just now",
+                result: "Task completed successfully",
+              };
+            }
+            return { ...task, progress: newProgress };
+          }
+          return task;
+        })
+      );
+
+      // Start next queued task if available
+      setTasks((prev) => {
+        const running = prev.filter((t) => t.status === "running").length;
+        if (running < settings.maxConcurrent) {
+          const firstQueued = prev.findIndex((t) => t.status === "queued");
+          if (firstQueued >= 0) {
+            return prev.map((t, i) =>
+              i === firstQueued
+                ? { ...t, status: "running" as TaskStatus, startedAt: "Just now" }
+                : t
+            );
+          }
+        }
+        return prev;
+      });
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [isRunning, settings.maxConcurrent]);
+
+  const addTask = () => {
+    if (!newTaskPrompt.trim()) return;
+
+    const newTask: AutopilotTask = {
+      id: Date.now().toString(),
+      type: "content",
+      title: `AI Task: ${newTaskPrompt.slice(0, 40)}...`,
+      description: newTaskPrompt,
+      status: "queued",
+      progress: 0,
+    };
+
+    setTasks((prev) => [...prev, newTask]);
+    setNewTaskPrompt("");
+  };
+
+  const removeTask = (id: string) => {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const retryTask = (id: string) => {
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, status: "queued" as TaskStatus, progress: 0, error: undefined } : t
+      )
+    );
+  };
+
+  const clearCompleted = () => {
+    setTasks((prev) => prev.filter((t) => t.status !== "completed"));
   };
 
   return (
-    <div className="min-h-screen">
-      <DashboardHeader
-        title="Autopilot"
-        description="Your autonomous SEO assistant"
-      />
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Bot className="w-8 h-8 text-primary" />
+            </div>
+            SEO Autopilot
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            AI-powered automation for your SEO tasks
+          </p>
+        </div>
+        <div className="flex gap-3">
+          {isRunning ? (
+            <Button variant="outline" onClick={() => setIsRunning(false)}>
+              <Pause className="w-4 h-4 mr-2" />
+              Pause All
+            </Button>
+          ) : (
+            <Button onClick={() => setIsRunning(true)}>
+              <Play className="w-4 h-4 mr-2" />
+              Resume
+            </Button>
+          )}
+        </div>
+      </div>
 
-      <div className="p-6 space-y-6">
-        {/* Status Banner */}
-        <Card className={`border-2 ${isActive ? "border-cabbage-200 bg-gradient-to-r from-cabbage-50 to-white dark:border-cabbage-800 dark:from-cabbage-950 dark:to-slate-900" : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50"}`}>
-          <CardContent className="py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <div className={`relative p-4 rounded-2xl ${isActive ? "bg-cabbage-500" : "bg-slate-400"}`}>
-                  <Bot className="h-8 w-8 text-white" />
-                  {isActive && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse border-2 border-white" />
-                  )}
-                </div>
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                      SEO Autopilot
-                    </h2>
-                    <Badge className={isActive ? "bg-green-500 text-white" : "bg-slate-400 text-white"}>
-                      {isActive ? "Active" : "Paused"}
-                    </Badge>
-                  </div>
-                  <p className="text-slate-500">
-                    {isActive 
-                      ? `Running for ${autopilotStats.uptime} • ${autopilotStats.tasksCompleted} tasks completed`
-                      : "Click to resume automatic optimization"
-                    }
-                  </p>
-                </div>
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <Loader2 className={`w-5 h-5 text-blue-500 ${isRunning ? "animate-spin" : ""}`} />
               </div>
-              <div className="flex items-center gap-4">
-                <Button variant="outline" asChild>
-                  <a href="#settings">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </a>
-                </Button>
-                <Button 
-                  size="lg"
-                  variant={isActive ? "outline" : "default"}
-                  onClick={() => setIsActive(!isActive)}
-                  className="gap-2"
-                >
-                  {isActive ? (
-                    <>
-                      <Pause className="h-5 w-5" />
-                      Pause Autopilot
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-5 w-5" />
-                      Resume Autopilot
-                    </>
-                  )}
-                </Button>
+              <div>
+                <p className="text-2xl font-bold">{runningTasks}</p>
+                <p className="text-xs text-muted-foreground">Running</p>
               </div>
             </div>
           </CardContent>
         </Card>
-
-        {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-green-100 dark:bg-green-900">
-                  <TrendingUp className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Traffic Growth</p>
-                  <p className="text-2xl font-bold text-green-600">{autopilotStats.trafficGrowth}</p>
-                </div>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gray-500/10">
+                <Clock className="w-5 h-5 text-gray-500" />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900">
-                  <FileText className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Content Generated</p>
-                  <p className="text-2xl font-bold">{autopilotStats.contentGenerated} articles</p>
-                </div>
+              <div>
+                <p className="text-2xl font-bold">{queuedTasks}</p>
+                <p className="text-xs text-muted-foreground">Queued</p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-purple-100 dark:bg-purple-900">
-                  <Link2 className="h-6 w-6 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Links Added</p>
-                  <p className="text-2xl font-bold">{autopilotStats.linksAdded} links</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-orange-100 dark:bg-orange-900">
-                  <CheckCircle2 className="h-6 w-6 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Issues Fixed</p>
-                  <p className="text-2xl font-bold">{autopilotStats.issuesFixed} issues</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Activity Feed & Upcoming */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Recent Activity */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5 text-cabbage-600" />
-                    Recent Activity
-                  </CardTitle>
-                  <CardDescription>What Autopilot has been doing</CardDescription>
-                </div>
-                <Button variant="outline" size="sm">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Refresh
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentTasks.map((task) => {
-                  const Icon = getTaskIcon(task.type);
-                  return (
-                    <div
-                      key={task.id}
-                      className="flex items-start gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                    >
-                      <div className={`p-2 rounded-lg ${getTaskColor(task.type)}`}>
-                        {task.status === "in_progress" ? (
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                        ) : (
-                          <Icon className="h-5 w-5" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium text-slate-900 dark:text-white">
-                            {task.title}
-                          </p>
-                          {getStatusBadge(task.status)}
-                        </div>
-                        <p className="text-sm text-slate-500 mb-2">{task.description}</p>
-                        <div className="flex items-center gap-4 text-xs text-slate-400">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {task.timestamp}
-                          </span>
-                          {task.impact && (
-                            <span className="flex items-center gap-1 text-green-600">
-                              <TrendingUp className="h-3 w-3" />
-                              {task.impact}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Upcoming Tasks */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-blue-600" />
-                Upcoming Tasks
-              </CardTitle>
-              <CardDescription>What's scheduled next</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {upcomingTasks.map((task, i) => {
-                  const Icon = getTaskIcon(task.type);
-                  return (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${getTaskColor(task.type)}`}>
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{task.title}</p>
-                        <p className="text-xs text-slate-500">{task.scheduled}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Settings */}
-        <Card id="settings">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5 text-slate-600" />
-              Automation Settings
-            </CardTitle>
-            <CardDescription>Control what Autopilot can do automatically</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {settings.map((setting) => (
-                <div key={setting.id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-lg ${getTaskColor(setting.id)}`}>
-                      {setting.id === "content" && <FileText className="h-5 w-5" />}
-                      {setting.id === "links" && <Link2 className="h-5 w-5" />}
-                      {setting.id === "technical" && <Settings className="h-5 w-5" />}
-                      {setting.id === "research" && <Search className="h-5 w-5" />}
-                      {setting.id === "publish" && <Globe className="h-5 w-5" />}
-                    </div>
-                    <div>
-                      <Label htmlFor={setting.id} className="font-medium">
-                        {setting.label}
-                      </Label>
-                      <p className="text-sm text-slate-500">{setting.description}</p>
-                    </div>
-                  </div>
-                  <Switch
-                    id={setting.id}
-                    checked={setting.enabled}
-                    onCheckedChange={() => toggleSetting(setting.id)}
-                  />
-                </div>
-              ))}
             </div>
-
-            <div className="mt-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium text-amber-800 dark:text-amber-200">
-                    Auto-Publish is disabled
-                  </p>
-                  <p className="text-sm text-amber-600 dark:text-amber-400">
-                    Content will be created as drafts for your review. Enable to publish automatically.
-                  </p>
-                </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-500/10">
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{completedTasks}</p>
+                <p className="text-xs text-muted-foreground">Completed</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Brain className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{isRunning ? "Active" : "Paused"}</p>
+                <p className="text-xs text-muted-foreground">Status</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Task Queue */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* New Task Input */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                Add New Task
+              </CardTitle>
+              <CardDescription>
+                Describe what you want the AI to do
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <Textarea
+                  value={newTaskPrompt}
+                  onChange={(e) => setNewTaskPrompt(e.target.value)}
+                  placeholder="e.g., Generate an article about 'best SEO practices for e-commerce sites'"
+                  className="min-h-[80px]"
+                />
+              </div>
+              <div className="flex justify-end mt-3">
+                <Button onClick={addTask} disabled={!newTaskPrompt.trim()}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add to Queue
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Task List */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Task Queue</h2>
+            {completedTasks > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearCompleted}>
+                Clear Completed
+              </Button>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            {tasks.length === 0 ? (
+              <Card className="p-8 text-center">
+                <div className="inline-flex items-center justify-center p-4 bg-muted rounded-full mb-4">
+                  <Bot className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">No tasks in queue</h3>
+                <p className="text-muted-foreground">
+                  Add a task above or use the command palette (⌘K)
+                </p>
+              </Card>
+            ) : (
+              tasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onRemove={() => removeTask(task.id)}
+                  onRetry={() => retryTask(task.id)}
+                />
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Settings Sidebar */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Autopilot Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="auto-publish">Auto-Publish</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Publish content automatically
+                  </p>
+                </div>
+                <Switch
+                  id="auto-publish"
+                  checked={settings.autoPublish}
+                  onCheckedChange={(checked) =>
+                    setSettings((s) => ({ ...s, autoPublish: checked }))
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="notify">Notifications</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Notify when tasks complete
+                  </p>
+                </div>
+                <Switch
+                  id="notify"
+                  checked={settings.notifyOnComplete}
+                  onCheckedChange={(checked) =>
+                    setSettings((s) => ({ ...s, notifyOnComplete: checked }))
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="pause-error">Pause on Error</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Stop queue if task fails
+                  </p>
+                </div>
+                <Switch
+                  id="pause-error"
+                  checked={settings.pauseOnError}
+                  onCheckedChange={(checked) =>
+                    setSettings((s) => ({ ...s, pauseOnError: checked }))
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="concurrent">Concurrent Tasks</Label>
+                <Select
+                  value={settings.maxConcurrent.toString()}
+                  onValueChange={(v) =>
+                    setSettings((s) => ({ ...s, maxConcurrent: parseInt(v) }))
+                  }
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 task at a time</SelectItem>
+                    <SelectItem value="2">2 tasks at a time</SelectItem>
+                    <SelectItem value="3">3 tasks at a time</SelectItem>
+                    <SelectItem value="5">5 tasks at a time</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Quick Add</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() =>
+                  setNewTaskPrompt("Generate a comprehensive article about SEO best practices")
+                }
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Generate Article
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() =>
+                  setNewTaskPrompt("Research keywords for content marketing")
+                }
+              >
+                <Search className="w-4 h-4 mr-2" />
+                Research Keywords
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() =>
+                  setNewTaskPrompt("Run a complete site audit")
+                }
+              >
+                <AlertTriangle className="w-4 h-4 mr-2" />
+                Run Site Audit
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() =>
+                  setNewTaskPrompt("Optimize all pages for better rankings")
+                }
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                Optimize Pages
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
-
