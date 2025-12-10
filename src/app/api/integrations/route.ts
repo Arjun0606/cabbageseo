@@ -22,119 +22,16 @@ function encrypt(text: string): string {
   return `${iv.toString("hex")}:${authTag.toString("hex")}:${encrypted}`;
 }
 
-function decrypt(encryptedText: string): string {
-  try {
-    const [ivHex, authTagHex, encrypted] = encryptedText.split(":");
-    const iv = Buffer.from(ivHex, "hex");
-    const authTag = Buffer.from(authTagHex, "hex");
-    const decipher = crypto.createDecipheriv("aes-256-gcm", Buffer.from(ENCRYPTION_KEY.padEnd(32).slice(0, 32)), iv);
-    decipher.setAuthTag(authTag);
-    let decrypted = decipher.update(encrypted, "hex", "utf8");
-    decrypted += decipher.final("utf8");
-    return decrypted;
-  } catch {
-    return "";
-  }
-}
-
-// ============================================
-// INTEGRATION TEST FUNCTIONS
-// ============================================
-
-async function testAnthropicConnection(apiKey: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-3-haiku-20240307",
-        max_tokens: 10,
-        messages: [{ role: "user", content: "test" }],
-      }),
-    });
-    
-    if (response.ok || response.status === 200) {
-      return { success: true };
-    }
-    
-    const error = await response.json().catch(() => ({}));
-    return { 
-      success: false, 
-      error: error.error?.message || `API returned ${response.status}` 
-    };
-  } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : "Connection failed" };
-  }
-}
-
-async function testOpenAIConnection(apiKey: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const response = await fetch("https://api.openai.com/v1/models", {
-      headers: { "Authorization": `Bearer ${apiKey}` },
-    });
-    
-    if (response.ok) {
-      return { success: true };
-    }
-    
-    return { success: false, error: `API returned ${response.status}` };
-  } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : "Connection failed" };
-  }
-}
-
-async function testDataForSEOConnection(login: string, password: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const auth = Buffer.from(`${login}:${password}`).toString("base64");
-    
-    // Use a lightweight endpoint to test
-    const response = await fetch("https://api.dataforseo.com/v3/appendix/user_data", {
-      headers: {
-        "Authorization": `Basic ${auth}`,
-        "Content-Type": "application/json",
-      },
-    });
-    
-    const data = await response.json();
-    
-    if (response.ok && data.status_code === 20000) {
-      return { success: true };
-    }
-    
-    return { 
-      success: false, 
-      error: data.status_message || `API returned ${response.status}` 
-    };
-  } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : "Connection failed" };
-  }
-}
-
-async function testSerpAPIConnection(apiKey: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const response = await fetch(`https://serpapi.com/account?api_key=${apiKey}`);
-    
-    if (response.ok) {
-      return { success: true };
-    }
-    
-    return { success: false, error: `API returned ${response.status}` };
-  } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : "Connection failed" };
-  }
-}
-
 // ============================================
 // GET - List connected integrations
 // ============================================
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -147,9 +44,10 @@ export async function GET(request: NextRequest) {
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
-      .single();
+      .single() as { data: { organization_id: string } | null };
 
-    if (!profile?.organization_id) {
+    const orgId = profile?.organization_id;
+    if (!orgId) {
       return NextResponse.json({ success: true, integrations: [] });
     }
 
@@ -157,7 +55,7 @@ export async function GET(request: NextRequest) {
     const { data: integrations, error } = await supabase
       .from("integrations")
       .select("type, status, updated_at, created_at")
-      .eq("organization_id", profile.organization_id);
+      .eq("organization_id", orgId);
 
     if (error) {
       console.error("Failed to fetch integrations:", error);
@@ -185,6 +83,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -197,9 +98,10 @@ export async function POST(request: NextRequest) {
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
-      .single();
+      .single() as { data: { organization_id: string } | null };
 
-    if (!profile?.organization_id) {
+    const orgId = profile?.organization_id;
+    if (!orgId) {
       return NextResponse.json(
         { success: false, error: "Organization not found" },
         { status: 400 }
@@ -220,17 +122,16 @@ export async function POST(request: NextRequest) {
     const encryptedCredentials = encrypt(JSON.stringify(credentials));
 
     // Upsert the integration
-    const { error: upsertError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: upsertError } = await (supabase as any)
       .from("integrations")
       .upsert({
-        organization_id: profile.organization_id,
+        organization_id: orgId,
         type,
         credentials: { encrypted: encryptedCredentials },
         status: "active",
         updated_at: new Date().toISOString(),
-      }, {
-        onConflict: "organization_id,type",
-      });
+      }, { onConflict: "organization_id,type" });
 
     if (upsertError) {
       console.error("Failed to save integration:", upsertError);
@@ -261,6 +162,9 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -273,9 +177,10 @@ export async function DELETE(request: NextRequest) {
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
-      .single();
+      .single() as { data: { organization_id: string } | null };
 
-    if (!profile?.organization_id) {
+    const orgId = profile?.organization_id;
+    if (!orgId) {
       return NextResponse.json(
         { success: false, error: "Organization not found" },
         { status: 400 }
@@ -296,7 +201,7 @@ export async function DELETE(request: NextRequest) {
     const { error: deleteError } = await supabase
       .from("integrations")
       .delete()
-      .eq("organization_id", profile.organization_id)
+      .eq("organization_id", orgId)
       .eq("type", type);
 
     if (deleteError) {

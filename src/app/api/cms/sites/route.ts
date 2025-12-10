@@ -12,6 +12,9 @@ import { createWordPressClient } from "@/lib/integrations/wordpress/client";
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
     
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -22,9 +25,10 @@ export async function GET(request: NextRequest) {
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
-      .single();
+      .single() as { data: { organization_id: string } | null };
 
-    if (!profile?.organization_id) {
+    const orgId = profile?.organization_id;
+    if (!orgId) {
       return NextResponse.json({ error: "Organization not found" }, { status: 400 });
     }
 
@@ -39,10 +43,10 @@ export async function GET(request: NextRequest) {
     const { data: integration } = await supabase
       .from("integrations")
       .select("credentials")
-      .eq("organization_id", profile.organization_id)
+      .eq("organization_id", orgId)
       .eq("type", cmsType)
       .eq("status", "active")
-      .single();
+      .single() as { data: { credentials: Record<string, unknown> } | null };
 
     if (!integration) {
       return NextResponse.json(
@@ -167,4 +171,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

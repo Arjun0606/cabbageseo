@@ -43,23 +43,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Publish content
-    const result = await wp.publishContent({
+    // Publish content using the correct method
+    const result = await wp.publishWithSEO({
       title,
       content,
-      metaTitle,
-      metaDescription,
       slug,
       excerpt,
       categoryNames: categories,
       tagNames: tags,
       featuredImageUrl,
       status: status as "publish" | "draft",
+      seoMeta: {
+        title: metaTitle,
+        description: metaDescription,
+      },
     });
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || "Failed to publish" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      postId: result.id,
+      postId: result.postId,
       url: result.url,
       message: status === "publish" 
         ? "Content published successfully" 

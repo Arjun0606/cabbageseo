@@ -20,9 +20,9 @@ export { SurferClient, surfer } from "./surfer/client";
 export { GSCClient, gsc } from "./gsc/client";
 
 // CMS / Publishing
-export { WordPressClient } from "./wordpress/client";
-export { WebflowClient, webflow } from "./webflow/client";
-export { ShopifyClient, shopify } from "./shopify/client";
+export { WordPressClient, createWordPressClient } from "./wordpress/client";
+export { WebflowClient, createWebflowClient } from "./webflow/client";
+export { ShopifyClient, createShopifyClient } from "./shopify/client";
 
 // Integration status checker
 export type IntegrationType = 

@@ -357,9 +357,9 @@ export class AutopilotEngine {
         },
       });
       
-      this.reportProgress("publishing", 100, "Published successfully", { url: result.link });
+      this.reportProgress("publishing", 100, "Published successfully", { url: result.url });
       
-      return { success: true, url: result.link };
+      return { success: true, url: result.url };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Publishing failed";
       return { success: false, error: message };
