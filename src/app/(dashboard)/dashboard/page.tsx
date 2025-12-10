@@ -1,396 +1,619 @@
 "use client";
 
-import { useState } from "react";
-import { DashboardHeader } from "@/components/dashboard/header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { 
+  TrendingUp, 
+  TrendingDown,
+  FileText, 
+  Search, 
+  AlertTriangle,
+  Zap,
+  Plus,
+  ArrowRight,
+  Clock,
+  CheckCircle2,
+  Sparkles,
+  Globe,
+  BarChart3,
+  Target,
+  Rocket,
+  RefreshCw
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  TrendingUp,
-  TrendingDown,
-  ArrowRight,
-  Zap,
-  Target,
-  FileText,
-  Link2,
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  Sparkles,
-  BarChart3,
-  Globe,
-  Eye,
-  MousePointer,
-  Search,
-  ArrowUpRight,
-  Calendar,
-  Play,
-  Pause,
-} from "lucide-react";
-import Link from "next/link";
 
-// Types
-interface Metric {
-  label: string;
-  value: string | number;
-  change: number;
-  trend: "up" | "down";
+// ============================================
+// TYPES
+// ============================================
+
+interface DashboardStats {
+  totalKeywords: number;
+  keywordsChange: number;
+  totalContent: number;
+  contentChange: number;
+  avgPosition: number;
+  positionChange: number;
+  issuesCount: number;
+  issuesChange: number;
 }
 
-// Mock data
-const metrics: Metric[] = [
-  { label: "Organic Traffic", value: "12,847", change: 23.5, trend: "up" },
-  { label: "Keywords Ranking", value: "847", change: 12.2, trend: "up" },
-  { label: "Avg. Position", value: "14.2", change: -2.3, trend: "up" },
-  { label: "SEO Score", value: "87", change: 8, trend: "up" },
-];
+interface RecentActivity {
+  id: string;
+  type: "content" | "keyword" | "audit" | "publish";
+  title: string;
+  description: string;
+  timestamp: string;
+  status: "completed" | "in_progress" | "failed";
+}
 
-const recentActivity = [
-  { type: "content", title: "Published: AI SEO Tools Guide", time: "2 hours ago", status: "success" },
-  { type: "keyword", title: "New ranking: 'seo automation' #8", time: "5 hours ago", status: "success" },
-  { type: "link", title: "Added 12 internal links", time: "Yesterday", status: "success" },
-  { type: "issue", title: "Fixed: 3 broken links", time: "Yesterday", status: "success" },
-  { type: "content", title: "Draft: Content Marketing Tips", time: "2 days ago", status: "pending" },
-];
+interface NextAction {
+  id: string;
+  type: "write" | "optimize" | "fix" | "research";
+  title: string;
+  description: string;
+  priority: "high" | "medium" | "low";
+  estimatedTime: string;
+}
 
-const nextActions = [
-  { 
-    title: "Write article for 'ai seo tools'",
-    type: "content",
-    priority: "high",
-    impact: "+2,400 traffic/mo",
-    icon: FileText,
-  },
-  { 
-    title: "Add 8 internal links to /blog/guide",
-    type: "links",
-    priority: "high",
-    impact: "+15% page authority",
-    icon: Link2,
-  },
-  { 
-    title: "Fix missing meta descriptions (5)",
-    type: "technical",
-    priority: "medium",
-    impact: "+12% CTR",
-    icon: AlertTriangle,
-  },
-  { 
-    title: "Optimize '/services' for keywords",
-    type: "optimization",
-    priority: "medium",
-    impact: "+8 ranking positions",
-    icon: Target,
-  },
-];
+interface Site {
+  id: string;
+  name: string;
+  domain: string;
+  seoScore: number;
+  lastCrawl: string;
+  issues: number;
+}
 
-const topKeywords = [
-  { keyword: "ai seo tools", position: 8, change: 5, volume: 5400 },
-  { keyword: "seo automation", position: 12, change: 3, volume: 2900 },
-  { keyword: "automated content", position: 15, change: -2, volume: 1800 },
-  { keyword: "best seo software", position: 23, change: 8, volume: 4200 },
-  { keyword: "ai content writer", position: 31, change: 12, volume: 3100 },
-];
+// ============================================
+// STAT CARD COMPONENT
+// ============================================
 
-export default function DashboardPage() {
-  const [autopilotRunning, setAutopilotRunning] = useState(true);
+function StatCard({ 
+  title, 
+  value, 
+  change, 
+  icon: Icon, 
+  trend 
+}: { 
+  title: string; 
+  value: string | number; 
+  change?: number; 
+  icon: React.ElementType;
+  trend?: "up" | "down" | "neutral";
+}) {
+  return (
+    <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/30">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground font-medium">{title}</p>
+            <p className="text-3xl font-bold tracking-tight">{value}</p>
+            {change !== undefined && (
+              <div className="flex items-center gap-1 text-sm">
+                {trend === "up" ? (
+                  <TrendingUp className="w-4 h-4 text-green-500" />
+                ) : trend === "down" ? (
+                  <TrendingDown className="w-4 h-4 text-red-500" />
+                ) : null}
+                <span className={trend === "up" ? "text-green-500" : trend === "down" ? "text-red-500" : "text-muted-foreground"}>
+                  {change > 0 ? "+" : ""}{change}%
+                </span>
+                <span className="text-muted-foreground">vs last week</span>
+              </div>
+            )}
+          </div>
+          <div className="p-3 rounded-xl bg-primary/10 text-primary">
+            <Icon className="w-6 h-6" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================
+// SEO SCORE RING
+// ============================================
+
+function SEOScoreRing({ score, size = 120 }: { score: number; size?: number }) {
+  const radius = (size - 12) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+  
+  const getColor = (s: number) => {
+    if (s >= 80) return "text-green-500";
+    if (s >= 60) return "text-yellow-500";
+    if (s >= 40) return "text-orange-500";
+    return "text-red-500";
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <DashboardHeader
-        title="Dashboard"
-        description="Your SEO command center"
-      />
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg className="transform -rotate-90" width={size} height={size}>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="8"
+          className="text-muted/20"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="8"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className={`${getColor(score)} transition-all duration-1000 ease-out`}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className={`text-3xl font-bold ${getColor(score)}`}>{score}</span>
+        <span className="text-xs text-muted-foreground">SEO Score</span>
+      </div>
+    </div>
+  );
+}
 
-      <div className="p-6 space-y-6">
-        {/* Autopilot Status Banner */}
-        <Card className="border-cabbage-200 dark:border-cabbage-800 bg-gradient-to-r from-cabbage-50 to-white dark:from-cabbage-950 dark:to-slate-900">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className={`relative p-3 rounded-xl ${autopilotRunning ? 'bg-cabbage-500' : 'bg-slate-400'}`}>
-                  <Zap className="h-6 w-6 text-white" />
-                  {autopilotRunning && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                  )}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-slate-900 dark:text-white">
-                      SEO Autopilot
-                    </h3>
-                    <Badge className={autopilotRunning ? "bg-green-500" : "bg-slate-400"}>
-                      {autopilotRunning ? "Running" : "Paused"}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-slate-500">
-                    {autopilotRunning 
-                      ? "Continuously optimizing your site • Last action: 2 hours ago"
-                      : "Autopilot is paused. Click to resume optimization."
-                    }
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button variant="outline" asChild>
-                  <Link href="/autopilot">View Activity</Link>
-                </Button>
-                <Button 
-                  variant={autopilotRunning ? "outline" : "default"}
-                  onClick={() => setAutopilotRunning(!autopilotRunning)}
-                  className="gap-2"
-                >
-                  {autopilotRunning ? (
-                    <>
-                      <Pause className="h-4 w-4" />
-                      Pause
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4" />
-                      Resume
-                    </>
-                  )}
-                </Button>
-              </div>
+// ============================================
+// ACTIVITY ITEM
+// ============================================
+
+function ActivityItem({ activity }: { activity: RecentActivity }) {
+  const icons = {
+    content: FileText,
+    keyword: Search,
+    audit: AlertTriangle,
+    publish: Globe,
+  };
+  
+  const Icon = icons[activity.type];
+  
+  return (
+    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+      <div className={`p-2 rounded-lg ${
+        activity.status === "completed" ? "bg-green-500/10 text-green-500" :
+        activity.status === "in_progress" ? "bg-blue-500/10 text-blue-500" :
+        "bg-red-500/10 text-red-500"
+      }`}>
+        <Icon className="w-4 h-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{activity.title}</p>
+        <p className="text-xs text-muted-foreground">{activity.description}</p>
+      </div>
+      <div className="flex items-center gap-2">
+        {activity.status === "completed" && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+        {activity.status === "in_progress" && <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />}
+        <span className="text-xs text-muted-foreground">{activity.timestamp}</span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// NEXT ACTION CARD
+// ============================================
+
+function NextActionCard({ action }: { action: NextAction }) {
+  const icons = {
+    write: FileText,
+    optimize: Sparkles,
+    fix: AlertTriangle,
+    research: Search,
+  };
+  
+  const Icon = icons[action.type];
+  
+  const priorityColors = {
+    high: "bg-red-500/10 text-red-500 border-red-500/20",
+    medium: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+    low: "bg-green-500/10 text-green-500 border-green-500/20",
+  };
+
+  return (
+    <Card className="group hover:shadow-md transition-all duration-300 cursor-pointer border-border/50 hover:border-primary/30">
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+            <Icon className="w-4 h-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-sm font-medium truncate">{action.title}</p>
+              <Badge variant="outline" className={priorityColors[action.priority]}>
+                {action.priority}
+              </Badge>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Metrics Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {metrics.map((metric) => (
-            <Card key={metric.label} className="relative overflow-hidden">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">{metric.label}</p>
-                    <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-                      {metric.value}
-                    </p>
-                  </div>
-                  <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${
-                    metric.trend === "up" 
-                      ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                      : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-                  }`}>
-                    {metric.trend === "up" ? (
-                      <TrendingUp className="h-4 w-4" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4" />
-                    )}
-                    {Math.abs(metric.change)}%
-                  </div>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-cabbage-500 to-cabbage-400" />
-              </CardContent>
-            </Card>
-          ))}
+            <p className="text-xs text-muted-foreground line-clamp-2">{action.description}</p>
+            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+              <Clock className="w-3 h-3" />
+              <span>{action.estimatedTime}</span>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
         </div>
+      </CardContent>
+    </Card>
+  );
+}
 
-        {/* Main Content Grid */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Next Actions - Priority Column */}
-          <Card className="lg:col-span-1">
+// ============================================
+// MAIN DASHBOARD
+// ============================================
+
+export default function DashboardPage() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [activities, setActivities] = useState<RecentActivity[]>([]);
+  const [nextActions, setNextActions] = useState<NextAction[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
+
+  useEffect(() => {
+    // Simulate loading data
+    const timer = setTimeout(() => {
+      setStats({
+        totalKeywords: 1247,
+        keywordsChange: 12,
+        totalContent: 48,
+        contentChange: 8,
+        avgPosition: 14.3,
+        positionChange: -2.1,
+        issuesCount: 23,
+        issuesChange: -15,
+      });
+
+      setActivities([
+        {
+          id: "1",
+          type: "content",
+          title: "Article Generated",
+          description: "\"10 Best SEO Tools for 2025\" - 2,500 words",
+          timestamp: "5m ago",
+          status: "completed",
+        },
+        {
+          id: "2",
+          type: "keyword",
+          title: "Keyword Research Complete",
+          description: "Found 45 new opportunities in your niche",
+          timestamp: "1h ago",
+          status: "completed",
+        },
+        {
+          id: "3",
+          type: "audit",
+          title: "Technical Audit Running",
+          description: "Scanning 234 pages for issues...",
+          timestamp: "2h ago",
+          status: "in_progress",
+        },
+        {
+          id: "4",
+          type: "publish",
+          title: "Content Published",
+          description: "\"How to Improve Core Web Vitals\" is now live",
+          timestamp: "3h ago",
+          status: "completed",
+        },
+      ]);
+
+      setNextActions([
+        {
+          id: "1",
+          type: "write",
+          title: "Write: \"Local SEO Guide 2025\"",
+          description: "High-volume keyword with low competition. Perfect opportunity!",
+          priority: "high",
+          estimatedTime: "~15 min",
+        },
+        {
+          id: "2",
+          type: "optimize",
+          title: "Optimize: Homepage Meta Tags",
+          description: "Your homepage is missing optimal title and description",
+          priority: "high",
+          estimatedTime: "~2 min",
+        },
+        {
+          id: "3",
+          type: "fix",
+          title: "Fix: 5 Broken Internal Links",
+          description: "These broken links are hurting your SEO score",
+          priority: "medium",
+          estimatedTime: "~5 min",
+        },
+        {
+          id: "4",
+          type: "research",
+          title: "Research: Competitor Gap Analysis",
+          description: "Discover keywords your competitors rank for but you don't",
+          priority: "low",
+          estimatedTime: "~10 min",
+        },
+      ]);
+
+      setSites([
+        {
+          id: "1",
+          name: "Main Website",
+          domain: "example.com",
+          seoScore: 78,
+          lastCrawl: "2 hours ago",
+          issues: 12,
+        },
+      ]);
+
+      setIsLoading(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+            <Sparkles className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <p className="text-muted-foreground animate-pulse">Loading your SEO command center...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const hasSites = sites.length > 0;
+
+  // Empty state for new users
+  if (!hasSites) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <div className="relative mb-8">
+          <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+          <div className="relative p-6 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full">
+            <Rocket className="w-16 h-16 text-primary" />
+          </div>
+        </div>
+        <h1 className="text-3xl font-bold mb-3">Welcome to CabbageSEO! 🥬</h1>
+        <p className="text-muted-foreground max-w-md mb-8">
+          Your AI-powered SEO autopilot is ready. Connect your first site and watch the magic happen in 30 seconds.
+        </p>
+        <div className="flex gap-4">
+          <Button size="lg" asChild className="gap-2">
+            <Link href="/onboarding">
+              <Sparkles className="w-5 h-5" />
+              Start Magic Setup
+            </Link>
+          </Button>
+          <Button size="lg" variant="outline" asChild className="gap-2">
+            <Link href="/sites/new">
+              <Plus className="w-5 h-5" />
+              Add Site Manually
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Mission Control</h1>
+          <p className="text-muted-foreground">Your SEO autopilot is running smoothly</p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="outline" size="sm" className="gap-2">
+            <RefreshCw className="w-4 h-4" />
+            Sync All
+          </Button>
+          <Button size="sm" className="gap-2" asChild>
+            <Link href="/content/new">
+              <Plus className="w-4 h-4" />
+              New Content
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Keywords Tracked"
+          value={stats?.totalKeywords.toLocaleString() || "0"}
+          change={stats?.keywordsChange}
+          icon={Target}
+          trend="up"
+        />
+        <StatCard
+          title="Content Pieces"
+          value={stats?.totalContent || "0"}
+          change={stats?.contentChange}
+          icon={FileText}
+          trend="up"
+        />
+        <StatCard
+          title="Avg. Position"
+          value={stats?.avgPosition || "0"}
+          change={stats?.positionChange}
+          icon={BarChart3}
+          trend="up"
+        />
+        <StatCard
+          title="Issues Found"
+          value={stats?.issuesCount || "0"}
+          change={stats?.issuesChange}
+          icon={AlertTriangle}
+          trend="down"
+        />
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Left Column - Activity & Actions */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Next Actions */}
+          <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-cabbage-600" />
-                  Next Actions
-                </CardTitle>
-                <Badge variant="outline">{nextActions.length}</Badge>
-              </div>
-              <CardDescription>AI-recommended tasks for maximum impact</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {nextActions.map((action, i) => (
-                <div
-                  key={i}
-                  className="group p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-cabbage-300 dark:hover:border-cabbage-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      action.priority === "high" 
-                        ? "bg-orange-100 dark:bg-orange-900" 
-                        : "bg-blue-100 dark:bg-blue-900"
-                    }`}>
-                      <action.icon className={`h-4 w-4 ${
-                        action.priority === "high"
-                          ? "text-orange-600 dark:text-orange-400"
-                          : "text-blue-600 dark:text-blue-400"
-                      }`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-slate-900 dark:text-white">
-                        {action.title}
-                      </p>
-                      <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                        {action.impact}
-                      </p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-primary" />
+                    Next Actions
+                  </CardTitle>
+                  <CardDescription>AI-recommended tasks to improve your SEO</CardDescription>
                 </div>
-              ))}
-              <Button className="w-full gap-2" variant="outline" asChild>
-                <Link href="/actions">
-                  View All Actions
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Keyword Rankings */}
-          <Card className="lg:col-span-1">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-purple-600" />
-                  Top Keywords
-                </CardTitle>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/keywords">View All</Link>
+                <Button variant="ghost" size="sm" className="text-primary">
+                  View All
                 </Button>
               </div>
-              <CardDescription>Your best ranking opportunities</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {topKeywords.map((kw, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 text-white text-xs flex items-center justify-center font-bold">
-                      #{kw.position}
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm text-slate-900 dark:text-white">
-                        {kw.keyword}
-                      </p>
-                      <p className="text-xs text-slate-500">{kw.volume.toLocaleString()}/mo</p>
-                    </div>
-                  </div>
-                  <div className={`flex items-center gap-1 text-xs font-medium ${
-                    kw.change > 0 
-                      ? "text-green-600" 
-                      : kw.change < 0 
-                        ? "text-red-600" 
-                        : "text-slate-500"
-                  }`}>
-                    {kw.change > 0 ? (
-                      <>
-                        <TrendingUp className="h-3 w-3" />
-                        +{kw.change}
-                      </>
-                    ) : kw.change < 0 ? (
-                      <>
-                        <TrendingDown className="h-3 w-3" />
-                        {kw.change}
-                      </>
-                    ) : (
-                      <span>—</span>
-                    )}
-                  </div>
-                </div>
+            <CardContent className="grid gap-3 sm:grid-cols-2">
+              {nextActions.map((action) => (
+                <NextActionCard key={action.id} action={action} />
               ))}
             </CardContent>
           </Card>
 
           {/* Recent Activity */}
-          <Card className="lg:col-span-1">
+          <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-blue-600" />
-                  Recent Activity
-                </CardTitle>
-              </div>
-              <CardDescription>What CabbageSEO has done for you</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {recentActivity.map((activity, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                >
-                  <div className={`mt-0.5 ${
-                    activity.status === "success" 
-                      ? "text-green-500" 
-                      : "text-yellow-500"
-                  }`}>
-                    {activity.status === "success" ? (
-                      <CheckCircle2 className="h-4 w-4" />
-                    ) : (
-                      <Clock className="h-4 w-4" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-900 dark:text-white">
-                      {activity.title}
-                    </p>
-                    <p className="text-xs text-slate-500">{activity.time}</p>
-                  </div>
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-primary" />
+                    Recent Activity
+                  </CardTitle>
+                  <CardDescription>What your SEO autopilot has been doing</CardDescription>
                 </div>
+                <Button variant="ghost" size="sm" className="text-primary">
+                  View All
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              {activities.map((activity) => (
+                <ActivityItem key={activity.id} activity={activity} />
               ))}
             </CardContent>
           </Card>
         </div>
 
-        {/* Quick Actions Row */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Link href="/content" className="block">
-            <Card className="group cursor-pointer hover:border-cabbage-300 dark:hover:border-cabbage-700 transition-colors h-full">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600">
-                    <FileText className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-slate-900 dark:text-white">Generate Content</h3>
-                    <p className="text-sm text-slate-500">Create SEO-optimized articles</p>
-                  </div>
-                  <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-cabbage-600 transition-colors" />
+        {/* Right Column - Site Overview */}
+        <div className="space-y-6">
+          {/* Site Score Card */}
+          <Card className="relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="w-5 h-5 text-primary" />
+                {sites[0]?.name || "Your Site"}
+              </CardTitle>
+              <CardDescription>{sites[0]?.domain}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-center py-4">
+                <SEOScoreRing score={sites[0]?.seoScore || 0} />
+              </div>
+              <div className="space-y-3 mt-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Last Crawl</span>
+                  <span>{sites[0]?.lastCrawl}</span>
                 </div>
-              </CardContent>
-            </Card>
-          </Link>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Open Issues</span>
+                  <Badge variant="secondary">{sites[0]?.issues}</Badge>
+                </div>
+                <Button className="w-full mt-2" variant="outline" asChild>
+                  <Link href="/audit">
+                    View Full Audit
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-          <Link href="/keywords" className="block">
-            <Card className="group cursor-pointer hover:border-cabbage-300 dark:hover:border-cabbage-700 transition-colors h-full">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600">
-                    <Search className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-slate-900 dark:text-white">Keyword Research</h3>
-                    <p className="text-sm text-slate-500">Discover ranking opportunities</p>
-                  </div>
-                  <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-cabbage-600 transition-colors" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-2">
+              <Button variant="outline" className="justify-start gap-2" asChild>
+                <Link href="/keywords">
+                  <Search className="w-4 h-4" />
+                  Research Keywords
+                </Link>
+              </Button>
+              <Button variant="outline" className="justify-start gap-2" asChild>
+                <Link href="/content">
+                  <FileText className="w-4 h-4" />
+                  Generate Content
+                </Link>
+              </Button>
+              <Button variant="outline" className="justify-start gap-2" asChild>
+                <Link href="/audit">
+                  <AlertTriangle className="w-4 h-4" />
+                  Run Site Audit
+                </Link>
+              </Button>
+              <Button variant="outline" className="justify-start gap-2" asChild>
+                <Link href="/analytics">
+                  <BarChart3 className="w-4 h-4" />
+                  View Analytics
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
 
-          <Link href="/audit" className="block">
-            <Card className="group cursor-pointer hover:border-cabbage-300 dark:hover:border-cabbage-700 transition-colors h-full">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600">
-                    <BarChart3 className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-slate-900 dark:text-white">Run SEO Audit</h3>
-                    <p className="text-sm text-slate-500">Find and fix issues</p>
-                  </div>
-                  <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-cabbage-600 transition-colors" />
+          {/* Usage Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Usage This Month</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-muted-foreground">Articles</span>
+                  <span>12 / 50</span>
                 </div>
-              </CardContent>
-            </Card>
-          </Link>
+                <Progress value={24} className="h-2" />
+              </div>
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-muted-foreground">Keywords</span>
+                  <span>450 / 1000</span>
+                </div>
+                <Progress value={45} className="h-2" />
+              </div>
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-muted-foreground">API Calls</span>
+                  <span>2,340 / 10,000</span>
+                </div>
+                <Progress value={23.4} className="h-2" />
+              </div>
+              <Button variant="link" size="sm" className="px-0 text-primary" asChild>
+                <Link href="/settings/billing">
+                  Upgrade Plan →
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
