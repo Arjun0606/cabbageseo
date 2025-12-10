@@ -24,6 +24,10 @@ export { WordPressClient, createWordPressClient } from "./wordpress/client";
 export { WebflowClient, createWebflowClient } from "./webflow/client";
 export { ShopifyClient, createShopifyClient } from "./shopify/client";
 
+// Outreach / Link Building
+export { HunterClient, hunter } from "./hunter/client";
+export { InstantlyClient, instantly } from "./instantly/client";
+
 // Integration status checker
 export type IntegrationType = 
   | "anthropic"
@@ -36,7 +40,9 @@ export type IntegrationType =
   | "ga4"
   | "wordpress"
   | "webflow"
-  | "shopify";
+  | "shopify"
+  | "hunter"
+  | "instantly";
 
 export interface IntegrationStatus {
   id: IntegrationType;
@@ -120,6 +126,20 @@ export async function checkAllIntegrations(): Promise<IntegrationStatus[]> {
     id: "shopify",
     name: "Shopify",
     configured: Boolean(process.env.SHOPIFY_STORE_URL && process.env.SHOPIFY_ACCESS_TOKEN),
+  });
+
+  // Outreach - Hunter.io
+  statuses.push({
+    id: "hunter",
+    name: "Hunter.io",
+    configured: Boolean(process.env.HUNTER_API_KEY),
+  });
+
+  // Outreach - Instantly.ai
+  statuses.push({
+    id: "instantly",
+    name: "Instantly.ai",
+    configured: Boolean(process.env.INSTANTLY_API_KEY),
   });
 
   return statuses;
