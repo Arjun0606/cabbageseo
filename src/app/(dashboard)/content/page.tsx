@@ -1,467 +1,513 @@
 "use client";
 
 import { useState } from "react";
-import { DashboardHeader } from "@/components/dashboard/header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
+import Link from "next/link";
 import {
   FileText,
   Plus,
   Search,
   Filter,
-  MoreVertical,
-  Edit3,
-  Trash2,
-  Eye,
-  Send,
+  MoreHorizontal,
   Clock,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
-  Loader2,
-  ArrowRight,
-  Target,
-  BarChart3,
-  Zap,
+  Edit3,
+  Trash2,
   Copy,
-  Download,
+  ExternalLink,
+  Sparkles,
+  TrendingUp,
+  Eye,
+  Calendar,
   Globe,
-  RefreshCw,
+  Loader2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
 
-// Types
-interface ContentPiece {
+// ============================================
+// TYPES
+// ============================================
+
+type ContentStatus = "idea" | "writing" | "draft" | "review" | "published" | "scheduled";
+
+interface ContentItem {
   id: string;
   title: string;
-  targetKeyword: string;
-  status: "idea" | "draft" | "review" | "published";
+  slug: string;
+  status: ContentStatus;
+  keyword: string;
   seoScore: number;
   wordCount: number;
   createdAt: string;
   updatedAt: string;
+  publishedAt?: string;
   publishedUrl?: string;
+  author: string;
 }
 
-// Mock data
-const mockContent: ContentPiece[] = [
+// ============================================
+// MOCK DATA
+// ============================================
+
+const mockContent: ContentItem[] = [
   {
     id: "1",
-    title: "The Complete Guide to AI SEO Tools in 2024",
-    targetKeyword: "ai seo tools",
+    title: "Complete Guide to SEO in 2025",
+    slug: "seo-guide-2025",
     status: "published",
+    keyword: "seo guide",
     seoScore: 92,
-    wordCount: 2450,
-    createdAt: "2024-12-01",
-    updatedAt: "2024-12-05",
-    publishedUrl: "https://example.com/ai-seo-tools",
+    wordCount: 3500,
+    createdAt: "2025-01-05",
+    updatedAt: "2025-01-08",
+    publishedAt: "2025-01-08",
+    publishedUrl: "https://example.com/blog/seo-guide-2025",
+    author: "AI + Human",
   },
   {
     id: "2",
-    title: "How to Automate Your SEO Workflow",
-    targetKeyword: "automated seo tools",
-    status: "review",
-    seoScore: 85,
-    wordCount: 1890,
-    createdAt: "2024-12-03",
-    updatedAt: "2024-12-08",
+    title: "How to Do Keyword Research: Step-by-Step",
+    slug: "keyword-research-guide",
+    status: "draft",
+    keyword: "keyword research",
+    seoScore: 78,
+    wordCount: 2800,
+    createdAt: "2025-01-06",
+    updatedAt: "2025-01-10",
+    author: "AI",
   },
   {
     id: "3",
-    title: "Best AI Content Generators for SEO",
-    targetKeyword: "ai content generator for seo",
-    status: "draft",
-    seoScore: 72,
-    wordCount: 1200,
-    createdAt: "2024-12-06",
-    updatedAt: "2024-12-08",
+    title: "10 Best Free SEO Tools for Beginners",
+    slug: "free-seo-tools",
+    status: "review",
+    keyword: "free seo tools",
+    seoScore: 85,
+    wordCount: 2100,
+    createdAt: "2025-01-07",
+    updatedAt: "2025-01-10",
+    author: "AI",
   },
   {
     id: "4",
-    title: "Keyword Research: The Ultimate Guide",
-    targetKeyword: "keyword research tool",
+    title: "Technical SEO Checklist for 2025",
+    slug: "technical-seo-checklist",
+    status: "writing",
+    keyword: "technical seo",
+    seoScore: 45,
+    wordCount: 1200,
+    createdAt: "2025-01-09",
+    updatedAt: "2025-01-10",
+    author: "AI",
+  },
+  {
+    id: "5",
+    title: "Link Building Strategies That Work",
+    slug: "link-building-strategies",
+    status: "scheduled",
+    keyword: "link building",
+    seoScore: 88,
+    wordCount: 2400,
+    createdAt: "2025-01-04",
+    updatedAt: "2025-01-09",
+    publishedAt: "2025-01-15",
+    author: "AI + Human",
+  },
+  {
+    id: "6",
+    title: "Local SEO: Complete Guide for Small Businesses",
+    slug: "local-seo-guide",
     status: "idea",
+    keyword: "local seo",
     seoScore: 0,
     wordCount: 0,
-    createdAt: "2024-12-08",
-    updatedAt: "2024-12-08",
+    createdAt: "2025-01-10",
+    updatedAt: "2025-01-10",
+    author: "",
   },
 ];
 
-function getStatusColor(status: string) {
-  switch (status) {
-    case "published": return "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
-    case "review": return "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
-    case "draft": return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
-    case "idea": return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
-    default: return "bg-slate-100 text-slate-700";
-  }
+// ============================================
+// STATUS CONFIG
+// ============================================
+
+const statusConfig: Record<ContentStatus, { label: string; color: string; icon: React.ElementType }> = {
+  idea: { label: "Idea", color: "bg-gray-500/10 text-gray-500", icon: Sparkles },
+  writing: { label: "Writing", color: "bg-blue-500/10 text-blue-500", icon: Edit3 },
+  draft: { label: "Draft", color: "bg-yellow-500/10 text-yellow-500", icon: FileText },
+  review: { label: "In Review", color: "bg-purple-500/10 text-purple-500", icon: Eye },
+  scheduled: { label: "Scheduled", color: "bg-orange-500/10 text-orange-500", icon: Calendar },
+  published: { label: "Published", color: "bg-green-500/10 text-green-500", icon: CheckCircle2 },
+};
+
+// ============================================
+// STATUS BADGE
+// ============================================
+
+function StatusBadge({ status }: { status: ContentStatus }) {
+  const config = statusConfig[status];
+  const Icon = config.icon;
+  
+  return (
+    <Badge variant="secondary" className={config.color}>
+      <Icon className="w-3 h-3 mr-1" />
+      {config.label}
+    </Badge>
+  );
 }
 
-function getStatusIcon(status: string) {
-  switch (status) {
-    case "published": return <CheckCircle2 className="h-4 w-4" />;
-    case "review": return <Eye className="h-4 w-4" />;
-    case "draft": return <Edit3 className="h-4 w-4" />;
-    case "idea": return <Sparkles className="h-4 w-4" />;
-    default: return <FileText className="h-4 w-4" />;
-  }
-}
+// ============================================
+// SEO SCORE
+// ============================================
 
-function getSeoScoreColor(score: number) {
-  if (score >= 80) return "text-green-600";
-  if (score >= 60) return "text-yellow-600";
-  if (score >= 40) return "text-orange-600";
-  return "text-red-600";
-}
-
-export default function ContentPage() {
-  const [content] = useState<ContentPiece[]>(mockContent);
-  const [isCreating, setIsCreating] = useState(false);
-  const [newContentKeyword, setNewContentKeyword] = useState("");
-  const [generating, setGenerating] = useState(false);
-  const [activeTab, setActiveTab] = useState("all");
-
-  const handleCreateContent = async () => {
-    if (!newContentKeyword.trim()) return;
-    
-    setGenerating(true);
-    // Simulate AI content generation
-    await new Promise(r => setTimeout(r, 5000));
-    setGenerating(false);
-    setIsCreating(false);
-    setNewContentKeyword("");
+function SEOScore({ score }: { score: number }) {
+  const getColor = (s: number) => {
+    if (s >= 80) return "text-green-500";
+    if (s >= 60) return "text-yellow-500";
+    if (s >= 40) return "text-orange-500";
+    return "text-red-500";
   };
 
-  const stats = {
-    total: content.length,
-    published: content.filter(c => c.status === "published").length,
-    drafts: content.filter(c => c.status === "draft" || c.status === "review").length,
-    avgSeoScore: Math.round(
-      content.filter(c => c.seoScore > 0).reduce((sum, c) => sum + c.seoScore, 0) / 
-      content.filter(c => c.seoScore > 0).length
-    ) || 0,
-  };
-
-  const filteredContent = activeTab === "all" 
-    ? content 
-    : content.filter(c => c.status === activeTab);
+  if (score === 0) {
+    return <span className="text-muted-foreground">-</span>;
+  }
 
   return (
-    <div className="min-h-screen">
-      <DashboardHeader
-        title="Content"
-        description="Create, optimize, and publish SEO-optimized content"
-      />
-
-      <div className="p-6 space-y-6">
-        {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Total Articles</p>
-                  <p className="text-2xl font-bold">{stats.total}</p>
-                </div>
-                <div className="p-3 rounded-full bg-slate-100 dark:bg-slate-800">
-                  <FileText className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Published</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.published}</p>
-                </div>
-                <div className="p-3 rounded-full bg-green-100 dark:bg-green-900">
-                  <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">In Progress</p>
-                  <p className="text-2xl font-bold text-yellow-600">{stats.drafts}</p>
-                </div>
-                <div className="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900">
-                  <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Avg. SEO Score</p>
-                  <p className={`text-2xl font-bold ${getSeoScoreColor(stats.avgSeoScore)}`}>
-                    {stats.avgSeoScore}
-                  </p>
-                </div>
-                <div className="p-3 rounded-full bg-cabbage-100 dark:bg-cabbage-900">
-                  <BarChart3 className="h-5 w-5 text-cabbage-600 dark:text-cabbage-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Create New Content Card */}
-        {isCreating ? (
-          <Card className="border-2 border-cabbage-200 bg-gradient-to-br from-cabbage-50 to-white dark:border-cabbage-800 dark:from-cabbage-950 dark:to-slate-900">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-cabbage-600" />
-                Create New Content
-              </CardTitle>
-              <CardDescription>
-                Enter a keyword and we'll generate a fully optimized article
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Target Keyword</label>
-                  <Input
-                    placeholder="e.g., ai seo tools"
-                    value={newContentKeyword}
-                    onChange={(e) => setNewContentKeyword(e.target.value)}
-                    disabled={generating}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Content Type</label>
-                  <select className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-                    <option>Comprehensive Guide</option>
-                    <option>How-To Article</option>
-                    <option>Listicle</option>
-                    <option>Comparison</option>
-                    <option>Review</option>
-                  </select>
-                </div>
-              </div>
-              
-              {generating && (
-                <div className="space-y-3 p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
-                  <div className="flex items-center gap-3">
-                    <Loader2 className="h-5 w-5 animate-spin text-cabbage-600" />
-                    <span className="font-medium">Generating your article...</span>
-                  </div>
-                  <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Analyzing SERP competitors
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Creating optimized outline
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-cabbage-500" />
-                      Writing content sections...
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-400">
-                      <Clock className="h-4 w-4" />
-                      Generating meta tags
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-400">
-                      <Clock className="h-4 w-4" />
-                      Adding internal links
-                    </div>
-                  </div>
-                  <Progress value={65} className="h-2" />
-                </div>
-              )}
-              
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={handleCreateContent}
-                  disabled={generating || !newContentKeyword.trim()}
-                  className="gap-2"
-                >
-                  {generating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="h-4 w-4" />
-                      Generate Article
-                    </>
-                  )}
-                </Button>
-                <Button variant="outline" onClick={() => setIsCreating(false)} disabled={generating}>
-                  Cancel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Button onClick={() => setIsCreating(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Create New Content
-          </Button>
-        )}
-
-        {/* Content List */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Your Content</CardTitle>
-                <CardDescription>Manage and track all your SEO content</CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input placeholder="Search content..." className="pl-9 w-64" />
-                </div>
-                <Button variant="outline" size="sm">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filter
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="mb-4">
-                <TabsTrigger value="all">All ({content.length})</TabsTrigger>
-                <TabsTrigger value="idea">Ideas ({content.filter(c => c.status === "idea").length})</TabsTrigger>
-                <TabsTrigger value="draft">Drafts ({content.filter(c => c.status === "draft").length})</TabsTrigger>
-                <TabsTrigger value="review">Review ({content.filter(c => c.status === "review").length})</TabsTrigger>
-                <TabsTrigger value="published">Published ({content.filter(c => c.status === "published").length})</TabsTrigger>
-              </TabsList>
-
-              <div className="space-y-3">
-                {filteredContent.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-cabbage-300 dark:hover:border-cabbage-700 transition-colors"
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className={`p-2 rounded-lg ${getStatusColor(item.status)}`}>
-                        {getStatusIcon(item.status)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-slate-900 dark:text-white truncate">
-                          {item.title}
-                        </h3>
-                        <div className="flex items-center gap-3 mt-1">
-                          <Badge variant="outline" className="gap-1">
-                            <Target className="h-3 w-3" />
-                            {item.targetKeyword}
-                          </Badge>
-                          {item.wordCount > 0 && (
-                            <span className="text-sm text-slate-500">
-                              {item.wordCount.toLocaleString()} words
-                            </span>
-                          )}
-                          <span className="text-sm text-slate-400">
-                            Updated {new Date(item.updatedAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      {item.seoScore > 0 && (
-                        <div className="text-center">
-                          <div className={`text-xl font-bold ${getSeoScoreColor(item.seoScore)}`}>
-                            {item.seoScore}
-                          </div>
-                          <div className="text-xs text-slate-500">SEO Score</div>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center gap-2">
-                        {item.status === "idea" && (
-                          <Button size="sm" className="gap-2">
-                            <Zap className="h-4 w-4" />
-                            Generate
-                          </Button>
-                        )}
-                        {item.status === "draft" && (
-                          <Button size="sm" variant="outline" className="gap-2">
-                            <Edit3 className="h-4 w-4" />
-                            Edit
-                          </Button>
-                        )}
-                        {item.status === "review" && (
-                          <Button size="sm" className="gap-2">
-                            <Send className="h-4 w-4" />
-                            Publish
-                          </Button>
-                        )}
-                        {item.status === "published" && item.publishedUrl && (
-                          <Button size="sm" variant="outline" className="gap-2" asChild>
-                            <a href={item.publishedUrl} target="_blank" rel="noopener noreferrer">
-                              <Globe className="h-4 w-4" />
-                              View
-                            </a>
-                          </Button>
-                        )}
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Edit3 className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <RefreshCw className="mr-2 h-4 w-4" />
-                              Regenerate
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Copy className="mr-2 h-4 w-4" />
-                              Duplicate
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Download className="mr-2 h-4 w-4" />
-                              Export
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Tabs>
-          </CardContent>
-        </Card>
+    <div className="flex items-center gap-2">
+      <div className="w-12">
+        <Progress value={score} className="h-2" />
       </div>
+      <span className={`font-medium ${getColor(score)}`}>{score}</span>
     </div>
   );
 }
 
+// ============================================
+// CONTENT CARD (for grid view)
+// ============================================
+
+function ContentCard({ item }: { item: ContentItem }) {
+  return (
+    <Card className="hover:shadow-md transition-all group">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <StatusBadge status={item.status} />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 h-8 w-8">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                <Edit3 className="w-4 h-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Copy className="w-4 h-4 mr-2" />
+                Duplicate
+              </DropdownMenuItem>
+              {item.publishedUrl && (
+                <DropdownMenuItem>
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  View Live
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-red-500">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <Link href={`/content/${item.id}`} className="block">
+          <h3 className="font-semibold mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+            {item.title}
+          </h3>
+        </Link>
+
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+          <Badge variant="outline" className="text-xs">
+            {item.keyword}
+          </Badge>
+        </div>
+
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <span>{item.wordCount.toLocaleString()} words</span>
+            <span>•</span>
+            <span>{item.updatedAt}</span>
+          </div>
+          <SEOScore score={item.seoScore} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================
+// MAIN PAGE
+// ============================================
+
+export default function ContentPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
+
+  const filteredContent = mockContent.filter(
+    (item) =>
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.keyword.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const stats = {
+    total: mockContent.length,
+    published: mockContent.filter((c) => c.status === "published").length,
+    drafts: mockContent.filter((c) => c.status === "draft" || c.status === "writing").length,
+    ideas: mockContent.filter((c) => c.status === "idea").length,
+  };
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    await new Promise((r) => setTimeout(r, 2000));
+    setIsGenerating(false);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Content</h1>
+          <p className="text-muted-foreground">
+            Create, manage, and optimize your SEO content
+          </p>
+        </div>
+        <Button onClick={handleGenerate} disabled={isGenerating}>
+          {isGenerating ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Sparkles className="w-4 h-4 mr-2" />
+          )}
+          Generate Content
+        </Button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <FileText className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.total}</p>
+                <p className="text-xs text-muted-foreground">Total Content</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-500/10">
+                <Globe className="w-5 h-5 text-green-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.published}</p>
+                <p className="text-xs text-muted-foreground">Published</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-yellow-500/10">
+                <Edit3 className="w-5 h-5 text-yellow-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.drafts}</p>
+                <p className="text-xs text-muted-foreground">In Progress</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-purple-500/10">
+                <Sparkles className="w-5 h-5 text-purple-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.ideas}</p>
+                <p className="text-xs text-muted-foreground">Ideas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search content..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Filter className="w-4 h-4 mr-2" />
+                Filter
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>All Status</DropdownMenuItem>
+              <DropdownMenuItem>Published</DropdownMenuItem>
+              <DropdownMenuItem>Drafts</DropdownMenuItem>
+              <DropdownMenuItem>In Review</DropdownMenuItem>
+              <DropdownMenuItem>Ideas</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Content Table */}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Keyword</TableHead>
+                <TableHead>SEO Score</TableHead>
+                <TableHead className="text-right">Words</TableHead>
+                <TableHead>Updated</TableHead>
+                <TableHead className="w-10"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredContent.map((item) => (
+                <TableRow key={item.id} className="group">
+                  <TableCell>
+                    <Link
+                      href={`/content/${item.id}`}
+                      className="font-medium hover:text-primary transition-colors"
+                    >
+                      {item.title}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={item.status} />
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                      {item.keyword}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <SEOScore score={item.seoScore} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {item.wordCount > 0 ? item.wordCount.toLocaleString() : "-"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {item.updatedAt}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="opacity-0 group-hover:opacity-100"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/content/${item.id}`}>
+                            <Edit3 className="w-4 h-4 mr-2" />
+                            Edit
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Optimize
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Copy className="w-4 h-4 mr-2" />
+                          Duplicate
+                        </DropdownMenuItem>
+                        {item.publishedUrl && (
+                          <DropdownMenuItem>
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            View Live
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-red-500">
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {filteredContent.length === 0 && (
+        <Card className="p-8 text-center">
+          <div className="inline-flex items-center justify-center p-4 bg-muted rounded-full mb-4">
+            <FileText className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2">No content found</h3>
+          <p className="text-muted-foreground mb-4">
+            {searchQuery
+              ? "Try adjusting your search"
+              : "Start creating SEO-optimized content with AI"}
+          </p>
+          <Button>
+            <Sparkles className="w-4 h-4 mr-2" />
+            Generate Your First Article
+          </Button>
+        </Card>
+      )}
+    </div>
+  );
+}

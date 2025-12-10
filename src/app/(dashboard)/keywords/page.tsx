@@ -1,35 +1,50 @@
 "use client";
 
 import { useState } from "react";
-import { DashboardHeader } from "@/components/dashboard/header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Search,
+  TrendingUp,
+  Target,
+  Sparkles,
+  Filter,
+  Download,
+  Plus,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus,
+  Loader2,
+  Lightbulb,
+  Layers,
+  Zap,
+  ChevronDown,
+  MoreHorizontal,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Search,
-  Sparkles,
-  TrendingUp,
-  TrendingDown,
-  Target,
-  Layers,
-  FileText,
-  ArrowRight,
-  Loader2,
-  Plus,
-  Filter,
-  Download,
-  RefreshCw,
-  Lightbulb,
-  BarChart3,
-  CheckCircle2,
-  Circle,
-  Zap,
-} from "lucide-react";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 
-// Types
+// ============================================
+// TYPES
+// ============================================
+
 interface Keyword {
   id: string;
   keyword: string;
@@ -39,575 +54,477 @@ interface Keyword {
   intent: "informational" | "commercial" | "transactional" | "navigational";
   trend: "up" | "down" | "stable";
   position?: number;
+  url?: string;
   clusterId?: string;
-  selected?: boolean;
 }
 
 interface KeywordCluster {
   id: string;
   name: string;
-  keywords: Keyword[];
+  pillarKeyword: string;
   totalVolume: number;
   avgDifficulty: number;
-  suggestedArticles: number;
-  status: "not_started" | "in_progress" | "completed";
+  keywordCount: number;
+  contentStatus: "none" | "draft" | "published";
 }
 
-// Mock data - in production this comes from API
-const mockClusters: KeywordCluster[] = [
-  {
-    id: "1",
-    name: "AI SEO Tools",
-    totalVolume: 12500,
-    avgDifficulty: 45,
-    suggestedArticles: 5,
-    status: "not_started",
-    keywords: [
-      { id: "1", keyword: "ai seo tools", volume: 5400, difficulty: 42, cpc: 8.50, intent: "commercial", trend: "up" },
-      { id: "2", keyword: "best ai seo software", volume: 2900, difficulty: 48, cpc: 12.00, intent: "commercial", trend: "up" },
-      { id: "3", keyword: "ai powered seo", volume: 1800, difficulty: 38, cpc: 6.20, intent: "informational", trend: "up" },
-      { id: "4", keyword: "automated seo tools", volume: 1400, difficulty: 45, cpc: 9.80, intent: "commercial", trend: "stable" },
-      { id: "5", keyword: "seo automation software", volume: 1000, difficulty: 52, cpc: 11.50, intent: "commercial", trend: "up" },
-    ],
-  },
-  {
-    id: "2",
-    name: "SEO Content Generation",
-    totalVolume: 8200,
-    avgDifficulty: 52,
-    suggestedArticles: 4,
-    status: "not_started",
-    keywords: [
-      { id: "6", keyword: "ai content generator for seo", volume: 3200, difficulty: 55, cpc: 7.80, intent: "commercial", trend: "up" },
-      { id: "7", keyword: "seo blog writer", volume: 2400, difficulty: 48, cpc: 5.50, intent: "commercial", trend: "stable" },
-      { id: "8", keyword: "automated blog posts", volume: 1600, difficulty: 50, cpc: 4.20, intent: "informational", trend: "up" },
-      { id: "9", keyword: "ai article writer seo", volume: 1000, difficulty: 55, cpc: 8.90, intent: "commercial", trend: "up" },
-    ],
-  },
-  {
-    id: "3",
-    name: "Keyword Research",
-    totalVolume: 18500,
-    avgDifficulty: 62,
-    suggestedArticles: 6,
-    status: "in_progress",
-    keywords: [
-      { id: "10", keyword: "keyword research tool", volume: 8100, difficulty: 68, cpc: 15.00, intent: "commercial", trend: "stable" },
-      { id: "11", keyword: "free keyword research", volume: 6200, difficulty: 55, cpc: 8.50, intent: "commercial", trend: "stable" },
-      { id: "12", keyword: "keyword finder", volume: 2800, difficulty: 58, cpc: 10.20, intent: "commercial", trend: "down" },
-      { id: "13", keyword: "seo keyword generator", volume: 1400, difficulty: 52, cpc: 9.00, intent: "commercial", trend: "up" },
-    ],
-  },
+interface QuickWin {
+  id: string;
+  keyword: string;
+  currentPosition: number;
+  potentialPosition: number;
+  volume: number;
+  url: string;
+  action: string;
+}
+
+// ============================================
+// MOCK DATA
+// ============================================
+
+const mockKeywords: Keyword[] = [
+  { id: "1", keyword: "seo tools", volume: 49500, difficulty: 67, cpc: 12.50, intent: "commercial", trend: "up", position: 15 },
+  { id: "2", keyword: "keyword research", volume: 33100, difficulty: 58, cpc: 8.20, intent: "informational", trend: "up", position: 23 },
+  { id: "3", keyword: "content optimization", volume: 12100, difficulty: 45, cpc: 5.80, intent: "informational", trend: "stable" },
+  { id: "4", keyword: "technical seo", volume: 8100, difficulty: 52, cpc: 7.30, intent: "informational", trend: "up" },
+  { id: "5", keyword: "link building strategies", volume: 6600, difficulty: 61, cpc: 9.10, intent: "informational", trend: "down" },
+  { id: "6", keyword: "seo audit tool", volume: 4400, difficulty: 48, cpc: 11.20, intent: "commercial", trend: "up", position: 8 },
+  { id: "7", keyword: "on page seo", volume: 18100, difficulty: 55, cpc: 6.40, intent: "informational", trend: "stable" },
+  { id: "8", keyword: "seo for beginners", volume: 14800, difficulty: 38, cpc: 4.20, intent: "informational", trend: "up" },
 ];
 
-// Helper functions
-function getDifficultyColor(difficulty: number): string {
-  if (difficulty < 30) return "text-green-600 bg-green-50 dark:bg-green-950";
-  if (difficulty < 50) return "text-yellow-600 bg-yellow-50 dark:bg-yellow-950";
-  if (difficulty < 70) return "text-orange-600 bg-orange-50 dark:bg-orange-950";
-  return "text-red-600 bg-red-50 dark:bg-red-950";
+const mockClusters: KeywordCluster[] = [
+  { id: "1", name: "SEO Tools & Software", pillarKeyword: "seo tools", totalVolume: 89000, avgDifficulty: 58, keywordCount: 24, contentStatus: "published" },
+  { id: "2", name: "Keyword Research", pillarKeyword: "keyword research", totalVolume: 67000, avgDifficulty: 52, keywordCount: 18, contentStatus: "draft" },
+  { id: "3", name: "Technical SEO", pillarKeyword: "technical seo", totalVolume: 45000, avgDifficulty: 61, keywordCount: 15, contentStatus: "none" },
+  { id: "4", name: "Content Optimization", pillarKeyword: "content optimization", totalVolume: 32000, avgDifficulty: 45, keywordCount: 12, contentStatus: "none" },
+];
+
+const mockQuickWins: QuickWin[] = [
+  { id: "1", keyword: "seo audit tool", currentPosition: 8, potentialPosition: 3, volume: 4400, url: "/blog/seo-audit-guide", action: "Add more internal links" },
+  { id: "2", keyword: "seo tools", currentPosition: 15, potentialPosition: 8, volume: 49500, url: "/tools", action: "Optimize meta title" },
+  { id: "3", keyword: "keyword research", currentPosition: 23, potentialPosition: 12, volume: 33100, url: "/blog/keyword-research", action: "Expand content by 500 words" },
+];
+
+// ============================================
+// DIFFICULTY BADGE
+// ============================================
+
+function DifficultyBadge({ difficulty }: { difficulty: number }) {
+  const getColor = (d: number) => {
+    if (d <= 30) return "bg-green-500/10 text-green-500 border-green-500/20";
+    if (d <= 50) return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
+    if (d <= 70) return "bg-orange-500/10 text-orange-500 border-orange-500/20";
+    return "bg-red-500/10 text-red-500 border-red-500/20";
+  };
+
+  const getLabel = (d: number) => {
+    if (d <= 30) return "Easy";
+    if (d <= 50) return "Medium";
+    if (d <= 70) return "Hard";
+    return "Very Hard";
+  };
+
+  return (
+    <Badge variant="outline" className={getColor(difficulty)}>
+      {difficulty} - {getLabel(difficulty)}
+    </Badge>
+  );
 }
 
-function getIntentColor(intent: string): string {
-  switch (intent) {
-    case "informational": return "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
-    case "commercial": return "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300";
-    case "transactional": return "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
-    case "navigational": return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
-    default: return "bg-slate-100 text-slate-700";
+// ============================================
+// INTENT BADGE
+// ============================================
+
+function IntentBadge({ intent }: { intent: Keyword["intent"] }) {
+  const colors = {
+    informational: "bg-blue-500/10 text-blue-500",
+    commercial: "bg-purple-500/10 text-purple-500",
+    transactional: "bg-green-500/10 text-green-500",
+    navigational: "bg-gray-500/10 text-gray-500",
+  };
+
+  return (
+    <Badge variant="secondary" className={colors[intent]}>
+      {intent.charAt(0).toUpperCase() + intent.slice(1)}
+    </Badge>
+  );
+}
+
+// ============================================
+// TREND INDICATOR
+// ============================================
+
+function TrendIndicator({ trend }: { trend: Keyword["trend"] }) {
+  if (trend === "up") {
+    return <ArrowUpRight className="w-4 h-4 text-green-500" />;
   }
+  if (trend === "down") {
+    return <ArrowDownRight className="w-4 h-4 text-red-500" />;
+  }
+  return <Minus className="w-4 h-4 text-gray-400" />;
 }
 
-function formatVolume(volume: number): string {
-  if (volume >= 1000) return `${(volume / 1000).toFixed(1)}K`;
-  return volume.toString();
-}
+// ============================================
+// MAIN PAGE
+// ============================================
 
 export default function KeywordsPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
   const [isResearching, setIsResearching] = useState(false);
-  const [clusters, setClusters] = useState<KeywordCluster[]>(mockClusters);
-  const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(new Set());
-  const [activeCluster, setActiveCluster] = useState<string | null>(null);
+
+  const filteredKeywords = mockKeywords.filter((kw) =>
+    kw.keyword.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const toggleKeyword = (id: string) => {
+    setSelectedKeywords((prev) =>
+      prev.includes(id) ? prev.filter((k) => k !== id) : [...prev, id]
+    );
+  };
 
   const handleResearch = async () => {
-    if (!searchQuery.trim()) return;
-    
     setIsResearching(true);
-    // Simulate API call
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise((r) => setTimeout(r, 2000));
     setIsResearching(false);
-    
-    // In production, this would call the keyword research API
   };
-
-  const toggleKeyword = (keywordId: string) => {
-    const newSelected = new Set(selectedKeywords);
-    if (newSelected.has(keywordId)) {
-      newSelected.delete(keywordId);
-    } else {
-      newSelected.add(keywordId);
-    }
-    setSelectedKeywords(newSelected);
-  };
-
-  const selectAllInCluster = (clusterId: string) => {
-    const cluster = clusters.find(c => c.id === clusterId);
-    if (!cluster) return;
-    
-    const newSelected = new Set(selectedKeywords);
-    cluster.keywords.forEach(k => newSelected.add(k.id));
-    setSelectedKeywords(newSelected);
-  };
-
-  const totalVolume = clusters.reduce((sum, c) => sum + c.totalVolume, 0);
-  const totalKeywords = clusters.reduce((sum, c) => sum + c.keywords.length, 0);
 
   return (
-    <div className="min-h-screen">
-      <DashboardHeader
-        title="Keyword Research"
-        description="Discover and cluster keywords to fuel your content strategy"
-      />
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Keywords</h1>
+          <p className="text-muted-foreground">
+            Research, track, and optimize your target keywords
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="outline" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+          <Button size="sm" onClick={handleResearch} disabled={isResearching}>
+            {isResearching ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4 mr-2" />
+            )}
+            Research Keywords
+          </Button>
+        </div>
+      </div>
 
-      <div className="p-6 space-y-6">
-        {/* Research Input */}
-        <Card className="border-2 border-dashed border-cabbage-200 bg-gradient-to-br from-cabbage-50 to-white dark:border-cabbage-800 dark:from-cabbage-950 dark:to-slate-900">
-          <CardContent className="py-8">
-            <div className="max-w-2xl mx-auto text-center space-y-4">
-              <div className="flex items-center justify-center gap-2 text-cabbage-600 dark:text-cabbage-400">
-                <Sparkles className="h-5 w-5" />
-                <span className="text-sm font-medium">AI-Powered Keyword Discovery</span>
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Target className="w-5 h-5 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                Enter a keyword, topic, or your website URL
-              </h2>
-              <p className="text-slate-500">
-                We'll find high-value keywords, cluster them by topic, and suggest content opportunities
-              </p>
-              <div className="flex gap-3 max-w-xl mx-auto">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                  <Input
-                    placeholder="e.g., 'ai seo tools' or 'https://cabbageseo.com'"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleResearch()}
-                    className="pl-10 h-12 text-lg"
-                  />
-                </div>
-                <Button 
-                  size="lg" 
-                  onClick={handleResearch}
-                  disabled={isResearching || !searchQuery.trim()}
-                  className="h-12 px-6"
-                >
-                  {isResearching ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Researching...
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="mr-2 h-5 w-5" />
-                      Research
-                    </>
-                  )}
-                </Button>
-              </div>
-              
-              {/* Quick suggestions */}
-              <div className="flex items-center justify-center gap-2 pt-2">
-                <span className="text-xs text-slate-400">Try:</span>
-                {["seo automation", "content marketing", "keyword research"].map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    onClick={() => setSearchQuery(suggestion)}
-                    className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    {suggestion}
-                  </button>
-                ))}
+              <div>
+                <p className="text-2xl font-bold">1,247</p>
+                <p className="text-xs text-muted-foreground">Total Keywords</p>
               </div>
             </div>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-500/10">
+                <TrendingUp className="w-5 h-5 text-green-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">156</p>
+                <p className="text-xs text-muted-foreground">Ranking Top 10</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-yellow-500/10">
+                <Lightbulb className="w-5 h-5 text-yellow-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">23</p>
+                <p className="text-xs text-muted-foreground">Quick Wins</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-purple-500/10">
+                <Layers className="w-5 h-5 text-purple-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">12</p>
+                <p className="text-xs text-muted-foreground">Clusters</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Stats Overview */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Total Keywords</p>
-                  <p className="text-2xl font-bold">{totalKeywords}</p>
-                </div>
-                <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
-                  <Search className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Topic Clusters</p>
-                  <p className="text-2xl font-bold">{clusters.length}</p>
-                </div>
-                <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
-                  <Layers className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Total Volume</p>
-                  <p className="text-2xl font-bold">{formatVolume(totalVolume)}/mo</p>
-                </div>
-                <div className="p-3 rounded-full bg-green-100 dark:bg-green-900">
-                  <BarChart3 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Content Ideas</p>
-                  <p className="text-2xl font-bold">{clusters.reduce((sum, c) => sum + c.suggestedArticles, 0)}</p>
-                </div>
-                <div className="p-3 rounded-full bg-orange-100 dark:bg-orange-900">
-                  <Lightbulb className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Tabs */}
+      <Tabs defaultValue="all" className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <TabsList>
+            <TabsTrigger value="all">All Keywords</TabsTrigger>
+            <TabsTrigger value="clusters">Clusters</TabsTrigger>
+            <TabsTrigger value="quickwins">Quick Wins</TabsTrigger>
+            <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
+          </TabsList>
+
+          <div className="flex gap-2">
+            <div className="relative flex-1 sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search keywords..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Filter className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Volume: High to Low</DropdownMenuItem>
+                <DropdownMenuItem>Difficulty: Low to High</DropdownMenuItem>
+                <DropdownMenuItem>CPC: High to Low</DropdownMenuItem>
+                <DropdownMenuItem>Position: Best First</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
-        {/* Selected Keywords Action Bar */}
-        {selectedKeywords.size > 0 && (
-          <Card className="border-cabbage-200 bg-cabbage-50 dark:border-cabbage-800 dark:bg-cabbage-950">
-            <CardContent className="py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Badge variant="default" className="text-sm">
-                    {selectedKeywords.size} keywords selected
-                  </Badge>
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
-                    Combined volume: {formatVolume(
-                      clusters.flatMap(c => c.keywords)
-                        .filter(k => selectedKeywords.has(k.id))
-                        .reduce((sum, k) => sum + k.volume, 0)
-                    )}/mo
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setSelectedKeywords(new Set())}>
-                    Clear Selection
-                  </Button>
-                  <Button size="sm" className="gap-2">
-                    <FileText className="h-4 w-4" />
-                    Generate Content
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+        {/* All Keywords Tab */}
+        <TabsContent value="all">
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={selectedKeywords.length === filteredKeywords.length}
+                        onCheckedChange={(checked) =>
+                          setSelectedKeywords(checked ? filteredKeywords.map((k) => k.id) : [])
+                        }
+                      />
+                    </TableHead>
+                    <TableHead>Keyword</TableHead>
+                    <TableHead className="text-right">Volume</TableHead>
+                    <TableHead>Difficulty</TableHead>
+                    <TableHead className="text-right">CPC</TableHead>
+                    <TableHead>Intent</TableHead>
+                    <TableHead className="text-center">Trend</TableHead>
+                    <TableHead className="text-right">Position</TableHead>
+                    <TableHead className="w-10"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredKeywords.map((kw) => (
+                    <TableRow key={kw.id} className="group">
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedKeywords.includes(kw.id)}
+                          onCheckedChange={() => toggleKeyword(kw.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{kw.keyword}</TableCell>
+                      <TableCell className="text-right">{kw.volume.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <DifficultyBadge difficulty={kw.difficulty} />
+                      </TableCell>
+                      <TableCell className="text-right">${kw.cpc.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <IntentBadge intent={kw.intent} />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <TrendIndicator trend={kw.trend} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {kw.position ? (
+                          <span className={kw.position <= 10 ? "text-green-500 font-medium" : ""}>
+                            #{kw.position}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Sparkles className="w-4 h-4 mr-2" />
+                              Generate Content
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Search className="w-4 h-4 mr-2" />
+                              Analyze SERP
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Layers className="w-4 h-4 mr-2" />
+                              Add to Cluster
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
-        )}
 
-        {/* Main Content */}
-        <Tabs defaultValue="clusters" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <TabsList>
-              <TabsTrigger value="clusters" className="gap-2">
-                <Layers className="h-4 w-4" />
-                Topic Clusters
-              </TabsTrigger>
-              <TabsTrigger value="all" className="gap-2">
-                <Search className="h-4 w-4" />
-                All Keywords
-              </TabsTrigger>
-              <TabsTrigger value="opportunities" className="gap-2">
-                <Target className="h-4 w-4" />
-                Quick Wins
-              </TabsTrigger>
-            </TabsList>
-            
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="mr-2 h-4 w-4" />
-                Filter
+          {selectedKeywords.length > 0 && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-background border rounded-lg shadow-lg p-4 flex items-center gap-4">
+              <span className="text-sm font-medium">{selectedKeywords.length} selected</span>
+              <Button size="sm" variant="outline">
+                <Layers className="w-4 h-4 mr-2" />
+                Create Cluster
               </Button>
-              <Button variant="outline" size="sm">
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-              <Button variant="outline" size="sm">
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Refresh
+              <Button size="sm">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate Content
               </Button>
             </div>
-          </div>
+          )}
+        </TabsContent>
 
-          {/* Topic Clusters View */}
-          <TabsContent value="clusters" className="space-y-4">
-            {clusters.map((cluster) => (
-              <Card key={cluster.id} className="overflow-hidden">
-                <CardHeader 
-                  className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                  onClick={() => setActiveCluster(activeCluster === cluster.id ? null : cluster.id)}
-                >
+        {/* Clusters Tab */}
+        <TabsContent value="clusters">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {mockClusters.map((cluster) => (
+              <Card key={cluster.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-lg ${
-                        cluster.status === "completed" ? "bg-green-100 dark:bg-green-900" :
-                        cluster.status === "in_progress" ? "bg-blue-100 dark:bg-blue-900" :
-                        "bg-slate-100 dark:bg-slate-800"
-                      }`}>
-                        {cluster.status === "completed" ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                        ) : cluster.status === "in_progress" ? (
-                          <Loader2 className="h-5 w-5 text-blue-600 dark:text-blue-400 animate-spin" />
-                        ) : (
-                          <Circle className="h-5 w-5 text-slate-400" />
-                        )}
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">{cluster.name}</CardTitle>
-                        <CardDescription>
-                          {cluster.keywords.length} keywords • {formatVolume(cluster.totalVolume)}/mo volume
-                        </CardDescription>
-                      </div>
+                    <CardTitle className="text-lg">{cluster.name}</CardTitle>
+                    <Badge
+                      variant={
+                        cluster.contentStatus === "published"
+                          ? "default"
+                          : cluster.contentStatus === "draft"
+                          ? "secondary"
+                          : "outline"
+                      }
+                    >
+                      {cluster.contentStatus === "none" ? "No Content" : cluster.contentStatus}
+                    </Badge>
+                  </div>
+                  <CardDescription>Pillar: {cluster.pillarKeyword}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-2xl font-bold">{cluster.keywordCount}</p>
+                      <p className="text-xs text-muted-foreground">Keywords</p>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-sm font-medium">Avg. Difficulty</p>
-                        <Badge className={getDifficultyColor(cluster.avgDifficulty)}>
-                          {cluster.avgDifficulty}
-                        </Badge>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">Content Ideas</p>
-                        <Badge variant="secondary">{cluster.suggestedArticles} articles</Badge>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          selectAllInCluster(cluster.id);
-                        }}
-                      >
-                        <Plus className="mr-1 h-4 w-4" />
-                        Select All
-                      </Button>
+                    <div>
+                      <p className="text-2xl font-bold">{(cluster.totalVolume / 1000).toFixed(0)}k</p>
+                      <p className="text-xs text-muted-foreground">Volume</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{cluster.avgDifficulty}</p>
+                      <p className="text-xs text-muted-foreground">Avg. KD</p>
                     </div>
                   </div>
-                </CardHeader>
-                
-                {activeCluster === cluster.id && (
-                  <CardContent className="border-t border-slate-200 dark:border-slate-700">
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {cluster.keywords.map((keyword) => (
-                        <div 
-                          key={keyword.id}
-                          className={`flex items-center justify-between py-3 px-2 rounded-lg cursor-pointer transition-colors ${
-                            selectedKeywords.has(keyword.id) 
-                              ? "bg-cabbage-50 dark:bg-cabbage-950" 
-                              : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                          }`}
-                          onClick={() => toggleKeyword(keyword.id)}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                              selectedKeywords.has(keyword.id)
-                                ? "border-cabbage-500 bg-cabbage-500"
-                                : "border-slate-300 dark:border-slate-600"
-                            }`}>
-                              {selectedKeywords.has(keyword.id) && (
-                                <CheckCircle2 className="h-3 w-3 text-white" />
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-medium text-slate-900 dark:text-white">
-                                {keyword.keyword}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="outline" className={getIntentColor(keyword.intent)}>
-                                  {keyword.intent}
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-6">
-                            <div className="text-right">
-                              <p className="text-sm text-slate-500">Volume</p>
-                              <p className="font-semibold flex items-center gap-1">
-                                {formatVolume(keyword.volume)}
-                                {keyword.trend === "up" && <TrendingUp className="h-4 w-4 text-green-500" />}
-                                {keyword.trend === "down" && <TrendingDown className="h-4 w-4 text-red-500" />}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm text-slate-500">Difficulty</p>
-                              <div className="flex items-center gap-2">
-                                <Progress value={keyword.difficulty} className="w-16 h-2" />
-                                <span className="text-sm font-medium">{keyword.difficulty}</span>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm text-slate-500">CPC</p>
-                              <p className="font-semibold">${keyword.cpc.toFixed(2)}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                )}
+                  <div className="mt-4 flex gap-2">
+                    <Button size="sm" variant="outline" className="flex-1">
+                      View Keywords
+                    </Button>
+                    {cluster.contentStatus === "none" && (
+                      <Button size="sm" className="flex-1">
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Create Content
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
               </Card>
             ))}
-          </TabsContent>
+          </div>
+        </TabsContent>
 
-          {/* All Keywords View */}
-          <TabsContent value="all">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {clusters.flatMap(c => c.keywords).map((keyword) => (
-                    <div 
-                      key={keyword.id}
-                      className={`flex items-center justify-between py-3 px-2 rounded-lg cursor-pointer transition-colors ${
-                        selectedKeywords.has(keyword.id) 
-                          ? "bg-cabbage-50 dark:bg-cabbage-950" 
-                          : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                      }`}
-                      onClick={() => toggleKeyword(keyword.id)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                          selectedKeywords.has(keyword.id)
-                            ? "border-cabbage-500 bg-cabbage-500"
-                            : "border-slate-300 dark:border-slate-600"
-                        }`}>
-                          {selectedKeywords.has(keyword.id) && (
-                            <CheckCircle2 className="h-3 w-3 text-white" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900 dark:text-white">
-                            {keyword.keyword}
-                          </p>
-                          <Badge variant="outline" className={getIntentColor(keyword.intent)}>
-                            {keyword.intent}
-                          </Badge>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          <p className="text-sm text-slate-500">Volume</p>
-                          <p className="font-semibold">{formatVolume(keyword.volume)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-slate-500">Difficulty</p>
-                          <Badge className={getDifficultyColor(keyword.difficulty)}>
-                            {keyword.difficulty}
-                          </Badge>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-slate-500">CPC</p>
-                          <p className="font-semibold">${keyword.cpc.toFixed(2)}</p>
-                        </div>
-                      </div>
+        {/* Quick Wins Tab */}
+        <TabsContent value="quickwins">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-yellow-500" />
+                Quick Win Opportunities
+              </CardTitle>
+              <CardDescription>
+                Keywords where small improvements can lead to big ranking gains
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {mockQuickWins.map((win) => (
+                <div
+                  key={win.id}
+                  className="flex items-center gap-4 p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex-1">
+                    <p className="font-medium">{win.keyword}</p>
+                    <p className="text-sm text-muted-foreground">{win.url}</p>
+                  </div>
+                  <div className="text-center px-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-orange-500">#{win.currentPosition}</span>
+                      <ArrowUpRight className="w-4 h-4 text-green-500" />
+                      <span className="text-lg font-bold text-green-500">#{win.potentialPosition}</span>
                     </div>
-                  ))}
+                    <p className="text-xs text-muted-foreground">Potential rank</p>
+                  </div>
+                  <div className="text-center px-4">
+                    <p className="text-lg font-bold">{win.volume.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">Monthly volume</p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <Button size="sm">
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      {win.action}
+                    </Button>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          {/* Quick Wins View */}
-          <TabsContent value="opportunities">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-cabbage-600" />
-                  Quick Win Opportunities
-                </CardTitle>
-                <CardDescription>
-                  High volume keywords with low competition - perfect targets for fast results
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {clusters
-                    .flatMap(c => c.keywords)
-                    .filter(k => k.volume > 1000 && k.difficulty < 50)
-                    .sort((a, b) => (b.volume / b.difficulty) - (a.volume / a.difficulty))
-                    .slice(0, 10)
-                    .map((keyword, index) => (
-                      <div 
-                        key={keyword.id}
-                        className="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-cabbage-300 dark:hover:border-cabbage-700 transition-colors cursor-pointer"
-                        onClick={() => toggleKeyword(keyword.id)}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-cabbage-500 to-cabbage-600 text-white font-bold text-sm">
-                            {index + 1}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-slate-900 dark:text-white">
-                              {keyword.keyword}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-sm text-green-600 flex items-center gap-1">
-                                <TrendingUp className="h-3 w-3" />
-                                High potential
-                              </span>
-                              <Badge variant="outline" className={getIntentColor(keyword.intent)}>
-                                {keyword.intent}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-6">
-                          <div className="text-center">
-                            <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                              {formatVolume(keyword.volume)}
-                            </p>
-                            <p className="text-xs text-slate-500">monthly searches</p>
-                          </div>
-                          <div className="text-center">
-                            <Badge className={`text-lg ${getDifficultyColor(keyword.difficulty)}`}>
-                              {keyword.difficulty}
-                            </Badge>
-                            <p className="text-xs text-slate-500 mt-1">difficulty</p>
-                          </div>
-                          <Button size="sm" className="gap-2">
-                            <FileText className="h-4 w-4" />
-                            Create Content
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+        {/* Opportunities Tab */}
+        <TabsContent value="opportunities">
+          <Card className="p-8 text-center">
+            <div className="inline-flex items-center justify-center p-4 bg-primary/10 rounded-full mb-4">
+              <Search className="w-8 h-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Discover New Opportunities</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Let AI analyze your competitors and find untapped keyword opportunities in your niche.
+            </p>
+            <Button>
+              <Sparkles className="w-4 h-4 mr-2" />
+              Run Opportunity Analysis
+            </Button>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
-

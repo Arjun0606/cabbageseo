@@ -1,619 +1,514 @@
 "use client";
 
 import { useState } from "react";
-import { DashboardHeader } from "@/components/dashboard/header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Info,
+  RefreshCw,
+  Download,
+  Zap,
+  Globe,
+  FileText,
+  Image,
+  Link2,
+  Code,
+  Gauge,
+  Search,
+  Filter,
+  ChevronDown,
+  ChevronRight,
+  Loader2,
+  Sparkles,
+  ExternalLink,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle2,
-  Info,
-  RefreshCw,
-  Loader2,
-  Zap,
-  Clock,
-  FileText,
-  Link2,
-  Image,
-  Code,
-  Smartphone,
-  Gauge,
-  Search,
-  Globe,
-  ShieldCheck,
-  ArrowRight,
-  ExternalLink,
-  ChevronDown,
-  ChevronRight,
-  Play,
-} from "lucide-react";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 
-// Types
+// ============================================
+// TYPES
+// ============================================
+
+type IssueSeverity = "critical" | "warning" | "info" | "passed";
+type IssueCategory = "meta" | "content" | "images" | "links" | "technical" | "performance";
+
 interface AuditIssue {
   id: string;
+  category: IssueCategory;
+  severity: IssueSeverity;
   title: string;
   description: string;
-  severity: "critical" | "warning" | "info" | "passed";
-  category: "technical" | "content" | "performance" | "mobile" | "security";
-  affectedPages: number;
-  howToFix: string;
-  autoFixable: boolean;
-  fixed?: boolean;
+  affectedUrl?: string;
+  currentValue?: string;
+  suggestedValue?: string;
+  canAutoFix: boolean;
 }
 
-// Mock audit data
-const mockAuditData = {
-  score: 67,
-  lastScan: "2024-12-09T10:30:00Z",
-  pagesScanned: 47,
-  issues: {
-    critical: 3,
-    warnings: 12,
-    info: 8,
-    passed: 45,
-  },
-  categories: {
-    technical: { score: 72, issues: 5 },
-    content: { score: 58, issues: 8 },
-    performance: { score: 81, issues: 4 },
-    mobile: { score: 78, issues: 3 },
-    security: { score: 92, issues: 2 },
-  },
-};
+interface CategoryStats {
+  category: IssueCategory;
+  label: string;
+  icon: React.ElementType;
+  critical: number;
+  warning: number;
+  passed: number;
+}
+
+// ============================================
+// MOCK DATA
+// ============================================
 
 const mockIssues: AuditIssue[] = [
   {
     id: "1",
-    title: "Missing meta descriptions",
-    description: "5 pages are missing meta descriptions, which can hurt CTR in search results.",
+    category: "meta",
     severity: "critical",
-    category: "content",
-    affectedPages: 5,
-    howToFix: "Add unique, keyword-rich meta descriptions (150-160 characters) to each page.",
-    autoFixable: true,
+    title: "Missing meta description",
+    description: "8 pages are missing meta descriptions, which can hurt click-through rates in search results.",
+    affectedUrl: "/about, /services, /contact...",
+    canAutoFix: true,
   },
   {
     id: "2",
-    title: "Broken internal links",
-    description: "3 internal links point to pages that return 404 errors.",
-    severity: "critical",
-    category: "technical",
-    affectedPages: 3,
-    howToFix: "Update or remove the broken links pointing to non-existent pages.",
-    autoFixable: true,
+    category: "meta",
+    severity: "warning",
+    title: "Title tags too long",
+    description: "5 pages have title tags exceeding 60 characters, which may be truncated in search results.",
+    affectedUrl: "/blog/complete-guide-to-seo-...",
+    currentValue: "Complete Guide to SEO: Everything You Need to Know in 2025 and Beyond",
+    suggestedValue: "Complete Guide to SEO: Everything You Need in 2025",
+    canAutoFix: true,
   },
   {
     id: "3",
-    title: "Duplicate title tags",
-    description: "2 pages have identical title tags, causing content confusion for search engines.",
+    category: "images",
     severity: "critical",
-    category: "content",
-    affectedPages: 2,
-    howToFix: "Create unique title tags for each page that accurately describe the content.",
-    autoFixable: true,
+    title: "Images missing alt text",
+    description: "23 images are missing alt text, making them inaccessible and hurting image SEO.",
+    canAutoFix: true,
   },
   {
     id: "4",
-    title: "Images missing alt text",
-    description: "15 images don't have alt attributes, reducing accessibility and image SEO.",
+    category: "images",
     severity: "warning",
-    category: "content",
-    affectedPages: 8,
-    howToFix: "Add descriptive alt text to all images that conveys their content or function.",
-    autoFixable: true,
+    title: "Large image files",
+    description: "12 images exceed 500KB and should be compressed for better page speed.",
+    canAutoFix: false,
   },
   {
     id: "5",
-    title: "Slow page load time",
-    description: "4 pages take more than 3 seconds to load on mobile connections.",
-    severity: "warning",
-    category: "performance",
-    affectedPages: 4,
-    howToFix: "Optimize images, enable compression, and minimize JavaScript to improve load times.",
-    autoFixable: false,
+    category: "links",
+    severity: "critical",
+    title: "Broken internal links",
+    description: "5 internal links point to pages that return 404 errors.",
+    affectedUrl: "/old-page, /deleted-post...",
+    canAutoFix: false,
   },
   {
     id: "6",
-    title: "Missing canonical tags",
-    description: "8 pages are missing canonical tags, which may cause duplicate content issues.",
+    category: "links",
     severity: "warning",
-    category: "technical",
-    affectedPages: 8,
-    howToFix: "Add self-referencing canonical tags to all pages.",
-    autoFixable: true,
+    title: "Orphan pages detected",
+    description: "3 pages have no internal links pointing to them.",
+    canAutoFix: true,
   },
   {
     id: "7",
-    title: "Low content word count",
-    description: "6 pages have fewer than 300 words, which may be considered thin content.",
-    severity: "warning",
     category: "content",
-    affectedPages: 6,
-    howToFix: "Expand the content on these pages with valuable, relevant information.",
-    autoFixable: false,
+    severity: "warning",
+    title: "Thin content pages",
+    description: "4 pages have less than 300 words of content.",
+    canAutoFix: false,
   },
   {
     id: "8",
-    title: "HTTPS not enforced",
-    description: "Some resources are loaded over HTTP instead of HTTPS.",
-    severity: "warning",
-    category: "security",
-    affectedPages: 2,
-    howToFix: "Update all resource URLs to use HTTPS.",
-    autoFixable: true,
+    category: "content",
+    severity: "info",
+    title: "Duplicate H1 tags",
+    description: "2 pages share the same H1 heading.",
+    canAutoFix: true,
   },
   {
     id: "9",
-    title: "Missing viewport meta tag",
-    description: "1 page is missing the viewport meta tag for mobile responsiveness.",
+    category: "technical",
     severity: "warning",
-    category: "mobile",
-    affectedPages: 1,
-    howToFix: "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"> to the page head.",
-    autoFixable: true,
+    title: "Missing canonical tags",
+    description: "6 pages are missing canonical URLs.",
+    canAutoFix: true,
   },
   {
     id: "10",
-    title: "Using deprecated HTML",
-    description: "2 pages use deprecated HTML tags that may not render correctly.",
-    severity: "info",
     category: "technical",
-    affectedPages: 2,
-    howToFix: "Replace deprecated tags with modern HTML5 equivalents.",
-    autoFixable: false,
+    severity: "info",
+    title: "No structured data",
+    description: "Blog posts are missing Article schema markup.",
+    canAutoFix: true,
+  },
+  {
+    id: "11",
+    category: "performance",
+    severity: "warning",
+    title: "Slow page load time",
+    description: "Average LCP is 3.2s, exceeding the recommended 2.5s threshold.",
+    canAutoFix: false,
+  },
+  {
+    id: "12",
+    category: "performance",
+    severity: "info",
+    title: "Render-blocking resources",
+    description: "3 CSS files are blocking initial render.",
+    canAutoFix: false,
   },
 ];
 
-function getScoreColor(score: number) {
-  if (score >= 80) return { bg: "bg-green-500", text: "text-green-600", light: "bg-green-50" };
-  if (score >= 60) return { bg: "bg-yellow-500", text: "text-yellow-600", light: "bg-yellow-50" };
-  if (score >= 40) return { bg: "bg-orange-500", text: "text-orange-600", light: "bg-orange-50" };
-  return { bg: "bg-red-500", text: "text-red-600", light: "bg-red-50" };
-}
+const categoryStats: CategoryStats[] = [
+  { category: "meta", label: "Meta Tags", icon: FileText, critical: 1, warning: 1, passed: 12 },
+  { category: "content", label: "Content", icon: FileText, critical: 0, warning: 1, passed: 8 },
+  { category: "images", label: "Images", icon: Image, critical: 1, warning: 1, passed: 45 },
+  { category: "links", label: "Links", icon: Link2, critical: 1, warning: 1, passed: 156 },
+  { category: "technical", label: "Technical", icon: Code, critical: 0, warning: 1, passed: 18 },
+  { category: "performance", label: "Performance", icon: Gauge, critical: 0, warning: 1, passed: 5 },
+];
 
-function getSeverityConfig(severity: string) {
-  switch (severity) {
-    case "critical":
-      return { icon: AlertCircle, color: "text-red-600", bg: "bg-red-50 dark:bg-red-950", badge: "bg-red-100 text-red-700" };
-    case "warning":
-      return { icon: AlertTriangle, color: "text-yellow-600", bg: "bg-yellow-50 dark:bg-yellow-950", badge: "bg-yellow-100 text-yellow-700" };
-    case "info":
-      return { icon: Info, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950", badge: "bg-blue-100 text-blue-700" };
-    case "passed":
-      return { icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50 dark:bg-green-950", badge: "bg-green-100 text-green-700" };
-    default:
-      return { icon: Info, color: "text-slate-600", bg: "bg-slate-50", badge: "bg-slate-100 text-slate-700" };
-  }
-}
+// ============================================
+// SEVERITY CONFIG
+// ============================================
 
-function getCategoryIcon(category: string) {
-  switch (category) {
-    case "technical": return Code;
-    case "content": return FileText;
-    case "performance": return Gauge;
-    case "mobile": return Smartphone;
-    case "security": return ShieldCheck;
-    default: return Globe;
-  }
-}
+const severityConfig = {
+  critical: { label: "Critical", color: "text-red-500", bgColor: "bg-red-500/10", icon: XCircle },
+  warning: { label: "Warning", color: "text-yellow-500", bgColor: "bg-yellow-500/10", icon: AlertTriangle },
+  info: { label: "Info", color: "text-blue-500", bgColor: "bg-blue-500/10", icon: Info },
+  passed: { label: "Passed", color: "text-green-500", bgColor: "bg-green-500/10", icon: CheckCircle2 },
+};
 
-export default function AuditPage() {
-  const [isScanning, setIsScanning] = useState(false);
-  const [scanProgress, setScanProgress] = useState(0);
-  const [selectedIssues, setSelectedIssues] = useState<Set<string>>(new Set());
-  const [expandedIssues, setExpandedIssues] = useState<Set<string>>(new Set());
-  const [fixingIssues, setFixingIssues] = useState(false);
+// ============================================
+// SCORE RING
+// ============================================
 
-  const handleScan = async () => {
-    setIsScanning(true);
-    setScanProgress(0);
-    
-    for (let i = 0; i <= 100; i += 2) {
-      await new Promise(r => setTimeout(r, 100));
-      setScanProgress(i);
-    }
-    
-    setIsScanning(false);
+function ScoreRing({ score }: { score: number }) {
+  const radius = 54;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+
+  const getColor = (s: number) => {
+    if (s >= 80) return "text-green-500";
+    if (s >= 60) return "text-yellow-500";
+    if (s >= 40) return "text-orange-500";
+    return "text-red-500";
   };
-
-  const toggleIssue = (id: string) => {
-    const newSelected = new Set(selectedIssues);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedIssues(newSelected);
-  };
-
-  const toggleExpand = (id: string) => {
-    const newExpanded = new Set(expandedIssues);
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id);
-    } else {
-      newExpanded.add(id);
-    }
-    setExpandedIssues(newExpanded);
-  };
-
-  const selectAutoFixable = () => {
-    const autoFixableIds = mockIssues.filter(i => i.autoFixable && i.severity !== "passed").map(i => i.id);
-    setSelectedIssues(new Set(autoFixableIds));
-  };
-
-  const handleFixSelected = async () => {
-    setFixingIssues(true);
-    await new Promise(r => setTimeout(r, 3000));
-    setFixingIssues(false);
-    setSelectedIssues(new Set());
-  };
-
-  const scoreColors = getScoreColor(mockAuditData.score);
-  const criticalAndWarnings = mockIssues.filter(i => i.severity === "critical" || i.severity === "warning");
 
   return (
-    <div className="min-h-screen">
-      <DashboardHeader
-        title="Technical SEO Audit"
-        description="Find and fix issues that hurt your search rankings"
-      />
+    <div className="relative w-32 h-32">
+      <svg className="w-full h-full transform -rotate-90">
+        <circle
+          cx="64"
+          cy="64"
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="10"
+          className="text-muted/20"
+        />
+        <circle
+          cx="64"
+          cy="64"
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className={`${getColor(score)} transition-all duration-1000`}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className={`text-3xl font-bold ${getColor(score)}`}>{score}</span>
+        <span className="text-xs text-muted-foreground">/100</span>
+      </div>
+    </div>
+  );
+}
 
-      <div className="p-6 space-y-6">
-        {/* Scan Banner */}
-        {isScanning ? (
-          <Card className="border-cabbage-200 dark:border-cabbage-800">
-            <CardContent className="py-8">
-              <div className="max-w-md mx-auto text-center space-y-4">
-                <Loader2 className="h-12 w-12 text-cabbage-600 animate-spin mx-auto" />
-                <div>
-                  <h3 className="text-lg font-semibold">Scanning your site...</h3>
-                  <p className="text-sm text-slate-500">Analyzing {mockAuditData.pagesScanned} pages for SEO issues</p>
-                </div>
-                <Progress value={scanProgress} className="h-2" />
-                <p className="text-sm text-slate-400">{scanProgress}% complete</p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            {/* Score Overview */}
-            <div className="grid gap-6 md:grid-cols-3">
-              {/* Main Score Card */}
-              <Card className="md:col-span-1 overflow-hidden">
-                <div className={`h-2 ${scoreColors.bg}`} />
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <div className={`inline-flex items-center justify-center w-32 h-32 rounded-full ${scoreColors.light} dark:bg-opacity-20 mb-4`}>
-                      <span className={`text-5xl font-bold ${scoreColors.text}`}>
-                        {mockAuditData.score}
-                      </span>
-                    </div>
-                    <h3 className="font-semibold text-lg">SEO Health Score</h3>
-                    <p className="text-sm text-slate-500 mt-1">
-                      {mockAuditData.score >= 80 ? "Great job! Your site is well optimized." :
-                       mockAuditData.score >= 60 ? "Good, but there's room for improvement." :
-                       "Your site needs attention to rank better."}
-                    </p>
-                    <div className="flex items-center justify-center gap-2 mt-4 text-xs text-slate-500">
-                      <Clock className="h-3 w-3" />
-                      <span>Last scan: {new Date(mockAuditData.lastScan).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+// ============================================
+// ISSUE CARD
+// ============================================
 
-              {/* Issues Summary */}
-              <Card className="md:col-span-1">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Issues Found</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-red-500" />
-                      <span className="text-sm">Critical</span>
-                    </div>
-                    <Badge variant="secondary" className="bg-red-100 text-red-700">
-                      {mockAuditData.issues.critical}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                      <span className="text-sm">Warnings</span>
-                    </div>
-                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
-                      {mockAuditData.issues.warnings}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500" />
-                      <span className="text-sm">Info</span>
-                    </div>
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                      {mockAuditData.issues.info}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500" />
-                      <span className="text-sm">Passed</span>
-                    </div>
-                    <Badge variant="secondary" className="bg-green-100 text-green-700">
-                      {mockAuditData.issues.passed}
-                    </Badge>
-                  </div>
-                  <Button onClick={handleScan} className="w-full gap-2">
-                    <RefreshCw className="h-4 w-4" />
-                    Re-scan Site
-                  </Button>
-                </CardContent>
-              </Card>
+function IssueCard({
+  issue,
+  selected,
+  onSelect,
+  onFix,
+}: {
+  issue: AuditIssue;
+  selected: boolean;
+  onSelect: () => void;
+  onFix: () => void;
+}) {
+  const config = severityConfig[issue.severity];
+  const Icon = config.icon;
 
-              {/* Category Breakdown */}
-              <Card className="md:col-span-1">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Categories</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {Object.entries(mockAuditData.categories).map(([category, data]) => {
-                    const Icon = getCategoryIcon(category);
-                    const colors = getScoreColor(data.score);
-                    return (
-                      <div key={category} className="flex items-center gap-3">
-                        <Icon className="h-4 w-4 text-slate-400" />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm capitalize">{category}</span>
-                            <span className={`text-sm font-semibold ${colors.text}`}>{data.score}</span>
-                          </div>
-                          <Progress value={data.score} className="h-1.5" />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
+  return (
+    <div
+      className={`p-4 border rounded-lg transition-all ${
+        selected ? "border-primary bg-primary/5" : "hover:border-primary/50"
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <Checkbox checked={selected} onCheckedChange={onSelect} />
+        <div className={`p-2 rounded-lg ${config.bgColor}`}>
+          <Icon className={`w-4 h-4 ${config.color}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <h4 className="font-medium">{issue.title}</h4>
+            <Badge variant="outline" className={config.color}>
+              {config.label}
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground mb-2">{issue.description}</p>
+          {issue.affectedUrl && (
+            <p className="text-xs text-muted-foreground">
+              Affected: <span className="font-mono">{issue.affectedUrl}</span>
+            </p>
+          )}
+          {issue.currentValue && (
+            <div className="mt-2 space-y-1">
+              <p className="text-xs">
+                <span className="text-muted-foreground">Current:</span>{" "}
+                <span className="font-mono text-red-500 line-through">{issue.currentValue}</span>
+              </p>
+              <p className="text-xs">
+                <span className="text-muted-foreground">Suggested:</span>{" "}
+                <span className="font-mono text-green-500">{issue.suggestedValue}</span>
+              </p>
             </div>
-
-            {/* Action Bar */}
-            {selectedIssues.size > 0 && (
-              <Card className="border-cabbage-200 bg-cabbage-50 dark:border-cabbage-800 dark:bg-cabbage-950">
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="default" className="text-sm">
-                        {selectedIssues.size} issues selected
-                      </Badge>
-                      <span className="text-sm text-slate-600 dark:text-slate-400">
-                        {mockIssues.filter(i => selectedIssues.has(i.id) && i.autoFixable).length} can be auto-fixed
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setSelectedIssues(new Set())}>
-                        Clear Selection
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        className="gap-2"
-                        onClick={handleFixSelected}
-                        disabled={fixingIssues}
-                      >
-                        {fixingIssues ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Fixing...
-                          </>
-                        ) : (
-                          <>
-                            <Zap className="h-4 w-4" />
-                            Fix Selected
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Issues List */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>All Issues</CardTitle>
-                    <CardDescription>Click to expand and see how to fix each issue</CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={selectAutoFixable}>
-                      Select Auto-fixable
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Tabs defaultValue="all">
-                  <TabsList>
-                    <TabsTrigger value="all">All ({mockIssues.length})</TabsTrigger>
-                    <TabsTrigger value="critical">Critical ({mockAuditData.issues.critical})</TabsTrigger>
-                    <TabsTrigger value="warning">Warnings ({mockAuditData.issues.warnings})</TabsTrigger>
-                    <TabsTrigger value="info">Info ({mockAuditData.issues.info})</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="all" className="mt-4 space-y-3">
-                    {mockIssues.map((issue) => {
-                      const config = getSeverityConfig(issue.severity);
-                      const Icon = config.icon;
-                      const isExpanded = expandedIssues.has(issue.id);
-                      const CategoryIcon = getCategoryIcon(issue.category);
-                      
-                      return (
-                        <div
-                          key={issue.id}
-                          className={`rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden transition-all ${
-                            selectedIssues.has(issue.id) ? "ring-2 ring-cabbage-500" : ""
-                          }`}
-                        >
-                          <div
-                            className={`flex items-center gap-4 p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 ${config.bg}`}
-                            onClick={() => toggleExpand(issue.id)}
-                          >
-                            <Checkbox
-                              checked={selectedIssues.has(issue.id)}
-                              onCheckedChange={() => toggleIssue(issue.id)}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                            <div className={`p-2 rounded-lg ${config.bg}`}>
-                              <Icon className={`h-5 w-5 ${config.color}`} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium text-slate-900 dark:text-white">
-                                  {issue.title}
-                                </p>
-                                {issue.autoFixable && (
-                                  <Badge variant="outline" className="text-xs bg-cabbage-50 text-cabbage-700 border-cabbage-200">
-                                    <Zap className="h-3 w-3 mr-1" />
-                                    Auto-fix
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-sm text-slate-500 truncate">{issue.description}</p>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <div className="text-right">
-                                <Badge className={config.badge} variant="secondary">
-                                  {issue.affectedPages} pages
-                                </Badge>
-                              </div>
-                              {isExpanded ? (
-                                <ChevronDown className="h-5 w-5 text-slate-400" />
-                              ) : (
-                                <ChevronRight className="h-5 w-5 text-slate-400" />
-                              )}
-                            </div>
-                          </div>
-                          
-                          {isExpanded && (
-                            <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
-                              <div className="grid md:grid-cols-2 gap-4">
-                                <div>
-                                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
-                                    How to Fix
-                                  </h4>
-                                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                                    {issue.howToFix}
-                                  </p>
-                                </div>
-                                <div>
-                                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
-                                    Details
-                                  </h4>
-                                  <div className="space-y-2 text-sm">
-                                    <div className="flex items-center gap-2">
-                                      <CategoryIcon className="h-4 w-4 text-slate-400" />
-                                      <span className="capitalize">{issue.category}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <FileText className="h-4 w-4 text-slate-400" />
-                                      <span>{issue.affectedPages} affected pages</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                                {issue.autoFixable && (
-                                  <Button size="sm" className="gap-2">
-                                    <Zap className="h-4 w-4" />
-                                    Auto-fix Now
-                                  </Button>
-                                )}
-                                <Button size="sm" variant="outline" className="gap-2">
-                                  View Affected Pages
-                                  <ExternalLink className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </TabsContent>
-
-                  <TabsContent value="critical" className="mt-4 space-y-3">
-                    {mockIssues.filter(i => i.severity === "critical").map((issue) => {
-                      const config = getSeverityConfig(issue.severity);
-                      const Icon = config.icon;
-                      return (
-                        <div key={issue.id} className={`flex items-center gap-4 p-4 rounded-xl border ${config.bg}`}>
-                          <div className={`p-2 rounded-lg ${config.bg}`}>
-                            <Icon className={`h-5 w-5 ${config.color}`} />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium">{issue.title}</p>
-                            <p className="text-sm text-slate-500">{issue.description}</p>
-                          </div>
-                          <Button size="sm" className="gap-2">
-                            <Zap className="h-4 w-4" />
-                            Fix
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </TabsContent>
-
-                  <TabsContent value="warning" className="mt-4 space-y-3">
-                    {mockIssues.filter(i => i.severity === "warning").map((issue) => {
-                      const config = getSeverityConfig(issue.severity);
-                      const Icon = config.icon;
-                      return (
-                        <div key={issue.id} className={`flex items-center gap-4 p-4 rounded-xl border ${config.bg}`}>
-                          <div className={`p-2 rounded-lg ${config.bg}`}>
-                            <Icon className={`h-5 w-5 ${config.color}`} />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium">{issue.title}</p>
-                            <p className="text-sm text-slate-500">{issue.description}</p>
-                          </div>
-                          <Button size="sm" variant="outline" className="gap-2">
-                            View
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </TabsContent>
-
-                  <TabsContent value="info" className="mt-4 space-y-3">
-                    {mockIssues.filter(i => i.severity === "info").map((issue) => {
-                      const config = getSeverityConfig(issue.severity);
-                      const Icon = config.icon;
-                      return (
-                        <div key={issue.id} className={`flex items-center gap-4 p-4 rounded-xl border ${config.bg}`}>
-                          <div className={`p-2 rounded-lg ${config.bg}`}>
-                            <Icon className={`h-5 w-5 ${config.color}`} />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium">{issue.title}</p>
-                            <p className="text-sm text-slate-500">{issue.description}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          </>
+          )}
+        </div>
+        {issue.canAutoFix && (
+          <Button size="sm" variant="outline" onClick={onFix}>
+            <Zap className="w-4 h-4 mr-1" />
+            Auto-Fix
+          </Button>
         )}
       </div>
     </div>
   );
 }
 
+// ============================================
+// MAIN PAGE
+// ============================================
+
+export default function AuditPage() {
+  const [isScanning, setIsScanning] = useState(false);
+  const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
+  const [filterSeverity, setFilterSeverity] = useState<IssueSeverity | "all">("all");
+
+  const seoScore = 67;
+  const totalCritical = mockIssues.filter((i) => i.severity === "critical").length;
+  const totalWarnings = mockIssues.filter((i) => i.severity === "warning").length;
+  const totalPassed = categoryStats.reduce((sum, cat) => sum + cat.passed, 0);
+
+  const filteredIssues =
+    filterSeverity === "all"
+      ? mockIssues
+      : mockIssues.filter((i) => i.severity === filterSeverity);
+
+  const toggleIssue = (id: string) => {
+    setSelectedIssues((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleScan = async () => {
+    setIsScanning(true);
+    await new Promise((r) => setTimeout(r, 3000));
+    setIsScanning(false);
+  };
+
+  const handleBulkFix = async () => {
+    // In production, this would fix selected issues
+    await new Promise((r) => setTimeout(r, 1000));
+    setSelectedIssues([]);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Technical Audit</h1>
+          <p className="text-muted-foreground">
+            Find and fix SEO issues on your website
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="outline" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Export Report
+          </Button>
+          <Button size="sm" onClick={handleScan} disabled={isScanning}>
+            {isScanning ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4 mr-2" />
+            )}
+            {isScanning ? "Scanning..." : "Run New Audit"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Overview Cards */}
+      <div className="grid gap-6 md:grid-cols-4">
+        <Card className="md:col-span-1">
+          <CardContent className="p-6 flex flex-col items-center">
+            <ScoreRing score={seoScore} />
+            <p className="mt-4 text-sm font-medium">SEO Health Score</p>
+            <p className="text-xs text-muted-foreground">Last scanned: 2 hours ago</p>
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-3">
+          <CardHeader>
+            <CardTitle className="text-base">Issues Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center p-4 rounded-lg bg-red-500/10">
+                <p className="text-3xl font-bold text-red-500">{totalCritical}</p>
+                <p className="text-sm text-muted-foreground">Critical Issues</p>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-yellow-500/10">
+                <p className="text-3xl font-bold text-yellow-500">{totalWarnings}</p>
+                <p className="text-sm text-muted-foreground">Warnings</p>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-green-500/10">
+                <p className="text-3xl font-bold text-green-500">{totalPassed}</p>
+                <p className="text-sm text-muted-foreground">Passed Checks</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Category Breakdown */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {categoryStats.map((cat) => {
+          const Icon = cat.icon;
+          const total = cat.critical + cat.warning + cat.passed;
+          const passRate = Math.round((cat.passed / total) * 100);
+
+          return (
+            <Card key={cat.category} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{cat.label}</p>
+                    <p className="text-xs text-muted-foreground">{passRate}% passing</p>
+                  </div>
+                </div>
+                <Progress value={passRate} className="h-2 mb-2" />
+                <div className="flex justify-between text-xs">
+                  {cat.critical > 0 && (
+                    <span className="text-red-500">{cat.critical} critical</span>
+                  )}
+                  {cat.warning > 0 && (
+                    <span className="text-yellow-500">{cat.warning} warnings</span>
+                  )}
+                  <span className="text-green-500">{cat.passed} passed</span>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Issues List */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>All Issues</CardTitle>
+              <CardDescription>
+                {filteredIssues.length} issues found • {selectedIssues.length} selected
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Filter className="w-4 h-4 mr-2" />
+                    {filterSeverity === "all" ? "All Severities" : severityConfig[filterSeverity].label}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => setFilterSeverity("all")}>
+                    All Severities
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterSeverity("critical")}>
+                    <XCircle className="w-4 h-4 mr-2 text-red-500" />
+                    Critical
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterSeverity("warning")}>
+                    <AlertTriangle className="w-4 h-4 mr-2 text-yellow-500" />
+                    Warnings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterSeverity("info")}>
+                    <Info className="w-4 h-4 mr-2 text-blue-500" />
+                    Info
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {filteredIssues.map((issue) => (
+            <IssueCard
+              key={issue.id}
+              issue={issue}
+              selected={selectedIssues.includes(issue.id)}
+              onSelect={() => toggleIssue(issue.id)}
+              onFix={() => console.log("Fix:", issue.id)}
+            />
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Bulk Actions */}
+      {selectedIssues.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-background border rounded-lg shadow-lg p-4 flex items-center gap-4">
+          <span className="text-sm font-medium">{selectedIssues.length} issues selected</span>
+          <Button size="sm" variant="outline" onClick={() => setSelectedIssues([])}>
+            Clear
+          </Button>
+          <Button size="sm" onClick={handleBulkFix}>
+            <Zap className="w-4 h-4 mr-2" />
+            Auto-Fix Selected
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
