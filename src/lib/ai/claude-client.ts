@@ -16,23 +16,28 @@
  * @see https://platform.claude.com/docs/en/about-claude/models/overview
  */
 
-// Cost per 1M tokens (in cents) - Latest Claude models (May 2025)
+// Cost per 1M tokens (in cents) - Claude 4.5 Models (Latest - Sept/Oct/Nov 2025)
+// Reference: https://platform.claude.com/docs/en/about-claude/models/overview
 const MODEL_COSTS = {
-  "claude-sonnet-4-20250514": { input: 300, output: 1500 },     // $3/$15 - Latest Sonnet 4
-  "claude-3-5-haiku-20241022": { input: 80, output: 400 },      // $0.80/$4 - Latest Haiku
-  "claude-3-opus-20240229": { input: 1500, output: 7500 },      // $15/$75 - Opus
+  "claude-sonnet-4-5-20250929": { input: 300, output: 1500 },   // $3/$15 - Sonnet 4.5 (smart, fast)
+  "claude-haiku-4-5-20251001": { input: 100, output: 500 },     // $1/$5 - Haiku 4.5 (fastest)
+  "claude-opus-4-5-20251101": { input: 500, output: 2500 },     // $5/$25 - Opus 4.5 (premium)
 } as const;
 
 // Model aliases for easier use
 const MODEL_ALIASES: Record<string, keyof typeof MODEL_COSTS> = {
-  "sonnet": "claude-sonnet-4-20250514",
-  "haiku": "claude-3-5-haiku-20241022",
-  "opus": "claude-3-opus-20240229",
-  "claude-sonnet": "claude-sonnet-4-20250514",
-  "claude-haiku": "claude-3-5-haiku-20241022",
-  "claude-opus": "claude-3-opus-20240229",
-  "claude-sonnet-4": "claude-sonnet-4-20250514",
-  "claude-3-5-haiku": "claude-3-5-haiku-20241022",
+  // Short aliases
+  "sonnet": "claude-sonnet-4-5-20250929",
+  "haiku": "claude-haiku-4-5-20251001",
+  "opus": "claude-opus-4-5-20251101",
+  // Medium aliases  
+  "claude-sonnet": "claude-sonnet-4-5-20250929",
+  "claude-haiku": "claude-haiku-4-5-20251001",
+  "claude-opus": "claude-opus-4-5-20251101",
+  // Version aliases (as per Anthropic docs)
+  "claude-sonnet-4-5": "claude-sonnet-4-5-20250929",
+  "claude-haiku-4-5": "claude-haiku-4-5-20251001",
+  "claude-opus-4-5": "claude-opus-4-5-20251101",
 };
 
 export type ClaudeModel = keyof typeof MODEL_ALIASES;

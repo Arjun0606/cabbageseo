@@ -27,9 +27,12 @@ interface ClaudeResponse {
   };
 }
 
+// Claude 4.5 Models - Latest (Sept/Oct/Nov 2025)
+// https://platform.claude.com/docs/en/about-claude/models/overview
 const MODEL_COSTS: Record<string, { input: number; output: number }> = {
-  "claude-3-5-haiku-20241022": { input: 80, output: 400 },
-  "claude-sonnet-4-20250514": { input: 300, output: 1500 },
+  "claude-haiku-4-5-20251001": { input: 100, output: 500 },     // $1/$5 - Fastest
+  "claude-sonnet-4-5-20250929": { input: 300, output: 1500 },   // $3/$15 - Smart
+  "claude-opus-4-5-20251101": { input: 500, output: 2500 },     // $5/$25 - Premium
 };
 
 async function chat(
@@ -103,7 +106,7 @@ async function testClaude() {
     const response = await chat(
       [{ role: "user", content: "Say 'CabbageSEO works!' in exactly 3 words." }],
       "You are a helpful assistant. Be concise.",
-      "claude-3-5-haiku-20241022",
+      "claude-haiku-4-5-20251001",
       50
     );
     const duration = Date.now() - startTime;
@@ -126,7 +129,7 @@ async function testClaude() {
     const response = await chat(
       [{ role: "user", content: 'Return a JSON object with 3 SEO keywords for "coffee shop". Format: {"keywords": ["kw1", "kw2", "kw3"]}' }],
       "You are a helpful assistant. Return only valid JSON, no explanation.",
-      "claude-3-5-haiku-20241022",
+      "claude-haiku-4-5-20251001",
       100
     );
     const duration = Date.now() - startTime;
@@ -151,7 +154,7 @@ async function testClaude() {
     const response = await chat(
       [{ role: "user", content: `Generate 3 SEO content ideas for "coffee brewing". Return JSON array: [{"title": "...", "keyword": "...", "intent": "informational"}]` }],
       "You are an SEO content strategist. Return only valid JSON array.",
-      "claude-3-5-haiku-20241022",
+      "claude-haiku-4-5-20251001",
       500
     );
     const duration = Date.now() - startTime;
@@ -179,7 +182,7 @@ async function testClaude() {
     const response = await chat(
       [{ role: "user", content: "Write a 50-word SEO meta description for a coffee shop in NYC." }],
       "You are an SEO expert. Be compelling and include a call to action.",
-      "claude-sonnet-4-20250514",
+      "claude-sonnet-4-5-20250929",
       150
     );
     const duration = Date.now() - startTime;
