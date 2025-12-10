@@ -1,0 +1,748 @@
+import {
+  pgTable,
+  uuid,
+  text,
+  integer,
+  boolean,
+  timestamp,
+  jsonb,
+  decimal,
+  pgEnum,
+  uniqueIndex,
+  index,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+
+// ============================================
+// ENUMS
+// ============================================
+
+export const planEnum = pgEnum("plan", ["starter", "pro", "pro_plus"]);
+export const billingIntervalEnum = pgEnum("billing_interval", ["monthly", "yearly"]);
+export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "active",
+  "canceled",
+  "past_due",
+  "trialing",
+  "paused",
+]);
+export const roleEnum = pgEnum("role", ["owner", "admin", "editor", "viewer"]);
+export const contentStatusEnum = pgEnum("content_status", [
+  "idea",
+  "researching",
+  "writing",
+  "draft",
+  "review",
+  "approved",
+  "scheduled",
+  "published",
+  "updating",
+]);
+export const keywordStatusEnum = pgEnum("keyword_status", [
+  "discovered",
+  "analyzed",
+  "clustered",
+  "queued",
+  "writing",
+  "published",
+]);
+export const taskStatusEnum = pgEnum("task_status", [
+  "pending",
+  "queued",
+  "running",
+  "completed",
+  "failed",
+  "canceled",
+]);
+export const taskTypeEnum = pgEnum("task_type", [
+  "research",
+  "cluster",
+  "write",
+  "optimize",
+  "publish",
+  "crawl",
+  "audit",
+  "refresh",
+  "link",
+]);
+export const issueTypeEnum = pgEnum("issue_type", [
+  "missing_meta_title",
+  "missing_meta_description",
+  "duplicate_title",
+  "thin_content",
+  "broken_link",
+  "orphan_page",
+  "redirect_chain",
+  "slow_page",
+  "missing_h1",
+  "multiple_h1",
+  "missing_alt",
+  "missing_schema",
+]);
+export const issueSeverityEnum = pgEnum("issue_severity", ["critical", "warning", "info"]);
+export const cmsTypeEnum = pgEnum("cms_type", ["wordpress", "webflow", "shopify", "ghost", "custom"]);
+
+// ============================================
+// ORGANIZATIONS & USERS
+// ============================================
+
+export const organizations = pgTable(
+  "organizations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull().unique(),
+
+    // Billing
+    stripeCustomerId: text("stripe_customer_id"),
+    stripeSubscriptionId: text("stripe_subscription_id"),
+    plan: planEnum("plan").notNull().default("starter"),
+    billingInterval: billingIntervalEnum("billing_interval").default("monthly"),
+    subscriptionStatus: subscriptionStatusEnum("subscription_status").default("trialing"),
+    trialEndsAt: timestamp("trial_ends_at"),
+    currentPeriodStart: timestamp("current_period_start"),
+    currentPeriodEnd: timestamp("current_period_end"),
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+
+    // Add-ons
+    autopilotEnabled: boolean("autopilot_enabled").default(false),
+
+    // Settings
+    settings: jsonb("settings").default({}),
+    brandVoice: text("brand_voice"),
+
+    // Timestamps
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex("org_slug_idx").on(table.slug)]
+);
+
+export const users = pgTable(
+  "users",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .references(() => organizations.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Auth
+    email: text("email").notNull().unique(),
+    passwordHash: text("password_hash"),
+    emailVerified: boolean("email_verified").default(false),
+
+    // Profile
+    name: text("name"),
+    avatarUrl: text("avatar_url"),
+    role: roleEnum("role").notNull().default("editor"),
+
+    // OAuth
+    googleId: text("google_id"),
+
+    // Activity
+    lastLoginAt: timestamp("last_login_at"),
+    lastActiveAt: timestamp("last_active_at"),
+
+    // Timestamps
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("user_email_idx").on(table.email),
+    index("user_org_idx").on(table.organizationId),
+  ]
+);
+
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    token: text("token").notNull().unique(),
+    userAgent: text("user_agent"),
+    ipAddress: text("ip_address"),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex("session_token_idx").on(table.token)]
+);
+
+// ============================================
+// BILLING & USAGE
+// ============================================
+
+export const usageRecords = pgTable(
+  "usage_records",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .references(() => organizations.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Period
+    periodStart: timestamp("period_start").notNull(),
+    periodEnd: timestamp("period_end").notNull(),
+
+    // Usage counts
+    articlesGenerated: integer("articles_generated").default(0).notNull(),
+    keywordsAnalyzed: integer("keywords_analyzed").default(0).notNull(),
+    serpCalls: integer("serp_calls").default(0).notNull(),
+    pagesCrawled: integer("pages_crawled").default(0).notNull(),
+    optimizations: integer("optimizations").default(0).notNull(),
+
+    // Limits (snapshot from plan at period start)
+    articlesLimit: integer("articles_limit").notNull(),
+    keywordsLimit: integer("keywords_limit").notNull(),
+    serpCallsLimit: integer("serp_calls_limit").notNull(),
+    crawlPagesLimit: integer("crawl_pages_limit").notNull(),
+
+    // On-Demand Usage (Cursor-style)
+    onDemandEnabled: boolean("on_demand_enabled").default(true),
+    onDemandSpendLimitCents: integer("on_demand_spend_limit_cents").default(30000), // $300 default
+    onDemandSpentCents: integer("on_demand_spent_cents").default(0),
+
+    // Overages calculated
+    overagesCalculated: boolean("overages_calculated").default(false),
+    overagesAmountCents: integer("overages_amount_cents").default(0),
+    overagesInvoiceId: text("overages_invoice_id"),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("usage_org_period_idx").on(table.organizationId, table.periodStart)]
+);
+
+export const usageEvents = pgTable(
+  "usage_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .references(() => organizations.id, { onDelete: "cascade" })
+      .notNull(),
+    usageRecordId: uuid("usage_record_id")
+      .references(() => usageRecords.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Event details
+    eventType: text("event_type").notNull(),
+    quantity: integer("quantity").notNull().default(1),
+
+    // Cost tracking
+    internalCostCents: integer("internal_cost_cents").notNull(),
+    isOverage: boolean("is_overage").default(false),
+
+    // Context
+    resourceId: uuid("resource_id"),
+    resourceType: text("resource_type"),
+    metadata: jsonb("metadata").default({}),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("usage_event_org_idx").on(table.organizationId, table.createdAt)]
+);
+
+// ============================================
+// SITES
+// ============================================
+
+export const sites = pgTable(
+  "sites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .references(() => organizations.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Basic info
+    domain: text("domain").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+
+    // CMS Integration
+    cmsType: cmsTypeEnum("cms_type"),
+    cmsUrl: text("cms_url"),
+    cmsCredentials: jsonb("cms_credentials"),
+    cmsConnected: boolean("cms_connected").default(false),
+    cmsLastSync: timestamp("cms_last_sync"),
+
+    // GSC Integration
+    gscConnected: boolean("gsc_connected").default(false),
+    gscPropertyUrl: text("gsc_property_url"),
+    gscCredentials: jsonb("gsc_credentials"),
+    gscLastSync: timestamp("gsc_last_sync"),
+
+    // Crawl state
+    lastCrawlAt: timestamp("last_crawl_at"),
+    lastCrawlPagesCount: integer("last_crawl_pages_count"),
+
+    // Site settings
+    settings: jsonb("settings").default({}),
+    brandVoice: text("brand_voice"),
+    targetAudience: text("target_audience"),
+    mainTopics: jsonb("main_topics").default([]),
+
+    // Autopilot settings
+    autopilotEnabled: boolean("autopilot_enabled").default(false),
+    autopilotSettings: jsonb("autopilot_settings").default({}),
+
+    // Status
+    isActive: boolean("is_active").default(true),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("site_org_idx").on(table.organizationId),
+    index("site_domain_idx").on(table.domain),
+  ]
+);
+
+// ============================================
+// KEYWORDS
+// ============================================
+
+export const keywordClusters = pgTable(
+  "keyword_clusters",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+
+    name: text("name").notNull(),
+    description: text("description"),
+    pillarKeyword: text("pillar_keyword"),
+
+    // Cluster metrics
+    totalVolume: integer("total_volume").default(0),
+    avgDifficulty: decimal("avg_difficulty", { precision: 5, scale: 2 }),
+    keywordCount: integer("keyword_count").default(0),
+
+    // Content planning
+    suggestedArticles: integer("suggested_articles"),
+    publishedArticles: integer("published_articles").default(0),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [index("cluster_site_idx").on(table.siteId)]
+);
+
+export const keywords = pgTable(
+  "keywords",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+    clusterId: uuid("cluster_id").references(() => keywordClusters.id, { onDelete: "set null" }),
+
+    // Keyword data
+    keyword: text("keyword").notNull(),
+    volume: integer("volume"),
+    difficulty: integer("difficulty"),
+    cpc: decimal("cpc", { precision: 10, scale: 2 }),
+
+    // Intent & classification
+    intent: text("intent"),
+    category: text("category"),
+
+    // SERP data
+    serpFeatures: jsonb("serp_features").default([]),
+    serpLastFetched: timestamp("serp_last_fetched"),
+
+    // Ranking data
+    currentPosition: decimal("current_position", { precision: 5, scale: 2 }),
+    previousPosition: decimal("previous_position", { precision: 5, scale: 2 }),
+    impressions: integer("impressions"),
+    clicks: integer("clicks"),
+    ctr: decimal("ctr", { precision: 5, scale: 4 }),
+    rankingUrl: text("ranking_url"),
+    rankingLastUpdated: timestamp("ranking_last_updated"),
+
+    // Workflow
+    status: keywordStatusEnum("status").default("discovered"),
+    priority: integer("priority").default(50),
+
+    // Related content
+    contentId: uuid("content_id"),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("keyword_site_idx").on(table.siteId),
+    index("keyword_cluster_idx").on(table.clusterId),
+    index("keyword_status_idx").on(table.status),
+  ]
+);
+
+// ============================================
+// CONTENT
+// ============================================
+
+export const content = pgTable(
+  "content",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+    keywordId: uuid("keyword_id").references(() => keywords.id, { onDelete: "set null" }),
+    clusterId: uuid("cluster_id").references(() => keywordClusters.id, { onDelete: "set null" }),
+
+    // Content
+    title: text("title").notNull(),
+    slug: text("slug"),
+    metaTitle: text("meta_title"),
+    metaDescription: text("meta_description"),
+    body: text("body"),
+    bodyFormat: text("body_format").default("html"),
+    excerpt: text("excerpt"),
+
+    // Structure
+    outline: jsonb("outline"),
+    tableOfContents: jsonb("table_of_contents"),
+
+    // Schema markup
+    schemaMarkup: jsonb("schema_markup"),
+    hasFaqSchema: boolean("has_faq_schema").default(false),
+    hasHowToSchema: boolean("has_how_to_schema").default(false),
+    hasArticleSchema: boolean("has_article_schema").default(false),
+
+    // Internal linking
+    internalLinks: jsonb("internal_links").default([]),
+    suggestedInternalLinks: jsonb("suggested_internal_links").default([]),
+
+    // Metrics
+    wordCount: integer("word_count"),
+    readingTime: integer("reading_time"),
+
+    // Scoring
+    seoScore: integer("seo_score"),
+    readabilityScore: integer("readability_score"),
+    keywordDensity: decimal("keyword_density", { precision: 5, scale: 4 }),
+
+    // Images
+    featuredImage: text("featured_image"),
+    images: jsonb("images").default([]),
+
+    // Workflow
+    status: contentStatusEnum("status").default("idea"),
+    assignedTo: uuid("assigned_to").references(() => users.id, { onDelete: "set null" }),
+
+    // Publishing
+    publishedUrl: text("published_url"),
+    publishedAt: timestamp("published_at"),
+    cmsPostId: text("cms_post_id"),
+    scheduledFor: timestamp("scheduled_for"),
+
+    // Revision tracking
+    version: integer("version").default(1),
+    lastEditedBy: uuid("last_edited_by").references(() => users.id, { onDelete: "set null" }),
+
+    // AI generation metadata
+    aiModel: text("ai_model"),
+    aiPromptVersion: text("ai_prompt_version"),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("content_site_idx").on(table.siteId),
+    index("content_status_idx").on(table.status),
+    index("content_keyword_idx").on(table.keywordId),
+  ]
+);
+
+// ============================================
+// PAGES (Crawled)
+// ============================================
+
+export const pages = pgTable(
+  "pages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Page data
+    url: text("url").notNull(),
+    path: text("path").notNull(),
+
+    // Content extracted
+    title: text("title"),
+    metaDescription: text("meta_description"),
+    h1: text("h1"),
+    headings: jsonb("headings"),
+    wordCount: integer("word_count"),
+
+    // Links
+    internalLinksOut: jsonb("internal_links_out").default([]),
+    internalLinksIn: integer("internal_links_in").default(0),
+    externalLinks: jsonb("external_links").default([]),
+
+    // Technical
+    statusCode: integer("status_code"),
+    canonicalUrl: text("canonical_url"),
+    robotsDirective: text("robots_directive"),
+
+    // Schema
+    schemaTypes: jsonb("schema_types").default([]),
+
+    // Performance
+    performanceScore: integer("performance_score"),
+    lcpMs: integer("lcp_ms"),
+    cls: decimal("cls", { precision: 5, scale: 4 }),
+
+    // Indexation
+    isIndexed: boolean("is_indexed"),
+    indexedAt: timestamp("indexed_at"),
+
+    // Content type
+    contentType: text("content_type"),
+
+    // Associated content
+    contentId: uuid("content_id").references(() => content.id, { onDelete: "set null" }),
+
+    lastCrawledAt: timestamp("last_crawled_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("page_site_idx").on(table.siteId),
+    index("page_url_idx").on(table.url),
+  ]
+);
+
+// ============================================
+// ISSUES (Technical SEO)
+// ============================================
+
+export const issues = pgTable(
+  "issues",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+    pageId: uuid("page_id").references(() => pages.id, { onDelete: "cascade" }),
+
+    // Issue details
+    type: issueTypeEnum("type").notNull(),
+    severity: issueSeverityEnum("severity").notNull(),
+
+    title: text("title").notNull(),
+    description: text("description"),
+    recommendation: text("recommendation"),
+
+    // Affected element
+    affectedUrl: text("affected_url"),
+    affectedElement: text("affected_element"),
+    currentValue: text("current_value"),
+    suggestedValue: text("suggested_value"),
+
+    // Resolution
+    isResolved: boolean("is_resolved").default(false),
+    resolvedAt: timestamp("resolved_at"),
+    resolvedBy: uuid("resolved_by").references(() => users.id, { onDelete: "set null" }),
+
+    // Auto-fix
+    canAutoFix: boolean("can_auto_fix").default(false),
+    autoFixApplied: boolean("auto_fix_applied").default(false),
+
+    detectedAt: timestamp("detected_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("issue_site_idx").on(table.siteId),
+    index("issue_severity_idx").on(table.severity),
+  ]
+);
+
+// ============================================
+// TASKS (Automation Queue)
+// ============================================
+
+export const tasks = pgTable(
+  "tasks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+    organizationId: uuid("organization_id")
+      .references(() => organizations.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Task definition
+    type: taskTypeEnum("type").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+
+    // Target
+    targetId: uuid("target_id"),
+    targetType: text("target_type"),
+
+    // Execution
+    status: taskStatusEnum("status").default("pending"),
+    priority: integer("priority").default(50),
+
+    // Scheduling
+    scheduledFor: timestamp("scheduled_for"),
+    startedAt: timestamp("started_at"),
+    completedAt: timestamp("completed_at"),
+
+    // Results
+    result: jsonb("result"),
+    error: text("error"),
+
+    // Retry logic
+    attempts: integer("attempts").default(0),
+    maxAttempts: integer("max_attempts").default(3),
+    lastAttemptAt: timestamp("last_attempt_at"),
+
+    // Source
+    triggeredBy: text("triggered_by"),
+    triggeredByUserId: uuid("triggered_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+
+    // Autopilot
+    isAutopilot: boolean("is_autopilot").default(false),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("task_site_idx").on(table.siteId),
+    index("task_status_idx").on(table.status),
+    index("task_scheduled_idx").on(table.scheduledFor),
+  ]
+);
+
+// ============================================
+// RANKINGS (Historical)
+// ============================================
+
+export const rankings = pgTable(
+  "rankings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+    keywordId: uuid("keyword_id").references(() => keywords.id, { onDelete: "cascade" }),
+    contentId: uuid("content_id").references(() => content.id, { onDelete: "set null" }),
+
+    keyword: text("keyword").notNull(),
+    url: text("url").notNull(),
+
+    position: decimal("position", { precision: 5, scale: 2 }),
+    impressions: integer("impressions"),
+    clicks: integer("clicks"),
+    ctr: decimal("ctr", { precision: 5, scale: 4 }),
+
+    date: timestamp("date").notNull(),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("ranking_site_date_idx").on(table.siteId, table.date),
+    index("ranking_keyword_idx").on(table.keywordId),
+  ]
+);
+
+// ============================================
+// RELATIONS
+// ============================================
+
+export const organizationsRelations = relations(organizations, ({ many }) => ({
+  users: many(users),
+  sites: many(sites),
+  usageRecords: many(usageRecords),
+  tasks: many(tasks),
+}));
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [users.organizationId],
+    references: [organizations.id],
+  }),
+  sessions: many(sessions),
+  assignedContent: many(content),
+}));
+
+export const sitesRelations = relations(sites, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [sites.organizationId],
+    references: [organizations.id],
+  }),
+  keywords: many(keywords),
+  keywordClusters: many(keywordClusters),
+  content: many(content),
+  pages: many(pages),
+  issues: many(issues),
+  tasks: many(tasks),
+  rankings: many(rankings),
+}));
+
+export const keywordsRelations = relations(keywords, ({ one, many }) => ({
+  site: one(sites, {
+    fields: [keywords.siteId],
+    references: [sites.id],
+  }),
+  cluster: one(keywordClusters, {
+    fields: [keywords.clusterId],
+    references: [keywordClusters.id],
+  }),
+  content: one(content, {
+    fields: [keywords.contentId],
+    references: [content.id],
+  }),
+  rankings: many(rankings),
+}));
+
+export const contentRelations = relations(content, ({ one }) => ({
+  site: one(sites, {
+    fields: [content.siteId],
+    references: [sites.id],
+  }),
+  keyword: one(keywords, {
+    fields: [content.keywordId],
+    references: [keywords.id],
+  }),
+  cluster: one(keywordClusters, {
+    fields: [content.clusterId],
+    references: [keywordClusters.id],
+  }),
+  assignedUser: one(users, {
+    fields: [content.assignedTo],
+    references: [users.id],
+  }),
+}));
+
+// ============================================
+// TYPE EXPORTS
+// ============================================
+
+export type Organization = typeof organizations.$inferSelect;
+export type NewOrganization = typeof organizations.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Site = typeof sites.$inferSelect;
+export type NewSite = typeof sites.$inferInsert;
+export type Keyword = typeof keywords.$inferSelect;
+export type NewKeyword = typeof keywords.$inferInsert;
+export type KeywordCluster = typeof keywordClusters.$inferSelect;
+export type Content = typeof content.$inferSelect;
+export type NewContent = typeof content.$inferInsert;
+export type Page = typeof pages.$inferSelect;
+export type Issue = typeof issues.$inferSelect;
+export type Task = typeof tasks.$inferSelect;
+export type Ranking = typeof rankings.$inferSelect;
+export type UsageRecord = typeof usageRecords.$inferSelect;
+export type Session = typeof sessions.$inferSelect;
+
