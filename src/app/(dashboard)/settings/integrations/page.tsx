@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { DashboardHeader } from "@/components/dashboard/header";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +30,10 @@ import {
   Loader2,
 } from "lucide-react";
 
-// Integration type definitions
+// ============================================
+// TYPES
+// ============================================
+
 interface IntegrationField {
   key: string;
   label: string;
@@ -54,6 +56,7 @@ interface FieldsIntegration extends BaseIntegration {
   fields: IntegrationField[];
   oauth?: false;
   perSite?: boolean;
+  testEndpoint?: string;
 }
 
 interface OAuthIntegration extends BaseIntegration {
@@ -65,13 +68,21 @@ interface OAuthIntegration extends BaseIntegration {
 
 type Integration = FieldsIntegration | OAuthIntegration;
 
-// Integration definitions
+interface IntegrationStatus {
+  connected: boolean;
+  lastChecked?: string;
+  error?: string;
+}
+
+// ============================================
+// INTEGRATION DEFINITIONS
+// ============================================
+
 const INTEGRATIONS: {
   ai: FieldsIntegration[];
   seo: FieldsIntegration[];
   analytics: OAuthIntegration[];
   publishing: FieldsIntegration[];
-  payments: FieldsIntegration[];
 } = {
   ai: [
     {
@@ -81,10 +92,11 @@ const INTEGRATIONS: {
       logo: "🤖",
       docsUrl: "https://console.anthropic.com/",
       fields: [
-        { key: "ANTHROPIC_API_KEY", label: "API Key", type: "password", placeholder: "sk-ant-..." },
+        { key: "apiKey", label: "API Key", type: "password", placeholder: "sk-ant-..." },
       ],
       required: true,
       category: "AI Provider",
+      testEndpoint: "/api/integrations/test",
     },
     {
       id: "openai",
@@ -93,10 +105,11 @@ const INTEGRATIONS: {
       logo: "🧠",
       docsUrl: "https://platform.openai.com/api-keys",
       fields: [
-        { key: "OPENAI_API_KEY", label: "API Key", type: "password", placeholder: "sk-..." },
+        { key: "apiKey", label: "API Key", type: "password", placeholder: "sk-..." },
       ],
       required: false,
       category: "AI Provider",
+      testEndpoint: "/api/integrations/test",
     },
   ],
   seo: [
@@ -107,11 +120,12 @@ const INTEGRATIONS: {
       logo: "📊",
       docsUrl: "https://dataforseo.com/apis",
       fields: [
-        { key: "DATAFORSEO_LOGIN", label: "Login/Email", type: "text", placeholder: "your@email.com" },
-        { key: "DATAFORSEO_PASSWORD", label: "Password", type: "password", placeholder: "API password" },
+        { key: "login", label: "Login/Email", type: "text", placeholder: "your@email.com" },
+        { key: "password", label: "Password", type: "password", placeholder: "API password" },
       ],
       required: true,
       category: "SEO Data",
+      testEndpoint: "/api/integrations/test",
     },
     {
       id: "serpapi",
@@ -120,59 +134,27 @@ const INTEGRATIONS: {
       logo: "🔍",
       docsUrl: "https://serpapi.com/dashboard",
       fields: [
-        { key: "SERPAPI_KEY", label: "API Key", type: "password", placeholder: "..." },
+        { key: "apiKey", label: "API Key", type: "password", placeholder: "..." },
       ],
       required: false,
       category: "SEO Data",
-    },
-    {
-      id: "ahrefs",
-      name: "Ahrefs",
-      description: "Backlink analysis, domain rating, referring domains",
-      logo: "🔗",
-      docsUrl: "https://ahrefs.com/api",
-      fields: [
-        { key: "AHREFS_API_KEY", label: "API Key", type: "password", placeholder: "..." },
-      ],
-      required: false,
-      category: "SEO Data",
-    },
-    {
-      id: "surfer",
-      name: "Surfer SEO",
-      description: "Content optimization scoring and NLP analysis",
-      logo: "🏄",
-      docsUrl: "https://surferseo.com/",
-      fields: [
-        { key: "SURFER_API_KEY", label: "API Key", type: "password", placeholder: "..." },
-      ],
-      required: false,
-      category: "Content Optimization",
+      testEndpoint: "/api/integrations/test",
     },
   ],
   analytics: [
     {
-      id: "gsc",
-      name: "Google Search Console",
-      description: "Search performance, rankings, clicks, impressions, indexing",
+      id: "google",
+      name: "Google (GSC + GA4)",
+      description: "Search Console rankings, clicks, impressions + Analytics traffic data",
       logo: "📈",
       docsUrl: "https://search.google.com/search-console",
       oauth: true,
       oauthProvider: "google",
-      scopes: ["https://www.googleapis.com/auth/webmasters.readonly"],
+      scopes: [
+        "https://www.googleapis.com/auth/webmasters.readonly",
+        "https://www.googleapis.com/auth/analytics.readonly",
+      ],
       required: true,
-      category: "Analytics",
-    },
-    {
-      id: "ga4",
-      name: "Google Analytics 4",
-      description: "Website traffic, user behavior, conversions",
-      logo: "📉",
-      docsUrl: "https://analytics.google.com/",
-      oauth: true,
-      oauthProvider: "google",
-      scopes: ["https://www.googleapis.com/auth/analytics.readonly"],
-      required: false,
       category: "Analytics",
     },
   ],
@@ -185,12 +167,13 @@ const INTEGRATIONS: {
       docsUrl: "https://developer.wordpress.org/rest-api/",
       perSite: true,
       fields: [
-        { key: "site_url", label: "Site URL", type: "url", placeholder: "https://yoursite.com" },
+        { key: "siteUrl", label: "Site URL", type: "url", placeholder: "https://yoursite.com" },
         { key: "username", label: "Username", type: "text", placeholder: "admin" },
-        { key: "app_password", label: "Application Password", type: "password", placeholder: "xxxx xxxx xxxx xxxx" },
+        { key: "appPassword", label: "Application Password", type: "password", placeholder: "xxxx xxxx xxxx xxxx" },
       ],
       required: false,
       category: "CMS",
+      testEndpoint: "/api/cms/test",
     },
     {
       id: "webflow",
@@ -199,10 +182,11 @@ const INTEGRATIONS: {
       logo: "🎨",
       docsUrl: "https://developers.webflow.com/",
       fields: [
-        { key: "WEBFLOW_API_KEY", label: "API Key", type: "password", placeholder: "..." },
+        { key: "accessToken", label: "API Access Token", type: "password", placeholder: "..." },
       ],
       required: false,
       category: "CMS",
+      testEndpoint: "/api/cms/test",
     },
     {
       id: "shopify",
@@ -211,57 +195,71 @@ const INTEGRATIONS: {
       logo: "🛒",
       docsUrl: "https://shopify.dev/docs/api",
       fields: [
-        { key: "SHOPIFY_STORE_URL", label: "Store URL", type: "url", placeholder: "your-store.myshopify.com" },
-        { key: "SHOPIFY_ACCESS_TOKEN", label: "Access Token", type: "password", placeholder: "shpat_..." },
+        { key: "shopDomain", label: "Store Domain", type: "text", placeholder: "your-store.myshopify.com" },
+        { key: "accessToken", label: "Access Token", type: "password", placeholder: "shpat_..." },
       ],
       required: false,
       category: "CMS",
-    },
-  ],
-  payments: [
-    {
-      id: "dodo",
-      name: "Dodo Payments",
-      description: "Subscription billing and usage-based charges",
-      logo: "💳",
-      docsUrl: "https://docs.dodopayments.com/",
-      fields: [
-        { key: "DODO_API_KEY", label: "API Key", type: "password", placeholder: "..." },
-        { key: "DODO_WEBHOOK_SECRET", label: "Webhook Secret", type: "password", placeholder: "..." },
-      ],
-      required: true,
-      category: "Billing",
-      adminOnly: true,
+      testEndpoint: "/api/cms/test",
     },
   ],
 };
 
-// Mock connected status - in production this comes from DB
-const mockConnectedStatus: Record<string, { connected: boolean; lastChecked?: string; error?: string }> = {
-  anthropic: { connected: true, lastChecked: "2024-12-09T10:30:00Z" },
-  dataforseo: { connected: true, lastChecked: "2024-12-09T10:30:00Z" },
-  gsc: { connected: false },
-  ga4: { connected: false },
-  wordpress: { connected: false },
-};
+// ============================================
+// INTEGRATION CARD COMPONENT
+// ============================================
 
 interface IntegrationCardProps {
   integration: Integration;
-  status: { connected: boolean; lastChecked?: string; error?: string };
-  onConnect: () => void;
-  onDisconnect: () => void;
-  onTest: () => void;
+  status: IntegrationStatus;
+  onStatusChange: () => void;
 }
 
-function IntegrationCard({ integration, status, onConnect, onDisconnect, onTest }: IntegrationCardProps) {
+function IntegrationCard({ integration, status, onStatusChange }: IntegrationCardProps) {
   const [showCredentials, setShowCredentials] = useState(false);
   const [testing, setTesting] = useState(false);
-  
+  const [testResult, setTestResult] = useState<{ success: boolean; message?: string } | null>(null);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   const handleTest = async () => {
+    if (integration.oauth) return;
+    
     setTesting(true);
-    await new Promise(r => setTimeout(r, 2000)); // Simulate test
-    setTesting(false);
-    onTest();
+    setTestResult(null);
+    
+    try {
+      const response = await fetch("/api/integrations/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: integration.id }),
+      });
+      
+      const data = await response.json();
+      setTestResult({ success: data.success, message: data.message || data.error });
+    } catch (error) {
+      setTestResult({ success: false, message: "Connection test failed" });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    setDisconnecting(true);
+    
+    try {
+      await fetch("/api/integrations", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: integration.id }),
+      });
+      
+      onStatusChange();
+    } catch (error) {
+      console.error("Failed to disconnect:", error);
+    } finally {
+      setDisconnecting(false);
+    }
   };
 
   return (
@@ -269,7 +267,7 @@ function IntegrationCard({ integration, status, onConnect, onDisconnect, onTest 
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100 text-2xl dark:bg-slate-800">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-2xl">
               {integration.logo}
             </div>
             <div>
@@ -286,7 +284,7 @@ function IntegrationCard({ integration, status, onConnect, onDisconnect, onTest 
           </div>
           <div className="flex items-center gap-2">
             {status.connected ? (
-              <Badge variant="success" className="gap-1">
+              <Badge className="gap-1 bg-green-500/10 text-green-600 border-green-500/20">
                 <Check className="h-3 w-3" />
                 Connected
               </Badge>
@@ -300,62 +298,65 @@ function IntegrationCard({ integration, status, onConnect, onDisconnect, onTest 
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-muted-foreground">
           {integration.description}
         </p>
         
         {status.error && (
           <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="h-4 w-4 shrink-0" />
             {status.error}
+          </div>
+        )}
+
+        {testResult && (
+          <div className={`flex items-center gap-2 rounded-lg p-3 text-sm ${
+            testResult.success 
+              ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
+              : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+          }`}>
+            {testResult.success ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+            {testResult.message || (testResult.success ? "Connection successful!" : "Connection failed")}
           </div>
         )}
         
         {status.lastChecked && (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Last verified: {new Date(status.lastChecked).toLocaleString()}
           </p>
         )}
         
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {status.connected ? (
             <>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleTest}
-                disabled={testing}
-              >
-                {testing ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                )}
-                Test Connection
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setShowCredentials(!showCredentials)}
-              >
-                {showCredentials ? (
-                  <EyeOff className="mr-2 h-4 w-4" />
-                ) : (
-                  <Eye className="mr-2 h-4 w-4" />
-                )}
-                {showCredentials ? "Hide" : "Show"} Credentials
-              </Button>
+              {!integration.oauth && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleTest}
+                  disabled={testing}
+                >
+                  {testing ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                  )}
+                  Test Connection
+                </Button>
+              )}
               <Button 
                 variant="ghost" 
                 size="sm"
-                className="text-red-600 hover:text-red-700"
-                onClick={onDisconnect}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={handleDisconnect}
+                disabled={disconnecting}
               >
+                {disconnecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Disconnect
               </Button>
             </>
           ) : (
-            <Dialog>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm">
                   <Key className="mr-2 h-4 w-4" />
@@ -372,7 +373,13 @@ function IntegrationCard({ integration, status, onConnect, onDisconnect, onTest 
                     Enter your API credentials to connect {integration.name}.
                   </DialogDescription>
                 </DialogHeader>
-                <ConnectForm integration={integration} onConnect={onConnect} />
+                <ConnectForm 
+                  integration={integration} 
+                  onConnect={() => {
+                    setDialogOpen(false);
+                    onStatusChange();
+                  }} 
+                />
               </DialogContent>
             </Dialog>
           )}
@@ -384,24 +391,14 @@ function IntegrationCard({ integration, status, onConnect, onDisconnect, onTest 
             </a>
           </Button>
         </div>
-        
-        {showCredentials && status.connected && !integration.oauth && (
-          <div className="mt-4 rounded-lg bg-slate-50 p-4 dark:bg-slate-900">
-            <p className="mb-2 text-xs font-medium text-slate-500">Stored Credentials</p>
-            {(integration as FieldsIntegration).fields?.map((field) => (
-              <div key={field.key} className="flex items-center justify-between text-sm">
-                <span className="text-slate-600 dark:text-slate-400">{field.label}</span>
-                <code className="rounded bg-slate-200 px-2 py-0.5 text-xs dark:bg-slate-800">
-                  ••••••••••••
-                </code>
-              </div>
-            ))}
-          </div>
-        )}
       </CardContent>
     </Card>
   );
 }
+
+// ============================================
+// CONNECT FORM COMPONENT
+// ============================================
 
 interface ConnectFormProps {
   integration: Integration;
@@ -413,26 +410,69 @@ function ConnectForm({ integration, onConnect }: ConnectFormProps) {
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<{ success: boolean; message?: string; data?: unknown } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setTestResult(null);
     
     try {
-      // In production, this would call an API to save and test the credentials
-      await new Promise(r => setTimeout(r, 1500));
-      
-      // Simulate validation for field-based integrations
+      // Validate required fields
       if (!integration.oauth) {
         const fields = (integration as FieldsIntegration).fields || [];
-        const missingFields = fields.filter(f => !values[f.key]);
+        const missingFields = fields.filter(f => !values[f.key]?.trim());
         if (missingFields.length > 0) {
-          throw new Error(`Please fill in all required fields: ${missingFields.map(f => f.label).join(", ")}`);
+          throw new Error(`Please fill in: ${missingFields.map(f => f.label).join(", ")}`);
         }
       }
+
+      // Determine test endpoint based on integration type
+      const isCMS = ["wordpress", "webflow", "shopify"].includes(integration.id);
+      const testEndpoint = isCMS ? "/api/cms/test" : "/api/integrations/test";
+
+      // Test the connection first
+      const testResponse = await fetch(testEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cmsType: isCMS ? integration.id : undefined,
+          type: !isCMS ? integration.id : undefined,
+          credentials: values,
+        }),
+      });
       
-      onConnect();
+      const testData = await testResponse.json();
+      
+      if (!testData.success) {
+        setTestResult({ success: false, message: testData.error || "Connection test failed" });
+        throw new Error(testData.error || "Connection test failed");
+      }
+
+      setTestResult({ success: true, message: testData.message || "Connection successful!", data: testData });
+
+      // Save the integration credentials
+      const saveResponse = await fetch("/api/integrations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: integration.id,
+          credentials: values,
+        }),
+      });
+      
+      const saveData = await saveResponse.json();
+      
+      if (!saveData.success) {
+        throw new Error(saveData.error || "Failed to save credentials");
+      }
+      
+      // Success - close dialog
+      setTimeout(() => {
+        onConnect();
+      }, 1000);
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to connect");
     } finally {
@@ -447,11 +487,11 @@ function ConnectForm({ integration, onConnect }: ConnectFormProps) {
       <div className="space-y-4 py-4">
         <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-950">
           <div className="flex items-start gap-3">
-            <Info className="mt-0.5 h-5 w-5 text-blue-600" />
+            <Info className="mt-0.5 h-5 w-5 text-blue-600 shrink-0" />
             <div className="text-sm text-blue-800 dark:text-blue-200">
               <p className="font-medium">OAuth Authentication Required</p>
               <p className="mt-1">
-                You'll be redirected to Google to authorize access to your{" "}
+                You&apos;ll be redirected to Google to authorize access to your{" "}
                 {integration.name} data. We only request read-only access.
               </p>
             </div>
@@ -460,8 +500,7 @@ function ConnectForm({ integration, onConnect }: ConnectFormProps) {
         
         <DialogFooter>
           <Button onClick={() => {
-            // In production, this initiates OAuth flow
-            window.location.href = `/api/auth/google?scope=${oauthIntegration.scopes?.join(",")}&integration=${integration.id}`;
+            window.location.href = `/api/auth/google?scopes=${encodeURIComponent(oauthIntegration.scopes.join(","))}`;
           }}>
             Continue with Google
           </Button>
@@ -484,13 +523,14 @@ function ConnectForm({ integration, onConnect }: ConnectFormProps) {
               placeholder={field.placeholder}
               value={values[field.key] || ""}
               onChange={(e) => setValues({ ...values, [field.key]: e.target.value })}
+              className="pr-10"
             />
             {field.type === "password" && (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute right-1 top-1/2 h-7 -translate-y-1/2"
+                className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 p-0"
                 onClick={() => setShowPasswords({ ...showPasswords, [field.key]: !showPasswords[field.key] })}
               >
                 {showPasswords[field.key] ? (
@@ -504,15 +544,26 @@ function ConnectForm({ integration, onConnect }: ConnectFormProps) {
         </div>
       ))}
       
-      {error && (
+      {testResult && (
+        <div className={`flex items-center gap-2 rounded-lg p-3 text-sm ${
+          testResult.success 
+            ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
+            : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+        }`}>
+          {testResult.success ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+          {testResult.message}
+        </div>
+      )}
+      
+      {error && !testResult && (
         <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
           <AlertCircle className="h-4 w-4" />
           {error}
         </div>
       )}
       
-      <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-900">
-        <p className="text-xs text-slate-500">
+      <div className="rounded-lg bg-muted p-3">
+        <p className="text-xs text-muted-foreground">
           <Info className="mr-1 inline h-3 w-3" />
           Your credentials are encrypted and stored securely. They are only used to connect to {integration.name} on your behalf.
         </p>
@@ -521,29 +572,47 @@ function ConnectForm({ integration, onConnect }: ConnectFormProps) {
       <DialogFooter>
         <Button type="submit" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Test & Save Connection
+          {testResult?.success ? "Saving..." : "Test & Save Connection"}
         </Button>
       </DialogFooter>
     </form>
   );
 }
 
+// ============================================
+// MAIN PAGE COMPONENT
+// ============================================
+
 export default function IntegrationsPage() {
-  const [statuses, setStatuses] = useState(mockConnectedStatus);
+  const [statuses, setStatuses] = useState<Record<string, IntegrationStatus>>({});
+  const [loading, setLoading] = useState(true);
 
-  const handleConnect = (id: string) => {
-    setStatuses({
-      ...statuses,
-      [id]: { connected: true, lastChecked: new Date().toISOString() },
-    });
-  };
+  const fetchStatuses = useCallback(async () => {
+    try {
+      const response = await fetch("/api/integrations");
+      const data = await response.json();
+      
+      if (data.success && data.integrations) {
+        const statusMap: Record<string, IntegrationStatus> = {};
+        for (const integration of data.integrations) {
+          statusMap[integration.type] = {
+            connected: integration.status === "active",
+            lastChecked: integration.updated_at,
+            error: integration.status === "error" ? integration.error : undefined,
+          };
+        }
+        setStatuses(statusMap);
+      }
+    } catch (error) {
+      console.error("Failed to fetch integration statuses:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const handleDisconnect = (id: string) => {
-    setStatuses({
-      ...statuses,
-      [id]: { connected: false },
-    });
-  };
+  useEffect(() => {
+    fetchStatuses();
+  }, [fetchStatuses]);
 
   const allIntegrations = [
     ...INTEGRATIONS.ai,
@@ -556,133 +625,136 @@ export default function IntegrationsPage() {
   const requiredIntegrations = allIntegrations.filter(i => i.required);
   const requiredConnected = requiredIntegrations.filter(i => statuses[i.id]?.connected).length;
 
-  return (
-    <div className="min-h-screen">
-      <DashboardHeader
-        title="Integrations"
-        description="Connect your SEO tools, analytics, and publishing platforms"
-      />
-
-      <div className="p-6">
-        {/* Status Overview */}
-        <Card className="mb-6">
-          <CardContent className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-6">
-              <div>
-                <p className="text-2xl font-bold">{connectedCount}/{allIntegrations.length}</p>
-                <p className="text-sm text-slate-500">Integrations connected</p>
-              </div>
-              <Separator orientation="vertical" className="h-12" />
-              <div>
-                <p className="text-2xl font-bold">{requiredConnected}/{requiredIntegrations.length}</p>
-                <p className="text-sm text-slate-500">Required integrations</p>
-              </div>
-            </div>
-            {requiredConnected < requiredIntegrations.length && (
-              <div className="flex items-center gap-2 rounded-lg bg-yellow-50 px-4 py-2 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-200">
-                <AlertCircle className="h-5 w-5" />
-                <span className="text-sm font-medium">
-                  {requiredIntegrations.length - requiredConnected} required integration(s) not connected
-                </span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Tabs defaultValue="ai" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="ai">AI Providers</TabsTrigger>
-            <TabsTrigger value="seo">SEO Data</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="publishing">Publishing</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="ai" className="space-y-4">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold">AI Providers</h3>
-              <p className="text-sm text-slate-500">
-                AI models power content generation, keyword clustering, and optimization suggestions.
-              </p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {INTEGRATIONS.ai.map((integration) => (
-                <IntegrationCard
-                  key={integration.id}
-                  integration={integration}
-                  status={statuses[integration.id] || { connected: false }}
-                  onConnect={() => handleConnect(integration.id)}
-                  onDisconnect={() => handleDisconnect(integration.id)}
-                  onTest={() => {}}
-                />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="seo" className="space-y-4">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold">SEO Data Providers</h3>
-              <p className="text-sm text-slate-500">
-                These services provide keyword data, search volumes, backlinks, and SERP analysis.
-              </p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {INTEGRATIONS.seo.map((integration) => (
-                <IntegrationCard
-                  key={integration.id}
-                  integration={integration}
-                  status={statuses[integration.id] || { connected: false }}
-                  onConnect={() => handleConnect(integration.id)}
-                  onDisconnect={() => handleDisconnect(integration.id)}
-                  onTest={() => {}}
-                />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-4">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold">Analytics & Search Console</h3>
-              <p className="text-sm text-slate-500">
-                Connect your analytics to track performance and get AI-powered insights.
-              </p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {INTEGRATIONS.analytics.map((integration) => (
-                <IntegrationCard
-                  key={integration.id}
-                  integration={integration}
-                  status={statuses[integration.id] || { connected: false }}
-                  onConnect={() => handleConnect(integration.id)}
-                  onDisconnect={() => handleDisconnect(integration.id)}
-                  onTest={() => {}}
-                />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="publishing" className="space-y-4">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold">Publishing Platforms</h3>
-              <p className="text-sm text-slate-500">
-                Connect your CMS to publish content directly from CabbageSEO.
-              </p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {INTEGRATIONS.publishing.map((integration) => (
-                <IntegrationCard
-                  key={integration.id}
-                  integration={integration}
-                  status={statuses[integration.id] || { connected: false }}
-                  onConnect={() => handleConnect(integration.id)}
-                  onDisconnect={() => handleDisconnect(integration.id)}
-                  onTest={() => {}}
-                />
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
+  if (loading) {
+    return (
+      <div className="min-h-screen p-6">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold">Integrations</h1>
+          <p className="text-muted-foreground">Connect your SEO tools, analytics, and publishing platforms</p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen p-6">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold">Integrations</h1>
+        <p className="text-muted-foreground">Connect your SEO tools, analytics, and publishing platforms</p>
+      </div>
+
+      {/* Status Overview */}
+      <Card className="mb-6">
+        <CardContent className="flex items-center justify-between py-4">
+          <div className="flex items-center gap-6">
+            <div>
+              <p className="text-2xl font-bold">{connectedCount}/{allIntegrations.length}</p>
+              <p className="text-sm text-muted-foreground">Integrations connected</p>
+            </div>
+            <Separator orientation="vertical" className="h-12" />
+            <div>
+              <p className="text-2xl font-bold">{requiredConnected}/{requiredIntegrations.length}</p>
+              <p className="text-sm text-muted-foreground">Required integrations</p>
+            </div>
+          </div>
+          {requiredConnected < requiredIntegrations.length && (
+            <div className="flex items-center gap-2 rounded-lg bg-yellow-50 px-4 py-2 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-200">
+              <AlertCircle className="h-5 w-5" />
+              <span className="text-sm font-medium">
+                {requiredIntegrations.length - requiredConnected} required integration(s) not connected
+              </span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Tabs defaultValue="ai" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="ai">AI Providers</TabsTrigger>
+          <TabsTrigger value="seo">SEO Data</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="publishing">Publishing</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="ai" className="space-y-4">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold">AI Providers</h3>
+            <p className="text-sm text-muted-foreground">
+              AI models power content generation, keyword clustering, and optimization suggestions.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {INTEGRATIONS.ai.map((integration) => (
+              <IntegrationCard
+                key={integration.id}
+                integration={integration}
+                status={statuses[integration.id] || { connected: false }}
+                onStatusChange={fetchStatuses}
+              />
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="seo" className="space-y-4">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold">SEO Data Providers</h3>
+            <p className="text-sm text-muted-foreground">
+              These services provide keyword data, search volumes, backlinks, and SERP analysis.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {INTEGRATIONS.seo.map((integration) => (
+              <IntegrationCard
+                key={integration.id}
+                integration={integration}
+                status={statuses[integration.id] || { connected: false }}
+                onStatusChange={fetchStatuses}
+              />
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold">Analytics & Search Console</h3>
+            <p className="text-sm text-muted-foreground">
+              Connect your analytics to track performance and get AI-powered insights.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {INTEGRATIONS.analytics.map((integration) => (
+              <IntegrationCard
+                key={integration.id}
+                integration={integration}
+                status={statuses[integration.id] || { connected: false }}
+                onStatusChange={fetchStatuses}
+              />
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="publishing" className="space-y-4">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold">Publishing Platforms</h3>
+            <p className="text-sm text-muted-foreground">
+              Connect your CMS to publish content directly from CabbageSEO.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {INTEGRATIONS.publishing.map((integration) => (
+              <IntegrationCard
+                key={integration.id}
+                integration={integration}
+                status={statuses[integration.id] || { connected: false }}
+                onStatusChange={fetchStatuses}
+              />
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
-

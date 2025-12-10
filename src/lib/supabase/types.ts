@@ -22,6 +22,7 @@ export interface Database {
           email: string;
           full_name: string | null;
           avatar_url: string | null;
+          organization_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -30,6 +31,7 @@ export interface Database {
           email: string;
           full_name?: string | null;
           avatar_url?: string | null;
+          organization_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -38,6 +40,7 @@ export interface Database {
           email?: string;
           full_name?: string | null;
           avatar_url?: string | null;
+          organization_id?: string | null;
           updated_at?: string;
         };
       };
@@ -385,9 +388,9 @@ export interface Database {
           id: string;
           organization_id: string;
           type: string;
-          name: string;
           credentials: Json;
-          is_active: boolean;
+          status: "active" | "error" | "disconnected";
+          error: string | null;
           last_synced_at: string | null;
           created_at: string;
           updated_at: string;
@@ -396,18 +399,18 @@ export interface Database {
           id?: string;
           organization_id: string;
           type: string;
-          name: string;
           credentials: Json;
-          is_active?: boolean;
+          status?: "active" | "error" | "disconnected";
+          error?: string | null;
           last_synced_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           type?: string;
-          name?: string;
           credentials?: Json;
-          is_active?: boolean;
+          status?: "active" | "error" | "disconnected";
+          error?: string | null;
           last_synced_at?: string | null;
           updated_at?: string;
         };
