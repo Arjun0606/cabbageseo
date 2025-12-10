@@ -1,68 +1,45 @@
 /**
- * Google OAuth Flow
- * Handles authentication for Google Search Console and Google Analytics
+ * Google OAuth - Start Authorization
+ * 
+ * Initiates the OAuth flow with CSRF protection
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { googleOAuth } from "@/lib/integrations/google/oauth";
+import { protectAPI } from "@/lib/security/api-protection";
+import { cookies } from "next/headers";
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const REDIRECT_URI = process.env.NEXT_PUBLIC_APP_URL 
-  ? `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/google/callback`
-  : "http://localhost:3000/api/auth/google/callback";
-
-// Scopes for different integrations
-const INTEGRATION_SCOPES: Record<string, string[]> = {
-  gsc: [
-    "https://www.googleapis.com/auth/webmasters.readonly",
-    "https://www.googleapis.com/auth/webmasters",
-  ],
-  ga4: [
-    "https://www.googleapis.com/auth/analytics.readonly",
-  ],
-  both: [
-    "https://www.googleapis.com/auth/webmasters.readonly",
-    "https://www.googleapis.com/auth/webmasters",
-    "https://www.googleapis.com/auth/analytics.readonly",
-  ],
-};
-
-// GET - Initiate OAuth flow
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const integration = searchParams.get("integration") || "both";
-  const siteId = searchParams.get("site_id"); // Optional: associate with specific site
-  
-  if (!GOOGLE_CLIENT_ID) {
+  // Protect endpoint
+  const blocked = await protectAPI(request, { 
+    rateLimit: "auth",
+    allowedMethods: ["GET"],
+  });
+  if (blocked) return blocked;
+
+  // Check if Google OAuth is configured
+  if (!googleOAuth.isConfigured()) {
     return NextResponse.json(
-      { error: "Google OAuth not configured. Set GOOGLE_CLIENT_ID in environment." },
+      { error: "Google OAuth not configured" },
       { status: 500 }
     );
   }
-  
-  // Get scopes for the requested integration
-  const scopes = INTEGRATION_SCOPES[integration] || INTEGRATION_SCOPES.both;
-  
-  // Build state parameter (contains context for callback)
-  const state = Buffer.from(JSON.stringify({
-    integration,
-    siteId,
-    timestamp: Date.now(),
-  })).toString("base64");
-  
-  // Build OAuth URL
-  const params = new URLSearchParams({
-    client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: REDIRECT_URI,
-    response_type: "code",
-    scope: scopes.join(" "),
-    access_type: "offline", // Get refresh token
-    prompt: "consent", // Always show consent screen to get refresh token
-    state,
-  });
-  
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
-  
-  return NextResponse.redirect(authUrl);
-}
 
+  // Generate CSRF state token
+  const state = googleOAuth.generateStateToken();
+  
+  // Store state in cookie for verification
+  const cookieStore = await cookies();
+  cookieStore.set("google_oauth_state", state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 10 * 60, // 10 minutes
+    path: "/",
+  });
+
+  // Get authorization URL
+  const authUrl = googleOAuth.getAuthorizationUrl(state);
+
+  return NextResponse.json({ url: authUrl });
+}
