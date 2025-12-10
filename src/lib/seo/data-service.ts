@@ -194,9 +194,8 @@ export class SEODataService {
       }
     }
 
-    // Mock data for development/demo
-    console.warn("Using mock keyword data - configure DataForSEO for real data");
-    return this.getMockKeywordMetrics(keywords);
+    // No mock data - require real API
+    throw new Error("DataForSEO not configured. Set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD in environment.");
   }
 
   /**
@@ -261,9 +260,8 @@ export class SEODataService {
       }
     }
 
-    // Mock data
-    console.warn("Using mock suggestions - configure API keys for real data");
-    return this.getMockSuggestions(seedKeyword);
+    // No mock data - require real API
+    throw new Error("SEO APIs not configured. Set DATAFORSEO or SERPAPI credentials in environment.");
   }
 
   // ============================================
@@ -330,9 +328,8 @@ export class SEODataService {
       }
     }
 
-    // Mock data
-    console.warn("Using mock SERP data - configure API keys for real data");
-    return this.getMockSerpAnalysis(keyword);
+    // No mock data - require real API
+    throw new Error("SEO APIs not configured. Set DATAFORSEO or SERPAPI credentials in environment.");
   }
 
   /**
@@ -394,8 +391,7 @@ export class SEODataService {
       }
     }
 
-    console.warn("Using mock competitor data - configure DataForSEO for real data");
-    return [];
+    throw new Error("DataForSEO not configured. Set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD in environment.");
   }
 
   /**
@@ -490,82 +486,6 @@ export class SEODataService {
     return "low";
   }
 
-  // ============================================
-  // MOCK DATA (for development/demo)
-  // ============================================
-
-  private getMockKeywordMetrics(keywords: string[]): KeywordData[] {
-    return keywords.map(keyword => ({
-      keyword,
-      volume: Math.floor(Math.random() * 10000) + 100,
-      difficulty: Math.floor(Math.random() * 80) + 10,
-      cpc: Math.round(Math.random() * 500) / 100,
-      competition: Math.random(),
-      intent: ["informational", "commercial", "transactional"][Math.floor(Math.random() * 3)] as KeywordData["intent"],
-      serpFeatures: ["People Also Ask", "Featured Snippet"].slice(0, Math.floor(Math.random() * 2)),
-    }));
-  }
-
-  private getMockSuggestions(seedKeyword: string): KeywordData[] {
-    const prefixes = ["best", "how to", "what is", "top", "cheap", "free"];
-    const suffixes = ["guide", "tips", "examples", "tutorial", "2024", "near me"];
-    
-    const suggestions: KeywordData[] = [];
-    
-    prefixes.forEach(prefix => {
-      suggestions.push({
-        keyword: `${prefix} ${seedKeyword}`,
-        volume: Math.floor(Math.random() * 5000) + 100,
-        difficulty: Math.floor(Math.random() * 60) + 20,
-        cpc: Math.round(Math.random() * 300) / 100,
-        competition: Math.random(),
-        intent: "informational",
-      });
-    });
-    
-    suffixes.forEach(suffix => {
-      suggestions.push({
-        keyword: `${seedKeyword} ${suffix}`,
-        volume: Math.floor(Math.random() * 3000) + 50,
-        difficulty: Math.floor(Math.random() * 50) + 10,
-        cpc: Math.round(Math.random() * 200) / 100,
-        competition: Math.random(),
-        intent: "informational",
-      });
-    });
-    
-    return suggestions;
-  }
-
-  private getMockSerpAnalysis(keyword: string): SerpAnalysis {
-    return {
-      keyword,
-      totalResults: Math.floor(Math.random() * 100000000) + 1000000,
-      organicResults: Array.from({ length: 10 }, (_, i) => ({
-        position: i + 1,
-        url: `https://example${i + 1}.com/${keyword.replace(/\s/g, "-")}`,
-        title: `${keyword} - Complete Guide ${i + 1}`,
-        description: `Learn everything about ${keyword} in this comprehensive guide. Updated for 2024.`,
-        domain: `example${i + 1}.com`,
-      })),
-      peopleAlsoAsk: [
-        `What is ${keyword}?`,
-        `How does ${keyword} work?`,
-        `Why is ${keyword} important?`,
-        `How much does ${keyword} cost?`,
-      ],
-      relatedSearches: [
-        `${keyword} for beginners`,
-        `${keyword} vs alternative`,
-        `best ${keyword} 2024`,
-        `${keyword} examples`,
-      ],
-      serpFeatures: ["People Also Ask", "Related Searches"],
-      hasLocalPack: false,
-      hasKnowledgeGraph: false,
-      hasAds: true,
-    };
-  }
 }
 
 // ============================================

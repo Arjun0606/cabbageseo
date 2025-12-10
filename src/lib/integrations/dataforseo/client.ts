@@ -61,11 +61,19 @@ export class DataForSEOClient {
       body: JSON.stringify(data),
     });
 
+    const json = await response.json();
+
     if (!response.ok) {
-      throw new Error(`DataForSEO API error: ${response.status}`);
+      console.error("DataForSEO error response:", JSON.stringify(json, null, 2).slice(0, 500));
+      throw new Error(`DataForSEO API error: ${response.status} - ${json?.status_message || "Unknown error"}`);
     }
 
-    return response.json();
+    // Check for task-level errors
+    if (json.tasks?.[0]?.status_code !== 20000) {
+      console.error("DataForSEO task error:", json.tasks?.[0]?.status_message);
+    }
+
+    return json as T;
   }
 
   /**
@@ -79,12 +87,7 @@ export class DataForSEOClient {
     const locationCode = await this.getLocationCode(location);
     const languageCode = await this.getLanguageCode(language);
 
-    const tasks = keywords.map((keyword) => ({
-      keyword,
-      location_code: locationCode,
-      language_code: languageCode,
-    }));
-
+    // DataForSEO expects keywords as an array in a single task object
     const response = await this.request<{
       tasks: Array<{
         result: Array<{
@@ -93,23 +96,31 @@ export class DataForSEOClient {
           keyword_difficulty: number;
           cpc: number;
           competition: number;
-          search_intent: { main: string };
-          serp_info?: { serp_features: string[] };
-        }>;
+          search_intent?: { main: string };
+          monthly_searches?: Array<{ search_volume: number }>;
+        }> | null;
       }>;
-    }>("/v3/keywords_data/google_ads/search_volume/live", tasks);
+    }>("/v3/keywords_data/google_ads/search_volume/live", [{
+      keywords,
+      location_code: locationCode,
+      language_code: languageCode,
+    }]);
 
-    return response.tasks.flatMap((task) =>
-      task.result.map((item) => ({
-        keyword: item.keyword,
-        volume: item.search_volume || 0,
-        difficulty: item.keyword_difficulty || 0,
-        cpc: item.cpc || 0,
-        competition: item.competition || 0,
-        intent: item.search_intent?.main || "informational",
-        serpFeatures: item.serp_info?.serp_features || [],
-      }))
-    );
+    const results = response.tasks?.[0]?.result;
+    if (!results || !Array.isArray(results)) {
+      console.log("DataForSEO response:", JSON.stringify(response, null, 2).slice(0, 500));
+      return [];
+    }
+
+    return results.map((item) => ({
+      keyword: item.keyword,
+      volume: item.search_volume || 0,
+      difficulty: item.keyword_difficulty || 0,
+      cpc: item.cpc || 0,
+      competition: item.competition || 0,
+      intent: item.search_intent?.main || "informational",
+      serpFeatures: [],
+    }));
   }
 
   /**
@@ -122,37 +133,47 @@ export class DataForSEOClient {
   ): Promise<KeywordData[]> {
     const locationCode = await this.getLocationCode(location);
 
-    const response = await this.request<{
-      tasks: Array<{
-        result: Array<{
-          items: Array<{
-            keyword: string;
-            search_volume: number;
-            keyword_difficulty: number;
-            cpc: number;
-            competition: number;
-            search_intent?: { main: string };
-          }>;
-        }>;
-      }>;
-    }>("/v3/keywords_data/google_ads/keywords_for_keywords/live", [
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const response = await this.request<any>("/v3/keywords_data/google_ads/keywords_for_keywords/live", [
       {
         keywords: [seedKeyword],
         location_code: locationCode,
         language_code: "en",
+        include_seed_keyword: true,
         limit,
       },
     ]);
 
-    return response.tasks[0]?.result[0]?.items?.map((item) => ({
+    // Navigate the response structure
+    const task = response?.tasks?.[0];
+    if (!task || task.status_code !== 20000) {
+      console.error("DataForSEO task failed:", task?.status_message);
+      return [];
+    }
+
+    // The result array contains keyword data objects directly
+    const results = task.result;
+    if (!results || !Array.isArray(results) || results.length === 0) {
+      return [];
+    }
+
+    // Each result item is a keyword data object
+    return results.slice(0, limit).map((item: {
+      keyword: string;
+      search_volume: number;
+      keyword_info?: { search_volume: number };
+      cpc?: number;
+      competition?: number;
+      keyword_properties?: { keyword_difficulty?: number };
+    }) => ({
       keyword: item.keyword,
-      volume: item.search_volume || 0,
-      difficulty: item.keyword_difficulty || 0,
+      volume: item.search_volume || item.keyword_info?.search_volume || 0,
+      difficulty: item.keyword_properties?.keyword_difficulty || 0,
       cpc: item.cpc || 0,
       competition: item.competition || 0,
-      intent: item.search_intent?.main || "informational",
+      intent: "informational",
       serpFeatures: [],
-    })) || [];
+    }));
   }
 
   /**
