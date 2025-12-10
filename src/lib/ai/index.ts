@@ -44,3 +44,10 @@ export {
 // Prompts
 export { PROMPTS, estimateTokens, truncateForTokens } from "./prompts";
 
+// Usage tracking (Cursor-style billing)
+export { 
+  withUsageTracking, 
+  preCheckUsage, 
+  getEstimatedCost,
+} from "./with-usage";
+

@@ -27,7 +27,7 @@ interface ClaudeResponse {
   };
 }
 
-const MODEL_COSTS = {
+const MODEL_COSTS: Record<string, { input: number; output: number }> = {
   "claude-3-5-haiku-20241022": { input: 80, output: 400 },
   "claude-sonnet-4-20250514": { input: 300, output: 1500 },
 };
