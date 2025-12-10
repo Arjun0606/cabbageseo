@@ -309,6 +309,9 @@ export class ClaudeClient {
       const outputTokens = data.usage?.output_tokens || 0;
       const costCents = this.calculateCost(model, inputTokens, outputTokens);
 
+      // Track spending for wallet monitoring
+      trackSpending(costCents);
+
       return {
         content: data.content?.[0]?.text || "",
         usage: {
@@ -461,6 +464,24 @@ export class UsageLimitError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "UsageLimitError";
+  }
+}
+
+// ============================================
+// SPENDING TRACKER INTEGRATION
+// ============================================
+
+// Import spending tracker (lazy to avoid circular deps)
+let recordSpendingFn: ((costCents: number) => void) | null = null;
+
+export function setSpendingTracker(fn: (costCents: number) => void): void {
+  recordSpendingFn = fn;
+}
+
+// Internal function to record spending after each call
+function trackSpending(costCents: number): void {
+  if (recordSpendingFn && costCents > 0) {
+    recordSpendingFn(costCents);
   }
 }
 
