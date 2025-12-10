@@ -318,6 +318,298 @@ export class DataForSEOClient {
       })) || [];
   }
 
+  // ============================================
+  // BACKLINKS API (Ahrefs alternative)
+  // ============================================
+
+  /**
+   * Get backlink summary for a domain
+   */
+  async getBacklinkSummary(target: string): Promise<{
+    backlinks: number;
+    referringDomains: number;
+    referringIps: number;
+    domainRank: number;
+    brokenBacklinks: number;
+    referringDomainsNofollow: number;
+    referringDomainsDofollow: number;
+  } | null> {
+    try {
+      const response = await this.request<{
+        tasks: Array<{
+          result: Array<{
+            backlinks: number;
+            referring_domains: number;
+            referring_ips: number;
+            rank: number;
+            broken_backlinks: number;
+            referring_domains_nofollow: number;
+          }>;
+        }>;
+      }>("/v3/backlinks/summary/live", [{ target }]);
+
+      const result = response.tasks[0]?.result[0];
+      if (!result) return null;
+
+      return {
+        backlinks: result.backlinks || 0,
+        referringDomains: result.referring_domains || 0,
+        referringIps: result.referring_ips || 0,
+        domainRank: result.rank || 0,
+        brokenBacklinks: result.broken_backlinks || 0,
+        referringDomainsNofollow: result.referring_domains_nofollow || 0,
+        referringDomainsDofollow: result.referring_domains - (result.referring_domains_nofollow || 0),
+      };
+    } catch (error) {
+      console.error("Backlink summary error:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Get list of backlinks for a domain
+   */
+  async getBacklinks(
+    target: string,
+    options: {
+      limit?: number;
+      offset?: number;
+      orderBy?: "rank" | "date_first_seen" | "date_lost";
+      mode?: "as_is" | "one_per_domain" | "one_per_anchor";
+    } = {}
+  ): Promise<Array<{
+    url: string;
+    anchor: string;
+    domainFrom: string;
+    pageFrom: string;
+    domainRank: number;
+    isNofollow: boolean;
+    isLost: boolean;
+    firstSeen: string;
+    lastSeen: string;
+  }>> {
+    try {
+      const response = await this.request<{
+        tasks: Array<{
+          result: Array<{
+            items: Array<{
+              url_to: string;
+              anchor: string;
+              domain_from: string;
+              url_from: string;
+              rank: number;
+              is_nofollow: boolean;
+              is_lost: boolean;
+              first_seen: string;
+              last_seen: string;
+            }>;
+          }>;
+        }>;
+      }>("/v3/backlinks/backlinks/live", [{
+        target,
+        limit: options.limit || 100,
+        offset: options.offset || 0,
+        order_by: [`${options.orderBy || "rank"},desc`],
+        mode: options.mode || "as_is",
+      }]);
+
+      return response.tasks[0]?.result[0]?.items?.map(item => ({
+        url: item.url_to,
+        anchor: item.anchor,
+        domainFrom: item.domain_from,
+        pageFrom: item.url_from,
+        domainRank: item.rank || 0,
+        isNofollow: item.is_nofollow,
+        isLost: item.is_lost,
+        firstSeen: item.first_seen,
+        lastSeen: item.last_seen,
+      })) || [];
+    } catch (error) {
+      console.error("Get backlinks error:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get referring domains for a site
+   */
+  async getReferringDomains(
+    target: string,
+    options: { limit?: number } = {}
+  ): Promise<Array<{
+    domain: string;
+    backlinks: number;
+    rank: number;
+    firstSeen: string;
+  }>> {
+    try {
+      const response = await this.request<{
+        tasks: Array<{
+          result: Array<{
+            items: Array<{
+              domain: string;
+              backlinks: number;
+              rank: number;
+              first_seen: string;
+            }>;
+          }>;
+        }>;
+      }>("/v3/backlinks/referring_domains/live", [{
+        target,
+        limit: options.limit || 100,
+        order_by: ["rank,desc"],
+      }]);
+
+      return response.tasks[0]?.result[0]?.items?.map(item => ({
+        domain: item.domain,
+        backlinks: item.backlinks,
+        rank: item.rank || 0,
+        firstSeen: item.first_seen,
+      })) || [];
+    } catch (error) {
+      console.error("Get referring domains error:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get new and lost backlinks
+   */
+  async getBacklinkChanges(
+    target: string,
+    dateFrom: string, // YYYY-MM-DD
+    dateTo: string
+  ): Promise<{
+    newBacklinks: number;
+    lostBacklinks: number;
+    newReferringDomains: number;
+    lostReferringDomains: number;
+  }> {
+    try {
+      const response = await this.request<{
+        tasks: Array<{
+          result: Array<{
+            new_backlinks: number;
+            lost_backlinks: number;
+            new_referring_domains: number;
+            lost_referring_domains: number;
+          }>;
+        }>;
+      }>("/v3/backlinks/history/live", [{
+        target,
+        date_from: dateFrom,
+        date_to: dateTo,
+      }]);
+
+      const result = response.tasks[0]?.result[0];
+      return {
+        newBacklinks: result?.new_backlinks || 0,
+        lostBacklinks: result?.lost_backlinks || 0,
+        newReferringDomains: result?.new_referring_domains || 0,
+        lostReferringDomains: result?.lost_referring_domains || 0,
+      };
+    } catch (error) {
+      console.error("Get backlink changes error:", error);
+      return {
+        newBacklinks: 0,
+        lostBacklinks: 0,
+        newReferringDomains: 0,
+        lostReferringDomains: 0,
+      };
+    }
+  }
+
+  /**
+   * Get anchor text distribution
+   */
+  async getAnchorTexts(
+    target: string,
+    options: { limit?: number } = {}
+  ): Promise<Array<{
+    anchor: string;
+    backlinks: number;
+    referringDomains: number;
+  }>> {
+    try {
+      const response = await this.request<{
+        tasks: Array<{
+          result: Array<{
+            items: Array<{
+              anchor: string;
+              backlinks: number;
+              referring_domains: number;
+            }>;
+          }>;
+        }>;
+      }>("/v3/backlinks/anchors/live", [{
+        target,
+        limit: options.limit || 50,
+        order_by: ["backlinks,desc"],
+      }]);
+
+      return response.tasks[0]?.result[0]?.items?.map(item => ({
+        anchor: item.anchor,
+        backlinks: item.backlinks,
+        referringDomains: item.referring_domains,
+      })) || [];
+    } catch (error) {
+      console.error("Get anchor texts error:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Compare backlink profiles (link gap analysis)
+   */
+  async getBacklinkGap(
+    yourDomain: string,
+    competitorDomains: string[]
+  ): Promise<Array<{
+    domain: string;
+    linksToCompetitors: number;
+    linksToYou: boolean;
+    rank: number;
+  }>> {
+    try {
+      // Get referring domains for each
+      const [yourDomains, ...competitorRefDomains] = await Promise.all([
+        this.getReferringDomains(yourDomain, { limit: 500 }),
+        ...competitorDomains.map(d => this.getReferringDomains(d, { limit: 500 })),
+      ]);
+
+      const yourDomainSet = new Set(yourDomains.map(d => d.domain));
+      const gapDomains = new Map<string, { count: number; rank: number }>();
+
+      // Find domains that link to competitors but not to you
+      for (const refDomains of competitorRefDomains) {
+        for (const ref of refDomains) {
+          if (!yourDomainSet.has(ref.domain)) {
+            const existing = gapDomains.get(ref.domain);
+            if (existing) {
+              existing.count++;
+              existing.rank = Math.max(existing.rank, ref.rank);
+            } else {
+              gapDomains.set(ref.domain, { count: 1, rank: ref.rank });
+            }
+          }
+        }
+      }
+
+      return Array.from(gapDomains.entries())
+        .map(([domain, data]) => ({
+          domain,
+          linksToCompetitors: data.count,
+          linksToYou: false,
+          rank: data.rank,
+        }))
+        .sort((a, b) => b.rank - a.rank)
+        .slice(0, 100);
+    } catch (error) {
+      console.error("Get backlink gap error:", error);
+      return [];
+    }
+  }
+
   // Helper methods
   private async getLocationCode(location: string): Promise<number> {
     // Map common locations to codes

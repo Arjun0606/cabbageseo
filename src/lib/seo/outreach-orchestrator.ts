@@ -1,17 +1,17 @@
 /**
  * Backlink Outreach Orchestrator
  * 
- * Orchestrates existing outreach tools:
- * - Hunter.io for email finding
- * - Instantly.ai for campaign automation
- * - AI for personalized email generation
+ * Orchestrates Apollo.io for end-to-end outreach:
+ * - Email finding
+ * - Contact enrichment
+ * - Email sequences
+ * - Campaign analytics
  * 
  * We DON'T rebuild outreach tools.
- * We INTEGRATE and ORCHESTRATE them.
+ * We INTEGRATE and ORCHESTRATE Apollo.io.
  */
 
-import { HunterClient, HunterEmail } from "@/lib/integrations/hunter/client";
-import { InstantlyClient, InstantlyLead, InstantlyEmailStep } from "@/lib/integrations/instantly/client";
+import { ApolloClient, ApolloContact, ApolloSequenceStep } from "@/lib/integrations/apollo/client";
 import { claude } from "@/lib/ai/claude-client";
 
 // ============================================
@@ -38,10 +38,9 @@ export interface OutreachCampaign {
   id: string;
   name: string;
   targets: OutreachTarget[];
-  emailSequence: OutreachEmail[];
-  status: "draft" | "finding_emails" | "ready" | "active" | "paused" | "completed";
+  status: "draft" | "finding_contacts" | "ready" | "active" | "paused" | "completed";
   stats: {
-    targetsFound: number;
+    contactsFound: number;
     emailsSent: number;
     opened: number;
     replied: number;
@@ -57,9 +56,8 @@ export interface OutreachEmail {
 
 export interface OutreachProspect {
   target: OutreachTarget;
-  contacts: HunterEmail[];
-  bestContact: HunterEmail | null;
-  personalizedEmail: OutreachEmail | null;
+  contact: ApolloContact | null;
+  personalizedEmails: OutreachEmail[];
 }
 
 // ============================================
@@ -67,12 +65,10 @@ export interface OutreachProspect {
 // ============================================
 
 export class OutreachOrchestrator {
-  private hunter: HunterClient;
-  private instantly: InstantlyClient;
+  private apollo: ApolloClient;
 
-  constructor(hunterApiKey?: string, instantlyApiKey?: string) {
-    this.hunter = new HunterClient(hunterApiKey);
-    this.instantly = new InstantlyClient(instantlyApiKey);
+  constructor(apolloApiKey?: string) {
+    this.apollo = new ApolloClient(apolloApiKey);
   }
 
   /**
@@ -114,31 +110,39 @@ export class OutreachOrchestrator {
   }
 
   /**
-   * Find contacts for outreach targets
+   * Find contacts for outreach targets using Apollo
    */
   async findContacts(targets: OutreachTarget[]): Promise<OutreachProspect[]> {
     const prospects: OutreachProspect[] = [];
 
     for (const target of targets) {
-      const result = await this.hunter.domainSearch(target.domain, {
-        type: "personal",
-        limit: 5,
+      // Search for relevant contacts at this domain
+      const contacts = await this.apollo.searchContacts(target.domain, {
+        titles: [
+          "Editor",
+          "Content Manager", 
+          "Marketing Manager",
+          "SEO Manager",
+          "Head of Content",
+          "Blogger",
+          "Writer",
+          "Founder",
+          "Owner",
+        ],
+        limit: 3,
       });
 
-      const contacts = result?.emails || [];
-      
-      // Find the best contact (editor, marketing, content roles)
+      // Pick the best contact
       const bestContact = this.selectBestContact(contacts);
 
       prospects.push({
         target,
-        contacts,
-        bestContact,
-        personalizedEmail: null,
+        contact: bestContact,
+        personalizedEmails: [],
       });
     }
 
-    return prospects;
+    return prospects.filter(p => p.contact !== null);
   }
 
   /**
@@ -148,7 +152,7 @@ export class OutreachOrchestrator {
     prospect: OutreachProspect,
     ourContent: { title: string; url: string; summary: string }
   ): Promise<OutreachEmail[]> {
-    const contactName = prospect.bestContact?.first_name || "there";
+    const contactName = prospect.contact?.first_name || "there";
     
     const prompt = `Generate a 3-email outreach sequence for link building.
 
@@ -158,7 +162,7 @@ Context:
 - Their page URL: ${prospect.target.pageUrl}
 - Outreach reason: ${prospect.target.reason}
 - Contact name: ${contactName}
-- Contact role: ${prospect.bestContact?.position || "Unknown"}
+- Contact role: ${prospect.contact?.title || "Unknown"}
 
 Our content:
 - Title: ${ourContent.title}
@@ -204,73 +208,145 @@ Rules:
         { model: "sonnet", maxTokens: 1500 }
       );
 
-      return JSON.parse(response.content);
+      const emails = JSON.parse(response.content);
+      prospect.personalizedEmails = emails;
+      return emails;
     } catch {
       // Return template emails on error
-      return this.getTemplateEmails(prospect, ourContent);
+      const templates = this.getTemplateEmails(prospect, ourContent);
+      prospect.personalizedEmails = templates;
+      return templates;
     }
   }
 
   /**
-   * Create and launch an outreach campaign
+   * Create and launch an outreach campaign in Apollo
    */
   async createCampaign(
     name: string,
-    prospects: OutreachProspect[],
-    fromEmail: string
-  ): Promise<string | null> {
-    // Create campaign in Instantly
-    const campaign = await this.instantly.createCampaign(name, {
-      from_email: fromEmail,
-      daily_limit: 50,
-    });
-
-    if (!campaign) {
-      console.error("Failed to create campaign");
+    prospects: OutreachProspect[]
+  ): Promise<{ campaignId: string; contactsAdded: number } | null> {
+    // Get email sequence from first prospect (they all use same template)
+    const emailTemplate = prospects[0]?.personalizedEmails || [];
+    
+    if (emailTemplate.length === 0) {
+      console.error("No email templates available");
       return null;
     }
 
-    // Add leads
-    const leads: InstantlyLead[] = prospects
-      .filter(p => p.bestContact?.value)
-      .map(p => ({
-        email: p.bestContact!.value,
-        first_name: p.bestContact!.first_name || undefined,
-        last_name: p.bestContact!.last_name || undefined,
-        company_name: p.target.domain,
-        website: p.target.pageUrl,
-        custom_variables: {
-          page_title: p.target.pageTitle,
-          outreach_reason: p.target.reason,
-        },
-      }));
+    // Create sequence steps
+    const steps: ApolloSequenceStep[] = emailTemplate.map((email, index) => ({
+      position: index + 1,
+      type: "auto_email" as const,
+      wait_time: email.delayDays,
+      subject: email.subject,
+      body: email.body,
+    }));
 
-    await this.instantly.addLeads(campaign.id, leads);
-
-    // Set email sequence (use first prospect's emails as template)
-    if (prospects[0]?.personalizedEmail) {
-      const sequence = await this.generateOutreachEmails(
-        prospects[0],
-        { title: "Our Resource", url: "https://example.com", summary: "..." }
-      );
-
-      const steps: InstantlyEmailStep[] = sequence.map(email => ({
-        subject: email.subject,
-        body: email.body,
-        delay_days: email.delayDays,
-      }));
-
-      await this.instantly.setEmailSequence(campaign.id, steps);
+    // Create the sequence in Apollo
+    const sequence = await this.apollo.createSequence(name, steps);
+    
+    if (!sequence) {
+      console.error("Failed to create sequence");
+      return null;
     }
 
-    return campaign.id;
+    // Add contacts to the sequence
+    const contactIds = prospects
+      .filter(p => p.contact?.id)
+      .map(p => p.contact!.id);
+
+    const result = await this.apollo.addContactsToSequence(sequence.id, contactIds);
+
+    return {
+      campaignId: sequence.id,
+      contactsAdded: result.added,
+    };
+  }
+
+  /**
+   * Start an outreach campaign
+   */
+  async startCampaign(campaignId: string): Promise<boolean> {
+    return this.apollo.activateSequence(campaignId);
+  }
+
+  /**
+   * Pause an outreach campaign
+   */
+  async pauseCampaign(campaignId: string): Promise<boolean> {
+    return this.apollo.pauseSequence(campaignId);
   }
 
   /**
    * Get campaign performance
    */
   async getCampaignStats(campaignId: string) {
-    return this.instantly.getCampaignStats(campaignId);
+    return this.apollo.getSequenceStats(campaignId);
+  }
+
+  /**
+   * Full outreach workflow: find → contact → email → launch
+   */
+  async runOutreachCampaign(
+    keyword: string,
+    ourContent: { title: string; url: string; summary: string },
+    serpResults: Array<{ url: string; title: string; snippet: string }>,
+    options: {
+      autoLaunch?: boolean;
+      maxProspects?: number;
+    } = {}
+  ): Promise<OutreachCampaign | null> {
+    const { autoLaunch = false, maxProspects = 20 } = options;
+
+    // 1. Find opportunities
+    const targets = await this.findOpportunities(keyword, ourContent.url, serpResults);
+    const limitedTargets = targets.slice(0, maxProspects);
+
+    if (limitedTargets.length === 0) {
+      console.log("No outreach targets found");
+      return null;
+    }
+
+    // 2. Find contacts
+    const prospects = await this.findContacts(limitedTargets);
+
+    if (prospects.length === 0) {
+      console.log("No contacts found");
+      return null;
+    }
+
+    // 3. Generate personalized emails
+    for (const prospect of prospects) {
+      await this.generateOutreachEmails(prospect, ourContent);
+    }
+
+    // 4. Create campaign
+    const campaignName = `${keyword} - ${new Date().toLocaleDateString()}`;
+    const result = await this.createCampaign(campaignName, prospects);
+
+    if (!result) {
+      return null;
+    }
+
+    // 5. Optionally launch
+    if (autoLaunch) {
+      await this.startCampaign(result.campaignId);
+    }
+
+    return {
+      id: result.campaignId,
+      name: campaignName,
+      targets: limitedTargets,
+      status: autoLaunch ? "active" : "ready",
+      stats: {
+        contactsFound: prospects.length,
+        emailsSent: 0,
+        opened: 0,
+        replied: 0,
+        linksWon: 0,
+      },
+    };
   }
 
   // ============================================
@@ -281,7 +357,6 @@ Rules:
     result: { url: string; title: string; snippet: string },
     keyword: string
   ): Promise<{ isGoodTarget: boolean; reason: OutreachReason; priority: number }> {
-    // Simple heuristics for target quality
     const title = result.title.toLowerCase();
     const snippet = result.snippet.toLowerCase();
     
@@ -308,33 +383,22 @@ Rules:
     return { isGoodTarget: false, reason: "skyscraper", priority: 0 };
   }
 
-  private selectBestContact(contacts: HunterEmail[]): HunterEmail | null {
+  private selectBestContact(contacts: ApolloContact[]): ApolloContact | null {
     if (contacts.length === 0) return null;
 
-    // Priority roles for outreach
-    const priorityRoles = [
-      "editor",
-      "content",
-      "marketing",
-      "seo",
-      "writer",
-      "blogger",
-      "founder",
-      "owner",
-    ];
-
-    for (const role of priorityRoles) {
-      const match = contacts.find(c => 
-        c.position?.toLowerCase().includes(role) ||
-        c.department?.toLowerCase().includes(role)
-      );
-      if (match) return match;
+    // Priority: verified emails first
+    const verified = contacts.filter(c => c.email_status === "verified");
+    if (verified.length > 0) {
+      return verified[0];
     }
 
-    // Return highest confidence personal email
-    return contacts
-      .filter(c => c.type === "personal")
-      .sort((a, b) => b.confidence - a.confidence)[0] || contacts[0];
+    // Then guessed emails
+    const guessed = contacts.filter(c => c.email_status === "guessed");
+    if (guessed.length > 0) {
+      return guessed[0];
+    }
+
+    return contacts[0];
   }
 
   private getTemplateEmails(
@@ -366,7 +430,7 @@ Best,
 
 Just wanted to follow up on my previous email.
 
-I thought this stat from our guide might interest you: [Include relevant stat]
+I thought this might interest you - our guide has been getting great feedback from readers in the ${prospect.target.domain} space.
 
 Happy to chat if you have any questions!
 
@@ -396,4 +460,3 @@ Thanks for your time!
 // ============================================
 
 export const outreach = new OutreachOrchestrator();
-

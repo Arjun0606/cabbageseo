@@ -24,9 +24,8 @@ export { WordPressClient, createWordPressClient } from "./wordpress/client";
 export { WebflowClient, createWebflowClient } from "./webflow/client";
 export { ShopifyClient, createShopifyClient } from "./shopify/client";
 
-// Outreach / Link Building
-export { HunterClient, hunter } from "./hunter/client";
-export { InstantlyClient, instantly } from "./instantly/client";
+// Outreach / Link Building (Apollo.io = Hunter + Instantly combined)
+export { ApolloClient, apollo } from "./apollo/client";
 
 // Integration status checker
 export type IntegrationType = 
@@ -41,8 +40,7 @@ export type IntegrationType =
   | "wordpress"
   | "webflow"
   | "shopify"
-  | "hunter"
-  | "instantly";
+  | "apollo";
 
 export interface IntegrationStatus {
   id: IntegrationType;
@@ -128,18 +126,11 @@ export async function checkAllIntegrations(): Promise<IntegrationStatus[]> {
     configured: Boolean(process.env.SHOPIFY_STORE_URL && process.env.SHOPIFY_ACCESS_TOKEN),
   });
 
-  // Outreach - Hunter.io
+  // Outreach - Apollo.io (email finding + sequences)
   statuses.push({
-    id: "hunter",
-    name: "Hunter.io",
-    configured: Boolean(process.env.HUNTER_API_KEY),
-  });
-
-  // Outreach - Instantly.ai
-  statuses.push({
-    id: "instantly",
-    name: "Instantly.ai",
-    configured: Boolean(process.env.INSTANTLY_API_KEY),
+    id: "apollo",
+    name: "Apollo.io",
+    configured: Boolean(process.env.APOLLO_API_KEY),
   });
 
   return statuses;

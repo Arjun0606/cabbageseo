@@ -9,6 +9,15 @@
 // Unified SEO Data Service (DataForSEO + SerpAPI)
 export { seoData, SEODataService } from "./data-service";
 
+// Backlink Service (Ahrefs alternative - DataForSEO + GSC + Claude)
+export {
+  BacklinkService,
+  backlinks,
+  type BacklinkProfile,
+  type CompetitorAnalysis,
+  type LinkGapOpportunity,
+} from "./backlink-service";
+
 // Internal Linking (LinkWhisper-style)
 export { 
   InternalLinkingEngine, 
