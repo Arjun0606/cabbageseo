@@ -1,182 +1,200 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getDodo } from "@/lib/billing/dodo";
-
 /**
  * Dodo Payments Webhook Handler
- * https://docs.dodopayments.com/integrate/webhooks
  * 
- * Handles:
+ * Handles payment events:
  * - subscription.created
  * - subscription.updated
  * - subscription.canceled
- * - payment.succeeded
- * - payment.failed
  * - invoice.paid
+ * - invoice.payment_failed
+ * - payment_intent.succeeded
  */
+
+import { NextRequest, NextResponse } from "next/server";
+import { createServiceClient } from "@/lib/supabase/server";
+import { dodo } from "@/lib/billing/dodo-client";
+import { usageTracker } from "@/lib/billing/usage-tracker";
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.text();
-    const signature = request.headers.get("x-dodo-signature");
-    const webhookSecret = process.env.DODO_WEBHOOK_SECRET || "";
-
-    if (!signature) {
-      return NextResponse.json(
-        { error: "Missing webhook signature" },
-        { status: 400 }
-      );
-    }
+    const payload = await request.text();
+    const signature = request.headers.get("dodo-signature") || "";
 
     // Verify webhook signature
-    const dodo = getDodo();
-    const isValid = dodo.verifyWebhook(body, signature, webhookSecret);
-
-    if (!isValid) {
-      return NextResponse.json(
-        { error: "Invalid webhook signature" },
-        { status: 401 }
-      );
+    if (!dodo.verifyWebhookSignature(payload, signature)) {
+      console.error("[Dodo Webhook] Invalid signature");
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
-    const event = JSON.parse(body);
-    const eventType = event.type;
-    const data = event.data;
+    // Parse event
+    const event = dodo.parseWebhookEvent(payload);
+    const { type, data } = event;
 
-    console.log(`[Dodo Webhook] Received: ${eventType}`);
+    console.log(`[Dodo Webhook] Received: ${type}`);
 
-    switch (eventType) {
-      // ============================================
-      // SUBSCRIPTION EVENTS
-      // ============================================
-      
-      case "subscription.created": {
-        // New subscription created
-        const { customer_id, product_id, metadata } = data;
-        const organizationId = metadata?.organizationId;
-        const planId = metadata?.planId;
+    const supabase = createServiceClient();
 
-        console.log(`[Dodo] Subscription created for org: ${organizationId}, plan: ${planId}`);
-
-        // TODO: Update organization in database
-        // await db.update(organizations)
-        //   .set({
-        //     dodoCustomerId: customer_id,
-        //     dodoSubscriptionId: data.id,
-        //     plan: planId,
-        //     subscriptionStatus: 'active',
-        //     currentPeriodStart: new Date(data.current_period_start),
-        //     currentPeriodEnd: new Date(data.current_period_end),
-        //   })
-        //   .where(eq(organizations.id, organizationId));
-
-        break;
-      }
-
+    switch (type) {
+      case "subscription.created":
       case "subscription.updated": {
-        // Subscription changed (upgrade/downgrade)
-        const { metadata } = data;
-        const organizationId = metadata?.organizationId;
-        const newPlanId = metadata?.planId;
+        const subscription = data as {
+          id: string;
+          customer_id: string;
+          product_id: string;
+          status: string;
+          current_period_start: string;
+          current_period_end: string;
+          metadata?: { organization_id?: string };
+        };
 
-        console.log(`[Dodo] Subscription updated for org: ${organizationId}, new plan: ${newPlanId}`);
-
-        // TODO: Update organization plan
+        // Update organization subscription
+        const orgId = subscription.metadata?.organization_id;
+        if (orgId) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase as any)
+            .from("organizations")
+            .update({
+              subscription_id: subscription.id,
+              subscription_status: subscription.status,
+              plan_id: mapProductToPlan(subscription.product_id),
+              billing_period_start: subscription.current_period_start,
+              billing_period_end: subscription.current_period_end,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", orgId);
+        }
         break;
       }
 
       case "subscription.canceled": {
-        // Subscription canceled
-        const { metadata } = data;
-        const organizationId = metadata?.organizationId;
+        const subscription = data as {
+          id: string;
+          metadata?: { organization_id?: string };
+        };
 
-        console.log(`[Dodo] Subscription canceled for org: ${organizationId}`);
-
-        // TODO: Mark subscription as canceled, downgrade at period end
+        const orgId = subscription.metadata?.organization_id;
+        if (orgId) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase as any)
+            .from("organizations")
+            .update({
+              subscription_status: "canceled",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", orgId);
+        }
         break;
       }
-
-      case "subscription.trial_ending": {
-        // Trial ending soon (usually 3 days before)
-        const { metadata, customer_id } = data;
-        const organizationId = metadata?.organizationId;
-
-        console.log(`[Dodo] Trial ending for org: ${organizationId}`);
-
-        // TODO: Send trial ending email
-        break;
-      }
-
-      // ============================================
-      // PAYMENT EVENTS
-      // ============================================
-
-      case "payment.succeeded": {
-        // Payment successful
-        const { amount, currency, customer_id, metadata } = data;
-        const organizationId = metadata?.organizationId;
-
-        console.log(`[Dodo] Payment succeeded: ${amount} ${currency} for org: ${organizationId}`);
-
-        // TODO: Record payment, reset usage counters for new billing period
-        break;
-      }
-
-      case "payment.failed": {
-        // Payment failed
-        const { customer_id, metadata, failure_reason } = data;
-        const organizationId = metadata?.organizationId;
-
-        console.log(`[Dodo] Payment failed for org: ${organizationId}: ${failure_reason}`);
-
-        // TODO: Send payment failed email, possibly pause service
-        break;
-      }
-
-      // ============================================
-      // INVOICE EVENTS
-      // ============================================
 
       case "invoice.paid": {
-        // Invoice paid (includes overages)
-        const { amount, metadata } = data;
-        const organizationId = metadata?.organizationId;
+        const invoice = data as {
+          id: string;
+          customer_id: string;
+          subscription_id?: string;
+          amount: number;
+          metadata?: { organization_id?: string };
+        };
 
-        console.log(`[Dodo] Invoice paid: ${amount} for org: ${organizationId}`);
+        const orgId = invoice.metadata?.organization_id;
+        if (orgId) {
+          // Record payment
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase as any)
+            .from("payments")
+            .insert({
+              organization_id: orgId,
+              invoice_id: invoice.id,
+              amount: invoice.amount,
+              status: "paid",
+              created_at: new Date().toISOString(),
+            });
 
-        // TODO: Record invoice, update billing history
+          // If subscription payment, reset usage for new period
+          if (invoice.subscription_id) {
+            await usageTracker.resetUsageForNewPeriod(orgId);
+          }
+        }
         break;
       }
 
       case "invoice.payment_failed": {
-        // Invoice payment failed
-        const { metadata } = data;
-        const organizationId = metadata?.organizationId;
+        const invoice = data as {
+          id: string;
+          customer_id: string;
+          metadata?: { organization_id?: string };
+        };
 
-        console.log(`[Dodo] Invoice payment failed for org: ${organizationId}`);
+        const orgId = invoice.metadata?.organization_id;
+        if (orgId) {
+          // Update subscription status
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase as any)
+            .from("organizations")
+            .update({
+              subscription_status: "past_due",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", orgId);
 
-        // TODO: Handle failed invoice payment
+          // TODO: Send payment failed email
+        }
         break;
       }
 
-      // ============================================
-      // USAGE EVENTS
-      // ============================================
+      case "payment_intent.succeeded": {
+        const paymentIntent = data as {
+          id: string;
+          amount: number;
+          metadata?: { 
+            organization_id?: string;
+            type?: string;
+          };
+        };
 
-      case "usage.threshold_reached": {
-        // Usage threshold reached (e.g., 80% of limit)
-        const { meter_id, current_usage, threshold, metadata } = data;
-        const organizationId = metadata?.organizationId;
+        // Handle on-demand credit purchase
+        if (paymentIntent.metadata?.type === "on_demand_credits") {
+          const orgId = paymentIntent.metadata.organization_id;
+          if (orgId) {
+            await usageTracker.addOnDemandCredits(
+              orgId,
+              paymentIntent.amount,
+              paymentIntent.id
+            );
+          }
+        }
+        break;
+      }
 
-        console.log(`[Dodo] Usage threshold reached for org: ${organizationId}, meter: ${meter_id}`);
+      case "checkout.session.completed": {
+        const session = data as {
+          id: string;
+          customer_id: string;
+          subscription_id?: string;
+          metadata?: { organization_id?: string };
+        };
 
-        // TODO: Send usage warning email
+        // Link customer and subscription to organization
+        const orgId = session.metadata?.organization_id;
+        if (orgId) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase as any)
+            .from("organizations")
+            .update({
+              dodo_customer_id: session.customer_id,
+              subscription_id: session.subscription_id,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", orgId);
+        }
         break;
       }
 
       default:
-        console.log(`[Dodo] Unhandled event type: ${eventType}`);
+        console.log(`[Dodo Webhook] Unhandled event type: ${type}`);
     }
 
     return NextResponse.json({ received: true });
+
   } catch (error) {
     console.error("[Dodo Webhook] Error:", error);
     return NextResponse.json(
@@ -186,8 +204,13 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Dodo might send GET requests for webhook verification
-export async function GET() {
-  return NextResponse.json({ status: "Dodo webhook endpoint active" });
+// Map Dodo product IDs to our plan IDs
+function mapProductToPlan(productId: string): string {
+  const mapping: Record<string, string> = {
+    "prod_starter": "starter",
+    "prod_pro": "pro",
+    "prod_business": "business",
+    "prod_enterprise": "enterprise",
+  };
+  return mapping[productId] || "starter";
 }
-

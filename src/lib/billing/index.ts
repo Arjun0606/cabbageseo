@@ -1,86 +1,40 @@
 /**
- * Billing Module for CabbageSEO
- * 
- * Exports:
- * - Usage manager (plan limits, on-demand, 90% markup)
- * - Wallet monitor (balance tracking, alerts)
- * 
- * Usage:
- * ```ts
- * import { initBilling, getWalletStatus, setWalletBalance } from "@/lib/billing";
- * 
- * // Initialize at app startup
- * initBilling();
- * 
- * // Set initial wallet balance
- * setWalletBalance(5000); // $50
- * 
- * // Check status
- * const status = getWalletStatus(monthlyRevenue);
- * ```
+ * Billing Module - Centralized Exports
  */
 
-// Usage manager exports
-export {
-  PLAN_LIMITS,
-  ACTION_COSTS,
-  OVERAGE_MARKUP,
-  DEFAULT_SPENDING_LIMIT_CENTS,
-  checkUsageAllowed,
-  recordUsage,
-  calculateOverageBill,
-  getUsageSummary,
-  formatCost,
-  calculateUserCharge,
-  type ActionType,
-  type PlanType,
-} from "./usage-manager";
+export { dodo, DodoPaymentsClient } from "./dodo-client";
+export { usageTracker, UsageTracker } from "./usage-tracker";
+export { 
+  PLANS, 
+  ON_DEMAND_PACKAGES, 
+  USAGE_COSTS,
+  getPlan, 
+  getPlanByPrice, 
+  getOnDemandPackage,
+  calculateOverageCharges,
+  formatPrice,
+} from "./plans";
 
-// Wallet monitor exports
-export {
-  setWalletBalance,
-  recordSpending,
-  getWalletStatus,
-  shouldSendAlert,
-  formatWalletStatus,
-  sendWalletAlert,
-  calculateTopUpAmount,
-  ALERT_THRESHOLDS,
-} from "./wallet-monitor";
+export type {
+  DodoConfig,
+  Customer,
+  Product,
+  Subscription,
+  UsageRecord as DodoUsageRecord,
+  Invoice,
+  PaymentIntent,
+  CheckoutSession,
+} from "./dodo-client";
 
-// Import for initialization
-import { recordSpending } from "./wallet-monitor";
-import { setSpendingTracker } from "@/lib/ai/claude-client";
+export type {
+  UsageType,
+  UsageRecord,
+  UsageStatus,
+  OrganizationUsage,
+} from "./usage-tracker";
 
-/**
- * Initialize billing system
- * Connects wallet monitoring to AI client
- */
-export function initBilling(): void {
-  // Connect spending tracker to Claude client
-  setSpendingTracker(recordSpending);
-  console.log("💰 Billing system initialized - spending tracking enabled");
-}
-
-/**
- * Quick status check for admin dashboard
- */
-export function getQuickStatus(): {
-  healthy: boolean;
-  level: "GREEN" | "YELLOW" | "RED";
-  action: string;
-} {
-  const { getWalletStatus } = require("./wallet-monitor");
-  const status = getWalletStatus();
-  
-  return {
-    healthy: status.alertLevel === "GREEN",
-    level: status.alertLevel,
-    action: status.alertLevel === "GREEN" 
-      ? "All good!" 
-      : status.alertLevel === "YELLOW"
-      ? "Check customer payments"
-      : "⚠️ Add funds now!",
-  };
-}
-
+export type {
+  PlanLimit,
+  Plan,
+  OnDemandPackage,
+} from "./plans";
