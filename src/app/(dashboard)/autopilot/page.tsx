@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Sparkles,
@@ -233,7 +233,7 @@ function TaskCard({
 // MAIN PAGE
 // ============================================
 
-export default function AutopilotPage() {
+function AutopilotContent() {
   const searchParams = useSearchParams();
   const initialTask = searchParams.get("task");
 
@@ -611,5 +611,26 @@ export default function AutopilotPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Loading fallback for Suspense
+function AutopilotLoading() {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+        <p className="text-muted-foreground">Loading Autopilot...</p>
+      </div>
+    </div>
+  );
+}
+
+// Wrapper with Suspense boundary
+export default function AutopilotPage() {
+  return (
+    <Suspense fallback={<AutopilotLoading />}>
+      <AutopilotContent />
+    </Suspense>
   );
 }
