@@ -53,6 +53,7 @@ export async function updateSession(request: NextRequest) {
     "/login",
     "/signup",
     "/forgot-password",
+    "/reset-password",
     "/terms",
     "/privacy",
   ];
