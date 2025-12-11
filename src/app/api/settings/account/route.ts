@@ -172,3 +172,79 @@ export async function PUT(request: NextRequest) {
   }
 }
 
+// DELETE - Delete account
+export async function DELETE() {
+  const supabase = await createClient();
+  
+  if (!supabase) {
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    // Get user's organization and role
+    const { data: userData } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    const profile = userData as { organization_id?: string; role?: string } | null;
+    const orgId = profile?.organization_id;
+    const isOwner = profile?.role === "owner";
+
+    // If user is org owner, delete the entire organization and all its data
+    if (isOwner && orgId) {
+      // First, get all site IDs for this organization
+      const { data: sitesData } = await supabase
+        .from("sites")
+        .select("id")
+        .eq("organization_id", orgId);
+      
+      const siteIds = (sitesData as { id: string }[] | null)?.map(s => s.id) || [];
+
+      if (siteIds.length > 0) {
+        // Delete all site-related data
+        await supabase.from("aio_analyses").delete().in("site_id", siteIds);
+        await supabase.from("entities").delete().in("site_id", siteIds);
+        await supabase.from("ai_citations").delete().in("site_id", siteIds);
+        await supabase.from("content").delete().in("site_id", siteIds);
+        await supabase.from("keywords").delete().in("site_id", siteIds);
+        await supabase.from("issues").delete().in("site_id", siteIds);
+        await supabase.from("pages").delete().in("site_id", siteIds);
+        await supabase.from("audits").delete().in("site_id", siteIds);
+        await supabase.from("sites").delete().eq("organization_id", orgId);
+      }
+
+      // Delete organization-level data
+      await supabase.from("integrations").delete().eq("organization_id", orgId);
+      await supabase.from("tasks").delete().eq("organization_id", orgId);
+      await supabase.from("usage").delete().eq("organization_id", orgId);
+      await supabase.from("credit_balance").delete().eq("organization_id", orgId);
+      await supabase.from("users").delete().eq("organization_id", orgId);
+      await supabase.from("organizations").delete().eq("id", orgId);
+    } else if (orgId) {
+      // Just delete the user record (not the owner)
+      await supabase.from("users").delete().eq("id", user.id);
+    }
+
+    // Sign out the user
+    await supabase.auth.signOut();
+
+    return NextResponse.json({ 
+      success: true, 
+      message: "Account deleted successfully" 
+    });
+
+  } catch (error) {
+    console.error("[Account API] Delete error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to delete account" },
+      { status: 500 }
+    );
+  }
+}

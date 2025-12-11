@@ -443,13 +443,8 @@ export default function OnboardingPage() {
               Start Over
             </Button>
             <Button onClick={() => {
-              // Only retry if URL is still set, otherwise reset
-              if (url) {
-                setError(null);
-                runAnalysis();
-              } else {
-                handleRetry();
-              }
+              setError(null);
+              runAnalysis();
             }}>
               Retry Analysis
             </Button>
