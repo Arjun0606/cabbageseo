@@ -420,6 +420,214 @@ Return JSON:
 // PROMPT HELPERS
 // ============================================
 
+// ============================================
+  // AIO (AI OPTIMIZATION) PROMPTS
+  // ============================================
+
+  /**
+   * Optimize content for AI visibility
+   * Model: Sonnet (quality optimization)
+   */
+  optimizeForAIO: (
+    content: string,
+    keyword: string,
+    mode: "seo" | "aio" | "balanced" = "balanced"
+  ) => ({
+    system: `You are an expert in optimizing content for AI search platforms (ChatGPT, Perplexity, Google AI Overviews, Claude, Gemini).
+
+AI platforms value:
+- Clear, quotable paragraphs (50-150 words each)
+- Direct answers to questions
+- Named entities (people, products, organizations, concepts)
+- Statistics with sources
+- FAQ sections with concise answers
+- Key Takeaways/TL;DR sections
+- Definitions of key terms
+- Expert attribution
+- Step-by-step instructions when relevant
+
+Return ONLY the optimized content in markdown format.`,
+    user: `Optimize this content for ${mode === "aio" ? "AI search platforms" : mode === "balanced" ? "both traditional SEO and AI search" : "traditional SEO"}.
+
+Target keyword: "${keyword}"
+Mode: ${mode.toUpperCase()}
+
+Current content:
+${content.slice(0, 8000)}${content.length > 8000 ? "\n...[truncated]" : ""}
+
+Optimization instructions:
+1. ${mode !== "seo" ? "Add a Key Takeaways section near the top (3-5 bullet points)" : "Ensure keyword is in first paragraph"}
+2. ${mode !== "seo" ? "Break paragraphs into quotable 50-150 word chunks" : "Optimize headings for keywords"}
+3. ${mode !== "seo" ? "Add clear definitions for key terms using 'X is defined as...' format" : "Ensure meta content is optimized"}
+4. ${mode !== "seo" ? "Include specific statistics/numbers where possible" : "Check keyword density"}
+5. ${mode !== "seo" ? "Add FAQ section with 3-5 questions if not present" : "Verify internal linking opportunities"}
+6. ${mode !== "seo" ? "Ensure each section starts with a direct answer" : "Check heading hierarchy"}
+
+Return the optimized content only, no explanations.`,
+  }),
+
+  /**
+   * Generate AIO-optimized outline
+   * Model: Sonnet (strategic planning)
+   */
+  generateAIOOutline: (
+    keyword: string,
+    serpResults: Array<{ title: string; snippet: string }>,
+    wordCount: number = 2000
+  ) => ({
+    system: `You are an expert content strategist optimizing for AI search platforms.
+
+Content must be structured for:
+1. Google AI Overviews - Featured snippets, FAQ schema, E-E-A-T
+2. ChatGPT/SearchGPT - Quotable paragraphs, key takeaways
+3. Perplexity - Citation-worthy content, expert sources
+4. Claude - Semantic clarity, context completeness
+5. Gemini - Schema markup, multimodal readiness
+
+Return ONLY valid JSON.`,
+    user: `Create an AIO-optimized content outline for: "${keyword}"
+
+Top-ranking competitors:
+${serpResults.slice(0, 5).map((r, i) => `${i + 1}. ${r.title}\n   ${r.snippet}`).join("\n\n")}
+
+Target: ${wordCount} words, optimized for AI citation
+
+Return JSON:
+{
+  "title": "Compelling article title (55-60 chars)",
+  "metaTitle": "SEO title with keyword (max 60 chars)",
+  "metaDescription": "Compelling description with keyword (max 155 chars)",
+  "keyTakeaways": ["3-5 key points that summarize the article"],
+  "headings": [
+    {
+      "level": 2,
+      "text": "Heading that answers a question",
+      "directAnswer": "2-3 sentence direct answer for this section",
+      "points": ["Point to cover", "Another point"],
+      "entities": ["Named entities to include in this section"],
+      "wordCount": 300
+    }
+  ],
+  "faqs": [
+    {"question": "FAQ question?", "answer": "Concise, quotable answer (50-100 words)"}
+  ],
+  "definitions": ["Key term: Clear definition"],
+  "statistics": ["Specific stat to include with source"],
+  "expertQuotes": ["Expert quote or attribution to add"],
+  "schemaTypes": ["Article", "FAQPage", "HowTo"]
+}`,
+  }),
+
+  /**
+   * Inject entities into content
+   * Model: Haiku (fast enhancement)
+   */
+  injectEntities: (
+    content: string,
+    entitiesToAdd: string[]
+  ) => ({
+    system: `You are an expert content editor specializing in entity-rich content.
+
+Rules:
+- Add named entities naturally into the text
+- Don't force entities where they don't fit
+- Define entities when first introduced
+- Maintain the original tone and flow`,
+    user: `Enhance this content by naturally incorporating these entities:
+
+Entities to add: ${entitiesToAdd.join(", ")}
+
+Content:
+${content.slice(0, 6000)}
+
+Return ONLY the enhanced content with entities incorporated naturally.`,
+  }),
+
+  /**
+   * Generate Key Takeaways section
+   * Model: Haiku (fast extraction)
+   */
+  generateKeyTakeaways: (content: string, keyword: string) => ({
+    system: `You are an expert content summarizer. Create concise, quotable key takeaways.
+Return ONLY valid JSON array.`,
+    user: `Generate 5 key takeaways from this content about "${keyword}":
+
+${content.slice(0, 4000)}
+
+Requirements:
+- Each takeaway: 15-25 words
+- Start with action verbs or specific facts
+- Include the most important/unique insights
+- Be quotable by AI platforms
+
+Return JSON array:
+["Key takeaway 1", "Key takeaway 2", ...]`,
+  }),
+
+  /**
+   * Improve content quotability
+   * Model: Sonnet (quality rewriting)
+   */
+  improveQuotability: (content: string) => ({
+    system: `You are an expert editor specializing in making content quotable for AI platforms.
+
+Rules for quotable content:
+- Paragraphs should be 50-150 words
+- Each paragraph should contain one main idea
+- Start paragraphs with the conclusion/answer
+- Include specific facts, numbers, or expert names
+- Use clear, unambiguous language`,
+    user: `Improve this content to make it more quotable by AI platforms:
+
+${content.slice(0, 6000)}
+
+Instructions:
+1. Break long paragraphs into 50-150 word chunks
+2. Ensure each paragraph leads with its main point
+3. Add transitional sentences where needed
+4. Maintain the original meaning and tone
+
+Return ONLY the improved content.`,
+  }),
+
+  /**
+   * Analyze content for AIO readiness
+   * Model: Sonnet (thorough analysis)
+   */
+  analyzeAIOReadiness: (content: string, keyword: string) => ({
+    system: `You are an expert in AI search optimization. Analyze content for AI platform visibility.
+Return ONLY valid JSON.`,
+    user: `Analyze this content's AI visibility readiness for: "${keyword}"
+
+Content:
+${content.slice(0, 5000)}
+
+Analyze and return JSON:
+{
+  "overallScore": 0-100,
+  "platformScores": {
+    "googleAIO": 0-100,
+    "chatGPT": 0-100,
+    "perplexity": 0-100,
+    "claude": 0-100,
+    "gemini": 0-100
+  },
+  "breakdown": {
+    "entityDensity": {"score": 0-100, "found": 5, "recommended": 10},
+    "quotability": {"score": 0-100, "avgParagraphWords": 85, "quotableSnippets": 8},
+    "answerStructure": {"score": 0-100, "hasDirectAnswer": true, "hasKeyTakeaways": false},
+    "schemaReadiness": {"score": 0-100, "detectedTypes": [], "recommendedTypes": ["FAQPage"]},
+    "freshness": {"score": 0-100, "lastUpdated": null, "recommendation": "Add date"}
+  },
+  "topIssues": [
+    {"priority": "high", "issue": "Missing FAQ section", "fix": "Add 3-5 FAQs", "impact": "+15 points"}
+  ],
+  "entitiesFound": ["Entity 1", "Entity 2"],
+  "quotableSnippets": ["Best snippet 1", "Best snippet 2"]
+}`,
+  }),
+};
+
 /**
  * Get estimated tokens for a prompt
  * Rough estimate: 4 characters = 1 token

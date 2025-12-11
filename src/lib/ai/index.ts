@@ -39,6 +39,7 @@ export {
   type KeywordCluster,
   type ContentAnalysis,
   type PipelineOptions,
+  type AIOAnalysisResult,
 } from "./content-pipeline";
 
 // Prompts

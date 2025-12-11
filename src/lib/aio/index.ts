@@ -36,3 +36,15 @@ export {
   type VisibilityScoreOptions,
 } from "./visibility-score";
 
+// AIO Audit Engine
+export {
+  AIOAuditEngine,
+  createAIOAuditEngine,
+  type AIOIssue,
+  type AIOAuditResult,
+  type AIOAuditSummary,
+  type AIOIssueType,
+  type AIOIssueSeverity,
+  type AIOIssueCategory,
+} from "./aio-audit";
+

@@ -178,6 +178,133 @@ function IssueCard({
   );
 }
 
+function CitationsPanel({ siteId }: { siteId: string | null }) {
+  const { data: citationsData, isLoading } = useQuery({
+    queryKey: ["aio-citations", siteId],
+    queryFn: async () => {
+      if (!siteId) return null;
+      const response = await fetch(`/api/aio/citations?siteId=${siteId}`);
+      if (!response.ok) throw new Error("Failed to fetch citations");
+      return response.json();
+    },
+    enabled: !!siteId,
+  });
+
+  const citations = citationsData?.data?.citations || [];
+  const platformCounts = citationsData?.data?.platformCounts || {};
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Citations</CardTitle>
+          <CardDescription>Loading citation data...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-12">
+            <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const totalCitations = Object.values(platformCounts).reduce((a: number, b) => a + (b as number), 0);
+
+  return (
+    <div className="space-y-6">
+      {/* Citation Stats */}
+      <div className="grid gap-4 md:grid-cols-5">
+        {(Object.keys(PLATFORM_WEIGHTS) as AIOPlatform[]).map((platform) => {
+          const config = platformConfig[platform];
+          const count = (platformCounts[platform] as number) || 0;
+          return (
+            <Card key={platform} className={cn("border", config.bgColor)}>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={cn("w-2 h-2 rounded-full", config.color.replace("text-", "bg-"))} />
+                  <span className="text-sm font-medium">{PLATFORM_LABELS[platform]}</span>
+                </div>
+                <div className="text-2xl font-bold">{count}</div>
+                <div className="text-xs text-muted-foreground">citations</div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Citations List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>Recent Citations</span>
+            <Badge variant="outline">{totalCitations} total</Badge>
+          </CardTitle>
+          <CardDescription>
+            When AI platforms cite your content in their responses
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {citations.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <ExternalLink className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No citations discovered yet.</p>
+              <p className="text-sm mt-2">
+                As AI platforms cite your content, they&apos;ll appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {citations.slice(0, 20).map((citation: {
+                id: string;
+                platform: AIOPlatform;
+                query: string;
+                citation_type: string;
+                snippet?: string;
+                discovered_at: string;
+                pages?: { url: string; title: string };
+              }) => {
+                const config = platformConfig[citation.platform];
+                return (
+                  <div
+                    key={citation.id}
+                    className="flex items-start gap-4 p-3 rounded-lg bg-muted/30"
+                  >
+                    <div className={cn("p-2 rounded", config.bgColor)}>
+                      <ExternalLink className={cn("w-4 h-4", config.color)} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline" className="text-xs">
+                          {PLATFORM_LABELS[citation.platform]}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(citation.discovered_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="font-medium truncate">Query: &quot;{citation.query}&quot;</p>
+                      {citation.snippet && (
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                          {citation.snippet}
+                        </p>
+                      )}
+                      {citation.pages && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Page: {citation.pages.title || citation.pages.url}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function AIODashboardPage() {
   const [selectedSite, setSelectedSite] = useState<string | null>(null);
 
@@ -225,37 +352,91 @@ export default function AIODashboardPage() {
     platformAverages: {},
   };
 
-  // Mock data for demo if no real data
-  const mockRecommendations = [
-    {
-      title: "Add FAQ sections to 5 pages",
-      description: "Pages with FAQ schema are 3x more likely to be cited in AI Overviews.",
-      priority: "high" as const,
-      impact: "+15-20 points",
-      autoFixable: true,
+  // Fetch recommendations from audit
+  const { data: recommendationsData } = useQuery({
+    queryKey: ["aio-recommendations", activeSiteId],
+    queryFn: async () => {
+      if (!activeSiteId) return null;
+      // Get pages that need improvement
+      const response = await fetch(`/api/pages?siteId=${activeSiteId}&hasAioScore=true&limit=50`);
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.pages || [];
     },
-    {
-      title: "Improve entity density on 12 pages",
-      description: "Add more named entities (people, products, concepts) to help AI understand content.",
-      priority: "medium" as const,
-      impact: "+10-15 points",
-      autoFixable: true,
-    },
-    {
-      title: "Add expert attribution to blog posts",
-      description: "Content with author credentials is more likely to be cited by Perplexity.",
-      priority: "medium" as const,
-      impact: "+10-15 points",
-      autoFixable: false,
-    },
-    {
-      title: "Update 3 stale pages",
-      description: "Content older than 6 months loses AI visibility. Refresh with new data.",
-      priority: "low" as const,
-      impact: "+5-10 points",
-      autoFixable: false,
-    },
-  ];
+    enabled: !!activeSiteId,
+  });
+
+  // Generate recommendations based on AIO scores
+  const recommendations = (() => {
+    const pagesWithScores = recommendationsData || [];
+    const recs: Array<{
+      title: string;
+      description: string;
+      priority: "critical" | "high" | "medium" | "low";
+      impact: string;
+      autoFixable: boolean;
+    }> = [];
+
+    // Check for pages with low AIO scores
+    const lowScorePages = pagesWithScores.filter((p: { aio_score?: number }) => (p.aio_score || 0) < 50);
+    if (lowScorePages.length > 0) {
+      recs.push({
+        title: `Optimize ${lowScorePages.length} pages with low AIO scores`,
+        description: "These pages score below 50 and need significant optimization for AI visibility.",
+        priority: "high",
+        impact: "+20-30 points",
+        autoFixable: true,
+      });
+    }
+
+    // Check for pages without FAQ
+    const noFAQPages = pagesWithScores.filter((p: { quotability_score?: number }) => (p.quotability_score || 0) < 60);
+    if (noFAQPages.length > 0) {
+      recs.push({
+        title: `Improve quotability on ${noFAQPages.length} pages`,
+        description: "Break up long paragraphs into quotable 50-150 word chunks for better AI citation.",
+        priority: "medium",
+        impact: "+10-15 points",
+        autoFixable: true,
+      });
+    }
+
+    // Generic recommendations if no specific data
+    if (recs.length === 0) {
+      recs.push(
+        {
+          title: "Add FAQ sections to key pages",
+          description: "Pages with FAQ schema are 3x more likely to be cited in AI Overviews.",
+          priority: "high",
+          impact: "+15-20 points",
+          autoFixable: true,
+        },
+        {
+          title: "Improve entity density across content",
+          description: "Add more named entities (people, products, concepts) to help AI understand content.",
+          priority: "medium",
+          impact: "+10-15 points",
+          autoFixable: true,
+        },
+        {
+          title: "Add expert attribution to articles",
+          description: "Content with author credentials is more likely to be cited by Perplexity.",
+          priority: "medium",
+          impact: "+10-15 points",
+          autoFixable: false,
+        },
+        {
+          title: "Keep content fresh and updated",
+          description: "Content older than 6 months loses AI visibility. Refresh with new data.",
+          priority: "low",
+          impact: "+5-10 points",
+          autoFixable: false,
+        }
+      );
+    }
+
+    return recs;
+  })();
 
   return (
     <div className="space-y-8">
@@ -384,7 +565,7 @@ export default function AIODashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {mockRecommendations.map((rec, i) => (
+              {recommendations.map((rec, i) => (
                 <IssueCard key={i} {...rec} />
               ))}
             </CardContent>
@@ -452,23 +633,7 @@ export default function AIODashboardPage() {
 
         {/* Citations Tab */}
         <TabsContent value="citations" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>AI Citations</CardTitle>
-              <CardDescription>
-                Times your content was cited by AI platforms (estimated)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <ExternalLink className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Citation tracking coming soon.</p>
-                <p className="text-sm mt-2">
-                  We&apos;ll track when Perplexity, ChatGPT, and other AI tools cite your pages.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <CitationsPanel siteId={activeSiteId} />
         </TabsContent>
       </Tabs>
 

@@ -107,6 +107,40 @@ export interface PipelineOptions {
   generateFaqs?: boolean;
   suggestInternalLinks?: boolean;
   availablePages?: Array<{ url: string; title: string; keywords?: string[] }>;
+  /** AIO optimization mode */
+  optimizationMode?: "seo" | "aio" | "balanced";
+  /** Add key takeaways section */
+  addKeyTakeaways?: boolean;
+  /** Inject additional entities */
+  entitiesToAdd?: string[];
+  /** Optimize paragraphs for quotability */
+  optimizeQuotability?: boolean;
+}
+
+export interface AIOAnalysisResult {
+  overallScore: number;
+  platformScores: {
+    googleAIO: number;
+    chatGPT: number;
+    perplexity: number;
+    claude: number;
+    gemini: number;
+  };
+  breakdown: {
+    entityDensity: { score: number; found: number; recommended: number };
+    quotability: { score: number; avgParagraphWords: number; quotableSnippets: number };
+    answerStructure: { score: number; hasDirectAnswer: boolean; hasKeyTakeaways: boolean };
+    schemaReadiness: { score: number; detectedTypes: string[]; recommendedTypes: string[] };
+    freshness: { score: number; lastUpdated: string | null; recommendation: string };
+  };
+  topIssues: Array<{
+    priority: "high" | "medium" | "low";
+    issue: string;
+    fix: string;
+    impact: string;
+  }>;
+  entitiesFound: string[];
+  quotableSnippets: string[];
 }
 
 // ============================================
@@ -645,6 +679,303 @@ export class ContentPipeline {
     }
 
     return Math.ceil(totalCents);
+  }
+
+  // ============================================
+  // AIO (AI OPTIMIZATION) METHODS
+  // ============================================
+
+  /**
+   * Optimize content for AI visibility
+   */
+  async optimizeForAIO(
+    content: string,
+    keyword: string,
+    mode: "seo" | "aio" | "balanced" = "balanced"
+  ): Promise<{
+    optimizedContent: string;
+    usage: { costCents: number };
+  }> {
+    if (!this.isReady()) {
+      throw new Error("AI client not configured");
+    }
+
+    const prompt = PROMPTS.optimizeForAIO(content, keyword, mode);
+    
+    const response = await this.client.chat(
+      [{ role: "user", content: prompt.user }],
+      prompt.system,
+      { model: "sonnet", maxTokens: 8192 }
+    );
+
+    return {
+      optimizedContent: response.content,
+      usage: { costCents: response.usage.costCents },
+    };
+  }
+
+  /**
+   * Generate AIO-optimized outline
+   */
+  async generateAIOOutline(
+    keyword: string,
+    serpResults: Array<{ title: string; snippet: string }>,
+    targetWordCount: number = 2000
+  ): Promise<{
+    outline: ContentOutline & {
+      keyTakeaways?: string[];
+      definitions?: string[];
+      statistics?: string[];
+      expertQuotes?: string[];
+      schemaTypes?: string[];
+    };
+    usage: { costCents: number };
+  }> {
+    if (!this.isReady()) {
+      throw new Error("AI client not configured");
+    }
+
+    const prompt = PROMPTS.generateAIOOutline(keyword, serpResults, targetWordCount);
+    
+    const response = await this.client.chat(
+      [{ role: "user", content: prompt.user }],
+      prompt.system,
+      { model: "sonnet", maxTokens: 2048 }
+    );
+
+    const outline = this.parseJSON<ContentOutline & {
+      keyTakeaways?: string[];
+      definitions?: string[];
+      statistics?: string[];
+      expertQuotes?: string[];
+      schemaTypes?: string[];
+    }>(response.content);
+
+    return {
+      outline,
+      usage: { costCents: response.usage.costCents },
+    };
+  }
+
+  /**
+   * Generate key takeaways from content
+   */
+  async generateKeyTakeaways(
+    content: string,
+    keyword: string
+  ): Promise<{
+    takeaways: string[];
+    usage: { costCents: number };
+  }> {
+    if (!this.isReady()) {
+      throw new Error("AI client not configured");
+    }
+
+    const prompt = PROMPTS.generateKeyTakeaways(content, keyword);
+    
+    const response = await this.client.chat(
+      [{ role: "user", content: prompt.user }],
+      prompt.system,
+      { model: "haiku" }
+    );
+
+    const takeaways = this.parseJSON<string[]>(response.content);
+
+    return {
+      takeaways,
+      usage: { costCents: response.usage.costCents },
+    };
+  }
+
+  /**
+   * Inject entities into content
+   */
+  async injectEntities(
+    content: string,
+    entities: string[]
+  ): Promise<{
+    enhancedContent: string;
+    usage: { costCents: number };
+  }> {
+    if (!this.isReady()) {
+      throw new Error("AI client not configured");
+    }
+
+    const prompt = PROMPTS.injectEntities(content, entities);
+    
+    const response = await this.client.chat(
+      [{ role: "user", content: prompt.user }],
+      prompt.system,
+      { model: "haiku", maxTokens: 4096 }
+    );
+
+    return {
+      enhancedContent: response.content,
+      usage: { costCents: response.usage.costCents },
+    };
+  }
+
+  /**
+   * Improve content quotability
+   */
+  async improveQuotability(
+    content: string
+  ): Promise<{
+    improvedContent: string;
+    usage: { costCents: number };
+  }> {
+    if (!this.isReady()) {
+      throw new Error("AI client not configured");
+    }
+
+    const prompt = PROMPTS.improveQuotability(content);
+    
+    const response = await this.client.chat(
+      [{ role: "user", content: prompt.user }],
+      prompt.system,
+      { model: "sonnet", maxTokens: 8192 }
+    );
+
+    return {
+      improvedContent: response.content,
+      usage: { costCents: response.usage.costCents },
+    };
+  }
+
+  /**
+   * Analyze content for AIO readiness
+   */
+  async analyzeAIOReadiness(
+    content: string,
+    keyword: string
+  ): Promise<{
+    analysis: AIOAnalysisResult;
+    usage: { costCents: number };
+  }> {
+    if (!this.isReady()) {
+      throw new Error("AI client not configured");
+    }
+
+    const prompt = PROMPTS.analyzeAIOReadiness(content, keyword);
+    
+    const response = await this.client.chat(
+      [{ role: "user", content: prompt.user }],
+      prompt.system,
+      { model: "sonnet", maxTokens: 2048 }
+    );
+
+    const analysis = this.parseJSON<AIOAnalysisResult>(response.content);
+
+    return {
+      analysis,
+      usage: { costCents: response.usage.costCents },
+    };
+  }
+
+  /**
+   * Full AIO content generation pipeline
+   */
+  async generateAIOContent(
+    keyword: string,
+    serpResults: Array<{ title: string; snippet: string }>,
+    options: PipelineOptions = {}
+  ): Promise<GeneratedContent> {
+    const tracker = createUsageTracker();
+    const targetWordCount = options.targetWordCount || 2000;
+
+    // Step 1: Generate AIO-optimized outline
+    const { outline, usage: outlineUsage } = await this.generateAIOOutline(
+      keyword,
+      serpResults,
+      targetWordCount
+    );
+
+    recordUsage(
+      tracker,
+      "aio_outline",
+      "sonnet",
+      0,
+      0,
+      outlineUsage.costCents
+    );
+
+    // Step 2: Generate article
+    const result = await this.generateArticle(keyword, outline, {
+      ...options,
+      generateFaqs: true,
+    });
+
+    // Update usage
+    result.usage.totalCostCents += outlineUsage.costCents;
+
+    // Step 3: Optimize for AIO if requested
+    if (options.optimizationMode === "aio" || options.optimizationMode === "balanced") {
+      const { optimizedContent, usage: aioUsage } = await this.optimizeForAIO(
+        result.body,
+        keyword,
+        options.optimizationMode
+      );
+      result.body = optimizedContent;
+      result.usage.totalCostCents += aioUsage.costCents;
+      result.usage.steps.push({
+        step: "aio_optimization",
+        model: "sonnet",
+        costCents: aioUsage.costCents,
+      });
+    }
+
+    // Step 4: Add key takeaways if requested
+    if (options.addKeyTakeaways) {
+      const { takeaways, usage: takeawaysUsage } = await this.generateKeyTakeaways(
+        result.body,
+        keyword
+      );
+      
+      // Prepend key takeaways to body
+      const takeawaysSection = `## Key Takeaways\n\n${takeaways.map(t => `- ${t}`).join("\n")}\n\n`;
+      result.body = takeawaysSection + result.body;
+      result.usage.totalCostCents += takeawaysUsage.costCents;
+      result.usage.steps.push({
+        step: "key_takeaways",
+        model: "haiku",
+        costCents: takeawaysUsage.costCents,
+      });
+    }
+
+    // Step 5: Inject entities if provided
+    if (options.entitiesToAdd && options.entitiesToAdd.length > 0) {
+      const { enhancedContent, usage: entityUsage } = await this.injectEntities(
+        result.body,
+        options.entitiesToAdd
+      );
+      result.body = enhancedContent;
+      result.usage.totalCostCents += entityUsage.costCents;
+      result.usage.steps.push({
+        step: "entity_injection",
+        model: "haiku",
+        costCents: entityUsage.costCents,
+      });
+    }
+
+    // Step 6: Improve quotability if requested
+    if (options.optimizeQuotability) {
+      const { improvedContent, usage: quotabilityUsage } = await this.improveQuotability(
+        result.body
+      );
+      result.body = improvedContent;
+      result.usage.totalCostCents += quotabilityUsage.costCents;
+      result.usage.steps.push({
+        step: "quotability_optimization",
+        model: "sonnet",
+        costCents: quotabilityUsage.costCents,
+      });
+    }
+
+    // Recalculate word count
+    result.wordCount = result.body.split(/\s+/).length;
+    result.readingTime = Math.ceil(result.wordCount / 200);
+
+    return result;
   }
 }
 
