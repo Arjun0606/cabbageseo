@@ -365,7 +365,7 @@ export const keywords = pgTable(
     status: keywordStatusEnum("status").default("discovered"),
     priority: integer("priority").default(50),
 
-    // Related content
+    // Related content (FK added after content table is defined)
     contentId: uuid("content_id"),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -375,8 +375,12 @@ export const keywords = pgTable(
     index("keyword_site_idx").on(table.siteId),
     index("keyword_cluster_idx").on(table.clusterId),
     index("keyword_status_idx").on(table.status),
+    index("keywords_content_id_idx").on(table.contentId),
   ]
 );
+
+// Note: keywords.contentId FK to content.id is added via migration
+// (004_keywords_content_fk.sql) since content is defined after keywords
 
 // ============================================
 // CONTENT
