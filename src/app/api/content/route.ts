@@ -15,8 +15,12 @@ interface ContentItem {
   status: string;
   target_keyword: string;
   seo_score: number | null;
+  aio_score: number | null;
+  aio_optimized: boolean;
+  entity_count: number | null;
+  quotability_score: number | null;
   word_count: number;
-  content: string;
+  body: string;
   meta_title: string;
   meta_description: string;
   created_at: string;

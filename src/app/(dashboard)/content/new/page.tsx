@@ -166,6 +166,7 @@ export default function NewContentPage() {
   // Input state
   const [targetKeyword, setTargetKeyword] = useState("");
   const [contentType, setContentType] = useState<"blog" | "guide" | "listicle" | "comparison">("blog");
+  const [optimizationMode, setOptimizationMode] = useState<"seo" | "aio" | "balanced">("balanced");
   const [customTitle, setCustomTitle] = useState("");
   const [customInstructions, setCustomInstructions] = useState("");
 
@@ -581,6 +582,39 @@ While you can start with basic tools, specialized software can help you scale an
                     <SelectItem value="comparison">Comparison Article</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  Optimization Mode
+                  <Badge variant="outline" className="text-[10px] text-violet-500 border-violet-500/30">NEW</Badge>
+                </Label>
+                <Select value={optimizationMode} onValueChange={(v) => setOptimizationMode(v as typeof optimizationMode)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="balanced">
+                      <div className="flex items-center gap-2">
+                        <span>Balanced (SEO + AI)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="seo">
+                      <div className="flex items-center gap-2">
+                        <span>SEO Focused</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="aio">
+                      <div className="flex items-center gap-2">
+                        <span>AI Search (ChatGPT, Perplexity)</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {optimizationMode === "balanced" && "Optimized for both traditional search and AI platforms"}
+                  {optimizationMode === "seo" && "Focus on Google rankings and traditional SEO signals"}
+                  {optimizationMode === "aio" && "Optimized for AI citations: quotable paragraphs, FAQs, entities"}
+                </p>
               </div>
             </div>
 

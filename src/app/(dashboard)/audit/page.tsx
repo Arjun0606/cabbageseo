@@ -19,7 +19,10 @@ import {
   Loader2,
   AlertCircle,
   Globe,
+  Brain,
+  ArrowRight,
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -456,6 +459,31 @@ export default function AuditPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* AIO Visibility Card */}
+          <Card className="bg-gradient-to-r from-violet-500/10 via-blue-500/5 to-transparent border-violet-500/20">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-violet-500/20">
+                    <Brain className="w-6 h-6 text-violet-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">AI Visibility Audit</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Optimize your content for ChatGPT, Perplexity, Google AI Overviews & more
+                    </p>
+                  </div>
+                </div>
+                <Link href="/aio">
+                  <Button variant="outline" className="gap-2">
+                    View AIO Dashboard
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Category Breakdown */}
           {data?.categories && data.categories.length > 0 && (

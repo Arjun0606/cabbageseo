@@ -20,6 +20,7 @@ import {
   Globe,
   Loader2,
   AlertCircle,
+  Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +57,7 @@ interface ContentItem {
   status: ContentStatus;
   keyword: string;
   seoScore: number;
+  aioScore?: number;
   wordCount: number;
   createdAt: string;
   updatedAt: string;
@@ -123,6 +125,32 @@ function SEOScore({ score }: { score: number }) {
     <div className="flex items-center gap-2">
       <div className="w-12">
         <Progress value={score} className="h-2" />
+      </div>
+      <span className={`font-medium ${getColor(score)}`}>{score}</span>
+    </div>
+  );
+}
+
+// ============================================
+// AIO SCORE
+// ============================================
+
+function AIOScore({ score }: { score?: number }) {
+  const getColor = (s: number) => {
+    if (s >= 80) return "text-violet-500";
+    if (s >= 60) return "text-blue-500";
+    if (s >= 40) return "text-yellow-500";
+    return "text-red-500";
+  };
+
+  if (!score || score === 0) {
+    return <span className="text-muted-foreground">-</span>;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="w-12">
+        <Progress value={score} className="h-2 [&>div]:bg-violet-500" />
       </div>
       <span className={`font-medium ${getColor(score)}`}>{score}</span>
     </div>
@@ -376,7 +404,8 @@ export default function ContentPage() {
                       <TableHead>Title</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Keyword</TableHead>
-                      <TableHead>SEO Score</TableHead>
+                      <TableHead>SEO</TableHead>
+                      <TableHead>AIO</TableHead>
                       <TableHead className="text-right">Words</TableHead>
                       <TableHead>Updated</TableHead>
                       <TableHead className="w-10"></TableHead>
@@ -404,6 +433,9 @@ export default function ContentPage() {
                         <TableCell>
                           <SEOScore score={item.seoScore} />
                         </TableCell>
+                        <TableCell>
+                          <AIOScore score={item.aioScore} />
+                        </TableCell>
                         <TableCell className="text-right">
                           {item.wordCount > 0 ? item.wordCount.toLocaleString() : "-"}
                         </TableCell>
@@ -430,7 +462,13 @@ export default function ContentPage() {
                               </DropdownMenuItem>
                               <DropdownMenuItem>
                                 <Sparkles className="w-4 h-4 mr-2" />
-                                Optimize
+                                Optimize SEO
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/aio?contentId=${item.id}`}>
+                                  <Brain className="w-4 h-4 mr-2" />
+                                  Optimize for AI
+                                </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem>
                                 <Copy className="w-4 h-4 mr-2" />
