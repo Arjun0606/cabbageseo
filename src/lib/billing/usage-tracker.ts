@@ -1,475 +1,377 @@
 /**
- * Usage Tracker for CabbageSEO
+ * Usage Tracking System for CabbageSEO
  * 
- * Tracks usage against plan limits with Cursor-style on-demand credits:
- * - Track usage in real-time
- * - Check against plan limits
- * - Deduct from on-demand balance when over limit
- * - Block requests when no credits available
+ * Tracks resource usage per organization:
+ * - AI credits
+ * - Articles generated
+ * - Keywords tracked
+ * - Audits run
+ * - API calls
+ * 
+ * Enforces plan limits and manages overage credits
  */
 
-import { createServiceClient } from "@/lib/supabase/server";
-import { getPlan, USAGE_COSTS } from "./plans";
-import { dodo } from "./dodo-client";
+import { createClient } from "@/lib/supabase/server";
+import { getPlanLimits, type PlanLimits } from "./plans";
 
 // ============================================
 // TYPES
 // ============================================
 
-export type UsageType = 
-  | "ai_credits"
-  | "keyword_researches"
-  | "content_generations"
-  | "audit_reports"
-  | "pages_crawled";
-
 export interface UsageRecord {
-  type: UsageType;
-  quantity: number;
-  cost: number;  // In cents
-  metadata?: Record<string, unknown>;
+  organizationId: string;
+  period: string;  // YYYY-MM format
+  aiCredits: number;
+  articles: number;
+  keywords: number;
+  audits: number;
+  serpCalls: number;
+  crawls: number;
 }
 
-export interface UsageStatus {
-  type: UsageType;
-  used: number;
+export interface UsageCheck {
+  allowed: boolean;
+  currentUsage: number;
   limit: number;
   remaining: number;
-  overageUsed: number;
-  overageCost: number;
+  overageCreditsAvailable: number;
+  requiresOverage: boolean;
 }
 
-export interface OrganizationUsage {
-  organizationId: string;
-  planId: string;
-  periodStart: string;
-  periodEnd: string;
-  usage: Record<UsageType, number>;
-  onDemandBalance: number;  // Prepaid credit balance in cents
-  onDemandSpent: number;    // Spent from on-demand in current period
+export interface CreditBalance {
+  prepaidCredits: number;
+  bonusCredits: number;
+  totalCredits: number;
+  expiresAt: string | null;
 }
 
 // ============================================
-// USAGE TRACKER CLASS
+// USAGE TRACKER
 // ============================================
 
 export class UsageTracker {
-  /**
-   * Track usage and deduct from plan or on-demand balance
-   */
-  async trackUsage(
-    organizationId: string,
-    type: UsageType,
-    quantity: number,
-    metadata?: Record<string, unknown>
-  ): Promise<{
-    allowed: boolean;
-    source: "plan" | "on-demand" | "blocked";
-    remaining?: number;
-    cost?: number;
-    message?: string;
-  }> {
-    const supabase = createServiceClient();
+  private organizationId: string;
 
-    // Get organization with subscription info
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: org } = await (supabase as any)
-      .from("organizations")
-      .select(`
-        id,
-        plan_id,
-        subscription_status,
-        on_demand_balance,
-        on_demand_enabled,
-        billing_period_start,
-        billing_period_end
-      `)
-      .eq("id", organizationId)
+  constructor(organizationId: string) {
+    this.organizationId = organizationId;
+  }
+
+  /**
+   * Get current period (YYYY-MM)
+   */
+  private getCurrentPeriod(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  /**
+   * Get or create usage record for current period
+   */
+  async getUsage(): Promise<UsageRecord> {
+    const supabase = await createClient();
+    if (!supabase) {
+      return this.emptyUsage();
+    }
+
+    const period = this.getCurrentPeriod();
+
+    const { data, error } = await supabase
+      .from("usage")
+      .select("*")
+      .eq("organization_id", this.organizationId)
+      .eq("period", period)
       .single();
 
-    if (!org) {
-      return {
-        allowed: false,
-        source: "blocked",
-        message: "Organization not found",
-      };
+    if (error || !data) {
+      // Create new usage record
+      await supabase.from("usage").insert({
+        organization_id: this.organizationId,
+        period,
+        ai_credits: 0,
+        articles: 0,
+        keywords: 0,
+        audits: 0,
+        serp_calls: 0,
+        crawls: 0,
+      } as never);
+
+      return this.emptyUsage();
     }
 
-    // Get current period usage
-    const currentUsage = await this.getCurrentUsage(organizationId, type);
-    const plan = getPlan(org.plan_id || "starter");
-    
-    if (!plan) {
-      return {
-        allowed: false,
-        source: "blocked",
-        message: "Invalid plan",
-      };
-    }
-
-    // Get limit for this usage type
-    const limit = this.getLimitForType(plan, type);
-    const newTotal = currentUsage + quantity;
-
-    // Check if within plan limits
-    if (newTotal <= limit) {
-      // Record usage under plan
-      await this.recordUsage(organizationId, type, quantity, 0, metadata);
-      
-      return {
-        allowed: true,
-        source: "plan",
-        remaining: limit - newTotal,
-      };
-    }
-
-    // Over plan limit - check on-demand
-    const overageQuantity = newTotal - limit;
-    const overageCost = this.calculateCost(type, overageQuantity);
-
-    // Check if on-demand is enabled and has balance
-    if (!org.on_demand_enabled || org.on_demand_balance < overageCost) {
-      return {
-        allowed: false,
-        source: "blocked",
-        message: org.on_demand_enabled 
-          ? "Insufficient on-demand credits. Please add more credits."
-          : "Plan limit reached. Enable on-demand credits to continue.",
-        cost: overageCost,
-      };
-    }
-
-    // Deduct from on-demand balance
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
-      .from("organizations")
-      .update({
-        on_demand_balance: org.on_demand_balance - overageCost,
-      })
-      .eq("id", organizationId);
-
-    // Record usage with cost
-    await this.recordUsage(organizationId, type, quantity, overageCost, metadata);
-
+    const usage = data as Record<string, number>;
     return {
-      allowed: true,
-      source: "on-demand",
-      cost: overageCost,
-      remaining: org.on_demand_balance - overageCost,
+      organizationId: this.organizationId,
+      period,
+      aiCredits: usage.ai_credits || 0,
+      articles: usage.articles || 0,
+      keywords: usage.keywords || 0,
+      audits: usage.audits || 0,
+      serpCalls: usage.serp_calls || 0,
+      crawls: usage.crawls || 0,
     };
   }
 
   /**
-   * Check if usage would be allowed (without recording)
+   * Get organization's plan
+   */
+  async getPlan(): Promise<string> {
+    const supabase = await createClient();
+    if (!supabase) return "starter";
+
+    const { data } = await supabase
+      .from("organizations")
+      .select("plan")
+      .eq("id", this.organizationId)
+      .single();
+
+    return data?.plan || "starter";
+  }
+
+  /**
+   * Check if a resource can be used
    */
   async checkUsage(
-    organizationId: string,
-    type: UsageType,
-    quantity: number
-  ): Promise<{
-    allowed: boolean;
-    source: "plan" | "on-demand" | "blocked";
-    cost?: number;
-    message?: string;
-  }> {
-    const supabase = createServiceClient();
+    resource: keyof PlanLimits,
+    amount: number = 1
+  ): Promise<UsageCheck> {
+    const [usage, plan, credits] = await Promise.all([
+      this.getUsage(),
+      this.getPlan(),
+      this.getCreditBalance(),
+    ]);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: org } = await (supabase as any)
-      .from("organizations")
-      .select("id, plan_id, on_demand_balance, on_demand_enabled")
-      .eq("id", organizationId)
+    const limits = getPlanLimits(plan);
+    const limit = limits[resource];
+    const currentUsage = this.getResourceUsage(usage, resource);
+    const remaining = Math.max(0, limit - currentUsage);
+    const requiresOverage = amount > remaining;
+    const overageNeeded = requiresOverage ? amount - remaining : 0;
+
+    return {
+      allowed: !requiresOverage || credits.totalCredits >= overageNeeded,
+      currentUsage,
+      limit,
+      remaining,
+      overageCreditsAvailable: credits.totalCredits,
+      requiresOverage,
+    };
+  }
+
+  /**
+   * Record usage of a resource
+   */
+  async recordUsage(
+    resource: "aiCredits" | "articles" | "keywords" | "audits" | "serpCalls" | "crawls",
+    amount: number = 1
+  ): Promise<{ success: boolean; overageUsed: number }> {
+    const supabase = await createClient();
+    if (!supabase) return { success: false, overageUsed: 0 };
+
+    const period = this.getCurrentPeriod();
+    const columnMap: Record<string, string> = {
+      aiCredits: "ai_credits",
+      articles: "articles",
+      keywords: "keywords",
+      audits: "audits",
+      serpCalls: "serp_calls",
+      crawls: "crawls",
+    };
+    const column = columnMap[resource];
+
+    // Check limits first
+    const check = await this.checkUsage(resource as keyof PlanLimits, amount);
+    
+    if (!check.allowed) {
+      return { success: false, overageUsed: 0 };
+    }
+
+    // Update usage
+    const { error } = await supabase.rpc("increment_usage", {
+      org_id: this.organizationId,
+      period_str: period,
+      column_name: column,
+      increment_amount: amount,
+    });
+
+    if (error) {
+      // Fallback: direct update
+      const { data: current } = await supabase
+        .from("usage")
+        .select(column)
+        .eq("organization_id", this.organizationId)
+        .eq("period", period)
+        .single();
+
+      const currentValue = (current as Record<string, number>)?.[column] || 0;
+
+      await supabase
+        .from("usage")
+        .upsert({
+          organization_id: this.organizationId,
+          period,
+          [column]: currentValue + amount,
+        }, {
+          onConflict: "organization_id,period",
+        });
+    }
+
+    // Deduct from overage credits if needed
+    let overageUsed = 0;
+    if (check.requiresOverage) {
+      overageUsed = amount - check.remaining;
+      await this.deductCredits(overageUsed);
+    }
+
+    return { success: true, overageUsed };
+  }
+
+  /**
+   * Get prepaid credit balance
+   */
+  async getCreditBalance(): Promise<CreditBalance> {
+    const supabase = await createClient();
+    if (!supabase) {
+      return { prepaidCredits: 0, bonusCredits: 0, totalCredits: 0, expiresAt: null };
+    }
+
+    const { data } = await supabase
+      .from("credit_balance")
+      .select("prepaid_credits, bonus_credits, expires_at")
+      .eq("organization_id", this.organizationId)
       .single();
 
-    if (!org) {
-      return { allowed: false, source: "blocked", message: "Organization not found" };
-    }
-
-    const currentUsage = await this.getCurrentUsage(organizationId, type);
-    const plan = getPlan(org.plan_id || "starter");
-    
-    if (!plan) {
-      return { allowed: false, source: "blocked", message: "Invalid plan" };
-    }
-
-    const limit = this.getLimitForType(plan, type);
-    const newTotal = currentUsage + quantity;
-
-    if (newTotal <= limit) {
-      return { allowed: true, source: "plan" };
-    }
-
-    const overageQuantity = newTotal - limit;
-    const overageCost = this.calculateCost(type, overageQuantity);
-
-    if (!org.on_demand_enabled) {
-      return {
-        allowed: false,
-        source: "blocked",
-        message: "Plan limit reached. Enable on-demand credits to continue.",
-        cost: overageCost,
-      };
-    }
-
-    if (org.on_demand_balance < overageCost) {
-      return {
-        allowed: false,
-        source: "blocked",
-        message: "Insufficient on-demand credits.",
-        cost: overageCost,
-      };
+    if (!data) {
+      return { prepaidCredits: 0, bonusCredits: 0, totalCredits: 0, expiresAt: null };
     }
 
     return {
-      allowed: true,
-      source: "on-demand",
-      cost: overageCost,
+      prepaidCredits: data.prepaid_credits || 0,
+      bonusCredits: data.bonus_credits || 0,
+      totalCredits: (data.prepaid_credits || 0) + (data.bonus_credits || 0),
+      expiresAt: data.expires_at,
     };
   }
 
   /**
-   * Get current usage for a type in the current billing period
+   * Add prepaid credits
    */
-  async getCurrentUsage(organizationId: string, type: UsageType): Promise<number> {
-    const supabase = createServiceClient();
+  async addCredits(amount: number, bonusAmount: number = 0): Promise<boolean> {
+    const supabase = await createClient();
+    if (!supabase) return false;
 
-    // Get billing period start
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: org } = await (supabase as any)
-      .from("organizations")
-      .select("billing_period_start")
-      .eq("id", organizationId)
-      .single();
+    const current = await this.getCreditBalance();
+    const expiresAt = new Date();
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);  // Credits expire in 1 year
 
-    const periodStart = org?.billing_period_start || 
-      new Date(new Date().setDate(1)).toISOString();
-
-    // Sum usage for this period
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any)
-      .from("usage_records")
-      .select("quantity")
-      .eq("organization_id", organizationId)
-      .eq("type", type)
-      .gte("created_at", periodStart);
-
-    return (data || []).reduce((sum: number, r: { quantity: number }) => sum + r.quantity, 0);
-  }
-
-  /**
-   * Get all usage stats for an organization
-   */
-  async getAllUsageStats(organizationId: string): Promise<UsageStatus[]> {
-    const supabase = createServiceClient();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: org } = await (supabase as any)
-      .from("organizations")
-      .select("plan_id, billing_period_start")
-      .eq("id", organizationId)
-      .single();
-
-    const plan = getPlan(org?.plan_id || "starter");
-    if (!plan) return [];
-
-    const types: UsageType[] = [
-      "ai_credits",
-      "keyword_researches",
-      "content_generations",
-      "audit_reports",
-      "pages_crawled",
-    ];
-
-    const stats: UsageStatus[] = [];
-
-    for (const type of types) {
-      const used = await this.getCurrentUsage(organizationId, type);
-      const limit = this.getLimitForType(plan, type);
-      const overageUsed = Math.max(0, used - limit);
-      const overageCost = this.calculateCost(type, overageUsed);
-
-      stats.push({
-        type,
-        used,
-        limit,
-        remaining: Math.max(0, limit - used),
-        overageUsed,
-        overageCost,
+    const { error } = await supabase
+      .from("credit_balance")
+      .upsert({
+        organization_id: this.organizationId,
+        prepaid_credits: current.prepaidCredits + amount,
+        bonus_credits: current.bonusCredits + bonusAmount,
+        expires_at: expiresAt.toISOString(),
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: "organization_id",
       });
-    }
 
-    return stats;
+    return !error;
   }
 
   /**
-   * Add on-demand credits to organization
+   * Deduct credits for overage
    */
-  async addOnDemandCredits(
-    organizationId: string,
-    amountInCents: number,
-    paymentIntentId?: string
-  ): Promise<{ newBalance: number }> {
-    const supabase = createServiceClient();
+  private async deductCredits(amount: number): Promise<boolean> {
+    const supabase = await createClient();
+    if (!supabase) return false;
 
-    // Get current balance
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: org } = await (supabase as any)
-      .from("organizations")
-      .select("on_demand_balance")
-      .eq("id", organizationId)
-      .single();
+    const current = await this.getCreditBalance();
+    
+    // Use bonus credits first, then prepaid
+    let bonusToDeduct = Math.min(amount, current.bonusCredits);
+    let prepaidToDeduct = amount - bonusToDeduct;
 
-    const newBalance = (org?.on_demand_balance || 0) + amountInCents;
-
-    // Update balance
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
-      .from("organizations")
+    const { error } = await supabase
+      .from("credit_balance")
       .update({
-        on_demand_balance: newBalance,
-        on_demand_enabled: true,
+        prepaid_credits: current.prepaidCredits - prepaidToDeduct,
+        bonus_credits: current.bonusCredits - bonusToDeduct,
+        updated_at: new Date().toISOString(),
       })
-      .eq("id", organizationId);
+      .eq("organization_id", this.organizationId);
 
-    // Record transaction
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
-      .from("credit_transactions")
-      .insert({
-        organization_id: organizationId,
-        type: "purchase",
-        amount: amountInCents,
-        balance_after: newBalance,
-        payment_intent_id: paymentIntentId,
-        created_at: new Date().toISOString(),
-      });
-
-    return { newBalance };
+    return !error;
   }
 
   /**
-   * Enable/disable on-demand for an organization
+   * Get usage summary for billing
    */
-  async setOnDemandEnabled(
-    organizationId: string,
-    enabled: boolean
-  ): Promise<void> {
-    const supabase = createServiceClient();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
-      .from("organizations")
-      .update({ on_demand_enabled: enabled })
-      .eq("id", organizationId);
-  }
-
-  /**
-   * Get on-demand balance
-   */
-  async getOnDemandBalance(organizationId: string): Promise<{
-    balance: number;
-    enabled: boolean;
+  async getUsageSummary(): Promise<{
+    usage: UsageRecord;
+    limits: PlanLimits;
+    percentages: Record<string, number>;
+    overageCreditsUsed: number;
+    overageCreditsRemaining: number;
   }> {
-    const supabase = createServiceClient();
+    const [usage, plan, credits] = await Promise.all([
+      this.getUsage(),
+      this.getPlan(),
+      this.getCreditBalance(),
+    ]);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any)
-      .from("organizations")
-      .select("on_demand_balance, on_demand_enabled")
-      .eq("id", organizationId)
-      .single();
+    const limits = getPlanLimits(plan);
+
+    const percentages = {
+      aiCredits: Math.round((usage.aiCredits / limits.aiCreditsPerMonth) * 100),
+      articles: Math.round((usage.articles / limits.articlesPerMonth) * 100),
+      keywords: Math.round((usage.keywords / limits.keywordsTracked) * 100),
+      audits: Math.round((usage.audits / limits.auditsPerMonth) * 100),
+    };
 
     return {
-      balance: data?.on_demand_balance || 0,
-      enabled: data?.on_demand_enabled || false,
+      usage,
+      limits,
+      percentages,
+      overageCreditsUsed: 0, // Would come from a separate table
+      overageCreditsRemaining: credits.totalCredits,
     };
-  }
-
-  /**
-   * Reset usage for new billing period
-   */
-  async resetUsageForNewPeriod(organizationId: string): Promise<void> {
-    const supabase = createServiceClient();
-
-    const now = new Date();
-    const periodEnd = new Date(now);
-    periodEnd.setMonth(periodEnd.getMonth() + 1);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
-      .from("organizations")
-      .update({
-        billing_period_start: now.toISOString(),
-        billing_period_end: periodEnd.toISOString(),
-      })
-      .eq("id", organizationId);
   }
 
   // ============================================
-  // PRIVATE HELPERS
+  // HELPERS
   // ============================================
 
-  private async recordUsage(
-    organizationId: string,
-    type: UsageType,
-    quantity: number,
-    cost: number,
-    metadata?: Record<string, unknown>
-  ): Promise<void> {
-    const supabase = createServiceClient();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
-      .from("usage_records")
-      .insert({
-        organization_id: organizationId,
-        type,
-        quantity,
-        cost,
-        metadata,
-        created_at: new Date().toISOString(),
-      });
+  private emptyUsage(): UsageRecord {
+    return {
+      organizationId: this.organizationId,
+      period: this.getCurrentPeriod(),
+      aiCredits: 0,
+      articles: 0,
+      keywords: 0,
+      audits: 0,
+      serpCalls: 0,
+      crawls: 0,
+    };
   }
 
-  private getLimitForType(plan: ReturnType<typeof getPlan>, type: UsageType): number {
-    if (!plan) return 0;
-
-    const limitMap: Record<UsageType, keyof typeof plan.limits> = {
-      ai_credits: "aiCredits",
-      keyword_researches: "keywordResearches",
-      content_generations: "contentGenerations",
-      audit_reports: "auditReports",
-      pages_crawled: "pagesPerCrawl",
+  private getResourceUsage(usage: UsageRecord, resource: keyof PlanLimits): number {
+    const mapping: Record<string, keyof UsageRecord> = {
+      aiCreditsPerMonth: "aiCredits",
+      articlesPerMonth: "articles",
+      keywordsTracked: "keywords",
+      auditsPerMonth: "audits",
+      sites: "crawls",
+      pagesPerSite: "crawls",
+      teamMembers: "crawls",
     };
-
-    const key = limitMap[type];
-    return plan.limits[key] || 0;
-  }
-
-  private calculateCost(type: UsageType, quantity: number): number {
-    // Cost calculation with 90% markup
-    const costMap: Record<UsageType, number> = {
-      ai_credits: USAGE_COSTS.claudeSonnet,  // Per 1k tokens
-      keyword_researches: USAGE_COSTS.keywordData * 50,  // ~50 keywords per research
-      content_generations: USAGE_COSTS.claudeSonnet * 4,  // ~4k tokens per article
-      audit_reports: USAGE_COSTS.serpAnalysis * 10,  // ~10 SERP checks per audit
-      pages_crawled: 0.5,  // $0.005 per page
-    };
-
-    const unitCost = costMap[type] || 0;
-    
-    // Scale based on type
-    if (type === "ai_credits") {
-      return Math.ceil((quantity / 1000) * unitCost);
-    }
-    
-    return Math.ceil(quantity * unitCost);
+    return usage[mapping[resource] || "aiCredits"] || 0;
   }
 }
 
 // ============================================
-// SINGLETON EXPORT
+// FACTORY
 // ============================================
 
-export const usageTracker = new UsageTracker();
-
+export function createUsageTracker(organizationId: string): UsageTracker {
+  return new UsageTracker(organizationId);
+}

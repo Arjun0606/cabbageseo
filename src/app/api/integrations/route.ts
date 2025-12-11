@@ -1,227 +1,370 @@
 /**
- * Integration Management API - Production Ready
- * Handles storing, retrieving, and testing integration credentials
+ * Integrations API
+ * 
+ * Manages integration connections for CMS, analytics, SEO tools
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import crypto from "crypto";
 
-// ============================================
-// ENCRYPTION UTILITIES
-// ============================================
-
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(0, 32) || "default-key-change-in-production";
-
-function encrypt(text: string): string {
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv("aes-256-gcm", Buffer.from(ENCRYPTION_KEY.padEnd(32).slice(0, 32)), iv);
-  let encrypted = cipher.update(text, "utf8", "hex");
-  encrypted += cipher.final("hex");
-  const authTag = cipher.getAuthTag();
-  return `${iv.toString("hex")}:${authTag.toString("hex")}:${encrypted}`;
+interface IntegrationRow {
+  id: string;
+  organization_id: string;
+  site_id: string | null;
+  type: string;
+  name: string;
+  status: string;
+  credentials: Record<string, unknown> | null;
+  settings: Record<string, unknown> | null;
+  last_sync_at: string | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
-// ============================================
-// GET - List connected integrations
-// ============================================
+// GET - List integrations
+export async function GET(request: NextRequest) {
+  const supabase = await createClient();
+  
+  if (!supabase) {
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
 
-export async function GET() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const supabase = await createClient();
-    if (!supabase) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
-    }
-    
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
+    const { searchParams } = new URL(request.url);
+    const siteId = searchParams.get("siteId");
+    const type = searchParams.get("type");
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: userData } = await supabase
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
-      .single() as { data: { organization_id: string } | null };
+      .single();
 
-    const orgId = profile?.organization_id;
+    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
     if (!orgId) {
-      return NextResponse.json({ success: true, integrations: [] });
+      return NextResponse.json({ success: true, data: { integrations: [] } });
     }
 
-    // Fetch integrations for this organization
-    const { data: integrations, error } = await supabase
+    // Build query
+    let query = supabase
       .from("integrations")
-      .select("type, status, updated_at, created_at")
-      .eq("organization_id", orgId);
+      .select("*")
+      .eq("organization_id", orgId)
+      .order("name");
+
+    if (siteId) {
+      query = query.or(`site_id.eq.${siteId},site_id.is.null`);
+    }
+
+    if (type) {
+      query = query.eq("type", type);
+    }
+
+    const { data: integrations, error } = await query;
 
     if (error) {
-      console.error("Failed to fetch integrations:", error);
-      return NextResponse.json({ success: true, integrations: [] });
+      console.error("Integrations fetch error:", error);
+      throw error;
     }
+
+    // Transform integrations (hide sensitive credentials)
+    const transformedIntegrations = ((integrations || []) as IntegrationRow[]).map(int => ({
+      id: int.id,
+      type: int.type,
+      name: int.name,
+      category: getCategoryFromType(int.type),
+      status: int.status,
+      hasCredentials: !!int.credentials,
+      lastSync: int.last_sync_at,
+      error: int.error_message,
+      siteId: int.site_id,
+    }));
+
+    // Get available integrations (those not yet connected)
+    const connectedTypes = new Set(transformedIntegrations.map(i => i.type));
+    const availableIntegrations = AVAILABLE_INTEGRATIONS.filter(
+      i => !connectedTypes.has(i.type)
+    );
 
     return NextResponse.json({
       success: true,
-      integrations: integrations || [],
+      data: {
+        integrations: transformedIntegrations,
+        available: availableIntegrations,
+      },
     });
 
   } catch (error) {
-    console.error("Integration GET error:", error);
+    console.error("[Integrations API] Error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to fetch integrations" },
+      { error: error instanceof Error ? error.message : "Failed to fetch integrations" },
       { status: 500 }
     );
   }
 }
 
-// ============================================
-// POST - Save integration credentials
-// ============================================
-
+// POST - Create/connect integration
 export async function POST(request: NextRequest) {
+  const supabase = await createClient();
+  
+  if (!supabase) {
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const supabase = await createClient();
-    if (!supabase) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
-    }
-    
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    const body = await request.json();
+    const { type, name, credentials, siteId, settings } = body;
+
+    if (!type) {
+      return NextResponse.json({ error: "Integration type is required" }, { status: 400 });
     }
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: userData } = await supabase
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
-      .single() as { data: { organization_id: string } | null };
+      .single();
 
-    const orgId = profile?.organization_id;
+    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
     if (!orgId) {
-      return NextResponse.json(
-        { success: false, error: "Organization not found" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
-    const body = await request.json();
-    const { type, credentials } = body as { type: string; credentials: Record<string, string> };
+    // Verify site if provided
+    if (siteId) {
+      const { data: site } = await supabase
+        .from("sites")
+        .select("id")
+        .eq("id", siteId)
+        .eq("organization_id", orgId)
+        .single();
 
-    if (!type || !credentials) {
-      return NextResponse.json(
-        { success: false, error: "Missing type or credentials" },
-        { status: 400 }
-      );
+      if (!site) {
+        return NextResponse.json({ error: "Site not found" }, { status: 404 });
+      }
     }
 
-    // Encrypt credentials
-    const encryptedCredentials = encrypt(JSON.stringify(credentials));
-
-    // Upsert the integration
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: upsertError } = await (supabase as any)
+    // Create integration
+    const { data: newIntegration, error } = await supabase
       .from("integrations")
       .upsert({
         organization_id: orgId,
+        site_id: siteId || null,
         type,
-        credentials: { encrypted: encryptedCredentials },
-        status: "active",
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "organization_id,type" });
+        name: name || getDefaultName(type),
+        status: credentials ? "connected" : "pending",
+        credentials: credentials || null,
+        settings: settings || null,
+      } as never, { onConflict: "organization_id,type,site_id" })
+      .select()
+      .single();
 
-    if (upsertError) {
-      console.error("Failed to save integration:", upsertError);
-      return NextResponse.json(
-        { success: false, error: "Failed to save credentials" },
-        { status: 500 }
-      );
+    if (error) {
+      console.error("Integration create error:", error);
+      throw error;
     }
 
-    return NextResponse.json({
-      success: true,
-      message: `${type} connected successfully`,
-    });
+    return NextResponse.json({ success: true, data: newIntegration });
 
   } catch (error) {
-    console.error("Integration POST error:", error);
+    console.error("[Integrations API] Error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to save integration" },
+      { error: error instanceof Error ? error.message : "Failed to create integration" },
       { status: 500 }
     );
   }
 }
 
-// ============================================
-// DELETE - Disconnect integration
-// ============================================
+// PATCH - Update integration
+export async function PATCH(request: NextRequest) {
+  const supabase = await createClient();
+  
+  if (!supabase) {
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
 
-export async function DELETE(request: NextRequest) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const supabase = await createClient();
-    if (!supabase) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
-    }
-    
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    const body = await request.json();
+    const { id, credentials, settings, status } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "Integration ID is required" }, { status: 400 });
     }
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: userData } = await supabase
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
-      .single() as { data: { organization_id: string } | null };
+      .single();
 
-    const orgId = profile?.organization_id;
+    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
     if (!orgId) {
-      return NextResponse.json(
-        { success: false, error: "Organization not found" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
-    const body = await request.json();
-    const { type } = body as { type: string };
-
-    if (!type) {
-      return NextResponse.json(
-        { success: false, error: "Missing integration type" },
-        { status: 400 }
-      );
-    }
-
-    // Delete the integration
-    const { error: deleteError } = await supabase
+    // Verify ownership
+    const { data: existing } = await supabase
       .from("integrations")
-      .delete()
-      .eq("organization_id", orgId)
-      .eq("type", type);
+      .select("id, organization_id")
+      .eq("id", id)
+      .single();
 
-    if (deleteError) {
-      console.error("Failed to delete integration:", deleteError);
-      return NextResponse.json(
-        { success: false, error: "Failed to disconnect" },
-        { status: 500 }
-      );
+    if (!existing || (existing as { organization_id: string }).organization_id !== orgId) {
+      return NextResponse.json({ error: "Integration not found" }, { status: 404 });
     }
 
-    return NextResponse.json({
-      success: true,
-      message: `${type} disconnected`,
-    });
+    // Build update object
+    const updates: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (credentials !== undefined) {
+      updates.credentials = credentials;
+      updates.status = credentials ? "connected" : "disconnected";
+    }
+    if (settings !== undefined) updates.settings = settings;
+    if (status !== undefined) updates.status = status;
+
+    const { data: updatedIntegration, error } = await supabase
+      .from("integrations")
+      .update(updates as never)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Integration update error:", error);
+      throw error;
+    }
+
+    return NextResponse.json({ success: true, data: updatedIntegration });
 
   } catch (error) {
-    console.error("Integration DELETE error:", error);
+    console.error("[Integrations API] Error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to disconnect integration" },
+      { error: error instanceof Error ? error.message : "Failed to update integration" },
       { status: 500 }
     );
   }
 }
+
+// DELETE - Disconnect integration
+export async function DELETE(request: NextRequest) {
+  const supabase = await createClient();
+  
+  if (!supabase) {
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Integration ID is required" }, { status: 400 });
+    }
+
+    // Get user's organization
+    const { data: userData } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
+    if (!orgId) {
+      return NextResponse.json({ error: "No organization found" }, { status: 400 });
+    }
+
+    // Delete integration (verify ownership)
+    const { error } = await supabase
+      .from("integrations")
+      .delete()
+      .eq("id", id)
+      .eq("organization_id", orgId);
+
+    if (error) {
+      console.error("Integration delete error:", error);
+      throw error;
+    }
+
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+    console.error("[Integrations API] Error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to delete integration" },
+      { status: 500 }
+    );
+  }
+}
+
+// Helper functions
+function getCategoryFromType(type: string): string {
+  const categories: Record<string, string> = {
+    wordpress: "cms",
+    webflow: "cms",
+    shopify: "cms",
+    gsc: "analytics",
+    ga4: "analytics",
+    dataforseo: "seo",
+    ahrefs: "seo",
+    serpapi: "seo",
+    surfer: "seo",
+    openai: "ai",
+    anthropic: "ai",
+  };
+  return categories[type] || "other";
+}
+
+function getDefaultName(type: string): string {
+  const names: Record<string, string> = {
+    wordpress: "WordPress",
+    webflow: "Webflow",
+    shopify: "Shopify",
+    gsc: "Google Search Console",
+    ga4: "Google Analytics 4",
+    dataforseo: "DataForSEO",
+    ahrefs: "Ahrefs",
+    serpapi: "SerpAPI",
+    surfer: "Surfer SEO",
+    openai: "OpenAI",
+    anthropic: "Anthropic Claude",
+  };
+  return names[type] || type;
+}
+
+const AVAILABLE_INTEGRATIONS = [
+  { type: "wordpress", name: "WordPress", category: "cms", description: "Publish content to WordPress" },
+  { type: "webflow", name: "Webflow", category: "cms", description: "Publish to Webflow CMS" },
+  { type: "shopify", name: "Shopify", category: "cms", description: "Manage Shopify blog" },
+  { type: "gsc", name: "Google Search Console", category: "analytics", description: "Track rankings and clicks" },
+  { type: "ga4", name: "Google Analytics 4", category: "analytics", description: "Track traffic" },
+  { type: "dataforseo", name: "DataForSEO", category: "seo", description: "Keyword research" },
+  { type: "ahrefs", name: "Ahrefs", category: "seo", description: "Backlink analysis" },
+  { type: "serpapi", name: "SerpAPI", category: "seo", description: "SERP tracking" },
+];

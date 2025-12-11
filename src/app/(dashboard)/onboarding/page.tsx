@@ -15,7 +15,11 @@ import {
   TrendingUp,
   Link2,
   Target,
-  Rocket
+  Rocket,
+  Image,
+  Clock,
+  RefreshCw,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +39,10 @@ interface AnalysisStep {
 }
 
 interface SiteAnalysis {
+  siteId: string;
+  domain: string;
   seoScore: number;
+  pagesAnalyzed: number;
   issues: {
     critical: number;
     warnings: number;
@@ -56,6 +63,7 @@ interface SiteAnalysis {
     type: string;
     title: string;
     impact: "high" | "medium" | "low";
+    count?: number;
   }>;
 }
 
@@ -63,32 +71,32 @@ interface SiteAnalysis {
 // STEP INDICATOR
 // ============================================
 
-function StepIndicator({ step, status }: { step: AnalysisStep; status: "pending" | "loading" | "complete" | "error" }) {
+function StepIndicator({ step }: { step: AnalysisStep }) {
   return (
     <div className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 ${
-      status === "complete" ? "bg-green-500/10" :
-      status === "loading" ? "bg-primary/10" :
-      status === "error" ? "bg-red-500/10" :
+      step.status === "complete" ? "bg-green-500/10" :
+      step.status === "loading" ? "bg-primary/10" :
+      step.status === "error" ? "bg-red-500/10" :
       "bg-muted/50"
     }`}>
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-        status === "complete" ? "bg-green-500 text-white" :
-        status === "loading" ? "bg-primary text-white" :
-        status === "error" ? "bg-red-500 text-white" :
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+        step.status === "complete" ? "bg-green-500 text-white" :
+        step.status === "loading" ? "bg-primary text-white" :
+        step.status === "error" ? "bg-red-500 text-white" :
         "bg-muted text-muted-foreground"
       }`}>
-        {status === "loading" ? (
+        {step.status === "loading" ? (
           <Loader2 className="w-4 h-4 animate-spin" />
-        ) : status === "complete" ? (
+        ) : step.status === "complete" ? (
           <CheckCircle2 className="w-4 h-4" />
-        ) : status === "error" ? (
+        ) : step.status === "error" ? (
           <AlertTriangle className="w-4 h-4" />
         ) : (
           <span className="text-sm font-medium">{step.id}</span>
         )}
       </div>
       <div className="flex-1">
-        <p className={`text-sm font-medium ${status === "loading" ? "text-primary" : ""}`}>
+        <p className={`text-sm font-medium ${step.status === "loading" ? "text-primary" : ""}`}>
           {step.label}
         </p>
         {step.result && (
@@ -138,6 +146,13 @@ function SEOScoreDisplay({ score, animate = false }: { score: number; animate?: 
     return "F";
   };
 
+  const getBgColor = (s: number) => {
+    if (s >= 80) return "stroke-green-500";
+    if (s >= 60) return "stroke-yellow-500";
+    if (s >= 40) return "stroke-orange-500";
+    return "stroke-red-500";
+  };
+
   return (
     <div className="relative flex flex-col items-center">
       <div className="relative w-40 h-40">
@@ -147,21 +162,19 @@ function SEOScoreDisplay({ score, animate = false }: { score: number; animate?: 
             cy="80"
             r="70"
             fill="none"
-            stroke="currentColor"
             strokeWidth="12"
-            className="text-muted/20"
+            className="stroke-muted/20"
           />
           <circle
             cx="80"
             cy="80"
             r="70"
             fill="none"
-            stroke="currentColor"
             strokeWidth="12"
             strokeLinecap="round"
             strokeDasharray={2 * Math.PI * 70}
             strokeDashoffset={2 * Math.PI * 70 * (1 - displayScore / 100)}
-            className={`${getColor(displayScore)} transition-all duration-500`}
+            className={`${getBgColor(displayScore)} transition-all duration-500`}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -169,11 +182,34 @@ function SEOScoreDisplay({ score, animate = false }: { score: number; animate?: 
           <span className="text-lg font-semibold text-muted-foreground">/ 100</span>
         </div>
       </div>
-      <Badge className={`mt-4 ${getColor(score)} bg-current/10`}>
+      <Badge className={`mt-4 ${getColor(score)}`} variant="secondary">
         Grade: {getGrade(score)}
       </Badge>
     </div>
   );
+}
+
+// ============================================
+// QUICK WIN ICON
+// ============================================
+
+function QuickWinIcon({ type }: { type: string }) {
+  switch (type) {
+    case "meta":
+      return <FileText className="w-4 h-4" />;
+    case "title":
+      return <FileText className="w-4 h-4" />;
+    case "images":
+      return <Image className="w-4 h-4" />;
+    case "speed":
+      return <Clock className="w-4 h-4" />;
+    case "links":
+      return <Link2 className="w-4 h-4" />;
+    case "content":
+      return <FileText className="w-4 h-4" />;
+    default:
+      return <Zap className="w-4 h-4" />;
+  }
 }
 
 // ============================================
@@ -187,11 +223,12 @@ export default function OnboardingPage() {
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [progress, setProgress] = useState(0);
   const [analysis, setAnalysis] = useState<SiteAnalysis | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [steps, setSteps] = useState<AnalysisStep[]>([
-    { id: "1", label: "Scanning your website...", status: "pending" },
-    { id: "2", label: "Analyzing SEO factors...", status: "pending" },
-    { id: "3", label: "Discovering keywords...", status: "pending" },
-    { id: "4", label: "Finding content opportunities...", status: "pending" },
+    { id: "1", label: "Connecting to your website...", status: "pending" },
+    { id: "2", label: "Discovering pages...", status: "pending" },
+    { id: "3", label: "Analyzing SEO factors...", status: "pending" },
+    { id: "4", label: "Researching keywords...", status: "pending" },
     { id: "5", label: "Generating recommendations...", status: "pending" },
   ]);
 
@@ -204,75 +241,94 @@ export default function OnboardingPage() {
   const runAnalysis = async () => {
     if (!url) return;
 
-    // Normalize URL
-    let normalizedUrl = url.trim();
-    if (!normalizedUrl.startsWith("http")) {
-      normalizedUrl = "https://" + normalizedUrl;
+    // Normalize URL for display
+    let displayUrl = url.trim();
+    if (!displayUrl.startsWith("http")) {
+      displayUrl = "https://" + displayUrl;
     }
 
     setIsAnalyzing(true);
     setProgress(0);
+    setError(null);
 
-    // Step 1: Scanning
-    updateStep(0, { status: "loading" });
-    await new Promise(r => setTimeout(r, 1500));
-    updateStep(0, { status: "complete", result: "Found 47 pages" });
-    setProgress(20);
+    // Reset steps
+    setSteps([
+      { id: "1", label: "Connecting to your website...", status: "pending" },
+      { id: "2", label: "Discovering pages...", status: "pending" },
+      { id: "3", label: "Analyzing SEO factors...", status: "pending" },
+      { id: "4", label: "Researching keywords...", status: "pending" },
+      { id: "5", label: "Generating recommendations...", status: "pending" },
+    ]);
 
-    // Step 2: Analyzing SEO
-    updateStep(1, { status: "loading" });
-    await new Promise(r => setTimeout(r, 2000));
-    updateStep(1, { status: "complete", result: "Analyzed 12 SEO factors" });
-    setProgress(40);
+    try {
+      // Step 1: Connecting
+      updateStep(0, { status: "loading" });
+      setProgress(10);
+      
+      // Start the actual API call
+      const response = await fetch("/api/onboarding/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: displayUrl }),
+      });
 
-    // Step 3: Keywords
-    updateStep(2, { status: "loading" });
-    await new Promise(r => setTimeout(r, 1800));
-    updateStep(2, { status: "complete", result: "Discovered 156 keywords" });
-    setProgress(60);
+      // Simulate progress while waiting (the API is synchronous)
+      // In a real app, you'd use SSE or polling
+      updateStep(0, { status: "complete", result: "Connected successfully" });
+      setProgress(20);
+      
+      updateStep(1, { status: "loading" });
+      await new Promise(r => setTimeout(r, 500));
+      updateStep(1, { status: "complete", result: "Discovering sitemap..." });
+      setProgress(35);
+      
+      updateStep(2, { status: "loading" });
+      await new Promise(r => setTimeout(r, 500));
+      setProgress(50);
+      
+      updateStep(3, { status: "loading" });
+      await new Promise(r => setTimeout(r, 400));
+      setProgress(65);
+      
+      updateStep(4, { status: "loading" });
+      await new Promise(r => setTimeout(r, 400));
+      setProgress(80);
 
-    // Step 4: Content
-    updateStep(3, { status: "loading" });
-    await new Promise(r => setTimeout(r, 1500));
-    updateStep(3, { status: "complete", result: "Found 23 content gaps" });
-    setProgress(80);
+      // Check response
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Analysis failed");
+      }
 
-    // Step 5: Recommendations
-    updateStep(4, { status: "loading" });
-    await new Promise(r => setTimeout(r, 1200));
-    updateStep(4, { status: "complete", result: "Generated 8 quick wins" });
-    setProgress(100);
+      const result = await response.json();
+      
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Analysis failed");
+      }
 
-    // Generate mock analysis results
-    setAnalysis({
-      seoScore: 67,
-      issues: {
-        critical: 3,
-        warnings: 12,
-        passed: 47,
-      },
-      keywords: [
-        { keyword: "seo tools", volume: 12000, difficulty: 45, opportunity: "high" },
-        { keyword: "keyword research", volume: 8500, difficulty: 38, opportunity: "high" },
-        { keyword: "content optimization", volume: 3200, difficulty: 32, opportunity: "medium" },
-        { keyword: "technical seo", volume: 5400, difficulty: 52, opportunity: "medium" },
-        { keyword: "link building", volume: 9800, difficulty: 61, opportunity: "low" },
-      ],
-      contentIdeas: [
-        { title: "Complete Guide to SEO in 2025", keyword: "seo guide", trafficPotential: 5200 },
-        { title: "How to Do Keyword Research (Step-by-Step)", keyword: "keyword research how to", trafficPotential: 3800 },
-        { title: "10 Best Free SEO Tools for Beginners", keyword: "free seo tools", trafficPotential: 4500 },
-      ],
-      quickWins: [
-        { type: "meta", title: "Add missing meta descriptions to 8 pages", impact: "high" },
-        { type: "speed", title: "Optimize 12 images for faster loading", impact: "high" },
-        { type: "links", title: "Fix 5 broken internal links", impact: "medium" },
-        { type: "content", title: "Expand thin content on 3 pages", impact: "medium" },
-      ],
-    });
+      const data = result.data as SiteAnalysis;
 
-    setAnalysisComplete(true);
-    setIsAnalyzing(false);
+      // Complete remaining steps
+      updateStep(1, { status: "complete", result: `Found ${data.pagesAnalyzed} pages` });
+      updateStep(2, { status: "complete", result: `Score: ${data.seoScore}/100` });
+      updateStep(3, { status: "complete", result: `${data.keywords.length} keyword opportunities` });
+      updateStep(4, { status: "complete", result: `${data.quickWins.length} quick wins identified` });
+      setProgress(100);
+
+      setAnalysis(data);
+      setAnalysisComplete(true);
+
+    } catch (err) {
+      console.error("Analysis error:", err);
+      setError(err instanceof Error ? err.message : "Analysis failed. Please try again.");
+      
+      // Mark current loading step as error
+      setSteps(prev => prev.map(step => 
+        step.status === "loading" ? { ...step, status: "error" } : step
+      ));
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -280,8 +336,22 @@ export default function OnboardingPage() {
     runAnalysis();
   };
 
+  const handleRetry = () => {
+    setError(null);
+    setAnalysisComplete(false);
+    setAnalysis(null);
+    setProgress(0);
+    setSteps([
+      { id: "1", label: "Connecting to your website...", status: "pending" },
+      { id: "2", label: "Discovering pages...", status: "pending" },
+      { id: "3", label: "Analyzing SEO factors...", status: "pending" },
+      { id: "4", label: "Researching keywords...", status: "pending" },
+      { id: "5", label: "Generating recommendations...", status: "pending" },
+    ]);
+  };
+
   // Initial state - URL input
-  if (!isAnalyzing && !analysisComplete) {
+  if (!isAnalyzing && !analysisComplete && !error) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-2xl space-y-8 text-center">
@@ -298,7 +368,7 @@ export default function OnboardingPage() {
                 Let&apos;s analyze your site
               </h1>
               <p className="text-xl text-muted-foreground max-w-md mx-auto">
-                Paste your URL and watch the magic happen in 30 seconds
+                Paste your URL and get a complete SEO strategy in under 2 minutes
               </p>
             </div>
           </div>
@@ -317,6 +387,7 @@ export default function OnboardingPage() {
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   className="flex-1 border-0 text-lg focus-visible:ring-0 focus-visible:ring-offset-0"
+                  autoFocus
                 />
                 <Button 
                   type="submit" 
@@ -354,6 +425,32 @@ export default function OnboardingPage() {
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center px-4">
+        <div className="w-full max-w-lg space-y-8 text-center">
+          <div className="inline-flex items-center justify-center p-4 bg-red-500/10 rounded-2xl">
+            <AlertTriangle className="w-12 h-12 text-red-500" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Analysis Failed</h2>
+            <p className="text-muted-foreground">{error}</p>
+          </div>
+          <div className="flex justify-center gap-4">
+            <Button variant="outline" onClick={handleRetry}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
+            <Button onClick={() => runAnalysis()}>
+              Retry Analysis
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Analyzing state
   if (isAnalyzing) {
     return (
@@ -364,7 +461,10 @@ export default function OnboardingPage() {
             <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-xl">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
-            <h2 className="text-2xl font-bold">Analyzing {url}...</h2>
+            <h2 className="text-2xl font-bold">Analyzing your site...</h2>
+            <p className="text-muted-foreground">
+              This usually takes 30-60 seconds
+            </p>
             <Progress value={progress} className="h-2" />
             <p className="text-sm text-muted-foreground">{progress}% complete</p>
           </div>
@@ -372,8 +472,8 @@ export default function OnboardingPage() {
           {/* Steps */}
           <Card>
             <CardContent className="p-4 space-y-2">
-              {steps.map((step, index) => (
-                <StepIndicator key={step.id} step={step} status={step.status} />
+              {steps.map((step) => (
+                <StepIndicator key={step.id} step={step} />
               ))}
             </CardContent>
           </Card>
@@ -384,14 +484,25 @@ export default function OnboardingPage() {
 
   // Results state
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 pb-12 animate-in fade-in duration-500">
       {/* Header */}
       <div className="text-center space-y-4">
         <div className="inline-flex items-center justify-center p-3 bg-green-500/10 rounded-xl">
           <CheckCircle2 className="w-8 h-8 text-green-500" />
         </div>
         <h1 className="text-3xl font-bold">Analysis Complete!</h1>
-        <p className="text-muted-foreground">Here&apos;s what we found for {url}</p>
+        <p className="text-muted-foreground flex items-center justify-center gap-2">
+          Here&apos;s what we found for 
+          <span className="font-medium text-foreground">{analysis?.domain}</span>
+          <a 
+            href={`https://${analysis?.domain}`} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        </p>
       </div>
 
       {/* Score and Issues */}
@@ -413,110 +524,128 @@ export default function OnboardingPage() {
               <p className="text-xs text-muted-foreground">Passed</p>
             </div>
           </div>
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Analyzed {analysis?.pagesAnalyzed} pages
+          </p>
         </Card>
 
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Quick Wins</h3>
-          <div className="space-y-3">
-            {analysis?.quickWins.map((win, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                <div className={`p-2 rounded-lg ${
-                  win.impact === "high" ? "bg-red-500/10 text-red-500" :
-                  "bg-yellow-500/10 text-yellow-500"
-                }`}>
-                  {win.type === "meta" ? <FileText className="w-4 h-4" /> :
-                   win.type === "speed" ? <Zap className="w-4 h-4" /> :
-                   win.type === "links" ? <Link2 className="w-4 h-4" /> :
-                   <AlertTriangle className="w-4 h-4" />}
+          {analysis?.quickWins && analysis.quickWins.length > 0 ? (
+            <div className="space-y-3">
+              {analysis.quickWins.map((win, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <div className={`p-2 rounded-lg ${
+                    win.impact === "high" ? "bg-red-500/10 text-red-500" :
+                    "bg-yellow-500/10 text-yellow-500"
+                  }`}>
+                    <QuickWinIcon type={win.type} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{win.title}</p>
+                  </div>
+                  <Badge variant={win.impact === "high" ? "destructive" : "secondary"}>
+                    {win.impact}
+                  </Badge>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{win.title}</p>
-                </div>
-                <Badge variant={win.impact === "high" ? "destructive" : "secondary"}>
-                  {win.impact}
-                </Badge>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-sm">No immediate issues found. Great job!</p>
+          )}
         </Card>
       </div>
 
       {/* Keywords */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Target className="w-5 h-5 text-primary" />
-            Keyword Opportunities
-          </h3>
-          <Badge variant="secondary">{analysis?.keywords.length} found</Badge>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="text-left text-sm text-muted-foreground border-b">
-                <th className="pb-2">Keyword</th>
-                <th className="pb-2">Volume</th>
-                <th className="pb-2">Difficulty</th>
-                <th className="pb-2">Opportunity</th>
-              </tr>
-            </thead>
-            <tbody>
-              {analysis?.keywords.map((kw, i) => (
-                <tr key={i} className="border-b last:border-0">
-                  <td className="py-3 font-medium">{kw.keyword}</td>
-                  <td className="py-3">{kw.volume.toLocaleString()}</td>
-                  <td className="py-3">
-                    <div className="flex items-center gap-2">
-                      <Progress value={kw.difficulty} className="h-2 w-16" />
-                      <span className="text-sm">{kw.difficulty}</span>
-                    </div>
-                  </td>
-                  <td className="py-3">
-                    <Badge variant={
-                      kw.opportunity === "high" ? "default" :
-                      kw.opportunity === "medium" ? "secondary" : "outline"
-                    }>
-                      {kw.opportunity}
-                    </Badge>
-                  </td>
+      {analysis?.keywords && analysis.keywords.length > 0 && (
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              Keyword Opportunities
+            </h3>
+            <Badge variant="secondary">{analysis.keywords.length} found</Badge>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-left text-sm text-muted-foreground border-b">
+                  <th className="pb-3 font-medium">Keyword</th>
+                  <th className="pb-3 font-medium">Volume</th>
+                  <th className="pb-3 font-medium">Difficulty</th>
+                  <th className="pb-3 font-medium">Opportunity</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+              </thead>
+              <tbody>
+                {analysis.keywords.map((kw, i) => (
+                  <tr key={i} className="border-b last:border-0">
+                    <td className="py-3 font-medium">{kw.keyword}</td>
+                    <td className="py-3 text-muted-foreground">
+                      {kw.volume.toLocaleString()}
+                    </td>
+                    <td className="py-3">
+                      <div className="flex items-center gap-2">
+                        <Progress value={kw.difficulty} className="h-2 w-16" />
+                        <span className="text-sm text-muted-foreground">{kw.difficulty}</span>
+                      </div>
+                    </td>
+                    <td className="py-3">
+                      <Badge variant={
+                        kw.opportunity === "high" ? "default" :
+                        kw.opportunity === "medium" ? "secondary" : "outline"
+                      }>
+                        {kw.opportunity}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
 
       {/* Content Ideas */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            AI Content Ideas
-          </h3>
-        </div>
-        <div className="grid md:grid-cols-3 gap-4">
-          {analysis?.contentIdeas.map((idea, i) => (
-            <Card key={i} className="p-4 hover:shadow-md transition-shadow cursor-pointer group">
-              <h4 className="font-medium mb-2 group-hover:text-primary transition-colors">
-                {idea.title}
-              </h4>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <TrendingUp className="w-4 h-4" />
-                <span>{idea.trafficPotential.toLocaleString()} potential visits/mo</span>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </Card>
+      {analysis?.contentIdeas && analysis.contentIdeas.length > 0 && (
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              AI Content Ideas
+            </h3>
+          </div>
+          <div className="grid md:grid-cols-3 gap-4">
+            {analysis.contentIdeas.map((idea, i) => (
+              <Card key={i} className="p-4 hover:shadow-md transition-shadow cursor-pointer group border-dashed">
+                <h4 className="font-medium mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                  {idea.title}
+                </h4>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <TrendingUp className="w-4 h-4" />
+                  <span>{idea.trafficPotential.toLocaleString()} potential visits/mo</span>
+                </div>
+                <Badge variant="outline" className="mt-2">
+                  {idea.keyword}
+                </Badge>
+              </Card>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* CTA */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-        <Button size="lg" className="gap-2" onClick={() => router.push("/dashboard")}>
+        <Button size="lg" className="gap-2 px-8" onClick={() => router.push("/dashboard")}>
           <Rocket className="w-5 h-5" />
           Go to Dashboard
         </Button>
-        <Button size="lg" variant="outline" className="gap-2" onClick={() => router.push("/sites/new")}>
-          Complete Site Setup
+        <Button 
+          size="lg" 
+          variant="outline" 
+          className="gap-2"
+          onClick={() => router.push(`/sites/${analysis?.siteId}`)}
+        >
+          View Site Details
           <ArrowRight className="w-5 h-5" />
         </Button>
       </div>

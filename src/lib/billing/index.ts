@@ -2,39 +2,49 @@
  * Billing Module - Centralized Exports
  */
 
-export { dodo, DodoPaymentsClient } from "./dodo-client";
-export { usageTracker, UsageTracker } from "./usage-tracker";
+// Plans & Pricing
 export { 
   PLANS, 
-  ON_DEMAND_PACKAGES, 
-  USAGE_COSTS,
+  CREDIT_PACKAGES,
+  INTERNAL_COSTS,
+  OVERAGE_PRICES,
   getPlan, 
-  getPlanByPrice, 
-  getOnDemandPackage,
-  calculateOverageCharges,
-  formatPrice,
+  getPlanLimits,
+  calculateYearlySavings,
+  calculateYearlySavingsPercent,
+  isWithinLimit,
+  getOverageAmount,
+  calculateOverageCost,
 } from "./plans";
 
 export type {
-  DodoConfig,
-  Customer,
-  Product,
-  Subscription,
-  UsageRecord as DodoUsageRecord,
-  Invoice,
-  PaymentIntent,
-  CheckoutSession,
-} from "./dodo-client";
+  Plan,
+  PlanLimits,
+} from "./plans";
 
-export type {
-  UsageType,
-  UsageRecord,
-  UsageStatus,
-  OrganizationUsage,
+// Usage Tracking
+export { 
+  UsageTracker,
+  createUsageTracker,
 } from "./usage-tracker";
 
 export type {
-  PlanLimit,
-  Plan,
-  OnDemandPackage,
-} from "./plans";
+  UsageRecord,
+  UsageCheck,
+  CreditBalance,
+} from "./usage-tracker";
+
+// Payments
+export { 
+  payments,
+  verifyWebhookSignature,
+  formatPrice,
+  getPlanFromSubscription,
+} from "./payments";
+
+export type {
+  PaymentCustomer,
+  Subscription,
+  PaymentIntent,
+  Invoice,
+} from "./payments";

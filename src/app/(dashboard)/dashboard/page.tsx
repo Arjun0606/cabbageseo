@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   TrendingUp, 
   TrendingDown,
@@ -18,53 +19,158 @@ import {
   BarChart3,
   Target,
   Rocket,
-  RefreshCw
+  RefreshCw,
+  ExternalLink,
+  Loader2,
+  AlertCircle,
+  Wrench,
+  PenSquare,
+  Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ============================================
 // TYPES
 // ============================================
 
-interface DashboardStats {
-  totalKeywords: number;
-  keywordsChange: number;
-  totalContent: number;
-  contentChange: number;
-  avgPosition: number;
-  positionChange: number;
-  issuesCount: number;
-  issuesChange: number;
+interface DashboardData {
+  sites: Array<{
+    id: string;
+    domain: string;
+    name: string;
+    seoScore: number;
+    status: string;
+    pagesCount: number;
+    issuesCount: number;
+    lastCrawled: string | null;
+  }>;
+  stats: {
+    totalKeywords: number;
+    trackedKeywords: number;
+    totalContent: number;
+    publishedContent: number;
+    avgPosition: number | null;
+    totalIssues: number;
+    criticalIssues: number;
+  };
+  recentActivity: Array<{
+    id: string;
+    type: "content" | "keyword" | "audit" | "publish" | "crawl";
+    title: string;
+    description: string;
+    timestamp: string;
+    siteId: string;
+    siteDomain: string;
+  }>;
+  nextActions: Array<{
+    id: string;
+    type: "write" | "optimize" | "fix" | "research" | "publish";
+    title: string;
+    description: string;
+    priority: "high" | "medium" | "low";
+    siteId: string;
+    siteDomain: string;
+  }>;
 }
 
-interface RecentActivity {
-  id: string;
-  type: "content" | "keyword" | "audit" | "publish";
-  title: string;
-  description: string;
-  timestamp: string;
-  status: "completed" | "in_progress" | "failed";
+// ============================================
+// LOADING SKELETON
+// ============================================
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-8 animate-pulse">
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="p-6">
+            <Skeleton className="h-4 w-24 mb-2" />
+            <Skeleton className="h-8 w-16" />
+          </Card>
+        ))}
+      </div>
+      
+      {/* Main content */}
+      <div className="grid md:grid-cols-3 gap-6">
+        <Card className="md:col-span-2 p-6">
+          <Skeleton className="h-6 w-32 mb-4" />
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        </Card>
+        <Card className="p-6">
+          <Skeleton className="h-6 w-32 mb-4" />
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
 }
 
-interface NextAction {
-  id: string;
-  type: "write" | "optimize" | "fix" | "research";
-  title: string;
-  description: string;
-  priority: "high" | "medium" | "low";
-  estimatedTime: string;
-}
+// ============================================
+// EMPTY STATE
+// ============================================
 
-interface Site {
-  id: string;
-  name: string;
-  domain: string;
-  seoScore: number;
-  lastCrawl: string;
-  issues: number;
+function EmptyDashboard() {
+  const router = useRouter();
+  
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+      <div className="relative mb-8">
+        <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+        <div className="relative p-6 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl">
+          <Rocket className="w-16 h-16 text-primary" />
+        </div>
+      </div>
+      
+      <h1 className="text-3xl font-bold mb-4">Welcome to CabbageSEO!</h1>
+      <p className="text-muted-foreground max-w-md mb-8">
+        Let&apos;s get started by analyzing your first website. Our AI will scan your site
+        and create a complete SEO strategy in minutes.
+      </p>
+      
+      <div className="flex gap-4">
+        <Button size="lg" className="gap-2" onClick={() => router.push("/onboarding")}>
+          <Plus className="w-5 h-5" />
+          Add Your First Site
+        </Button>
+      </div>
+      
+      <div className="grid grid-cols-3 gap-8 mt-16 max-w-2xl">
+        <div className="text-center">
+          <div className="p-3 bg-primary/10 rounded-xl inline-block mb-3">
+            <Search className="w-6 h-6 text-primary" />
+          </div>
+          <p className="text-sm font-medium">Keyword Research</p>
+          <p className="text-xs text-muted-foreground">AI-powered opportunities</p>
+        </div>
+        <div className="text-center">
+          <div className="p-3 bg-primary/10 rounded-xl inline-block mb-3">
+            <FileText className="w-6 h-6 text-primary" />
+          </div>
+          <p className="text-sm font-medium">Content Creation</p>
+          <p className="text-xs text-muted-foreground">SEO-optimized articles</p>
+        </div>
+        <div className="text-center">
+          <div className="p-3 bg-primary/10 rounded-xl inline-block mb-3">
+            <TrendingUp className="w-6 h-6 text-primary" />
+          </div>
+          <p className="text-sm font-medium">Rank Tracking</p>
+          <p className="text-xs text-muted-foreground">Monitor progress</p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ============================================
@@ -76,15 +182,17 @@ function StatCard({
   value, 
   change, 
   icon: Icon, 
-  trend 
+  trend,
+  href
 }: { 
   title: string; 
   value: string | number; 
   change?: number; 
   icon: React.ElementType;
   trend?: "up" | "down" | "neutral";
+  href?: string;
 }) {
-  return (
+  const content = (
     <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/30">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       <CardContent className="p-6">
@@ -102,65 +210,152 @@ function StatCard({
                 <span className={trend === "up" ? "text-green-500" : trend === "down" ? "text-red-500" : "text-muted-foreground"}>
                   {change > 0 ? "+" : ""}{change}%
                 </span>
-                <span className="text-muted-foreground">vs last week</span>
               </div>
             )}
           </div>
-          <div className="p-3 rounded-xl bg-primary/10 text-primary">
+          <div className="p-3 rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
             <Icon className="w-6 h-6" />
           </div>
         </div>
       </CardContent>
     </Card>
   );
+
+  if (href) {
+    return <Link href={href}>{content}</Link>;
+  }
+  return content;
 }
 
 // ============================================
-// SEO SCORE RING
+// SITE CARD
 // ============================================
 
-function SEOScoreRing({ score, size = 120 }: { score: number; size?: number }) {
-  const radius = (size - 12) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
-  
-  const getColor = (s: number) => {
-    if (s >= 80) return "text-green-500";
-    if (s >= 60) return "text-yellow-500";
-    if (s >= 40) return "text-orange-500";
+function SiteCard({ site }: { site: DashboardData["sites"][0] }) {
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-green-500";
+    if (score >= 60) return "text-yellow-500";
+    if (score >= 40) return "text-orange-500";
     return "text-red-500";
   };
 
+  const getScoreBg = (score: number) => {
+    if (score >= 80) return "bg-green-500";
+    if (score >= 60) return "bg-yellow-500";
+    if (score >= 40) return "bg-orange-500";
+    return "bg-red-500";
+  };
+
   return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg className="transform -rotate-90" width={size} height={size}>
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="8"
-          className="text-muted/20"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="8"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className={`${getColor(score)} transition-all duration-1000 ease-out`}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`text-3xl font-bold ${getColor(score)}`}>{score}</span>
-        <span className="text-xs text-muted-foreground">SEO Score</span>
+    <Link href={`/sites/${site.id}`}>
+      <Card className="p-4 hover:shadow-md transition-all hover:border-primary/30 group cursor-pointer">
+        <div className="flex items-center gap-4">
+          {/* Score Ring */}
+          <div className="relative w-14 h-14 flex-shrink-0">
+            <svg className="w-full h-full transform -rotate-90">
+              <circle
+                cx="28"
+                cy="28"
+                r="24"
+                fill="none"
+                strokeWidth="4"
+                className="stroke-muted/30"
+              />
+              <circle
+                cx="28"
+                cy="28"
+                r="24"
+                fill="none"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 24}
+                strokeDashoffset={2 * Math.PI * 24 * (1 - site.seoScore / 100)}
+                className={getScoreBg(site.seoScore)}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className={`text-sm font-bold ${getScoreColor(site.seoScore)}`}>
+                {site.seoScore}
+              </span>
+            </div>
+          </div>
+
+          {/* Site Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-muted-foreground" />
+              <span className="font-medium truncate">{site.domain}</span>
+              <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+              <span>{site.pagesCount} pages</span>
+              {site.issuesCount > 0 && (
+                <span className="text-red-500 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  {site.issuesCount} issues
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Arrow */}
+          <ArrowRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+      </Card>
+    </Link>
+  );
+}
+
+// ============================================
+// ACTION CARD
+// ============================================
+
+function ActionCard({ action, onClick }: { 
+  action: DashboardData["nextActions"][0];
+  onClick?: () => void;
+}) {
+  const getIcon = () => {
+    switch (action.type) {
+      case "write": return PenSquare;
+      case "optimize": return Sparkles;
+      case "fix": return Wrench;
+      case "research": return Search;
+      case "publish": return Send;
+      default: return Zap;
+    }
+  };
+
+  const Icon = getIcon();
+
+  return (
+    <Card 
+      className="p-4 hover:shadow-md transition-all hover:border-primary/30 group cursor-pointer"
+      onClick={onClick}
+    >
+      <div className="flex items-center gap-3">
+        <div className={`p-2 rounded-lg ${
+          action.priority === "high" ? "bg-red-500/10 text-red-500" :
+          action.priority === "medium" ? "bg-yellow-500/10 text-yellow-500" :
+          "bg-muted text-muted-foreground"
+        }`}>
+          <Icon className="w-4 h-4" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+            {action.title}
+          </p>
+          <p className="text-xs text-muted-foreground truncate">
+            {action.siteDomain}
+          </p>
+        </div>
+        <Badge variant={
+          action.priority === "high" ? "destructive" : 
+          action.priority === "medium" ? "secondary" : "outline"
+        } className="text-xs">
+          {action.priority}
+        </Badge>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -168,454 +363,273 @@ function SEOScoreRing({ score, size = 120 }: { score: number; size?: number }) {
 // ACTIVITY ITEM
 // ============================================
 
-function ActivityItem({ activity }: { activity: RecentActivity }) {
-  const icons = {
-    content: FileText,
-    keyword: Search,
-    audit: AlertTriangle,
-    publish: Globe,
+function ActivityItem({ activity }: { activity: DashboardData["recentActivity"][0] }) {
+  const getIcon = () => {
+    switch (activity.type) {
+      case "content": return FileText;
+      case "keyword": return Search;
+      case "audit": return AlertTriangle;
+      case "publish": return Send;
+      case "crawl": return Globe;
+      default: return CheckCircle2;
+    }
   };
-  
-  const Icon = icons[activity.type];
-  
+
+  const Icon = getIcon();
+  const timeAgo = getTimeAgo(activity.timestamp);
+
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-      <div className={`p-2 rounded-lg ${
-        activity.status === "completed" ? "bg-green-500/10 text-green-500" :
-        activity.status === "in_progress" ? "bg-blue-500/10 text-blue-500" :
-        "bg-red-500/10 text-red-500"
-      }`}>
+    <div className="flex items-start gap-3 py-3">
+      <div className="p-2 rounded-lg bg-primary/10 text-primary">
         <Icon className="w-4 h-4" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{activity.title}</p>
-        <p className="text-xs text-muted-foreground">{activity.description}</p>
+        <p className="text-sm font-medium">{activity.title}</p>
+        <p className="text-xs text-muted-foreground">{activity.siteDomain}</p>
       </div>
-      <div className="flex items-center gap-2">
-        {activity.status === "completed" && <CheckCircle2 className="w-4 h-4 text-green-500" />}
-        {activity.status === "in_progress" && <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />}
-        <span className="text-xs text-muted-foreground">{activity.timestamp}</span>
-      </div>
+      <span className="text-xs text-muted-foreground whitespace-nowrap">
+        {timeAgo}
+      </span>
     </div>
   );
 }
 
-// ============================================
-// NEXT ACTION CARD
-// ============================================
+function getTimeAgo(timestamp: string): string {
+  const now = new Date();
+  const then = new Date(timestamp);
+  const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
 
-function NextActionCard({ action }: { action: NextAction }) {
-  const icons = {
-    write: FileText,
-    optimize: Sparkles,
-    fix: AlertTriangle,
-    research: Search,
-  };
-  
-  const Icon = icons[action.type];
-  
-  const priorityColors = {
-    high: "bg-red-500/10 text-red-500 border-red-500/20",
-    medium: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-    low: "bg-green-500/10 text-green-500 border-green-500/20",
-  };
-
-  return (
-    <Card className="group hover:shadow-md transition-all duration-300 cursor-pointer border-border/50 hover:border-primary/30">
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-            <Icon className="w-4 h-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <p className="text-sm font-medium truncate">{action.title}</p>
-              <Badge variant="outline" className={priorityColors[action.priority]}>
-                {action.priority}
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground line-clamp-2">{action.description}</p>
-            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-              <Clock className="w-3 h-3" />
-              <span>{action.estimatedTime}</span>
-            </div>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-        </div>
-      </CardContent>
-    </Card>
-  );
+  if (seconds < 60) return "Just now";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  return then.toLocaleDateString();
 }
 
 // ============================================
-// MAIN DASHBOARD
+// MAIN DASHBOARD PAGE
 // ============================================
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [activities, setActivities] = useState<RecentActivity[]>([]);
-  const [nextActions, setNextActions] = useState<NextAction[]>([]);
-  const [sites, setSites] = useState<Site[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      setStats({
-        totalKeywords: 1247,
-        keywordsChange: 12,
-        totalContent: 48,
-        contentChange: 8,
-        avgPosition: 14.3,
-        positionChange: -2.1,
-        issuesCount: 23,
-        issuesChange: -15,
-      });
+    async function fetchDashboard() {
+      try {
+        const response = await fetch("/api/dashboard");
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            router.push("/login");
+            return;
+          }
+          throw new Error("Failed to load dashboard");
+        }
 
-      setActivities([
-        {
-          id: "1",
-          type: "content",
-          title: "Article Generated",
-          description: "\"10 Best SEO Tools for 2025\" - 2,500 words",
-          timestamp: "5m ago",
-          status: "completed",
-        },
-        {
-          id: "2",
-          type: "keyword",
-          title: "Keyword Research Complete",
-          description: "Found 45 new opportunities in your niche",
-          timestamp: "1h ago",
-          status: "completed",
-        },
-        {
-          id: "3",
-          type: "audit",
-          title: "Technical Audit Running",
-          description: "Scanning 234 pages for issues...",
-          timestamp: "2h ago",
-          status: "in_progress",
-        },
-        {
-          id: "4",
-          type: "publish",
-          title: "Content Published",
-          description: "\"How to Improve Core Web Vitals\" is now live",
-          timestamp: "3h ago",
-          status: "completed",
-        },
-      ]);
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || "Failed to load dashboard");
+        }
 
-      setNextActions([
-        {
-          id: "1",
-          type: "write",
-          title: "Write: \"Local SEO Guide 2025\"",
-          description: "High-volume keyword with low competition. Perfect opportunity!",
-          priority: "high",
-          estimatedTime: "~15 min",
-        },
-        {
-          id: "2",
-          type: "optimize",
-          title: "Optimize: Homepage Meta Tags",
-          description: "Your homepage is missing optimal title and description",
-          priority: "high",
-          estimatedTime: "~2 min",
-        },
-        {
-          id: "3",
-          type: "fix",
-          title: "Fix: 5 Broken Internal Links",
-          description: "These broken links are hurting your SEO score",
-          priority: "medium",
-          estimatedTime: "~5 min",
-        },
-        {
-          id: "4",
-          type: "research",
-          title: "Research: Competitor Gap Analysis",
-          description: "Discover keywords your competitors rank for but you don't",
-          priority: "low",
-          estimatedTime: "~10 min",
-        },
-      ]);
+        setData(result.data);
+      } catch (err) {
+        console.error("Dashboard error:", err);
+        setError(err instanceof Error ? err.message : "Failed to load dashboard");
+      } finally {
+        setIsLoading(false);
+      }
+    }
 
-      setSites([
-        {
-          id: "1",
-          name: "Main Website",
-          domain: "example.com",
-          seoScore: 78,
-          lastCrawl: "2 hours ago",
-          issues: 12,
-        },
-      ]);
+    fetchDashboard();
+  }, [router]);
 
-      setIsLoading(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
+  // Loading state
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative">
-            <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-            <Sparkles className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-          </div>
-          <p className="text-muted-foreground animate-pulse">Loading your SEO command center...</p>
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">Loading your SEO command center...</p>
         </div>
+        <DashboardSkeleton />
       </div>
     );
   }
 
-  const hasSites = sites.length > 0;
-
-  // Empty state for new users
-  if (!hasSites) {
+  // Error state
+  if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-        <div className="relative mb-8">
-          <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-          <div className="relative p-6 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full">
-            <Rocket className="w-16 h-16 text-primary" />
-          </div>
-        </div>
-        <h1 className="text-3xl font-bold mb-3">Welcome to CabbageSEO! 🥬</h1>
-        <p className="text-muted-foreground max-w-md mb-8">
-          Your AI-powered SEO autopilot is ready. Connect your first site and watch the magic happen in 30 seconds.
-        </p>
-        <div className="flex gap-4">
-          <Button size="lg" asChild className="gap-2">
-            <Link href="/onboarding">
-              <Sparkles className="w-5 h-5" />
-              Start Magic Setup
-            </Link>
-          </Button>
-          <Button size="lg" variant="outline" asChild className="gap-2">
-            <Link href="/sites/new">
-              <Plus className="w-5 h-5" />
-              Add Site Manually
-            </Link>
-          </Button>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Failed to load dashboard</h2>
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <Button onClick={() => window.location.reload()}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Retry
+        </Button>
       </div>
     );
+  }
+
+  // Empty state (no sites)
+  if (!data || data.sites.length === 0) {
+    return <EmptyDashboard />;
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Mission Control</h1>
-          <p className="text-muted-foreground">Your SEO autopilot is running smoothly</p>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Your SEO command center
+          </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" size="sm" className="gap-2">
-            <RefreshCw className="w-4 h-4" />
-            Sync All
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => router.push("/sites/new")}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Site
           </Button>
-          <Button size="sm" className="gap-2" asChild>
-            <Link href="/content/new">
-              <Plus className="w-4 h-4" />
-              New Content
-            </Link>
+          <Button size="sm" onClick={() => router.push("/content")}>
+            <Sparkles className="w-4 h-4 mr-2" />
+            Create Content
           </Button>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
-          title="Keywords Tracked"
-          value={stats?.totalKeywords.toLocaleString() || "0"}
-          change={stats?.keywordsChange}
+          title="Keywords"
+          value={data.stats.totalKeywords.toLocaleString()}
           icon={Target}
-          trend="up"
+          href="/keywords"
         />
         <StatCard
-          title="Content Pieces"
-          value={stats?.totalContent || "0"}
-          change={stats?.contentChange}
+          title="Content"
+          value={data.stats.totalContent}
           icon={FileText}
-          trend="up"
+          href="/content"
         />
         <StatCard
           title="Avg. Position"
-          value={stats?.avgPosition || "0"}
-          change={stats?.positionChange}
+          value={data.stats.avgPosition ? `#${data.stats.avgPosition}` : "—"}
           icon={BarChart3}
-          trend="up"
+          href="/analytics"
         />
         <StatCard
-          title="Issues Found"
-          value={stats?.issuesCount || "0"}
-          change={stats?.issuesChange}
+          title="Issues"
+          value={data.stats.totalIssues}
           icon={AlertTriangle}
-          trend="down"
+          trend={data.stats.criticalIssues > 0 ? "down" : "neutral"}
+          href="/audit"
         />
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column - Activity & Actions */}
-        <div className="lg:col-span-2 space-y-6">
+      {/* Main Content */}
+      <div className="grid md:grid-cols-3 gap-6">
+        {/* Sites */}
+        <div className="md:col-span-2 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Your Sites</h2>
+            <Link href="/sites" className="text-sm text-primary hover:underline">
+              View all
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {data.sites.slice(0, 5).map((site) => (
+              <SiteCard key={site.id} site={site} />
+            ))}
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
           {/* Next Actions */}
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-primary" />
-                    Next Actions
-                  </CardTitle>
-                  <CardDescription>AI-recommended tasks to improve your SEO</CardDescription>
-                </div>
-                <Button variant="ghost" size="sm" className="text-primary">
-                  View All
-                </Button>
-              </div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Zap className="w-4 h-4 text-primary" />
+                Next Actions
+              </CardTitle>
+              <CardDescription>
+                Recommended tasks to improve SEO
+              </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2">
-              {nextActions.map((action) => (
-                <NextActionCard key={action.id} action={action} />
-              ))}
+            <CardContent className="space-y-2">
+              {data.nextActions.length > 0 ? (
+                data.nextActions.map((action) => (
+                  <ActionCard 
+                    key={action.id} 
+                    action={action}
+                    onClick={() => {
+                      if (action.type === "write") router.push("/content");
+                      else if (action.type === "fix") router.push("/audit");
+                      else if (action.type === "research") router.push("/keywords");
+                      else router.push(`/sites/${action.siteId}`);
+                    }}
+                  />
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  No pending actions. Great job!
+                </p>
+              )}
             </CardContent>
           </Card>
 
           {/* Recent Activity */}
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-primary" />
-                    Recent Activity
-                  </CardTitle>
-                  <CardDescription>What your SEO autopilot has been doing</CardDescription>
-                </div>
-                <Button variant="ghost" size="sm" className="text-primary">
-                  View All
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-1">
-              {activities.map((activity) => (
-                <ActivityItem key={activity.id} activity={activity} />
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column - Site Overview */}
-        <div className="space-y-6">
-          {/* Site Score Card */}
-          <Card className="relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="w-5 h-5 text-primary" />
-                {sites[0]?.name || "Your Site"}
+              <CardTitle className="text-base flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" />
+                Recent Activity
               </CardTitle>
-              <CardDescription>{sites[0]?.domain}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-center py-4">
-                <SEOScoreRing score={sites[0]?.seoScore || 0} />
-              </div>
-              <div className="space-y-3 mt-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Last Crawl</span>
-                  <span>{sites[0]?.lastCrawl}</span>
+              {data.recentActivity.length > 0 ? (
+                <div className="divide-y">
+                  {data.recentActivity.slice(0, 5).map((activity) => (
+                    <ActivityItem key={activity.id} activity={activity} />
+                  ))}
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Open Issues</span>
-                  <Badge variant="secondary">{sites[0]?.issues}</Badge>
-                </div>
-                <Button className="w-full mt-2" variant="outline" asChild>
-                  <Link href="/audit">
-                    View Full Audit
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-2">
-              <Button variant="outline" className="justify-start gap-2" asChild>
-                <Link href="/keywords">
-                  <Search className="w-4 h-4" />
-                  Research Keywords
-                </Link>
-              </Button>
-              <Button variant="outline" className="justify-start gap-2" asChild>
-                <Link href="/content">
-                  <FileText className="w-4 h-4" />
-                  Generate Content
-                </Link>
-              </Button>
-              <Button variant="outline" className="justify-start gap-2" asChild>
-                <Link href="/audit">
-                  <AlertTriangle className="w-4 h-4" />
-                  Run Site Audit
-                </Link>
-              </Button>
-              <Button variant="outline" className="justify-start gap-2" asChild>
-                <Link href="/analytics">
-                  <BarChart3 className="w-4 h-4" />
-                  View Analytics
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Usage Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Usage This Month</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Articles</span>
-                  <span>12 / 50</span>
-                </div>
-                <Progress value={24} className="h-2" />
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Keywords</span>
-                  <span>450 / 1000</span>
-                </div>
-                <Progress value={45} className="h-2" />
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">API Calls</span>
-                  <span>2,340 / 10,000</span>
-                </div>
-                <Progress value={23.4} className="h-2" />
-              </div>
-              <Button variant="link" size="sm" className="px-0 text-primary" asChild>
-                <Link href="/settings/billing">
-                  Upgrade Plan →
-                </Link>
-              </Button>
+              ) : (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  No recent activity yet
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Quick Actions Footer */}
+      <Card className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-primary/20">
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-xl">
+                <Rocket className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Ready to grow?</h3>
+                <p className="text-sm text-muted-foreground">
+                  Let our AI autopilot handle your SEO automatically
+                </p>
+              </div>
+            </div>
+            <Button onClick={() => router.push("/autopilot")} className="gap-2">
+              <Sparkles className="w-4 h-4" />
+              Enable Autopilot
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

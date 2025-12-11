@@ -12,6 +12,7 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard,
   Globe,
@@ -21,10 +22,8 @@ import {
   Gauge,
   BarChart3,
   Settings,
-  Zap,
   Sparkles,
   Target,
-  BookOpen,
   Bot,
   PlusCircle,
   RefreshCw,
@@ -33,8 +32,22 @@ import {
   Lightbulb,
   AlertCircle,
   ArrowUpRight,
-  Keyboard,
+  Loader2,
+  Send,
+  CheckCircle,
 } from "lucide-react";
+
+// ============================================
+// TYPES
+// ============================================
+
+interface CommandResult {
+  type: "navigation" | "action" | "ai";
+  title: string;
+  description?: string;
+  status: "pending" | "running" | "success" | "error";
+  result?: string;
+}
 
 // ============================================
 // COMMAND ITEMS
@@ -44,8 +57,8 @@ const navigationItems = [
   { icon: LayoutDashboard, label: "Go to Dashboard", href: "/dashboard", shortcut: "⌘D" },
   { icon: Globe, label: "Go to Sites", href: "/sites", shortcut: "⌘S" },
   { icon: Bot, label: "Go to Autopilot", href: "/autopilot" },
-  { icon: Search, label: "Go to Keywords", href: "/keywords" },
-  { icon: FileText, label: "Go to Content", href: "/content" },
+  { icon: Search, label: "Go to Keywords", href: "/keywords", shortcut: "⌘K" },
+  { icon: FileText, label: "Go to Content", href: "/content", shortcut: "⌘C" },
   { icon: Link2, label: "Go to Internal Links", href: "/links" },
   { icon: Gauge, label: "Go to Technical Audit", href: "/audit" },
   { icon: BarChart3, label: "Go to Analytics", href: "/analytics" },
@@ -57,47 +70,105 @@ const aiActions = [
     icon: Wand2, 
     label: "Generate content ideas", 
     action: "generate-ideas",
-    description: "AI generates 10 content ideas for your site"
+    description: "AI generates 10 content ideas for your site",
+    keywords: ["ideas", "topics", "content", "suggest", "generate"],
   },
   { 
     icon: FileEdit, 
     label: "Write an article", 
     action: "write-article",
-    description: "AI writes a full SEO-optimized article"
+    description: "AI writes a full SEO-optimized article",
+    keywords: ["write", "article", "blog", "post", "create content"],
   },
   { 
     icon: Sparkles, 
     label: "Optimize a page", 
     action: "optimize-page",
-    description: "AI analyzes and suggests improvements"
+    description: "AI analyzes and suggests improvements",
+    keywords: ["optimize", "improve", "seo", "fix", "enhance"],
   },
   { 
     icon: Link2, 
     label: "Find internal linking opportunities", 
     action: "internal-links",
-    description: "AI finds pages to link together"
+    description: "AI finds pages to link together",
+    keywords: ["link", "internal", "connect", "linking"],
   },
   { 
     icon: AlertCircle, 
     label: "Fix SEO issues", 
     action: "fix-issues",
-    description: "Auto-fix common SEO problems"
+    description: "Auto-fix common SEO problems",
+    keywords: ["fix", "issues", "problems", "errors", "audit"],
   },
   { 
     icon: Target, 
     label: "Analyze competitors", 
     action: "analyze-competitors",
-    description: "AI analyzes your competitors' SEO"
+    description: "AI analyzes your competitors' SEO",
+    keywords: ["competitor", "analyze", "compare", "competition"],
+  },
+  {
+    icon: Search,
+    label: "Research keywords",
+    action: "research-keywords",
+    description: "Find keyword opportunities",
+    keywords: ["keyword", "research", "find", "discover", "seo"],
   },
 ];
 
 const quickActions = [
-  { icon: PlusCircle, label: "Add new site", action: "add-site" },
-  { icon: RefreshCw, label: "Run site crawl", action: "run-crawl" },
-  { icon: Search, label: "Research keywords", action: "research-keywords" },
-  { icon: Lightbulb, label: "Get SEO recommendations", action: "get-recommendations" },
-  { icon: ArrowUpRight, label: "Check rankings", action: "check-rankings" },
-  { icon: Keyboard, label: "View keyboard shortcuts", action: "shortcuts" },
+  { icon: PlusCircle, label: "Add new site", action: "add-site", keywords: ["add", "new", "site", "website"] },
+  { icon: RefreshCw, label: "Run site crawl", action: "run-crawl", keywords: ["crawl", "scan", "refresh"] },
+  { icon: Lightbulb, label: "Get SEO recommendations", action: "get-recommendations", keywords: ["recommend", "suggest", "tips"] },
+  { icon: ArrowUpRight, label: "Check rankings", action: "check-rankings", keywords: ["rank", "position", "serp"] },
+];
+
+// ============================================
+// AI QUERY PATTERNS
+// ============================================
+
+const aiPatterns = [
+  {
+    pattern: /^(generate|create|suggest|give me).*(idea|topic|content)/i,
+    action: "generate-ideas",
+    response: "Generating content ideas..."
+  },
+  {
+    pattern: /^(write|create).*(article|blog|post|content)/i,
+    action: "write-article",
+    response: "Starting content generation..."
+  },
+  {
+    pattern: /^(optimize|improve|enhance|fix).*(page|content|seo)/i,
+    action: "optimize-page",
+    response: "Analyzing for optimization..."
+  },
+  {
+    pattern: /^(find|suggest|add).*(internal|link)/i,
+    action: "internal-links",
+    response: "Finding linking opportunities..."
+  },
+  {
+    pattern: /^(fix|resolve|address).*(issue|error|problem)/i,
+    action: "fix-issues",
+    response: "Scanning for issues to fix..."
+  },
+  {
+    pattern: /^(analyze|check|compare).*(competitor|competition)/i,
+    action: "analyze-competitors",
+    response: "Analyzing competitor SEO..."
+  },
+  {
+    pattern: /^(research|find|discover).*(keyword)/i,
+    action: "research-keywords",
+    response: "Researching keywords..."
+  },
+  {
+    pattern: /^(crawl|scan|audit).*(site|website)/i,
+    action: "run-crawl",
+    response: "Starting site crawl..."
+  },
 ];
 
 // ============================================
@@ -112,6 +183,8 @@ interface CommandPaletteProps {
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const router = useRouter();
   const [inputValue, setInputValue] = React.useState("");
+  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [commandResult, setCommandResult] = React.useState<CommandResult | null>(null);
 
   // Handle keyboard shortcut
   React.useEffect(() => {
@@ -125,20 +198,29 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     return () => document.removeEventListener("keydown", down);
   }, [open, onOpenChange]);
 
+  // Reset state when dialog closes
+  React.useEffect(() => {
+    if (!open) {
+      setInputValue("");
+      setCommandResult(null);
+      setIsProcessing(false);
+    }
+  }, [open]);
+
   const handleNavigation = (href: string) => {
     router.push(href);
     onOpenChange(false);
     setInputValue("");
   };
 
-  const handleAction = (action: string) => {
+  const handleAction = async (action: string) => {
     // Handle different actions
     switch (action) {
       case "add-site":
         router.push("/sites/new");
         break;
       case "generate-ideas":
-        router.push("/ideas?action=generate");
+        router.push("/content?action=generate-ideas");
         break;
       case "write-article":
         router.push("/content/new");
@@ -153,11 +235,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         router.push("/audit?action=fix");
         break;
       case "analyze-competitors":
-        router.push("/competitors");
+        router.push("/keywords?tab=competitors");
         break;
       case "run-crawl":
-        // Trigger crawl action
-        console.log("Running crawl...");
+        router.push("/sites?action=crawl");
         break;
       case "research-keywords":
         router.push("/keywords?tab=research");
@@ -168,10 +249,6 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       case "check-rankings":
         router.push("/analytics?tab=rankings");
         break;
-      case "shortcuts":
-        // Show shortcuts modal
-        console.log("Showing shortcuts...");
-        break;
       default:
         console.log("Unknown action:", action);
     }
@@ -179,8 +256,95 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     setInputValue("");
   };
 
-  // Check if input looks like a command
-  const isAiQuery = inputValue.length > 10 || inputValue.includes("?");
+  // Handle AI queries
+  const handleAIQuery = async () => {
+    if (!inputValue.trim()) return;
+
+    setIsProcessing(true);
+    setCommandResult({
+      type: "ai",
+      title: inputValue,
+      status: "running",
+      description: "Processing your request...",
+    });
+
+    // Check for pattern matches
+    for (const { pattern, action, response } of aiPatterns) {
+      if (pattern.test(inputValue)) {
+        setCommandResult(prev => prev ? {
+          ...prev,
+          status: "running",
+          description: response,
+        } : null);
+        
+        // Simulate processing
+        await new Promise(r => setTimeout(r, 500));
+        
+        setCommandResult(prev => prev ? {
+          ...prev,
+          status: "success",
+          description: "Redirecting...",
+        } : null);
+
+        await new Promise(r => setTimeout(r, 300));
+        handleAction(action);
+        return;
+      }
+    }
+
+    // If no pattern matches, treat as general AI query
+    // In a real implementation, this would call an AI endpoint
+    setCommandResult({
+      type: "ai",
+      title: inputValue,
+      status: "running",
+      description: "Thinking...",
+    });
+
+    await new Promise(r => setTimeout(r, 1000));
+
+    // For now, show a helpful message
+    setCommandResult({
+      type: "ai",
+      title: inputValue,
+      status: "success",
+      description: "Try being more specific, like 'Generate content ideas' or 'Fix SEO issues'",
+    });
+
+    setIsProcessing(false);
+  };
+
+  // Handle enter key for AI queries
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && isAiQuery && !isProcessing) {
+      e.preventDefault();
+      handleAIQuery();
+    }
+  };
+
+  // Check if input looks like an AI query
+  const isAiQuery = inputValue.length > 5 || inputValue.includes("?");
+  
+  // Filter actions based on input
+  const filteredAiActions = inputValue
+    ? aiActions.filter(action => 
+        action.label.toLowerCase().includes(inputValue.toLowerCase()) ||
+        action.keywords.some(k => inputValue.toLowerCase().includes(k))
+      )
+    : aiActions;
+
+  const filteredQuickActions = inputValue
+    ? quickActions.filter(action =>
+        action.label.toLowerCase().includes(inputValue.toLowerCase()) ||
+        action.keywords.some(k => inputValue.toLowerCase().includes(k))
+      )
+    : quickActions;
+
+  const filteredNavItems = inputValue
+    ? navigationItems.filter(item =>
+        item.label.toLowerCase().includes(inputValue.toLowerCase())
+      )
+    : navigationItems;
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
@@ -188,76 +352,147 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         placeholder="Type a command, search, or ask AI..."
         value={inputValue}
         onValueChange={setInputValue}
+        onKeyDown={handleKeyDown}
       />
-      <CommandList>
+      <CommandList className="max-h-[400px]">
+        {/* Processing State */}
+        {commandResult && (
+          <div className="p-4 border-b">
+            <div className="flex items-start gap-3">
+              <div className={`p-2 rounded-lg ${
+                commandResult.status === "success" ? "bg-green-500/10" :
+                commandResult.status === "error" ? "bg-red-500/10" :
+                "bg-primary/10"
+              }`}>
+                {commandResult.status === "running" ? (
+                  <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                ) : commandResult.status === "success" ? (
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-red-500" />
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">{commandResult.title}</p>
+                <p className="text-xs text-muted-foreground">{commandResult.description}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <CommandEmpty>
           {isAiQuery ? (
             <div className="py-6 text-center">
-              <Sparkles className="mx-auto h-8 w-8 text-primary animate-pulse mb-3" />
-              <p className="text-sm font-medium">Ask AI: &quot;{inputValue}&quot;</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Press Enter to let AI help you
+              <div className="relative inline-block">
+                <Sparkles className="mx-auto h-10 w-10 text-primary mb-3" />
+                <Badge variant="secondary" className="absolute -top-1 -right-1 text-[10px]">
+                  AI
+                </Badge>
+              </div>
+              <p className="text-sm font-medium mb-1">Ask AI: &quot;{inputValue}&quot;</p>
+              <p className="text-xs text-muted-foreground">
+                Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px]">Enter</kbd> to let AI help you
               </p>
             </div>
           ) : (
-            <p className="py-6 text-center text-sm">No results found.</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No results found. Try a different search.
+            </p>
           )}
         </CommandEmpty>
 
         {/* AI Actions */}
-        <CommandGroup heading="AI Actions">
-          {aiActions.map((item) => (
-            <CommandItem
-              key={item.action}
-              onSelect={() => handleAction(item.action)}
-              className="flex items-center gap-3"
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                <item.icon className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">{item.label}</span>
-                <span className="text-xs text-muted-foreground">{item.description}</span>
-              </div>
-              <Sparkles className="ml-auto h-3 w-3 text-primary" />
-            </CommandItem>
-          ))}
-        </CommandGroup>
+        {filteredAiActions.length > 0 && (
+          <CommandGroup heading="AI Actions">
+            {filteredAiActions.map((item) => (
+              <CommandItem
+                key={item.action}
+                onSelect={() => handleAction(item.action)}
+                className="flex items-center gap-3 py-3"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5">
+                  <item.icon className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex flex-col flex-1">
+                  <span className="text-sm font-medium">{item.label}</span>
+                  <span className="text-xs text-muted-foreground">{item.description}</span>
+                </div>
+                <Badge variant="secondary" className="text-[10px] gap-1">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  AI
+                </Badge>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
 
-        <CommandSeparator />
+        {(filteredAiActions.length > 0 && (filteredQuickActions.length > 0 || filteredNavItems.length > 0)) && (
+          <CommandSeparator />
+        )}
 
         {/* Quick Actions */}
-        <CommandGroup heading="Quick Actions">
-          {quickActions.map((item) => (
-            <CommandItem
-              key={item.action}
-              onSelect={() => handleAction(item.action)}
-            >
-              <item.icon className="mr-3 h-4 w-4 text-muted-foreground" />
-              <span>{item.label}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
+        {filteredQuickActions.length > 0 && (
+          <CommandGroup heading="Quick Actions">
+            {filteredQuickActions.map((item) => (
+              <CommandItem
+                key={item.action}
+                onSelect={() => handleAction(item.action)}
+              >
+                <item.icon className="mr-3 h-4 w-4 text-muted-foreground" />
+                <span>{item.label}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
 
-        <CommandSeparator />
+        {filteredQuickActions.length > 0 && filteredNavItems.length > 0 && (
+          <CommandSeparator />
+        )}
 
         {/* Navigation */}
-        <CommandGroup heading="Navigation">
-          {navigationItems.map((item) => (
-            <CommandItem
-              key={item.href}
-              onSelect={() => handleNavigation(item.href)}
-            >
-              <item.icon className="mr-3 h-4 w-4 text-muted-foreground" />
-              <span>{item.label}</span>
-              {item.shortcut && (
-                <CommandShortcut>{item.shortcut}</CommandShortcut>
-              )}
-            </CommandItem>
-          ))}
-        </CommandGroup>
+        {filteredNavItems.length > 0 && (
+          <CommandGroup heading="Navigation">
+            {filteredNavItems.map((item) => (
+              <CommandItem
+                key={item.href}
+                onSelect={() => handleNavigation(item.href)}
+              >
+                <item.icon className="mr-3 h-4 w-4 text-muted-foreground" />
+                <span>{item.label}</span>
+                {item.shortcut && (
+                  <CommandShortcut>{item.shortcut}</CommandShortcut>
+                )}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+
+        {/* AI Query Prompt */}
+        {isAiQuery && filteredAiActions.length === 0 && (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Or ask AI directly">
+              <CommandItem
+                onSelect={handleAIQuery}
+                className="flex items-center gap-3 py-3"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5">
+                  <Send className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex flex-col flex-1">
+                  <span className="text-sm font-medium">Send to AI</span>
+                  <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                    &quot;{inputValue}&quot;
+                  </span>
+                </div>
+                <Badge variant="secondary" className="text-[10px]">
+                  Enter ↵
+                </Badge>
+              </CommandItem>
+            </CommandGroup>
+          </>
+        )}
       </CommandList>
     </CommandDialog>
   );
 }
-

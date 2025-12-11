@@ -1,126 +1,197 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
-import { getSupabaseClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthState {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  configured: boolean;
+  error: Error | null;
 }
 
-export function useAuth() {
+interface UseAuthReturn extends AuthState {
+  signOut: () => Promise<void>;
+  refreshSession: () => Promise<void>;
+}
+
+export function useAuth(): UseAuthReturn {
   const [state, setState] = useState<AuthState>({
     user: null,
     session: null,
     loading: true,
-    configured: false,
+    error: null,
   });
-  const router = useRouter();
-  const supabase = getSupabaseClient();
+
+  const supabase = createClient();
 
   useEffect(() => {
-    // Check if Supabase is configured
     if (!supabase) {
-      setState({
-        user: null,
-        session: null,
-        loading: false,
-        configured: false,
-      });
+      setState((prev) => ({ ...prev, loading: false }));
       return;
     }
 
-    setState(prev => ({ ...prev, configured: true }));
-
     // Get initial session
-    const initSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setState({
-        user: session?.user ?? null,
-        session: session,
-        loading: false,
-        configured: true,
-      });
-    };
-    
-    initSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, newSession: Session | null) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        setState({ user: null, session: null, loading: false, error });
+      } else {
         setState({
-          user: newSession?.user ?? null,
-          session: newSession,
+          user: session?.user ?? null,
+          session,
           loading: false,
-          configured: true,
+          error: null,
         });
       }
-    );
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setState({
+        user: session?.user ?? null,
+        session,
+        loading: false,
+        error: null,
+      });
+    });
 
     return () => subscription.unsubscribe();
   }, [supabase]);
 
-  const signIn = useCallback(
-    async (email: string, password: string) => {
-      if (!supabase) throw new Error("Supabase not configured");
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-      router.push("/dashboard");
-    },
-    [supabase, router]
-  );
-
-  const signUp = useCallback(
-    async (email: string, password: string, fullName?: string) => {
-      if (!supabase) throw new Error("Supabase not configured");
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-        },
-      });
-      if (error) throw error;
-    },
-    [supabase]
-  );
-
   const signOut = useCallback(async () => {
-    if (!supabase) throw new Error("Supabase not configured");
+    if (!supabase) return;
+    
+    setState((prev) => ({ ...prev, loading: true }));
     const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    router.push("/");
-  }, [supabase, router]);
+    
+    if (error) {
+      setState((prev) => ({ ...prev, loading: false, error }));
+    } else {
+      setState({
+        user: null,
+        session: null,
+        loading: false,
+        error: null,
+      });
+      window.location.href = "/";
+    }
+  }, [supabase]);
 
-  const signInWithGoogle = useCallback(async () => {
-    if (!supabase) throw new Error("Supabase not configured");
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (error) throw error;
+  const refreshSession = useCallback(async () => {
+    if (!supabase) return;
+    
+    const { data: { session }, error } = await supabase.auth.refreshSession();
+    
+    if (error) {
+      setState((prev) => ({ ...prev, error }));
+    } else {
+      setState({
+        user: session?.user ?? null,
+        session,
+        loading: false,
+        error: null,
+      });
+    }
   }, [supabase]);
 
   return {
-    user: state.user,
-    session: state.session,
-    loading: state.loading,
-    configured: state.configured,
-    isAuthenticated: !!state.user,
-    signIn,
-    signUp,
+    ...state,
     signOut,
-    signInWithGoogle,
+    refreshSession,
+  };
+}
+
+/**
+ * Hook to get the current user's profile from the database
+ */
+export function useUserProfile() {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<{
+    id: string;
+    organization_id: string;
+    name: string | null;
+    email: string;
+    role: string;
+    avatar_url: string | null;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
+
+    const supabase = createClient();
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    supabase
+      .from("users")
+      .select("id, organization_id, name, email, role, avatar_url")
+      .eq("id", user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (!error && data) {
+          setProfile(data);
+        }
+        setLoading(false);
+      });
+  }, [user]);
+
+  return { profile, loading };
+}
+
+/**
+ * Hook to get the current organization
+ */
+export function useOrganization() {
+  const { profile, loading: profileLoading } = useUserProfile();
+  const [organization, setOrganization] = useState<{
+    id: string;
+    name: string;
+    slug: string;
+    plan: string;
+    subscription_status: string | null;
+    autopilot_enabled: boolean;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!profile?.organization_id) {
+      setOrganization(null);
+      setLoading(false);
+      return;
+    }
+
+    const supabase = createClient();
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    supabase
+      .from("organizations")
+      .select("id, name, slug, plan, subscription_status, autopilot_enabled")
+      .eq("id", profile.organization_id)
+      .single()
+      .then(({ data, error }) => {
+        if (!error && data) {
+          setOrganization(data);
+        }
+        setLoading(false);
+      });
+  }, [profile?.organization_id]);
+
+  return { 
+    organization, 
+    loading: profileLoading || loading,
+    profile,
   };
 }
