@@ -73,27 +73,29 @@ function normalizeUrl(input: string): string {
 }
 
 // Helper: Calculate SEO score from audit
+// Note: Audit engine uses "critical", "warning", "info" severities
 function calculateSeoScore(issues: { severity: string }[]): number {
   const critical = issues.filter(i => i.severity === "critical").length;
-  const high = issues.filter(i => i.severity === "high").length;
-  const medium = issues.filter(i => i.severity === "medium").length;
-  const low = issues.filter(i => i.severity === "low").length;
+  const warning = issues.filter(i => i.severity === "warning").length;
+  const info = issues.filter(i => i.severity === "info").length;
   
   // Start at 100 and deduct points
   let score = 100;
   score -= critical * 15;  // Critical issues are severe
-  score -= high * 8;
-  score -= medium * 3;
-  score -= low * 1;
+  score -= warning * 5;    // Warnings are moderate
+  score -= info * 1;       // Info issues are minor
   
   return Math.max(0, Math.min(100, score));
 }
 
 // Helper: Classify opportunity
+// High: good volume-to-difficulty ratio AND low difficulty
+// Medium: decent ratio AND reasonable difficulty (both conditions must be true)
+// Low: everything else
 function classifyOpportunity(volume: number, difficulty: number): "high" | "medium" | "low" {
   const ratio = volume / (difficulty + 1);
   if (ratio > 200 && difficulty < 40) return "high";
-  if (ratio > 100 || difficulty < 50) return "medium";
+  if (ratio > 100 && difficulty < 50) return "medium";
   return "low";
 }
 

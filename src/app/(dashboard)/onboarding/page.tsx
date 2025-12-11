@@ -440,9 +440,17 @@ export default function OnboardingPage() {
           <div className="flex justify-center gap-4">
             <Button variant="outline" onClick={handleRetry}>
               <RefreshCw className="w-4 h-4 mr-2" />
-              Try Again
+              Start Over
             </Button>
-            <Button onClick={() => runAnalysis()}>
+            <Button onClick={() => {
+              // Only retry if URL is still set, otherwise reset
+              if (url) {
+                setError(null);
+                runAnalysis();
+              } else {
+                handleRetry();
+              }
+            }}>
               Retry Analysis
             </Button>
           </div>
