@@ -280,15 +280,8 @@ export default function LinksPage() {
             Optimize your site structure with smart internal linking
           </p>
         </div>
-        <Button 
-          disabled={selectedLinks.length === 0 || applyMutation.isPending}
-          onClick={handleApplySelected}
-        >
-          {applyMutation.isPending ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Zap className="w-4 h-4 mr-2" />
-          )}
+        <Button disabled={selectedLinks.length === 0}>
+          <Zap className="w-4 h-4 mr-2" />
           Apply Selected ({selectedLinks.length})
         </Button>
       </div>

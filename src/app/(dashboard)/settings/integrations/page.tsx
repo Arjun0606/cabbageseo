@@ -357,6 +357,7 @@ export default function IntegrationsPage() {
   // Connect mutation
   const connectMutation = useMutation({
     mutationFn: async ({ type, credentials }: { type: string; credentials: Record<string, string> }) => {
+      setConnectingType(type);
       const response = await fetch("/api/integrations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -364,10 +365,6 @@ export default function IntegrationsPage() {
       });
       if (!response.ok) throw new Error("Failed to connect");
       return response.json();
-    },
-    onMutate: ({ type }) => {
-      // Set loading state immediately for optimistic UI feedback
-      setConnectingType(type);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["integrations"] });
