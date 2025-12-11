@@ -11,6 +11,8 @@
  */
 
 import * as cheerio from "cheerio";
+import { createAIOAnalyzer } from "@/lib/aio";
+import type { AIOAnalysisInput } from "@/lib/aio/types";
 
 // ============================================
 // TYPES
@@ -25,6 +27,10 @@ export interface CrawlOptions {
   respectRobotsTxt?: boolean;
   followExternalLinks?: boolean;
   includeSubdomains?: boolean;
+  /** Include raw HTML/text content for later AIO analysis */
+  includeRawContent?: boolean;
+  /** Run AIO scoring during crawl (slower but comprehensive) */
+  includeAIOScoring?: boolean;
 }
 
 export interface PageData {
@@ -48,6 +54,24 @@ export interface PageData {
   schemaMarkup: object[];
   crawledAt: string;
   depth: number;
+  
+  // Raw content for AIO analysis
+  rawHtml?: string;
+  textContent?: string;
+  
+  // AIO scores (populated if includeAIOScoring is enabled)
+  aioScores?: {
+    combined: number;
+    google_aio: number;
+    chatgpt: number;
+    perplexity: number;
+    claude: number;
+    gemini: number;
+  };
+  entityCount?: number;
+  quotabilityScore?: number;
+  answerStructureScore?: number;
+  hasExpertAttribution?: boolean;
 }
 
 export interface ImageData {
@@ -114,6 +138,8 @@ export class SiteCrawler {
       respectRobotsTxt: options.respectRobotsTxt ?? true,
       followExternalLinks: options.followExternalLinks ?? false,
       includeSubdomains: options.includeSubdomains ?? false,
+      includeRawContent: options.includeRawContent ?? false,
+      includeAIOScoring: options.includeAIOScoring ?? false,
     };
   }
 
@@ -228,6 +254,17 @@ export class SiteCrawler {
       const html = await response.text();
       const $ = cheerio.load(html);
 
+      // Extract text content for AIO analysis
+      const textContent = this.extractTextContent($);
+      
+      // Build headings array for AIO
+      const allHeadings: { level: number; text: string }[] = [];
+      for (let i = 1; i <= 6; i++) {
+        this.extractHeadings($, `h${i}`).forEach(text => {
+          allHeadings.push({ level: i, text });
+        });
+      }
+
       // Extract page data
       const pageData: PageData = {
         url,
@@ -251,6 +288,46 @@ export class SiteCrawler {
         crawledAt: new Date().toISOString(),
         depth,
       };
+
+      // Include raw content if requested
+      if (this.options.includeRawContent) {
+        pageData.rawHtml = html;
+        pageData.textContent = textContent;
+      }
+
+      // Run AIO analysis if requested
+      if (this.options.includeAIOScoring) {
+        const aioInput: AIOAnalysisInput = {
+          url,
+          title: pageData.title,
+          content: textContent,
+          htmlContent: html,
+          metaDescription: pageData.metaDescription,
+          headings: allHeadings,
+          wordCount: pageData.wordCount,
+        };
+
+        try {
+          const analyzer = createAIOAnalyzer();
+          const aioResult = await analyzer.analyze(aioInput);
+          
+          pageData.aioScores = {
+            combined: aioResult.scores.combined,
+            google_aio: aioResult.scores.platforms.google_aio,
+            chatgpt: aioResult.scores.platforms.chatgpt,
+            perplexity: aioResult.scores.platforms.perplexity,
+            claude: aioResult.scores.platforms.claude,
+            gemini: aioResult.scores.platforms.gemini,
+          };
+          pageData.entityCount = aioResult.entities.length;
+          pageData.quotabilityScore = aioResult.quotabilityScore;
+          pageData.answerStructureScore = aioResult.answerStructureScore;
+          pageData.hasExpertAttribution = aioResult.contentStructure.hasExpertAttribution;
+        } catch (aioError) {
+          // Log but don't fail the crawl
+          console.error("AIO analysis error for", url, aioError);
+        }
+      }
 
       return pageData;
 
@@ -482,11 +559,16 @@ export class SiteCrawler {
   }
 
   private countWords($: cheerio.CheerioAPI): number {
-    // Remove script and style content
-    $("script, style, noscript").remove();
-    const text = $("body").text();
+    const text = this.extractTextContent($);
     const words = text.split(/\s+/).filter(w => w.length > 0);
     return words.length;
+  }
+
+  private extractTextContent($: cheerio.CheerioAPI): string {
+    // Clone to avoid modifying the original
+    const $clone = cheerio.load($.html());
+    $clone("script, style, noscript, nav, footer, header, aside").remove();
+    return $clone("body").text().replace(/\s+/g, " ").trim();
   }
 
   private extractOgTags($: cheerio.CheerioAPI): Record<string, string> {
