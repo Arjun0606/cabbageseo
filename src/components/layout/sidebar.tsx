@@ -20,6 +20,7 @@ import {
   Target,
   BookOpen,
   Bot,
+  Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -85,6 +86,16 @@ const seoNavItems = [
     href: "/analytics",
     icon: BarChart3,
     description: "Performance tracking",
+  },
+];
+
+const aioNavItems = [
+  {
+    name: "AI Visibility",
+    href: "/aio",
+    icon: Brain,
+    description: "AI search optimization",
+    badge: "NEW",
   },
 ];
 
@@ -232,6 +243,7 @@ export function Sidebar({ className }: SidebarProps) {
         <nav className="flex-1 space-y-6 overflow-y-auto p-3">
           <NavSection title="Overview" items={mainNavItems} />
           <NavSection title="SEO Tools" items={seoNavItems} />
+          <NavSection title="AI Search" items={aioNavItems} />
           <NavSection title="More" items={toolsNavItems} />
         </nav>
 

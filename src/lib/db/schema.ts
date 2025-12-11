@@ -66,6 +66,7 @@ export const taskTypeEnum = pgEnum("task_type", [
   "link",
 ]);
 export const issueTypeEnum = pgEnum("issue_type", [
+  // SEO issues
   "missing_meta_title",
   "missing_meta_description",
   "duplicate_title",
@@ -78,6 +79,16 @@ export const issueTypeEnum = pgEnum("issue_type", [
   "multiple_h1",
   "missing_alt",
   "missing_schema",
+  // AIO issues
+  "aio_low_entity_density",
+  "aio_poor_answer_structure",
+  "aio_missing_faq",
+  "aio_missing_howto",
+  "aio_weak_quotability",
+  "aio_missing_definitions",
+  "aio_no_expert_attribution",
+  "aio_ambiguous_context",
+  "aio_stale_content",
 ]);
 export const issueSeverityEnum = pgEnum("issue_severity", ["critical", "warning", "info"]);
 export const cmsTypeEnum = pgEnum("cms_type", ["wordpress", "webflow", "shopify", "ghost", "custom"]);
@@ -286,6 +297,11 @@ export const sites = pgTable(
     autopilotEnabled: boolean("autopilot_enabled").default(false),
     autopilotSettings: jsonb("autopilot_settings").default({}),
 
+    // AIO (AI Optimization) settings
+    aioEnabled: boolean("aio_enabled").default(true),
+    aioScoreAvg: integer("aio_score_avg"),
+    aioLastAnalyzed: timestamp("aio_last_analyzed"),
+
     // Status
     isActive: boolean("is_active").default(true),
 
@@ -450,6 +466,13 @@ export const content = pgTable(
     aiModel: text("ai_model"),
     aiPromptVersion: text("ai_prompt_version"),
 
+    // AIO (AI Optimization) fields
+    aioOptimized: boolean("aio_optimized").default(false),
+    aioScore: integer("aio_score"),
+    entityCount: integer("entity_count").default(0),
+    quotabilityScore: integer("quotability_score"),
+    answerStructureScore: integer("answer_structure_score"),
+
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -510,6 +533,21 @@ export const pages = pgTable(
 
     // Associated content
     contentId: uuid("content_id").references(() => content.id, { onDelete: "set null" }),
+
+    // AIO (AI Optimization) Scores
+    aioScore: integer("aio_score"),
+    aioGoogleScore: integer("aio_google_score"),
+    aioChatgptScore: integer("aio_chatgpt_score"),
+    aioPerplexityScore: integer("aio_perplexity_score"),
+    aioClaudeScore: integer("aio_claude_score"),
+    aioGeminiScore: integer("aio_gemini_score"),
+    aioLastAnalyzed: timestamp("aio_last_analyzed"),
+
+    // AIO metadata
+    entityCount: integer("entity_count").default(0),
+    quotabilityScore: integer("quotability_score"),
+    answerStructureScore: integer("answer_structure_score"),
+    hasExpertAttribution: boolean("has_expert_attribution").default(false),
 
     lastCrawledAt: timestamp("last_crawled_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -660,6 +698,146 @@ export const rankings = pgTable(
 );
 
 // ============================================
+// ENTITIES (Named entities extracted from content)
+// ============================================
+
+export const entities = pgTable(
+  "entities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+    pageId: uuid("page_id").references(() => pages.id, { onDelete: "cascade" }),
+    contentId: uuid("content_id").references(() => content.id, { onDelete: "cascade" }),
+
+    // Entity details
+    name: text("name").notNull(),
+    type: text("type"), // person, organization, concept, product, location, event
+    description: text("description"),
+
+    // External references
+    wikidataId: text("wikidata_id"),
+    wikipediaUrl: text("wikipedia_url"),
+
+    // Usage stats
+    mentions: integer("mentions").default(1),
+    contextQuality: integer("context_quality"), // 0-100
+
+    // Timestamps
+    firstSeenAt: timestamp("first_seen_at").defaultNow(),
+    lastSeenAt: timestamp("last_seen_at").defaultNow(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("entities_site_idx").on(table.siteId),
+    index("entities_page_idx").on(table.pageId),
+    index("entities_content_idx").on(table.contentId),
+    index("entities_type_idx").on(table.type),
+  ]
+);
+
+// ============================================
+// AI CITATIONS (Track when AI platforms cite our content)
+// ============================================
+
+export const aiCitations = pgTable(
+  "ai_citations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+    pageId: uuid("page_id").references(() => pages.id, { onDelete: "cascade" }),
+
+    // Which platform cited us
+    platform: text("platform").notNull(), // google_aio, chatgpt, perplexity, claude, gemini
+
+    // The query that resulted in citation
+    query: text("query").notNull(),
+
+    // Citation details
+    citationType: text("citation_type"), // direct_quote, paraphrase, source_link, featured
+    snippet: text("snippet"),
+    position: integer("position"), // Position in AI response
+
+    // Confidence
+    confidence: decimal("confidence", { precision: 3, scale: 2 }).default("0.80"),
+
+    // Discovery metadata
+    discoveredAt: timestamp("discovered_at").defaultNow(),
+    lastVerifiedAt: timestamp("last_verified_at"),
+  },
+  (table) => [
+    index("ai_citations_site_idx").on(table.siteId),
+    index("ai_citations_platform_idx").on(table.platform),
+    index("ai_citations_page_idx").on(table.pageId),
+    uniqueIndex("ai_citations_unique_idx").on(table.siteId, table.platform, table.query, table.pageId),
+  ]
+);
+
+// ============================================
+// AIO ANALYSES (Detailed AIO analysis results)
+// ============================================
+
+export const aioAnalyses = pgTable(
+  "aio_analyses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+    pageId: uuid("page_id")
+      .references(() => pages.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Analysis version
+    version: integer("version").default(1),
+
+    // Platform scores (0-100)
+    googleAioScore: integer("google_aio_score"),
+    chatgptScore: integer("chatgpt_score"),
+    perplexityScore: integer("perplexity_score"),
+    claudeScore: integer("claude_score"),
+    geminiScore: integer("gemini_score"),
+    combinedScore: integer("combined_score"),
+
+    // Breakdown scores
+    entityDensityScore: integer("entity_density_score"),
+    quotabilityScore: integer("quotability_score"),
+    answerStructureScore: integer("answer_structure_score"),
+    schemaPresenceScore: integer("schema_presence_score"),
+    freshnessScore: integer("freshness_score"),
+    authorityScore: integer("authority_score"),
+
+    // Extracted data
+    entitiesFound: jsonb("entities_found").default([]),
+    quotableSnippets: jsonb("quotable_snippets").default([]),
+    missingElements: jsonb("missing_elements").default([]),
+    improvementSuggestions: jsonb("improvement_suggestions").default([]),
+
+    // Platform-specific recommendations
+    googleRecommendations: jsonb("google_recommendations").default([]),
+    chatgptRecommendations: jsonb("chatgpt_recommendations").default([]),
+    perplexityRecommendations: jsonb("perplexity_recommendations").default([]),
+
+    // Analysis metadata
+    modelUsed: text("model_used").default("claude-sonnet-4-20250514"),
+    tokensUsed: integer("tokens_used"),
+    analysisDurationMs: integer("analysis_duration_ms"),
+
+    analyzedAt: timestamp("analyzed_at").defaultNow(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("aio_analyses_page_idx").on(table.pageId),
+    index("aio_analyses_site_idx").on(table.siteId),
+    index("aio_analyses_analyzed_idx").on(table.analyzedAt),
+  ]
+);
+
+// ============================================
 // RELATIONS
 // ============================================
 
@@ -691,6 +869,9 @@ export const sitesRelations = relations(sites, ({ one, many }) => ({
   issues: many(issues),
   tasks: many(tasks),
   rankings: many(rankings),
+  entities: many(entities),
+  aiCitations: many(aiCitations),
+  aioAnalyses: many(aioAnalyses),
 }));
 
 export const keywordsRelations = relations(keywords, ({ one, many }) => ({
@@ -709,7 +890,7 @@ export const keywordsRelations = relations(keywords, ({ one, many }) => ({
   rankings: many(rankings),
 }));
 
-export const contentRelations = relations(content, ({ one }) => ({
+export const contentRelations = relations(content, ({ one, many }) => ({
   site: one(sites, {
     fields: [content.siteId],
     references: [sites.id],
@@ -725,6 +906,59 @@ export const contentRelations = relations(content, ({ one }) => ({
   assignedUser: one(users, {
     fields: [content.assignedTo],
     references: [users.id],
+  }),
+  entities: many(entities),
+}));
+
+export const pagesRelations = relations(pages, ({ one, many }) => ({
+  site: one(sites, {
+    fields: [pages.siteId],
+    references: [sites.id],
+  }),
+  content: one(content, {
+    fields: [pages.contentId],
+    references: [content.id],
+  }),
+  entities: many(entities),
+  aiCitations: many(aiCitations),
+  aioAnalyses: many(aioAnalyses),
+  issues: many(issues),
+}));
+
+export const entitiesRelations = relations(entities, ({ one }) => ({
+  site: one(sites, {
+    fields: [entities.siteId],
+    references: [sites.id],
+  }),
+  page: one(pages, {
+    fields: [entities.pageId],
+    references: [pages.id],
+  }),
+  content: one(content, {
+    fields: [entities.contentId],
+    references: [content.id],
+  }),
+}));
+
+export const aiCitationsRelations = relations(aiCitations, ({ one }) => ({
+  site: one(sites, {
+    fields: [aiCitations.siteId],
+    references: [sites.id],
+  }),
+  page: one(pages, {
+    fields: [aiCitations.pageId],
+    references: [pages.id],
+  }),
+}));
+
+export const aioAnalysesRelations = relations(aioAnalyses, ({ one }) => ({
+  site: one(sites, {
+    fields: [aioAnalyses.siteId],
+    references: [sites.id],
+  }),
+  page: one(pages, {
+    fields: [aioAnalyses.pageId],
+    references: [pages.id],
   }),
 }));
 
@@ -749,4 +983,10 @@ export type Task = typeof tasks.$inferSelect;
 export type Ranking = typeof rankings.$inferSelect;
 export type UsageRecord = typeof usageRecords.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
+export type Entity = typeof entities.$inferSelect;
+export type NewEntity = typeof entities.$inferInsert;
+export type AICitation = typeof aiCitations.$inferSelect;
+export type NewAICitation = typeof aiCitations.$inferInsert;
+export type AIOAnalysis = typeof aioAnalyses.$inferSelect;
+export type NewAIOAnalysis = typeof aioAnalyses.$inferInsert;
 
