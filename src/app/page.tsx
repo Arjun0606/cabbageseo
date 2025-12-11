@@ -59,15 +59,15 @@ export default function LandingPage() {
 
             {/* Headline */}
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
-              <span className="text-zinc-100">SEO tools are fragmented.</span>
+              <span className="text-zinc-100">The first SEO + AIO</span>
               <br />
-              <span className="text-emerald-400">We unified them.</span>
+              <span className="text-emerald-400">Operating System.</span>
             </h1>
             
             <p className="text-xl text-zinc-400 leading-relaxed mb-10 max-w-2xl">
-              You shouldn&apos;t need 10 subscriptions and an agency to do SEO. 
-              CabbageSEO connects your existing tools, automates the boring stuff, 
-              and lets you focus on what matters.
+              Google, ChatGPT, Perplexity—search is changing. CabbageSEO unifies your 
+              SEO tools and optimizes for AI search too. One workspace for traditional 
+              rankings and AI visibility.
             </p>
 
             {/* CTA */}
@@ -125,14 +125,20 @@ export default function LandingPage() {
                     <span className="text-zinc-600">3.1s</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-emerald-400">✓</span>
-                    <span className="text-zinc-400">Generated 8 content ideas</span>
-                    <span className="text-zinc-600">1.2s</span>
+                    <span className="text-violet-400">✓</span>
+                    <span className="text-zinc-400">Analyzed AI visibility</span>
+                    <span className="text-zinc-600">1.8s</span>
                   </div>
-                  <div className="pt-3 border-t border-zinc-800">
-                    <span className="text-zinc-300">SEO Score: </span>
-                    <span className="text-emerald-400 font-bold">74/100</span>
-                    <span className="text-zinc-500 ml-3">→ Ready for autopilot</span>
+                  <div className="pt-3 border-t border-zinc-800 space-y-1">
+                    <div>
+                      <span className="text-zinc-300">SEO Score: </span>
+                      <span className="text-emerald-400 font-bold">74/100</span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-300">AIO Score: </span>
+                      <span className="text-violet-400 font-bold">68/100</span>
+                      <span className="text-zinc-500 ml-2 text-xs">(ChatGPT: 72 · Perplexity: 65 · Google AI: 67)</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -146,11 +152,11 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="mb-16">
             <h2 className="text-3xl font-bold mb-4">
-              One workspace. All your SEO.
+              One workspace. SEO + AI visibility.
             </h2>
             <p className="text-zinc-400 text-lg max-w-2xl">
-              We don&apos;t reinvent the wheel. We connect DataForSEO, Google Search Console, 
-              your CMS, and AI—then orchestrate them into one clean interface.
+              We connect your existing tools—DataForSEO, Search Console, your CMS—and add 
+              AI visibility scoring for ChatGPT, Perplexity, and Google AI Overviews.
             </p>
           </div>
 
@@ -164,17 +170,18 @@ export default function LandingPage() {
               {
                 icon: FileText,
                 title: "Content Generation",
-                desc: "Claude or GPT writes. You edit. Publish to WordPress, Webflow, or Shopify.",
+                desc: "Claude writes SEO + AI-optimized content. Quotable, entity-rich, structured.",
               },
               {
-                icon: Link2,
-                title: "Internal Linking",
-                desc: "Find link opportunities across your site. Apply them in one click.",
+                icon: Sparkles,
+                title: "AI Visibility Score",
+                desc: "See how your content ranks in ChatGPT, Perplexity, and Google AI Overviews.",
+                badge: "NEW",
               },
               {
                 icon: BarChart3,
                 title: "Technical Audit",
-                desc: "Scan for issues. Get fixes. Some are even auto-applied.",
+                desc: "Scan for SEO issues and AI optimization gaps. Get fixes.",
               },
               {
                 icon: Globe,
@@ -191,7 +198,14 @@ export default function LandingPage() {
                 key={item.title}
                 className="p-5 rounded-lg border border-zinc-800/50 bg-zinc-900/30 hover:bg-zinc-900/50 hover:border-zinc-700/50 transition-all"
               >
-                <item.icon className="h-5 w-5 text-emerald-500 mb-3" />
+                <div className="flex items-center gap-2 mb-3">
+                  <item.icon className="h-5 w-5 text-emerald-500" />
+                  {"badge" in item && item.badge && (
+                    <span className="px-2 py-0.5 text-[10px] font-medium bg-violet-500/20 text-violet-400 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
                 <h3 className="font-semibold mb-1.5">{item.title}</h3>
                 <p className="text-sm text-zinc-500 leading-relaxed">{item.desc}</p>
               </div>
@@ -206,22 +220,21 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
               <h2 className="text-3xl font-bold mb-6">
-                We&apos;re not building another SEO tool.
+                SEO is evolving. Your tools should too.
               </h2>
               <div className="space-y-4 text-zinc-400">
                 <p>
-                  There are already great keyword tools, crawlers, and content graders. 
-                  The problem isn&apos;t the tools—it&apos;s that you need 10 of them, 
-                  they don&apos;t talk to each other, and you spend more time switching tabs 
-                  than actually improving your SEO.
+                  Google isn&apos;t the only search anymore. ChatGPT, Perplexity, Claude—they&apos;re 
+                  answering questions with your content (or your competitor&apos;s). Traditional SEO 
+                  tools don&apos;t track AI visibility.
                 </p>
                 <p>
-                  CabbageSEO is the orchestration layer. Think of it like Cursor for coding, 
-                  but for SEO. We connect your existing subscriptions, add AI where it helps, 
-                  and give you one place to actually get things done.
+                  CabbageSEO is the first Search Optimization OS. We unify your existing SEO tools 
+                  and add AI Optimization (AIO)—visibility scores for ChatGPT, Perplexity, Google AI 
+                  Overviews, and more.
                 </p>
                 <p className="text-zinc-300 font-medium">
-                  Less tool-hopping. More shipping.
+                  Optimize for search today. And tomorrow.
                 </p>
               </div>
             </div>
@@ -262,17 +275,17 @@ export default function LandingPage() {
               { 
                 step: "01", 
                 title: "Connect your site", 
-                desc: "Paste your URL. We'll crawl it, find issues, and pull in your GSC data if connected." 
+                desc: "Paste your URL. We'll crawl it, audit SEO issues, and score your AI visibility." 
               },
               { 
                 step: "02", 
-                title: "Get a strategy", 
-                desc: "AI analyzes your niche, finds keyword gaps, and suggests content to create." 
+                title: "Get dual scores", 
+                desc: "See your SEO score and AIO score. Know how you rank in Google and AI search." 
               },
               { 
                 step: "03", 
-                title: "Execute (or autopilot)", 
-                desc: "Generate content, fix issues, publish—manually or let the system handle it." 
+                title: "Optimize both", 
+                desc: "Generate content optimized for traditional search and AI platforms simultaneously." 
               },
             ].map((item) => (
               <div key={item.step}>
