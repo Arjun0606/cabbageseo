@@ -582,9 +582,12 @@ function Step5Complete({ data }: { data: SiteData }) {
         throw new Error(errorData.error || "Failed to create site");
       }
       
+      // Navigate to dashboard on success
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create site");
+    } finally {
+      // Always reset loading state, whether success or failure
       setIsCreating(false);
     }
   };

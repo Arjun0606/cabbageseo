@@ -289,12 +289,31 @@ function AutopilotContent() {
     },
   });
 
+  // Clear completed tasks mutation
+  const clearCompletedMutation = useMutation({
+    mutationFn: async () => {
+      const completedTasks = tasks.filter(t => t.status === "completed");
+      await Promise.all(
+        completedTasks.map(task =>
+          fetch(`/api/autopilot/tasks?id=${task.id}`, { method: "DELETE" })
+        )
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["autopilot-tasks"] });
+    },
+  });
+
   const addTask = () => {
     if (!newTaskPrompt.trim()) return;
     createMutation.mutate({
       type: "content",
       description: newTaskPrompt,
     });
+  };
+
+  const handleClearCompleted = () => {
+    clearCompletedMutation.mutate();
   };
 
   const stats = data?.stats || { running: 0, pending: 0, completed: 0, failed: 0 };
@@ -453,7 +472,15 @@ function AutopilotContent() {
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Task Queue</h2>
                 {stats.completed > 0 && (
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={handleClearCompleted}
+                    disabled={clearCompletedMutation.isPending}
+                  >
+                    {clearCompletedMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : null}
                     Clear Completed
                   </Button>
                 )}
