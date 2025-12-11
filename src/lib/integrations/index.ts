@@ -24,8 +24,8 @@ export { WordPressClient, createWordPressClient } from "./wordpress/client";
 export { WebflowClient, createWebflowClient } from "./webflow/client";
 export { ShopifyClient, createShopifyClient } from "./shopify/client";
 
-// Outreach / Link Building (Apollo.io = Hunter + Instantly combined)
-export { ApolloClient, apollo } from "./apollo/client";
+// Outreach: No external tools needed!
+// We use Claude + scraping + email patterns (see src/lib/seo/diy-outreach.ts)
 
 // Integration status checker
 export type IntegrationType = 
@@ -39,8 +39,7 @@ export type IntegrationType =
   | "ga4"
   | "wordpress"
   | "webflow"
-  | "shopify"
-  | "apollo";
+  | "shopify";
 
 export interface IntegrationStatus {
   id: IntegrationType;
@@ -126,12 +125,8 @@ export async function checkAllIntegrations(): Promise<IntegrationStatus[]> {
     configured: Boolean(process.env.SHOPIFY_STORE_URL && process.env.SHOPIFY_ACCESS_TOKEN),
   });
 
-  // Outreach - Apollo.io (email finding + sequences)
-  statuses.push({
-    id: "apollo",
-    name: "Apollo.io",
-    configured: Boolean(process.env.APOLLO_API_KEY),
-  });
+  // Outreach: Using Claude AI (no external service needed)
+  // See src/lib/seo/diy-outreach.ts
 
   return statuses;
 }

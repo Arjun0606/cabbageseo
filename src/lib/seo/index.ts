@@ -39,13 +39,12 @@ export {
   type TitleVariant,
 } from "./content-refresh";
 
-// Backlink Outreach (Hunter + Instantly orchestration)
+// DIY Outreach (NO paid tools - Claude + scraping + email patterns)
 export {
-  OutreachOrchestrator,
-  outreach,
+  DIYOutreach,
+  diyOutreach,
   type OutreachTarget,
-  type OutreachReason,
-  type OutreachCampaign,
+  type ContactInfo,
   type OutreachEmail,
-  type OutreachProspect,
-} from "./outreach-orchestrator";
+  type OutreachPackage,
+} from "./diy-outreach";
