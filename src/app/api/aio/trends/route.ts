@@ -27,7 +27,8 @@ export async function GET(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (!userData?.organization_id) {
+    const organizationId = (userData as { organization_id?: string } | null)?.organization_id;
+    if (!organizationId) {
       return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
       .from("sites")
       .select("id, organization_id")
       .eq("id", siteId)
-      .eq("organization_id", userData.organization_id)
+      .eq("organization_id", organizationId)
       .single();
 
     if (!site) {
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
     startDate.setDate(startDate.getDate() - days);
 
     // Get historical AIO analyses
-    const { data: analyses } = await supabase
+    const { data: analysesRaw } = await supabase
       .from("aio_analyses")
       .select(`
         analyzed_at,
@@ -72,6 +73,17 @@ export async function GET(request: NextRequest) {
       .gte("analyzed_at", startDate.toISOString())
       .order("analyzed_at", { ascending: true });
 
+    type AIOAnalysisRow = {
+      analyzed_at: string;
+      combined_score: number | null;
+      google_aio_score: number | null;
+      chatgpt_score: number | null;
+      perplexity_score: number | null;
+      claude_score: number | null;
+      gemini_score: number | null;
+    };
+    const analyses = (analysesRaw || []) as AIOAnalysisRow[];
+
     // Group by day and calculate averages
     const dailyScores: Record<string, {
       date: string;
@@ -83,7 +95,7 @@ export async function GET(request: NextRequest) {
       gemini: number[];
     }> = {};
 
-    for (const analysis of analyses || []) {
+    for (const analysis of analyses) {
       const date = new Date(analysis.analyzed_at).toISOString().split("T")[0];
       if (!dailyScores[date]) {
         dailyScores[date] = {

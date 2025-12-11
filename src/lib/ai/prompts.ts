@@ -414,11 +414,7 @@ Return JSON:
   "expectedResults": "What to expect in 3-6 months"
 }`,
   }),
-};
 
-// ============================================
-// PROMPT HELPERS
-// ============================================
 
 // ============================================
   // AIO (AI OPTIMIZATION) PROMPTS
@@ -473,8 +469,10 @@ Return the optimized content only, no explanations.`,
   generateAIOOutline: (
     keyword: string,
     serpResults: Array<{ title: string; snippet: string }>,
-    wordCount: number = 2000
-  ) => ({
+    wordCount?: number
+  ) => {
+    const targetWords = wordCount ?? 2000;
+    return {
     system: `You are an expert content strategist optimizing for AI search platforms.
 
 Content must be structured for:
@@ -490,7 +488,7 @@ Return ONLY valid JSON.`,
 Top-ranking competitors:
 ${serpResults.slice(0, 5).map((r, i) => `${i + 1}. ${r.title}\n   ${r.snippet}`).join("\n\n")}
 
-Target: ${wordCount} words, optimized for AI citation
+Target: ${targetWords} words, optimized for AI citation
 
 Return JSON:
 {
@@ -516,7 +514,8 @@ Return JSON:
   "expertQuotes": ["Expert quote or attribution to add"],
   "schemaTypes": ["Article", "FAQPage", "HowTo"]
 }`,
-  }),
+    };
+  },
 
   /**
    * Inject entities into content

@@ -29,7 +29,8 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (!userData?.organization_id) {
+    const organizationId = (userData as { organization_id?: string } | null)?.organization_id;
+    if (!organizationId) {
       return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
@@ -60,15 +61,23 @@ export async function POST(request: NextRequest) {
 
     // If pageId provided, fetch page data
     if (pageId) {
-      const { data: page } = await supabase
+      const { data: pageData } = await supabase
         .from("pages")
         .select(`
           *,
           sites!inner(organization_id)
         `)
         .eq("id", pageId)
-        .eq("sites.organization_id", userData.organization_id)
+        .eq("sites.organization_id", organizationId)
         .single();
+
+      const page = pageData as {
+        url: string;
+        title?: string;
+        meta_description?: string;
+        headings?: { level: number; text: string }[];
+        word_count?: number;
+      } | null;
 
       if (!page) {
         return NextResponse.json({ error: "Page not found" }, { status: 404 });
@@ -81,33 +90,42 @@ export async function POST(request: NextRequest) {
         content: content || "", // Would need to re-fetch or have cached
         htmlContent: htmlContent,
         metaDescription: page.meta_description || undefined,
-        headings: page.headings as { level: number; text: string }[] || undefined,
+        headings: page.headings || undefined,
         wordCount: page.word_count || undefined,
       };
     } 
     // If contentId provided, fetch content data
     else if (contentId) {
-      const { data: contentData } = await supabase
+      const { data: contentDataRaw } = await supabase
         .from("content")
         .select(`
           *,
           sites!inner(organization_id)
         `)
         .eq("id", contentId)
-        .eq("sites.organization_id", userData.organization_id)
+        .eq("sites.organization_id", organizationId)
         .single();
 
-      if (!contentData) {
+      const contentItem = contentDataRaw as {
+        published_url?: string;
+        title: string;
+        body?: string;
+        meta_description?: string;
+        word_count?: number;
+        published_at?: string;
+      } | null;
+
+      if (!contentItem) {
         return NextResponse.json({ error: "Content not found" }, { status: 404 });
       }
 
       analysisInput = {
-        url: contentData.published_url || "",
-        title: contentData.title,
-        content: contentData.body || "",
-        metaDescription: contentData.meta_description || undefined,
-        wordCount: contentData.word_count || undefined,
-        publishedAt: contentData.published_at ? new Date(contentData.published_at) : undefined,
+        url: contentItem.published_url || "",
+        title: contentItem.title,
+        content: contentItem.body || "",
+        metaDescription: contentItem.meta_description || undefined,
+        wordCount: contentItem.word_count || undefined,
+        publishedAt: contentItem.published_at ? new Date(contentItem.published_at) : undefined,
       };
     }
     // Direct content analysis
@@ -148,18 +166,19 @@ export async function POST(request: NextRequest) {
         .eq("id", pageId);
 
       // Get site_id from page
-      const { data: pageData } = await supabase
+      const { data: pageDataForSite } = await supabase
         .from("pages")
         .select("site_id")
         .eq("id", pageId)
         .single();
 
-      if (pageData) {
+      const pageForAnalysis = pageDataForSite as { site_id: string } | null;
+      if (pageForAnalysis) {
         // Save detailed analysis
         await supabase
           .from("aio_analyses")
           .insert({
-            site_id: pageData.site_id,
+            site_id: pageForAnalysis.site_id,
             page_id: pageId,
             google_aio_score: result.scores.platforms.google_aio,
             chatgpt_score: result.scores.platforms.chatgpt,
@@ -187,7 +206,7 @@ export async function POST(request: NextRequest) {
         // Save entities
         if (result.entities.length > 0) {
           const entityRecords = result.entities.slice(0, 20).map(entity => ({
-            site_id: pageData.site_id,
+            site_id: pageForAnalysis.site_id,
             page_id: pageId,
             name: entity.name,
             type: entity.type,
@@ -271,13 +290,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: userData } = await supabase
+    const { data: userDataGet } = await supabase
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
       .single();
 
-    if (!userData?.organization_id) {
+    const orgId = (userDataGet as { organization_id?: string } | null)?.organization_id;
+    if (!orgId) {
       return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
@@ -307,13 +327,23 @@ export async function GET(request: NextRequest) {
 
     if (siteId) {
       // Get site-wide AIO stats
-      const { data: pages } = await supabase
+      const { data: pagesRaw } = await supabase
         .from("pages")
         .select("aio_score, aio_google_score, aio_chatgpt_score, aio_perplexity_score, aio_claude_score, aio_gemini_score")
         .eq("site_id", siteId)
         .not("aio_score", "is", null);
 
-      if (!pages || pages.length === 0) {
+      type AIOPageScore = {
+        aio_score: number | null;
+        aio_google_score: number | null;
+        aio_chatgpt_score: number | null;
+        aio_perplexity_score: number | null;
+        aio_claude_score: number | null;
+        aio_gemini_score: number | null;
+      };
+      const pages = (pagesRaw || []) as AIOPageScore[];
+
+      if (pages.length === 0) {
         return NextResponse.json({
           success: true,
           data: {

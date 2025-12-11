@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createAIClient } from "@/lib/ai/client";
+import { claude } from "@/lib/ai";
 
 interface QueryIntent {
   action: string;
@@ -141,7 +141,6 @@ export async function POST(request: NextRequest) {
     }
 
     // If no pattern matches, use AI to understand the query
-    const ai = createAIClient();
     
     // Get context about user's sites
     const { data: sites } = await supabase
@@ -160,7 +159,7 @@ Available actions:
 - Research keywords
 - Run site crawls
 
-User's sites: ${sites?.map(s => s.domain).join(", ") || "No sites yet"}
+User's sites: ${sites?.map((s: { domain: string }) => s.domain).join(", ") || "No sites yet"}
 
 For any query, respond with:
 1. A brief, helpful response (1-2 sentences)
@@ -168,11 +167,12 @@ For any query, respond with:
 
 Respond in JSON: {"response": "...", "action": "...", "route": "..."}`;
 
-    const aiResponse = await ai.generateText(
-      `User query: "${query}"${context ? `\nContext: ${context}` : ""}`,
+    const aiResult = await claude.chat(
+      [{ role: "user", content: `User query: "${query}"${context ? `\nContext: ${context}` : ""}` }],
       systemPrompt,
-      { maxTokens: 200 }
+      { maxTokens: 200, model: "haiku" }
     );
+    const aiResponse = aiResult.content;
 
     // Parse AI response
     try {

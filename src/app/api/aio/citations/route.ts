@@ -27,7 +27,8 @@ export async function GET(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (!userData?.organization_id) {
+    const organizationId = (userData as { organization_id?: string } | null)?.organization_id;
+    if (!organizationId) {
       return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
           sites!inner(organization_id)
         )
       `)
-      .eq("pages.sites.organization_id", userData.organization_id)
+      .eq("pages.sites.organization_id", organizationId)
       .order("discovered_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -68,10 +69,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Get citation stats by platform
-    const { data: stats } = await supabase
+    const { data: statsRaw } = await supabase
       .from("ai_citations")
       .select("platform")
       .eq("site_id", siteId || "");
+
+    const stats = (statsRaw || []) as { platform: string }[];
 
     const platformCounts: Record<string, number> = {
       google_aio: 0,
@@ -81,11 +84,9 @@ export async function GET(request: NextRequest) {
       gemini: 0,
     };
 
-    if (stats) {
-      for (const row of stats) {
-        if (row.platform in platformCounts) {
-          platformCounts[row.platform]++;
-        }
+    for (const row of stats) {
+      if (row.platform in platformCounts) {
+        platformCounts[row.platform]++;
       }
     }
 
@@ -142,13 +143,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify site ownership
-    const { data: userData } = await supabase
+    const { data: userDataPost } = await supabase
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
       .single();
 
-    if (!userData?.organization_id) {
+    const orgIdPost = (userDataPost as { organization_id?: string } | null)?.organization_id;
+    if (!orgIdPost) {
       return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
@@ -156,7 +158,7 @@ export async function POST(request: NextRequest) {
       .from("sites")
       .select("id")
       .eq("id", siteId)
-      .eq("organization_id", userData.organization_id)
+      .eq("organization_id", orgIdPost)
       .single();
 
     if (!site) {
@@ -228,13 +230,14 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Verify ownership through organization
-    const { data: userData } = await supabase
+    const { data: userDataDel } = await supabase
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
       .single();
 
-    if (!userData?.organization_id) {
+    const orgIdDel = (userDataDel as { organization_id?: string } | null)?.organization_id;
+    if (!orgIdDel) {
       return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 

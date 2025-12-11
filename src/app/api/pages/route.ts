@@ -27,7 +27,8 @@ export async function GET(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (!userData?.organization_id) {
+    const organizationId = (userData as { organization_id?: string } | null)?.organization_id;
+    if (!organizationId) {
       return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
     const { data: sites } = await supabase
       .from("sites")
       .select("id")
-      .eq("organization_id", userData.organization_id);
+      .eq("organization_id", organizationId);
 
     if (!sites || sites.length === 0) {
       return NextResponse.json({

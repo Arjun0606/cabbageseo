@@ -124,7 +124,8 @@ export class UsageTracker {
       .eq("id", this.organizationId)
       .single();
 
-    return data?.plan || "starter";
+    const org = data as { plan?: string } | null;
+    return org?.plan || "starter";
   }
 
   /**
@@ -186,12 +187,12 @@ export class UsageTracker {
     }
 
     // Update usage
-    const { error } = await supabase.rpc("increment_usage", {
+    const { error } = await supabase.rpc("increment_usage" as never, {
       org_id: this.organizationId,
       period_str: period,
       column_name: column,
       increment_amount: amount,
-    });
+    } as never);
 
     if (error) {
       // Fallback: direct update
@@ -202,7 +203,7 @@ export class UsageTracker {
         .eq("period", period)
         .single();
 
-      const currentValue = (current as Record<string, number>)?.[column] || 0;
+      const currentValue = (current as unknown as Record<string, number> | null)?.[column] || 0;
 
       await supabase
         .from("usage")
@@ -210,7 +211,7 @@ export class UsageTracker {
           organization_id: this.organizationId,
           period,
           [column]: currentValue + amount,
-        }, {
+        } as never, {
           onConflict: "organization_id,period",
         });
     }
@@ -240,15 +241,18 @@ export class UsageTracker {
       .eq("organization_id", this.organizationId)
       .single();
 
-    if (!data) {
+    type CreditData = { prepaid_credits: number | null; bonus_credits: number | null; expires_at: string | null } | null;
+    const credits = data as CreditData;
+
+    if (!credits) {
       return { prepaidCredits: 0, bonusCredits: 0, totalCredits: 0, expiresAt: null };
     }
 
     return {
-      prepaidCredits: data.prepaid_credits || 0,
-      bonusCredits: data.bonus_credits || 0,
-      totalCredits: (data.prepaid_credits || 0) + (data.bonus_credits || 0),
-      expiresAt: data.expires_at,
+      prepaidCredits: credits.prepaid_credits || 0,
+      bonusCredits: credits.bonus_credits || 0,
+      totalCredits: (credits.prepaid_credits || 0) + (credits.bonus_credits || 0),
+      expiresAt: credits.expires_at,
     };
   }
 
@@ -271,7 +275,7 @@ export class UsageTracker {
         bonus_credits: current.bonusCredits + bonusAmount,
         expires_at: expiresAt.toISOString(),
         updated_at: new Date().toISOString(),
-      }, {
+      } as never, {
         onConflict: "organization_id",
       });
 
@@ -297,7 +301,7 @@ export class UsageTracker {
         prepaid_credits: current.prepaidCredits - prepaidToDeduct,
         bonus_credits: current.bonusCredits - bonusToDeduct,
         updated_at: new Date().toISOString(),
-      })
+      } as never)
       .eq("organization_id", this.organizationId);
 
     return !error;
@@ -364,7 +368,9 @@ export class UsageTracker {
       pagesPerSite: "crawls",
       teamMembers: "crawls",
     };
-    return usage[mapping[resource] || "aiCredits"] || 0;
+    const key = mapping[resource] || "aiCredits";
+    const value = usage[key];
+    return typeof value === "number" ? value : 0;
   }
 }
 

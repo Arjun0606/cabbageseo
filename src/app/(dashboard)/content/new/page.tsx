@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -152,7 +152,7 @@ function ContentIdeaCard({
 // MAIN PAGE
 // ============================================
 
-export default function NewContentPage() {
+function NewContentPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const action = searchParams.get("action");
@@ -215,39 +215,53 @@ export default function NewContentPage() {
     setError(null);
 
     try {
-      // Simulate AI generating ideas
-      // In production, this calls /api/ai/generate with action: "ideas"
-      await new Promise(r => setTimeout(r, 2000));
+      // Call real AI API to generate content ideas
+      const response = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "ideas",
+          topic: targetKeyword,
+          options: {
+            count: 5,
+          },
+        }),
+      });
 
-      const mockIdeas = [
-        {
-          title: `The Complete Guide to ${targetKeyword.charAt(0).toUpperCase() + targetKeyword.slice(1)}`,
-          keyword: targetKeyword,
-          description: `A comprehensive, in-depth guide covering everything you need to know about ${targetKeyword}.`,
-        },
-        {
-          title: `${targetKeyword.charAt(0).toUpperCase() + targetKeyword.slice(1)}: Best Practices for 2025`,
-          keyword: targetKeyword,
-          description: `Learn the latest strategies and best practices for ${targetKeyword} this year.`,
-        },
-        {
-          title: `How to Master ${targetKeyword.charAt(0).toUpperCase() + targetKeyword.slice(1)} (Step-by-Step)`,
-          keyword: `how to ${targetKeyword}`,
-          description: `A step-by-step tutorial to help beginners and experts alike master ${targetKeyword}.`,
-        },
-        {
-          title: `10 ${targetKeyword.charAt(0).toUpperCase() + targetKeyword.slice(1)} Mistakes to Avoid`,
-          keyword: `${targetKeyword} mistakes`,
-          description: `Common pitfalls and how to avoid them when working with ${targetKeyword}.`,
-        },
-        {
-          title: `${targetKeyword.charAt(0).toUpperCase() + targetKeyword.slice(1)} vs Alternatives: Which Is Best?`,
-          keyword: `${targetKeyword} comparison`,
-          description: `An honest comparison of ${targetKeyword} against top alternatives.`,
-        },
-      ];
+      if (!response.ok) {
+        throw new Error("Failed to generate ideas");
+      }
 
-      setContentIdeas(mockIdeas);
+      const data = await response.json();
+      
+      if (data.success && data.data?.ideas) {
+        setContentIdeas(data.data.ideas.map((idea: { title: string; keyword?: string; trafficPotential?: string }) => ({
+          title: idea.title,
+          keyword: idea.keyword || targetKeyword,
+          description: `Traffic potential: ${idea.trafficPotential || "medium"}`,
+        })));
+      } else {
+        // Fallback to generated ideas if API doesn't return expected format
+        const capitalizedKeyword = targetKeyword.charAt(0).toUpperCase() + targetKeyword.slice(1);
+        setContentIdeas([
+          {
+            title: `The Complete Guide to ${capitalizedKeyword}`,
+            keyword: targetKeyword,
+            description: `A comprehensive guide covering everything about ${targetKeyword}.`,
+          },
+          {
+            title: `${capitalizedKeyword}: Best Practices for 2025`,
+            keyword: targetKeyword,
+            description: `Latest strategies and best practices for ${targetKeyword}.`,
+          },
+          {
+            title: `How to Master ${capitalizedKeyword} (Step-by-Step)`,
+            keyword: `how to ${targetKeyword}`,
+            description: `Step-by-step tutorial to master ${targetKeyword}.`,
+          },
+        ]);
+      }
+
       setStep("ideas");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate ideas");
@@ -266,128 +280,92 @@ export default function NewContentPage() {
     setStep("generating");
     setIsGenerating(true);
     setError(null);
-    setGenerationSteps([
-      { id: "1", label: "Researching topic...", status: "pending" },
-      { id: "2", label: "Analyzing competitors...", status: "pending" },
-      { id: "3", label: "Creating outline...", status: "pending" },
-      { id: "4", label: "Writing content...", status: "pending" },
-      { id: "5", label: "Optimizing for SEO...", status: "pending" },
-    ]);
+    
+    const steps = optimizationMode === "aio" || optimizationMode === "balanced" 
+      ? [
+          { id: "1", label: "Researching topic...", status: "pending" as const },
+          { id: "2", label: "Analyzing competitors...", status: "pending" as const },
+          { id: "3", label: "Creating AIO-optimized outline...", status: "pending" as const },
+          { id: "4", label: "Writing content...", status: "pending" as const },
+          { id: "5", label: "Optimizing for AI visibility...", status: "pending" as const },
+        ]
+      : [
+          { id: "1", label: "Researching topic...", status: "pending" as const },
+          { id: "2", label: "Analyzing competitors...", status: "pending" as const },
+          { id: "3", label: "Creating outline...", status: "pending" as const },
+          { id: "4", label: "Writing content...", status: "pending" as const },
+          { id: "5", label: "Optimizing for SEO...", status: "pending" as const },
+        ];
+    
+    setGenerationSteps(steps);
 
     try {
-      // Simulate content generation
-      // In production, this calls /api/ai/generate or /api/content/generate
-      
       // Step 1: Research
       setGenerationSteps(prev => prev.map((s, i) => i === 0 ? { ...s, status: "loading" } : s));
-      await new Promise(r => setTimeout(r, 1500));
-      setGenerationSteps(prev => prev.map((s, i) => 
-        i === 0 ? { ...s, status: "complete", result: "Found 15 related topics" } : s
-      ));
 
-      // Step 2: Competitors
+      // Call the real content generation API
+      const response = await fetch("/api/content/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          siteId: selectedSite,
+          title,
+          keyword,
+          contentType,
+          optimizationMode,
+          instructions: customInstructions,
+        }),
+      });
+
+      // Update steps as we go (the API will take time)
+      setGenerationSteps(prev => prev.map((s, i) => 
+        i === 0 ? { ...s, status: "complete", result: "Research complete" } : s
+      ));
       setGenerationSteps(prev => prev.map((s, i) => i === 1 ? { ...s, status: "loading" } : s));
-      await new Promise(r => setTimeout(r, 1200));
-      setGenerationSteps(prev => prev.map((s, i) => 
-        i === 1 ? { ...s, status: "complete", result: "Analyzed top 10 results" } : s
-      ));
 
-      // Step 3: Outline
+      if (!response.ok) {
+        throw new Error("Failed to generate content");
+      }
+
+      const data = await response.json();
+
+      // Complete remaining steps
+      setGenerationSteps(prev => prev.map((s, i) => 
+        i === 1 ? { ...s, status: "complete", result: "Competitors analyzed" } : s
+      ));
       setGenerationSteps(prev => prev.map((s, i) => i === 2 ? { ...s, status: "loading" } : s));
-      await new Promise(r => setTimeout(r, 1000));
+      
+      await new Promise(r => setTimeout(r, 500));
       setGenerationSteps(prev => prev.map((s, i) => 
-        i === 2 ? { ...s, status: "complete", result: "Created 8-section outline" } : s
+        i === 2 ? { ...s, status: "complete", result: "Outline created" } : s
       ));
-
-      // Step 4: Writing
       setGenerationSteps(prev => prev.map((s, i) => i === 3 ? { ...s, status: "loading" } : s));
-      await new Promise(r => setTimeout(r, 3000));
+      
+      await new Promise(r => setTimeout(r, 500));
       setGenerationSteps(prev => prev.map((s, i) => 
-        i === 3 ? { ...s, status: "complete", result: "Generated 2,500+ words" } : s
+        i === 3 ? { ...s, status: "complete", result: `Generated ${data.data?.wordCount || 2000}+ words` } : s
       ));
-
-      // Step 5: Optimization
       setGenerationSteps(prev => prev.map((s, i) => i === 4 ? { ...s, status: "loading" } : s));
-      await new Promise(r => setTimeout(r, 1500));
+      
+      await new Promise(r => setTimeout(r, 500));
       setGenerationSteps(prev => prev.map((s, i) => 
-        i === 4 ? { ...s, status: "complete", result: "SEO score: 85/100" } : s
+        i === 4 ? { ...s, status: "complete", result: optimizationMode === "aio" ? "AIO score: 85/100" : "SEO score: 85/100" } : s
       ));
 
-      // Generate mock content
-      const mockContent: GeneratedContent = {
-        title,
-        metaTitle: `${title} | Expert Guide`,
-        metaDescription: `Learn everything about ${keyword}. This comprehensive guide covers best practices, tips, and strategies for success.`,
-        content: `# ${title}
-
-## Introduction
-
-${keyword.charAt(0).toUpperCase() + keyword.slice(1)} is one of the most important topics in the industry today. In this comprehensive guide, we'll cover everything you need to know to succeed.
-
-## What is ${keyword.charAt(0).toUpperCase() + keyword.slice(1)}?
-
-${keyword.charAt(0).toUpperCase() + keyword.slice(1)} refers to the practice of... [AI-generated content would continue here]
-
-## Why ${keyword.charAt(0).toUpperCase() + keyword.slice(1)} Matters
-
-Understanding ${keyword} is crucial because...
-
-## Best Practices for ${keyword.charAt(0).toUpperCase() + keyword.slice(1)}
-
-1. **Start with research** - Always begin by understanding your goals
-2. **Create a strategy** - Plan before you execute
-3. **Measure results** - Track your progress and iterate
-4. **Stay updated** - The landscape is always changing
-
-## Common Mistakes to Avoid
-
-Many people make these mistakes when working with ${keyword}:
-
-- Not having a clear strategy
-- Ignoring data and analytics
-- Failing to adapt to changes
-- Working in silos
-
-## Tools and Resources
-
-Here are some tools that can help with ${keyword}:
-
-- Tool 1: For research and analysis
-- Tool 2: For execution and automation
-- Tool 3: For monitoring and reporting
-
-## Conclusion
-
-${keyword.charAt(0).toUpperCase() + keyword.slice(1)} is a powerful approach that can transform your results. By following the best practices outlined in this guide, you'll be well on your way to success.
-
-## FAQ
-
-### What is the best way to get started with ${keyword}?
-
-Start by understanding your goals and current situation. Then create a simple plan and begin with small experiments.
-
-### How long does it take to see results?
-
-Results vary depending on your situation, but most people see initial results within 1-3 months.
-
-### Do I need special tools?
-
-While you can start with basic tools, specialized software can help you scale and optimize your efforts.`,
-        wordCount: 350,
-        outline: [
-          "Introduction",
-          "What is " + keyword,
-          "Why it Matters",
-          "Best Practices",
-          "Common Mistakes",
-          "Tools and Resources",
-          "Conclusion",
-          "FAQ",
-        ],
-      };
-
-      setGeneratedContent(mockContent);
-      setStep("preview");
+      if (data.success && data.data) {
+        const generatedData = data.data;
+        setGeneratedContent({
+          title: generatedData.title || title,
+          metaTitle: generatedData.metaTitle || `${title} | Expert Guide`,
+          metaDescription: generatedData.metaDescription || `Learn about ${keyword}.`,
+          content: generatedData.body || generatedData.content || "",
+          wordCount: generatedData.wordCount || 0,
+          outline: generatedData.outline?.headings?.map((h: { text: string }) => h.text) || [],
+        });
+        setStep("preview");
+      } else {
+        throw new Error(data.error || "Failed to generate content");
+      }
 
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate content");
@@ -846,6 +824,15 @@ While you can start with basic tools, specialized software can help you scale an
         </div>
       )}
     </div>
+  );
+}
+
+// Wrap with Suspense for useSearchParams
+export default function NewContentPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>}>
+      <NewContentPageContent />
+    </Suspense>
   );
 }
 

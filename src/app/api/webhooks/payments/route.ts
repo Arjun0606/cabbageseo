@@ -164,17 +164,17 @@ export async function POST(request: NextRequest) {
       // ============================================
 
       case "customer.subscription.trial_will_end": {
-        const subscription = event.data;
-        const organizationId = subscription.metadata?.organization_id as string;
+        const subscription = event.data as { metadata?: { organization_id?: string }; trial_end?: number };
+        const organizationId = subscription.metadata?.organization_id;
         
         if (organizationId) {
           // Update trial end date
           await supabase
             .from("organizations")
             .update({
-              trial_ends_at: subscription.trial_end as string,
+              trial_ends_at: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
               updated_at: new Date().toISOString(),
-            })
+            } as never)
             .eq("id", organizationId);
 
           // TODO: Send email notification about trial ending
