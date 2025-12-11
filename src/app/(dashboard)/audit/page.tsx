@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -9,31 +10,20 @@ import {
   RefreshCw,
   Download,
   Zap,
-  Globe,
   FileText,
   Image,
   Link2,
   Code,
   Gauge,
-  Search,
   Filter,
-  ChevronDown,
-  ChevronRight,
   Loader2,
-  Sparkles,
-  ExternalLink,
+  AlertCircle,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +31,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 
 // ============================================
 // TYPES
@@ -61,131 +53,24 @@ interface AuditIssue {
   canAutoFix: boolean;
 }
 
-interface CategoryStats {
-  category: IssueCategory;
-  label: string;
-  icon: React.ElementType;
-  critical: number;
-  warning: number;
-  passed: number;
+interface AuditData {
+  score: number;
+  issues: AuditIssue[];
+  stats: {
+    critical: number;
+    warning: number;
+    info: number;
+    passed: number;
+  };
+  categories: Array<{
+    category: IssueCategory;
+    label: string;
+    critical: number;
+    warning: number;
+    passed: number;
+  }>;
+  lastScan: string | null;
 }
-
-// ============================================
-// MOCK DATA
-// ============================================
-
-const mockIssues: AuditIssue[] = [
-  {
-    id: "1",
-    category: "meta",
-    severity: "critical",
-    title: "Missing meta description",
-    description: "8 pages are missing meta descriptions, which can hurt click-through rates in search results.",
-    affectedUrl: "/about, /services, /contact...",
-    canAutoFix: true,
-  },
-  {
-    id: "2",
-    category: "meta",
-    severity: "warning",
-    title: "Title tags too long",
-    description: "5 pages have title tags exceeding 60 characters, which may be truncated in search results.",
-    affectedUrl: "/blog/complete-guide-to-seo-...",
-    currentValue: "Complete Guide to SEO: Everything You Need to Know in 2025 and Beyond",
-    suggestedValue: "Complete Guide to SEO: Everything You Need in 2025",
-    canAutoFix: true,
-  },
-  {
-    id: "3",
-    category: "images",
-    severity: "critical",
-    title: "Images missing alt text",
-    description: "23 images are missing alt text, making them inaccessible and hurting image SEO.",
-    canAutoFix: true,
-  },
-  {
-    id: "4",
-    category: "images",
-    severity: "warning",
-    title: "Large image files",
-    description: "12 images exceed 500KB and should be compressed for better page speed.",
-    canAutoFix: false,
-  },
-  {
-    id: "5",
-    category: "links",
-    severity: "critical",
-    title: "Broken internal links",
-    description: "5 internal links point to pages that return 404 errors.",
-    affectedUrl: "/old-page, /deleted-post...",
-    canAutoFix: false,
-  },
-  {
-    id: "6",
-    category: "links",
-    severity: "warning",
-    title: "Orphan pages detected",
-    description: "3 pages have no internal links pointing to them.",
-    canAutoFix: true,
-  },
-  {
-    id: "7",
-    category: "content",
-    severity: "warning",
-    title: "Thin content pages",
-    description: "4 pages have less than 300 words of content.",
-    canAutoFix: false,
-  },
-  {
-    id: "8",
-    category: "content",
-    severity: "info",
-    title: "Duplicate H1 tags",
-    description: "2 pages share the same H1 heading.",
-    canAutoFix: true,
-  },
-  {
-    id: "9",
-    category: "technical",
-    severity: "warning",
-    title: "Missing canonical tags",
-    description: "6 pages are missing canonical URLs.",
-    canAutoFix: true,
-  },
-  {
-    id: "10",
-    category: "technical",
-    severity: "info",
-    title: "No structured data",
-    description: "Blog posts are missing Article schema markup.",
-    canAutoFix: true,
-  },
-  {
-    id: "11",
-    category: "performance",
-    severity: "warning",
-    title: "Slow page load time",
-    description: "Average LCP is 3.2s, exceeding the recommended 2.5s threshold.",
-    canAutoFix: false,
-  },
-  {
-    id: "12",
-    category: "performance",
-    severity: "info",
-    title: "Render-blocking resources",
-    description: "3 CSS files are blocking initial render.",
-    canAutoFix: false,
-  },
-];
-
-const categoryStats: CategoryStats[] = [
-  { category: "meta", label: "Meta Tags", icon: FileText, critical: 1, warning: 1, passed: 12 },
-  { category: "content", label: "Content", icon: FileText, critical: 0, warning: 1, passed: 8 },
-  { category: "images", label: "Images", icon: Image, critical: 1, warning: 1, passed: 45 },
-  { category: "links", label: "Links", icon: Link2, critical: 1, warning: 1, passed: 156 },
-  { category: "technical", label: "Technical", icon: Code, critical: 0, warning: 1, passed: 18 },
-  { category: "performance", label: "Performance", icon: Gauge, critical: 0, warning: 1, passed: 5 },
-];
 
 // ============================================
 // SEVERITY CONFIG
@@ -198,11 +83,20 @@ const severityConfig = {
   passed: { label: "Passed", color: "text-green-500", bgColor: "bg-green-500/10", icon: CheckCircle2 },
 };
 
+const categoryIcons: Record<IssueCategory, React.ElementType> = {
+  meta: FileText,
+  content: FileText,
+  images: Image,
+  links: Link2,
+  technical: Code,
+  performance: Gauge,
+};
+
 // ============================================
 // SCORE RING
 // ============================================
 
-function ScoreRing({ score }: { score: number }) {
+function ScoreRing({ score, isLoading }: { score: number; isLoading?: boolean }) {
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
@@ -213,6 +107,14 @@ function ScoreRing({ score }: { score: number }) {
     if (s >= 40) return "text-orange-500";
     return "text-red-500";
   };
+
+  if (isLoading) {
+    return (
+      <div className="relative w-32 h-32 flex items-center justify-center">
+        <Skeleton className="w-32 h-32 rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-32 h-32">
@@ -256,11 +158,13 @@ function IssueCard({
   selected,
   onSelect,
   onFix,
+  isFixing,
 }: {
   issue: AuditIssue;
   selected: boolean;
   onSelect: () => void;
   onFix: () => void;
+  isFixing?: boolean;
 }) {
   const config = severityConfig[issue.severity];
   const Icon = config.icon;
@@ -303,11 +207,77 @@ function IssueCard({
           )}
         </div>
         {issue.canAutoFix && (
-          <Button size="sm" variant="outline" onClick={onFix}>
-            <Zap className="w-4 h-4 mr-1" />
-            Auto-Fix
+          <Button size="sm" variant="outline" onClick={onFix} disabled={isFixing}>
+            {isFixing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Zap className="w-4 h-4 mr-1" />
+                Auto-Fix
+              </>
+            )}
           </Button>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// EMPTY STATE
+// ============================================
+
+function EmptyState() {
+  return (
+    <Card className="p-12">
+      <div className="text-center max-w-md mx-auto">
+        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+          <Globe className="w-8 h-8 text-primary" />
+        </div>
+        <h3 className="text-xl font-semibold mb-2">No Audit Data Yet</h3>
+        <p className="text-muted-foreground mb-6">
+          Add a site and run your first technical audit to identify SEO issues
+          and opportunities for improvement.
+        </p>
+        <Link href="/onboarding">
+          <Button>Add Your First Site</Button>
+        </Link>
+      </div>
+    </Card>
+  );
+}
+
+// ============================================
+// LOADING STATE
+// ============================================
+
+function AuditLoading() {
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-6 md:grid-cols-4">
+        <Card className="md:col-span-1">
+          <CardContent className="p-6 flex flex-col items-center">
+            <ScoreRing score={0} isLoading />
+            <Skeleton className="h-4 w-24 mt-4" />
+          </CardContent>
+        </Card>
+        <Card className="md:col-span-3">
+          <CardHeader>
+            <Skeleton className="h-5 w-32" />
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-20 w-full rounded-lg" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[...Array(6)].map((_, i) => (
+          <Skeleton key={i} className="h-32 w-full rounded-lg" />
+        ))}
       </div>
     </div>
   );
@@ -318,19 +288,66 @@ function IssueCard({
 // ============================================
 
 export default function AuditPage() {
-  const [isScanning, setIsScanning] = useState(false);
   const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
   const [filterSeverity, setFilterSeverity] = useState<IssueSeverity | "all">("all");
+  const [fixingIssue, setFixingIssue] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const seoScore = 67;
-  const totalCritical = mockIssues.filter((i) => i.severity === "critical").length;
-  const totalWarnings = mockIssues.filter((i) => i.severity === "warning").length;
-  const totalPassed = categoryStats.reduce((sum, cat) => sum + cat.passed, 0);
+  // Fetch audit data
+  const { data, isLoading, error, refetch } = useQuery<AuditData>({
+    queryKey: ["audit"],
+    queryFn: async () => {
+      const response = await fetch("/api/audit/issues");
+      if (!response.ok) throw new Error("Failed to fetch audit data");
+      const json = await response.json();
+      return json.data;
+    },
+  });
+
+  // Run new scan mutation
+  const scanMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/autopilot/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "crawl", action: "start" }),
+      });
+      if (!response.ok) throw new Error("Failed to start scan");
+      return response.json();
+    },
+    onSuccess: () => {
+      // Refresh after a delay to allow scan to complete
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["audit"] });
+      }, 5000);
+    },
+  });
+
+  // Fix issue mutation
+  const fixMutation = useMutation({
+    mutationFn: async (issueId: string) => {
+      setFixingIssue(issueId);
+      const response = await fetch("/api/audit/issues", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: issueId, action: "fix" }),
+      });
+      if (!response.ok) throw new Error("Failed to fix issue");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["audit"] });
+      setFixingIssue(null);
+    },
+    onError: () => {
+      setFixingIssue(null);
+    },
+  });
 
   const filteredIssues =
     filterSeverity === "all"
-      ? mockIssues
-      : mockIssues.filter((i) => i.severity === filterSeverity);
+      ? (data?.issues || [])
+      : (data?.issues || []).filter((i) => i.severity === filterSeverity);
 
   const toggleIssue = (id: string) => {
     setSelectedIssues((prev) =>
@@ -338,17 +355,17 @@ export default function AuditPage() {
     );
   };
 
-  const handleScan = async () => {
-    setIsScanning(true);
-    await new Promise((r) => setTimeout(r, 3000));
-    setIsScanning(false);
-  };
-
   const handleBulkFix = async () => {
-    // In production, this would fix selected issues
-    await new Promise((r) => setTimeout(r, 1000));
+    for (const id of selectedIssues) {
+      const issue = data?.issues.find((i) => i.id === id);
+      if (issue?.canAutoFix) {
+        await fixMutation.mutateAsync(id);
+      }
+    }
     setSelectedIssues([]);
   };
+
+  const hasData = data && (data.issues.length > 0 || data.stats.passed > 0);
 
   return (
     <div className="space-y-6">
@@ -361,153 +378,205 @@ export default function AuditPage() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" disabled={!hasData}>
             <Download className="w-4 h-4 mr-2" />
             Export Report
           </Button>
-          <Button size="sm" onClick={handleScan} disabled={isScanning}>
-            {isScanning ? (
+          <Button size="sm" onClick={() => scanMutation.mutate()} disabled={scanMutation.isPending}>
+            {scanMutation.isPending ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             ) : (
               <RefreshCw className="w-4 h-4 mr-2" />
             )}
-            {isScanning ? "Scanning..." : "Run New Audit"}
+            {scanMutation.isPending ? "Scanning..." : "Run New Audit"}
           </Button>
         </div>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid gap-6 md:grid-cols-4">
-        <Card className="md:col-span-1">
-          <CardContent className="p-6 flex flex-col items-center">
-            <ScoreRing score={seoScore} />
-            <p className="mt-4 text-sm font-medium">SEO Health Score</p>
-            <p className="text-xs text-muted-foreground">Last scanned: 2 hours ago</p>
-          </CardContent>
-        </Card>
-
-        <Card className="md:col-span-3">
-          <CardHeader>
-            <CardTitle className="text-base">Issues Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-4 rounded-lg bg-red-500/10">
-                <p className="text-3xl font-bold text-red-500">{totalCritical}</p>
-                <p className="text-sm text-muted-foreground">Critical Issues</p>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-yellow-500/10">
-                <p className="text-3xl font-bold text-yellow-500">{totalWarnings}</p>
-                <p className="text-sm text-muted-foreground">Warnings</p>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-green-500/10">
-                <p className="text-3xl font-bold text-green-500">{totalPassed}</p>
-                <p className="text-sm text-muted-foreground">Passed Checks</p>
-              </div>
+      {/* Error State */}
+      {error && (
+        <Card className="p-6 border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500" />
+            <div>
+              <p className="font-medium text-red-700 dark:text-red-400">Failed to load audit data</p>
+              <p className="text-sm text-red-600 dark:text-red-300">
+                {error instanceof Error ? error.message : "Please try again"}
+              </p>
             </div>
-          </CardContent>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto">
+              Retry
+            </Button>
+          </div>
         </Card>
-      </div>
+      )}
 
-      {/* Category Breakdown */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {categoryStats.map((cat) => {
-          const Icon = cat.icon;
-          const total = cat.critical + cat.warning + cat.passed;
-          const passRate = Math.round((cat.passed / total) * 100);
+      {/* Loading State */}
+      {isLoading && <AuditLoading />}
 
-          return (
-            <Card key={cat.category} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Icon className="w-5 h-5 text-primary" />
+      {/* Empty State */}
+      {!isLoading && !error && !hasData && <EmptyState />}
+
+      {/* Data View */}
+      {!isLoading && hasData && (
+        <>
+          {/* Overview Cards */}
+          <div className="grid gap-6 md:grid-cols-4">
+            <Card className="md:col-span-1">
+              <CardContent className="p-6 flex flex-col items-center">
+                <ScoreRing score={data?.score || 0} />
+                <p className="mt-4 text-sm font-medium">SEO Health Score</p>
+                {data?.lastScan && (
+                  <p className="text-xs text-muted-foreground">
+                    Last scanned: {new Date(data.lastScan).toLocaleDateString()}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="md:col-span-3">
+              <CardHeader>
+                <CardTitle className="text-base">Issues Overview</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center p-4 rounded-lg bg-red-500/10">
+                    <p className="text-3xl font-bold text-red-500">{data?.stats.critical || 0}</p>
+                    <p className="text-sm text-muted-foreground">Critical Issues</p>
                   </div>
-                  <div>
-                    <p className="font-medium">{cat.label}</p>
-                    <p className="text-xs text-muted-foreground">{passRate}% passing</p>
+                  <div className="text-center p-4 rounded-lg bg-yellow-500/10">
+                    <p className="text-3xl font-bold text-yellow-500">{data?.stats.warning || 0}</p>
+                    <p className="text-sm text-muted-foreground">Warnings</p>
                   </div>
-                </div>
-                <Progress value={passRate} className="h-2 mb-2" />
-                <div className="flex justify-between text-xs">
-                  {cat.critical > 0 && (
-                    <span className="text-red-500">{cat.critical} critical</span>
-                  )}
-                  {cat.warning > 0 && (
-                    <span className="text-yellow-500">{cat.warning} warnings</span>
-                  )}
-                  <span className="text-green-500">{cat.passed} passed</span>
+                  <div className="text-center p-4 rounded-lg bg-green-500/10">
+                    <p className="text-3xl font-bold text-green-500">{data?.stats.passed || 0}</p>
+                    <p className="text-sm text-muted-foreground">Passed Checks</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          );
-        })}
-      </div>
-
-      {/* Issues List */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>All Issues</CardTitle>
-              <CardDescription>
-                {filteredIssues.length} issues found • {selectedIssues.length} selected
-              </CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Filter className="w-4 h-4 mr-2" />
-                    {filterSeverity === "all" ? "All Severities" : severityConfig[filterSeverity].label}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => setFilterSeverity("all")}>
-                    All Severities
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setFilterSeverity("critical")}>
-                    <XCircle className="w-4 h-4 mr-2 text-red-500" />
-                    Critical
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setFilterSeverity("warning")}>
-                    <AlertTriangle className="w-4 h-4 mr-2 text-yellow-500" />
-                    Warnings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setFilterSeverity("info")}>
-                    <Info className="w-4 h-4 mr-2 text-blue-500" />
-                    Info
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {filteredIssues.map((issue) => (
-            <IssueCard
-              key={issue.id}
-              issue={issue}
-              selected={selectedIssues.includes(issue.id)}
-              onSelect={() => toggleIssue(issue.id)}
-              onFix={() => console.log("Fix:", issue.id)}
-            />
-          ))}
-        </CardContent>
-      </Card>
 
-      {/* Bulk Actions */}
-      {selectedIssues.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-background border rounded-lg shadow-lg p-4 flex items-center gap-4">
-          <span className="text-sm font-medium">{selectedIssues.length} issues selected</span>
-          <Button size="sm" variant="outline" onClick={() => setSelectedIssues([])}>
-            Clear
-          </Button>
-          <Button size="sm" onClick={handleBulkFix}>
-            <Zap className="w-4 h-4 mr-2" />
-            Auto-Fix Selected
-          </Button>
-        </div>
+          {/* Category Breakdown */}
+          {data?.categories && data.categories.length > 0 && (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {data.categories.map((cat) => {
+                const Icon = categoryIcons[cat.category] || FileText;
+                const total = cat.critical + cat.warning + cat.passed;
+                const passRate = total > 0 ? Math.round((cat.passed / total) * 100) : 100;
+
+                return (
+                  <Card key={cat.category} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 rounded-lg bg-primary/10">
+                          <Icon className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{cat.label}</p>
+                          <p className="text-xs text-muted-foreground">{passRate}% passing</p>
+                        </div>
+                      </div>
+                      <Progress value={passRate} className="h-2 mb-2" />
+                      <div className="flex justify-between text-xs">
+                        {cat.critical > 0 && (
+                          <span className="text-red-500">{cat.critical} critical</span>
+                        )}
+                        {cat.warning > 0 && (
+                          <span className="text-yellow-500">{cat.warning} warnings</span>
+                        )}
+                        <span className="text-green-500">{cat.passed} passed</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Issues List */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>All Issues</CardTitle>
+                  <CardDescription>
+                    {filteredIssues.length} issues found • {selectedIssues.length} selected
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Filter className="w-4 h-4 mr-2" />
+                        {filterSeverity === "all" ? "All Severities" : severityConfig[filterSeverity].label}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => setFilterSeverity("all")}>
+                        All Severities
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilterSeverity("critical")}>
+                        <XCircle className="w-4 h-4 mr-2 text-red-500" />
+                        Critical
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilterSeverity("warning")}>
+                        <AlertTriangle className="w-4 h-4 mr-2 text-yellow-500" />
+                        Warnings
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilterSeverity("info")}>
+                        <Info className="w-4 h-4 mr-2 text-blue-500" />
+                        Info
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {filteredIssues.length === 0 ? (
+                <div className="text-center py-8">
+                  <CheckCircle2 className="w-12 h-12 mx-auto text-green-500 mb-3" />
+                  <p className="font-medium">No issues found!</p>
+                  <p className="text-sm text-muted-foreground">
+                    {filterSeverity === "all"
+                      ? "Your site is looking great"
+                      : `No ${filterSeverity} issues`}
+                  </p>
+                </div>
+              ) : (
+                filteredIssues.map((issue) => (
+                  <IssueCard
+                    key={issue.id}
+                    issue={issue}
+                    selected={selectedIssues.includes(issue.id)}
+                    onSelect={() => toggleIssue(issue.id)}
+                    onFix={() => fixMutation.mutate(issue.id)}
+                    isFixing={fixingIssue === issue.id}
+                  />
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Bulk Actions */}
+          {selectedIssues.length > 0 && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-background border rounded-lg shadow-lg p-4 flex items-center gap-4 z-50">
+              <span className="text-sm font-medium">{selectedIssues.length} issues selected</span>
+              <Button size="sm" variant="outline" onClick={() => setSelectedIssues([])}>
+                Clear
+              </Button>
+              <Button size="sm" onClick={handleBulkFix} disabled={fixMutation.isPending}>
+                {fixMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Zap className="w-4 h-4 mr-2" />
+                )}
+                Auto-Fix Selected
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

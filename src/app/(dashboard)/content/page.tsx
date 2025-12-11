@@ -2,31 +2,29 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import {
   FileText,
   Plus,
   Search,
   Filter,
   MoreHorizontal,
-  Clock,
   CheckCircle2,
-  AlertCircle,
   Edit3,
   Trash2,
   Copy,
   ExternalLink,
   Sparkles,
-  TrendingUp,
   Eye,
   Calendar,
   Globe,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,6 +41,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ============================================
 // TYPES
@@ -65,87 +64,15 @@ interface ContentItem {
   author: string;
 }
 
-// ============================================
-// MOCK DATA
-// ============================================
-
-const mockContent: ContentItem[] = [
-  {
-    id: "1",
-    title: "Complete Guide to SEO in 2025",
-    slug: "seo-guide-2025",
-    status: "published",
-    keyword: "seo guide",
-    seoScore: 92,
-    wordCount: 3500,
-    createdAt: "2025-01-05",
-    updatedAt: "2025-01-08",
-    publishedAt: "2025-01-08",
-    publishedUrl: "https://example.com/blog/seo-guide-2025",
-    author: "AI + Human",
-  },
-  {
-    id: "2",
-    title: "How to Do Keyword Research: Step-by-Step",
-    slug: "keyword-research-guide",
-    status: "draft",
-    keyword: "keyword research",
-    seoScore: 78,
-    wordCount: 2800,
-    createdAt: "2025-01-06",
-    updatedAt: "2025-01-10",
-    author: "AI",
-  },
-  {
-    id: "3",
-    title: "10 Best Free SEO Tools for Beginners",
-    slug: "free-seo-tools",
-    status: "review",
-    keyword: "free seo tools",
-    seoScore: 85,
-    wordCount: 2100,
-    createdAt: "2025-01-07",
-    updatedAt: "2025-01-10",
-    author: "AI",
-  },
-  {
-    id: "4",
-    title: "Technical SEO Checklist for 2025",
-    slug: "technical-seo-checklist",
-    status: "writing",
-    keyword: "technical seo",
-    seoScore: 45,
-    wordCount: 1200,
-    createdAt: "2025-01-09",
-    updatedAt: "2025-01-10",
-    author: "AI",
-  },
-  {
-    id: "5",
-    title: "Link Building Strategies That Work",
-    slug: "link-building-strategies",
-    status: "scheduled",
-    keyword: "link building",
-    seoScore: 88,
-    wordCount: 2400,
-    createdAt: "2025-01-04",
-    updatedAt: "2025-01-09",
-    publishedAt: "2025-01-15",
-    author: "AI + Human",
-  },
-  {
-    id: "6",
-    title: "Local SEO: Complete Guide for Small Businesses",
-    slug: "local-seo-guide",
-    status: "idea",
-    keyword: "local seo",
-    seoScore: 0,
-    wordCount: 0,
-    createdAt: "2025-01-10",
-    updatedAt: "2025-01-10",
-    author: "",
-  },
-];
+interface ContentData {
+  content: ContentItem[];
+  stats: {
+    total: number;
+    published: number;
+    drafts: number;
+    ideas: number;
+  };
+}
 
 // ============================================
 // STATUS CONFIG
@@ -165,7 +92,7 @@ const statusConfig: Record<ContentStatus, { label: string; color: string; icon: 
 // ============================================
 
 function StatusBadge({ status }: { status: ContentStatus }) {
-  const config = statusConfig[status];
+  const config = statusConfig[status] || statusConfig.draft;
   const Icon = config.icon;
   
   return (
@@ -203,66 +130,61 @@ function SEOScore({ score }: { score: number }) {
 }
 
 // ============================================
-// CONTENT CARD (for grid view)
+// LOADING SKELETON
 // ============================================
 
-function ContentCard({ item }: { item: ContentItem }) {
+function ContentLoading() {
   return (
-    <Card className="hover:shadow-md transition-all group">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <StatusBadge status={item.status} />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 h-8 w-8">
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Edit3 className="w-4 h-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Copy className="w-4 h-4 mr-2" />
-                Duplicate
-              </DropdownMenuItem>
-              {item.publishedUrl && (
-                <DropdownMenuItem>
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  View Live
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-500">
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="w-10 h-10 rounded-lg" />
+                <div>
+                  <Skeleton className="h-6 w-12 mb-1" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full" />
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
-        <Link href={`/content/${item.id}`} className="block">
-          <h3 className="font-semibold mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-            {item.title}
-          </h3>
+// ============================================
+// EMPTY STATE
+// ============================================
+
+function EmptyState() {
+  return (
+    <Card className="p-12">
+      <div className="text-center max-w-md mx-auto">
+        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+          <FileText className="w-8 h-8 text-primary" />
+        </div>
+        <h3 className="text-xl font-semibold mb-2">No Content Yet</h3>
+        <p className="text-muted-foreground mb-6">
+          Start creating SEO-optimized articles with AI. Just provide a topic
+          and let the system do the rest.
+        </p>
+        <Link href="/content/new">
+          <Button>
+            <Sparkles className="w-4 h-4 mr-2" />
+            Create Your First Article
+          </Button>
         </Link>
-
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-          <Badge variant="outline" className="text-xs">
-            {item.keyword}
-          </Badge>
-        </div>
-
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <span>{item.wordCount.toLocaleString()} words</span>
-            <span>•</span>
-            <span>{item.updatedAt}</span>
-          </div>
-          <SEOScore score={item.seoScore} />
-        </div>
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -273,27 +195,41 @@ function ContentCard({ item }: { item: ContentItem }) {
 
 export default function ContentPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
 
-  const filteredContent = mockContent.filter(
+  // Fetch content data
+  const { data, isLoading, error, refetch } = useQuery<ContentData>({
+    queryKey: ["content"],
+    queryFn: async () => {
+      const response = await fetch("/api/content");
+      if (!response.ok) throw new Error("Failed to fetch content");
+      const json = await response.json();
+      return json.data;
+    },
+  });
+
+  const filteredContent = (data?.content || []).filter(
     (item) =>
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.keyword.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const stats = {
-    total: mockContent.length,
-    published: mockContent.filter((c) => c.status === "published").length,
-    drafts: mockContent.filter((c) => c.status === "draft" || c.status === "writing").length,
-    ideas: mockContent.filter((c) => c.status === "idea").length,
-  };
+  const hasData = data && data.content.length > 0;
 
-  const handleGenerate = async () => {
-    setIsGenerating(true);
-    await new Promise((r) => setTimeout(r, 2000));
-    setIsGenerating(false);
-  };
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Content</h1>
+            <p className="text-muted-foreground">
+              Create, manage, and optimize your SEO content
+            </p>
+          </div>
+        </div>
+        <ContentLoading />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -305,208 +241,223 @@ export default function ContentPage() {
             Create, manage, and optimize your SEO content
           </p>
         </div>
-        <Button onClick={handleGenerate} disabled={isGenerating}>
-          {isGenerating ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Sparkles className="w-4 h-4 mr-2" />
-          )}
-          Generate Content
-        </Button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <FileText className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">Total Content</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <Globe className="w-5 h-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.published}</p>
-                <p className="text-xs text-muted-foreground">Published</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-yellow-500/10">
-                <Edit3 className="w-5 h-5 text-yellow-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.drafts}</p>
-                <p className="text-xs text-muted-foreground">In Progress</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/10">
-                <Sparkles className="w-5 h-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.ideas}</p>
-                <p className="text-xs text-muted-foreground">Ideas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search content..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <div className="flex gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>All Status</DropdownMenuItem>
-              <DropdownMenuItem>Published</DropdownMenuItem>
-              <DropdownMenuItem>Drafts</DropdownMenuItem>
-              <DropdownMenuItem>In Review</DropdownMenuItem>
-              <DropdownMenuItem>Ideas</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      {/* Content Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Keyword</TableHead>
-                <TableHead>SEO Score</TableHead>
-                <TableHead className="text-right">Words</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead className="w-10"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredContent.map((item) => (
-                <TableRow key={item.id} className="group">
-                  <TableCell>
-                    <Link
-                      href={`/content/${item.id}`}
-                      className="font-medium hover:text-primary transition-colors"
-                    >
-                      {item.title}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={item.status} />
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-xs">
-                      {item.keyword}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <SEOScore score={item.seoScore} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {item.wordCount > 0 ? item.wordCount.toLocaleString() : "-"}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {item.updatedAt}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="opacity-0 group-hover:opacity-100"
-                        >
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/content/${item.id}`}>
-                            <Edit3 className="w-4 h-4 mr-2" />
-                            Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Sparkles className="w-4 h-4 mr-2" />
-                          Optimize
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Copy className="w-4 h-4 mr-2" />
-                          Duplicate
-                        </DropdownMenuItem>
-                        {item.publishedUrl && (
-                          <DropdownMenuItem>
-                            <ExternalLink className="w-4 h-4 mr-2" />
-                            View Live
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-500">
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {filteredContent.length === 0 && (
-        <Card className="p-8 text-center">
-          <div className="inline-flex items-center justify-center p-4 bg-muted rounded-full mb-4">
-            <FileText className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-semibold mb-2">No content found</h3>
-          <p className="text-muted-foreground mb-4">
-            {searchQuery
-              ? "Try adjusting your search"
-              : "Start creating SEO-optimized content with AI"}
-          </p>
+        <Link href="/content/new">
           <Button>
             <Sparkles className="w-4 h-4 mr-2" />
-            Generate Your First Article
+            Generate Content
           </Button>
+        </Link>
+      </div>
+
+      {/* Error State */}
+      {error && (
+        <Card className="p-6 border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500" />
+            <div>
+              <p className="font-medium text-red-700 dark:text-red-400">Failed to load content</p>
+              <p className="text-sm text-red-600 dark:text-red-300">
+                {error instanceof Error ? error.message : "Please try again"}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto">
+              Retry
+            </Button>
+          </div>
         </Card>
+      )}
+
+      {/* Empty State */}
+      {!error && !hasData && <EmptyState />}
+
+      {/* Data View */}
+      {hasData && (
+        <>
+          {/* Stats */}
+          <div className="grid gap-4 sm:grid-cols-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <FileText className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{data.stats.total}</p>
+                    <p className="text-xs text-muted-foreground">Total Content</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-500/10">
+                    <Globe className="w-5 h-5 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{data.stats.published}</p>
+                    <p className="text-xs text-muted-foreground">Published</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-yellow-500/10">
+                    <Edit3 className="w-5 h-5 text-yellow-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{data.stats.drafts}</p>
+                    <p className="text-xs text-muted-foreground">In Progress</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-500/10">
+                    <Sparkles className="w-5 h-5 text-purple-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{data.stats.ideas}</p>
+                    <p className="text-xs text-muted-foreground">Ideas</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search content..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="flex gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <Filter className="w-4 h-4 mr-2" />
+                    Filter
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>All Status</DropdownMenuItem>
+                  <DropdownMenuItem>Published</DropdownMenuItem>
+                  <DropdownMenuItem>Drafts</DropdownMenuItem>
+                  <DropdownMenuItem>In Review</DropdownMenuItem>
+                  <DropdownMenuItem>Ideas</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          {/* Content Table */}
+          <Card>
+            <CardContent className="p-0">
+              {filteredContent.length === 0 ? (
+                <div className="p-8 text-center">
+                  <Search className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-muted-foreground">
+                    No content matches &quot;{searchQuery}&quot;
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Keyword</TableHead>
+                      <TableHead>SEO Score</TableHead>
+                      <TableHead className="text-right">Words</TableHead>
+                      <TableHead>Updated</TableHead>
+                      <TableHead className="w-10"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredContent.map((item) => (
+                      <TableRow key={item.id} className="group">
+                        <TableCell>
+                          <Link
+                            href={`/content/${item.id}`}
+                            className="font-medium hover:text-primary transition-colors"
+                          >
+                            {item.title}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={item.status} />
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {item.keyword}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <SEOScore score={item.seoScore} />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {item.wordCount > 0 ? item.wordCount.toLocaleString() : "-"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(item.updatedAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="opacity-0 group-hover:opacity-100"
+                              >
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link href={`/content/${item.id}`}>
+                                  <Edit3 className="w-4 h-4 mr-2" />
+                                  Edit
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Sparkles className="w-4 h-4 mr-2" />
+                                Optimize
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Copy className="w-4 h-4 mr-2" />
+                                Duplicate
+                              </DropdownMenuItem>
+                              {item.publishedUrl && (
+                                <DropdownMenuItem>
+                                  <ExternalLink className="w-4 h-4 mr-2" />
+                                  View Live
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-red-500">
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   );
