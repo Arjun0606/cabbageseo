@@ -268,50 +268,56 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       description: "Processing your request...",
     });
 
-    // Check for pattern matches
-    for (const { pattern, action, response } of aiPatterns) {
-      if (pattern.test(inputValue)) {
-        setCommandResult(prev => prev ? {
-          ...prev,
-          status: "running",
-          description: response,
-        } : null);
-        
-        // Simulate processing
-        await new Promise(r => setTimeout(r, 500));
-        
-        setCommandResult(prev => prev ? {
-          ...prev,
-          status: "success",
-          description: "Redirecting...",
-        } : null);
+    try {
+      // Call the AI query API
+      const response = await fetch("/api/ai/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: inputValue }),
+      });
 
-        await new Promise(r => setTimeout(r, 300));
-        handleAction(action);
-        return;
+      if (!response.ok) {
+        throw new Error("Failed to process query");
       }
+
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        const result = data.data;
+        
+        setCommandResult({
+          type: "ai",
+          title: inputValue,
+          status: "success",
+          description: result.response || "Processing complete",
+        });
+
+        // If there's an action/route, navigate after a short delay
+        if (result.route) {
+          setTimeout(() => {
+            router.push(result.route);
+            onOpenChange(false);
+            setInputValue("");
+          }, 800);
+        } else if (result.action) {
+          setTimeout(() => {
+            handleAction(result.action);
+          }, 800);
+        } else {
+          setIsProcessing(false);
+        }
+      } else {
+        throw new Error(data.error || "Unknown error");
+      }
+    } catch (error) {
+      setCommandResult({
+        type: "ai",
+        title: inputValue,
+        status: "error",
+        description: error instanceof Error ? error.message : "Failed to process query. Please try again.",
+      });
+      setIsProcessing(false);
     }
-
-    // If no pattern matches, treat as general AI query
-    // In a real implementation, this would call an AI endpoint
-    setCommandResult({
-      type: "ai",
-      title: inputValue,
-      status: "running",
-      description: "Thinking...",
-    });
-
-    await new Promise(r => setTimeout(r, 1000));
-
-    // For now, show a helpful message
-    setCommandResult({
-      type: "ai",
-      title: inputValue,
-      status: "success",
-      description: "Try being more specific, like 'Generate content ideas' or 'Fix SEO issues'",
-    });
-
-    setIsProcessing(false);
   };
 
   // Handle enter key for AI queries

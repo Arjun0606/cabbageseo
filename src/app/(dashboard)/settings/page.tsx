@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { User, Mail, Building, Globe, Camera, Loader2, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { User, Mail, Building, Globe, Camera, Loader2, Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -16,27 +16,147 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// ============================================
+// TYPES
+// ============================================
+
+interface AccountData {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+  role: string;
+  emailVerified: boolean;
+  createdAt: string;
+  organization: {
+    id: string;
+    name: string;
+    slug: string;
+    plan: string;
+    website: string;
+    timezone: string;
+  } | null;
+}
+
+// ============================================
+// LOADING SKELETON
+// ============================================
+
+function SettingsLoading() {
+  return (
+    <div className="space-y-6 max-w-2xl">
+      {[...Array(3)].map((_, i) => (
+        <Card key={i}>
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+// ============================================
+// MAIN PAGE
+// ============================================
 
 export default function AccountSettingsPage() {
-  const [isSaving, setIsSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const queryClient = useQueryClient();
+  const [hasChanges, setHasChanges] = useState(false);
 
-  const [profile, setProfile] = useState({
-    name: "Arjun",
-    email: "arjun@example.com",
-    company: "CabbageSEO",
-    website: "https://example.com",
-    timezone: "America/New_York",
-    bio: "",
+  // Local form state
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    company: "",
+    website: "",
+    timezone: "UTC",
   });
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setIsSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  // Fetch account data
+  const { data, isLoading, error, refetch } = useQuery<AccountData>({
+    queryKey: ["account-settings"],
+    queryFn: async () => {
+      const response = await fetch("/api/settings/account");
+      if (!response.ok) throw new Error("Failed to fetch account");
+      const json = await response.json();
+      return json.data;
+    },
+  });
+
+  // Initialize form when data loads
+  useEffect(() => {
+    if (data) {
+      setFormData({
+        name: data.name || "",
+        email: data.email || "",
+        company: data.organization?.name || "",
+        website: data.organization?.website || "",
+        timezone: data.organization?.timezone || "UTC",
+      });
+    }
+  }, [data]);
+
+  // Save mutation
+  const saveMutation = useMutation({
+    mutationFn: async (updates: Record<string, string>) => {
+      const response = await fetch("/api/settings/account", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: updates.name,
+          organizationName: updates.company,
+          website: updates.website,
+          timezone: updates.timezone,
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to save");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["account-settings"] });
+      setHasChanges(false);
+    },
+  });
+
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setHasChanges(true);
   };
+
+  const handleSave = () => {
+    saveMutation.mutate(formData);
+  };
+
+  if (isLoading) {
+    return <SettingsLoading />;
+  }
+
+  if (error) {
+    return (
+      <Card className="p-6 max-w-2xl">
+        <div className="flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-500" />
+          <div>
+            <p className="font-medium">Failed to load account settings</p>
+            <p className="text-sm text-muted-foreground">
+              {error instanceof Error ? error.message : "Please try again"}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto">
+            Retry
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -50,9 +170,9 @@ export default function AccountSettingsPage() {
         </CardHeader>
         <CardContent className="flex items-center gap-6">
           <Avatar className="w-20 h-20">
-            <AvatarImage src="" />
+            <AvatarImage src={data?.avatarUrl || ""} />
             <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-              {profile.name.charAt(0).toUpperCase()}
+              {formData.name.charAt(0).toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
           <div className="space-y-2">
@@ -81,8 +201,8 @@ export default function AccountSettingsPage() {
               <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
-                value={profile.name}
-                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                value={formData.name}
+                onChange={(e) => handleChange("name", e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -91,23 +211,26 @@ export default function AccountSettingsPage() {
                 <Input
                   id="email"
                   type="email"
-                  value={profile.email}
-                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                  value={formData.email}
+                  disabled
+                  className="pr-20"
                 />
-                <Badge className="absolute right-2 top-1/2 -translate-y-1/2" variant="secondary">
-                  Verified
-                </Badge>
+                {data?.emailVerified && (
+                  <Badge className="absolute right-2 top-1/2 -translate-y-1/2" variant="secondary">
+                    Verified
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="company">Company</Label>
+              <Label htmlFor="company">Company / Organization</Label>
               <Input
                 id="company"
-                value={profile.company}
-                onChange={(e) => setProfile({ ...profile, company: e.target.value })}
+                value={formData.company}
+                onChange={(e) => handleChange("company", e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -115,22 +238,35 @@ export default function AccountSettingsPage() {
               <Input
                 id="website"
                 type="url"
-                value={profile.website}
-                onChange={(e) => setProfile({ ...profile, website: e.target.value })}
+                placeholder="https://"
+                value={formData.website}
+                onChange={(e) => handleChange("website", e.target.value)}
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
 
+      {/* Preferences */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Preferences</CardTitle>
+          <CardDescription>
+            Customize your experience
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="timezone">Timezone</Label>
             <Select
-              value={profile.timezone}
-              onValueChange={(value) => setProfile({ ...profile, timezone: value })}
+              value={formData.timezone}
+              onValueChange={(value) => handleChange("timezone", value)}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="UTC">UTC</SelectItem>
                 <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
                 <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
                 <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
@@ -138,104 +274,65 @@ export default function AccountSettingsPage() {
                 <SelectItem value="Europe/London">London (GMT)</SelectItem>
                 <SelectItem value="Europe/Paris">Paris (CET)</SelectItem>
                 <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
+                <SelectItem value="Asia/Kolkata">India (IST)</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              id="bio"
-              placeholder="Tell us a bit about yourself..."
-              value={profile.bio}
-              onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-              rows={3}
-            />
           </div>
         </CardContent>
       </Card>
 
-      {/* Brand Settings */}
+      {/* Account Info */}
       <Card>
         <CardHeader>
-          <CardTitle>Brand Settings</CardTitle>
-          <CardDescription>
-            Customize AI-generated content to match your brand
-          </CardDescription>
+          <CardTitle>Account</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Writing Style</Label>
-            <Select defaultValue="professional">
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="professional">Professional</SelectItem>
-                <SelectItem value="friendly">Friendly</SelectItem>
-                <SelectItem value="casual">Casual</SelectItem>
-                <SelectItem value="technical">Technical</SelectItem>
-              </SelectContent>
-            </Select>
+        <CardContent className="space-y-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Role</span>
+            <Badge variant="secondary">{data?.role || "member"}</Badge>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="audience">Target Audience</Label>
-            <Input
-              id="audience"
-              placeholder="e.g., Small business owners, marketing managers"
-              defaultValue="Small business owners looking to improve their SEO"
-            />
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Plan</span>
+            <Badge variant="outline">{data?.organization?.plan || "free"}</Badge>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="topics">Main Topics</Label>
-            <Textarea
-              id="topics"
-              placeholder="Enter topics separated by commas"
-              defaultValue="SEO, content marketing, digital marketing, small business growth"
-              rows={2}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Danger Zone */}
-      <Card className="border-red-200 dark:border-red-900">
-        <CardHeader>
-          <CardTitle className="text-red-500">Danger Zone</CardTitle>
-          <CardDescription>
-            Irreversible actions for your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div>
-              <p className="font-medium">Delete Account</p>
-              <p className="text-sm text-muted-foreground">
-                Permanently delete your account and all data
-              </p>
-            </div>
-            <Button variant="destructive" size="sm">
-              Delete Account
-            </Button>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Member since</span>
+            <span>{data?.createdAt ? new Date(data.createdAt).toLocaleDateString() : "-"}</span>
           </div>
         </CardContent>
       </Card>
 
       {/* Save Button */}
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={isSaving} className="min-w-32">
-          {isSaving ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : saved ? (
-            <>
-              <Check className="w-4 h-4 mr-2" />
-              Saved!
-            </>
-          ) : (
-            "Save Changes"
-          )}
+      <div className="flex justify-end gap-3">
+        {hasChanges && (
+          <Button
+            variant="ghost"
+            onClick={() => {
+              if (data) {
+                setFormData({
+                  name: data.name || "",
+                  email: data.email || "",
+                  company: data.organization?.name || "",
+                  website: data.organization?.website || "",
+                  timezone: data.organization?.timezone || "UTC",
+                });
+                setHasChanges(false);
+              }
+            }}
+          >
+            Cancel
+          </Button>
+        )}
+        <Button
+          onClick={handleSave}
+          disabled={!hasChanges || saveMutation.isPending}
+        >
+          {saveMutation.isPending ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : saveMutation.isSuccess ? (
+            <Check className="w-4 h-4 mr-2" />
+          ) : null}
+          {saveMutation.isSuccess ? "Saved!" : "Save Changes"}
         </Button>
       </div>
     </div>

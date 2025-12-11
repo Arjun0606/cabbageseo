@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { DashboardHeader } from "@/components/dashboard/header";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Link2,
   ArrowRight,
@@ -18,17 +18,20 @@ import {
   Search,
   FileText,
   ExternalLink,
-  TrendingUp,
-  Filter,
-  RefreshCw,
   AlertTriangle,
   Globe,
   ArrowUpRight,
   Unlink,
+  AlertCircle,
+  Sparkles,
 } from "lucide-react";
+import Link from "next/link";
 
-// Types
-interface InternalLinkOpportunity {
+// ============================================
+// TYPES
+// ============================================
+
+interface LinkOpportunity {
   id: string;
   fromPage: string;
   fromTitle: string;
@@ -41,421 +44,433 @@ interface InternalLinkOpportunity {
 }
 
 interface OrphanPage {
+  id: string;
   url: string;
   title: string;
   incomingLinks: number;
-  pageAuthority: number;
+  outgoingLinks: number;
 }
 
-// Mock data
-const mockOpportunities: InternalLinkOpportunity[] = [
-  {
-    id: "1",
-    fromPage: "/blog/seo-guide",
-    fromTitle: "The Complete SEO Guide",
-    toPage: "/services/seo-audit",
-    toTitle: "SEO Audit Service",
-    anchorText: "professional SEO audit",
-    context: "...consider getting a professional SEO audit to identify hidden issues...",
-    impact: "high",
-    status: "pending",
-  },
-  {
-    id: "2",
-    fromPage: "/blog/content-marketing",
-    fromTitle: "Content Marketing 101",
-    toPage: "/blog/keyword-research",
-    toTitle: "Keyword Research Guide",
-    anchorText: "keyword research",
-    context: "...always start with thorough keyword research before creating content...",
-    impact: "high",
-    status: "pending",
-  },
-  {
-    id: "3",
-    fromPage: "/about",
-    fromTitle: "About Us",
-    toPage: "/case-studies",
-    toTitle: "Case Studies",
-    anchorText: "our case studies",
-    context: "...see the amazing results we've achieved in our case studies...",
-    impact: "medium",
-    status: "pending",
-  },
-  {
-    id: "4",
-    fromPage: "/services",
-    fromTitle: "Our Services",
-    toPage: "/blog/seo-tips",
-    toTitle: "10 SEO Tips",
-    anchorText: "SEO tips",
-    context: "...learn more from these actionable SEO tips from our experts...",
-    impact: "medium",
-    status: "pending",
-  },
-  {
-    id: "5",
-    fromPage: "/pricing",
-    fromTitle: "Pricing",
-    toPage: "/contact",
-    toTitle: "Contact Us",
-    anchorText: "get in touch",
-    context: "...have questions about our plans? get in touch with our team...",
-    impact: "low",
-    status: "pending",
-  },
-];
-
-const mockOrphanPages: OrphanPage[] = [
-  { url: "/blog/old-post-2023", title: "SEO Trends 2023", incomingLinks: 0, pageAuthority: 12 },
-  { url: "/resources/template", title: "Free SEO Template", incomingLinks: 1, pageAuthority: 8 },
-  { url: "/blog/case-study-acme", title: "Case Study: ACME Corp", incomingLinks: 1, pageAuthority: 15 },
-];
-
-const linkStats = {
-  totalOpportunities: 47,
-  appliedToday: 12,
-  avgImpact: "+18%",
-  orphanPages: 3,
-};
-
-const impactColors = {
-  high: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-  medium: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-  low: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-};
-
-export default function LinksPage() {
-  const [opportunities, setOpportunities] = useState(mockOpportunities);
-  const [selectedLinks, setSelectedLinks] = useState<Set<string>>(new Set());
-  const [isApplying, setIsApplying] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const toggleLink = (id: string) => {
-    const newSelected = new Set(selectedLinks);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedLinks(newSelected);
+interface LinksData {
+  opportunities: LinkOpportunity[];
+  orphanPages: OrphanPage[];
+  stats: {
+    total: number;
+    pending: number;
+    applied: number;
+    orphanCount: number;
   };
+}
 
-  const selectAll = () => {
-    const pendingIds = opportunities.filter(o => o.status === "pending").map(o => o.id);
-    setSelectedLinks(new Set(pendingIds));
+// ============================================
+// IMPACT BADGE
+// ============================================
+
+function ImpactBadge({ impact }: { impact: LinkOpportunity["impact"] }) {
+  const config = {
+    high: { label: "High Impact", color: "bg-green-500/10 text-green-600 border-green-500/20" },
+    medium: { label: "Medium", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20" },
+    low: { label: "Low", color: "bg-gray-500/10 text-gray-600 border-gray-500/20" },
   };
-
-  const handleApply = async () => {
-    setIsApplying(true);
-    await new Promise(r => setTimeout(r, 2000));
-    
-    setOpportunities(opportunities.map(o => 
-      selectedLinks.has(o.id) ? { ...o, status: "applied" as const } : o
-    ));
-    setSelectedLinks(new Set());
-    setIsApplying(false);
-  };
-
-  const pendingCount = opportunities.filter(o => o.status === "pending").length;
-  const appliedCount = opportunities.filter(o => o.status === "applied").length;
 
   return (
-    <div className="min-h-screen">
-      <DashboardHeader
-        title="Internal Links"
-        description="Strengthen your site structure with strategic internal linking"
-      />
+    <Badge variant="outline" className={config[impact].color}>
+      {config[impact].label}
+    </Badge>
+  );
+}
 
-      <div className="p-6 space-y-6">
-        {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Opportunities</p>
-                  <p className="text-2xl font-bold">{linkStats.totalOpportunities}</p>
-                </div>
-                <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
-                  <Link2 className="h-5 w-5 text-blue-600" />
-                </div>
+// ============================================
+// LOADING SKELETON
+// ============================================
+
+function LinksLoading() {
+  return (
+    <div className="space-y-4">
+      {[...Array(5)].map((_, i) => (
+        <Card key={i}>
+          <CardContent className="p-4">
+            <div className="flex items-start gap-4">
+              <Skeleton className="h-5 w-5 rounded" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-5 w-2/3" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-1/2" />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Applied Today</p>
-                  <p className="text-2xl font-bold text-green-600">{linkStats.appliedToday}</p>
-                </div>
-                <div className="p-3 rounded-full bg-green-100 dark:bg-green-900">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Avg. Impact</p>
-                  <p className="text-2xl font-bold text-cabbage-600">{linkStats.avgImpact}</p>
-                </div>
-                <div className="p-3 rounded-full bg-cabbage-100 dark:bg-cabbage-900">
-                  <TrendingUp className="h-5 w-5 text-cabbage-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Orphan Pages</p>
-                  <p className="text-2xl font-bold text-orange-600">{linkStats.orphanPages}</p>
-                </div>
-                <div className="p-3 rounded-full bg-orange-100 dark:bg-orange-900">
-                  <Unlink className="h-5 w-5 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Action Bar */}
-        {selectedLinks.size > 0 && (
-          <Card className="border-cabbage-200 bg-cabbage-50 dark:border-cabbage-800 dark:bg-cabbage-950">
-            <CardContent className="py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Badge variant="default" className="text-sm">
-                    {selectedLinks.size} links selected
-                  </Badge>
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
-                    {opportunities.filter(o => selectedLinks.has(o.id) && o.impact === "high").length} high impact
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setSelectedLinks(new Set())}>
-                    Clear
-                  </Button>
-                  <Button size="sm" className="gap-2" onClick={handleApply} disabled={isApplying}>
-                    {isApplying ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Applying...
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="h-4 w-4" />
-                        Apply Selected
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Main Content */}
-        <Tabs defaultValue="opportunities" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <TabsList>
-              <TabsTrigger value="opportunities" className="gap-2">
-                <Link2 className="h-4 w-4" />
-                Opportunities ({pendingCount})
-              </TabsTrigger>
-              <TabsTrigger value="applied" className="gap-2">
-                <CheckCircle2 className="h-4 w-4" />
-                Applied ({appliedCount})
-              </TabsTrigger>
-              <TabsTrigger value="orphans" className="gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                Orphan Pages ({mockOrphanPages.length})
-              </TabsTrigger>
-            </TabsList>
-
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input 
-                  placeholder="Search pages..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 w-64" 
-                />
-              </div>
-              <Button variant="outline" size="sm">
-                <Filter className="mr-2 h-4 w-4" />
-                Filter
-              </Button>
-              <Button variant="outline" size="sm">
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Scan
-              </Button>
+              <Skeleton className="h-9 w-24" />
             </div>
-          </div>
-
-          {/* Opportunities Tab */}
-          <TabsContent value="opportunities">
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Link Opportunities</CardTitle>
-                    <CardDescription>AI-discovered internal linking opportunities</CardDescription>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={selectAll}>
-                    Select All Pending
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {opportunities.filter(o => o.status === "pending").map((link) => (
-                    <div
-                      key={link.id}
-                      className={`p-4 rounded-xl border transition-all cursor-pointer ${
-                        selectedLinks.has(link.id)
-                          ? "border-cabbage-500 bg-cabbage-50 dark:bg-cabbage-950"
-                          : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
-                      }`}
-                      onClick={() => toggleLink(link.id)}
-                    >
-                      <div className="flex items-start gap-4">
-                        <Checkbox
-                          checked={selectedLinks.has(link.id)}
-                          onCheckedChange={() => toggleLink(link.id)}
-                          className="mt-1"
-                        />
-                        <div className="flex-1 min-w-0">
-                          {/* From -> To */}
-                          <div className="flex items-center gap-2 text-sm mb-2">
-                            <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                              <FileText className="h-4 w-4" />
-                              <span className="font-medium truncate max-w-[200px]">{link.fromTitle}</span>
-                            </div>
-                            <ArrowRight className="h-4 w-4 text-slate-400 shrink-0" />
-                            <div className="flex items-center gap-1 text-cabbage-600">
-                              <Globe className="h-4 w-4" />
-                              <span className="font-medium truncate max-w-[200px]">{link.toTitle}</span>
-                            </div>
-                          </div>
-
-                          {/* Context */}
-                          <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
-                            "...{link.context.split(link.anchorText)[0]}
-                            <span className="text-cabbage-600 font-medium underline">{link.anchorText}</span>
-                            {link.context.split(link.anchorText)[1]}..."
-                          </p>
-
-                          {/* URLs */}
-                          <div className="flex items-center gap-4 text-xs text-slate-400">
-                            <span>{link.fromPage}</span>
-                            <ArrowRight className="h-3 w-3" />
-                            <span>{link.toPage}</span>
-                          </div>
-                        </div>
-
-                        <Badge className={impactColors[link.impact]}>
-                          {link.impact} impact
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-
-                  {opportunities.filter(o => o.status === "pending").length === 0 && (
-                    <div className="text-center py-12">
-                      <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">All caught up!</h3>
-                      <p className="text-slate-500">No pending link opportunities. Run a scan to find more.</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Applied Tab */}
-          <TabsContent value="applied">
-            <Card>
-              <CardHeader>
-                <CardTitle>Applied Links</CardTitle>
-                <CardDescription>Links that have been added to your site</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {opportunities.filter(o => o.status === "applied").map((link) => (
-                    <div key={link.id} className="flex items-center gap-4 p-4 rounded-xl bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="font-medium">{link.fromTitle}</span>
-                          <ArrowRight className="h-4 w-4 text-slate-400" />
-                          <span className="text-cabbage-600">{link.toTitle}</span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">Anchor: "{link.anchorText}"</p>
-                      </div>
-                      <Badge className={impactColors[link.impact]}>{link.impact}</Badge>
-                    </div>
-                  ))}
-
-                  {opportunities.filter(o => o.status === "applied").length === 0 && (
-                    <div className="text-center py-12 text-slate-500">
-                      No links applied yet. Select opportunities and click "Apply Selected".
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Orphan Pages Tab */}
-          <TabsContent value="orphans">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-orange-500" />
-                  Orphan Pages
-                </CardTitle>
-                <CardDescription>Pages with no or very few internal links pointing to them</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {mockOrphanPages.map((page) => (
-                    <div key={page.url} className="flex items-center justify-between p-4 rounded-xl border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950">
-                      <div className="flex items-center gap-4">
-                        <Unlink className="h-5 w-5 text-orange-500" />
-                        <div>
-                          <p className="font-medium text-slate-900 dark:text-white">{page.title}</p>
-                          <p className="text-sm text-slate-500">{page.url}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">{page.incomingLinks} links</p>
-                          <p className="text-xs text-slate-500">PA: {page.pageAuthority}</p>
-                        </div>
-                        <Button size="sm" className="gap-2">
-                          <Link2 className="h-4 w-4" />
-                          Find Links
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
 
+// ============================================
+// EMPTY STATE
+// ============================================
+
+function EmptyState() {
+  return (
+    <Card className="p-12">
+      <div className="text-center max-w-md mx-auto">
+        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+          <Link2 className="w-8 h-8 text-primary" />
+        </div>
+        <h3 className="text-xl font-semibold mb-2">No Link Opportunities Yet</h3>
+        <p className="text-muted-foreground mb-6">
+          Add content and let the AI analyze your site to find internal linking
+          opportunities that can boost your SEO.
+        </p>
+        <div className="flex gap-3 justify-center">
+          <Link href="/content/new">
+            <Button>
+              <Sparkles className="w-4 h-4 mr-2" />
+              Create Content
+            </Button>
+          </Link>
+          <Link href="/audit">
+            <Button variant="outline">Run Site Audit</Button>
+          </Link>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ============================================
+// OPPORTUNITY CARD
+// ============================================
+
+function OpportunityCard({
+  opportunity,
+  selected,
+  onSelect,
+  onApply,
+  isApplying,
+}: {
+  opportunity: LinkOpportunity;
+  selected: boolean;
+  onSelect: () => void;
+  onApply: () => void;
+  isApplying: boolean;
+}) {
+  return (
+    <Card className={`transition-all ${selected ? "ring-2 ring-primary" : ""}`}>
+      <CardContent className="p-4">
+        <div className="flex items-start gap-4">
+          <Checkbox checked={selected} onCheckedChange={onSelect} className="mt-1" />
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <ImpactBadge impact={opportunity.impact} />
+              {opportunity.status === "applied" && (
+                <Badge variant="secondary" className="bg-green-500/10 text-green-600">
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  Applied
+                </Badge>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 text-sm mb-2">
+              <span className="font-medium truncate">{opportunity.fromTitle}</span>
+              <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <span className="font-medium truncate text-primary">{opportunity.toTitle}</span>
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-2">
+              Anchor text: <span className="font-mono text-primary">&quot;{opportunity.anchorText}&quot;</span>
+            </p>
+
+            {opportunity.context && (
+              <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                ...{opportunity.context}...
+              </p>
+            )}
+          </div>
+
+          {opportunity.status === "pending" && (
+            <Button size="sm" onClick={onApply} disabled={isApplying}>
+              {isApplying ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-1" />
+                  Apply
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================
+// MAIN PAGE
+// ============================================
+
+export default function LinksPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedLinks, setSelectedLinks] = useState<string[]>([]);
+  const [applyingId, setApplyingId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  // Fetch links data
+  const { data, isLoading, error, refetch } = useQuery<LinksData>({
+    queryKey: ["links"],
+    queryFn: async () => {
+      const response = await fetch("/api/links");
+      if (!response.ok) throw new Error("Failed to fetch links");
+      const json = await response.json();
+      return json.data;
+    },
+  });
+
+  // Apply link mutation
+  const applyMutation = useMutation({
+    mutationFn: async ({ contentId, linkIndex }: { contentId: string; linkIndex: number }) => {
+      setApplyingId(`${contentId}-${linkIndex}`);
+      const response = await fetch("/api/links", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentId, linkIndex, action: "apply" }),
+      });
+      if (!response.ok) throw new Error("Failed to apply link");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["links"] });
+      setApplyingId(null);
+    },
+    onError: () => {
+      setApplyingId(null);
+    },
+  });
+
+  const toggleLink = (id: string) => {
+    setSelectedLinks((prev) =>
+      prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id]
+    );
+  };
+
+  const handleApply = (opportunity: LinkOpportunity) => {
+    const [contentId, indexStr] = opportunity.id.split("-");
+    applyMutation.mutate({ contentId, linkIndex: parseInt(indexStr) });
+  };
+
+  const filteredOpportunities = (data?.opportunities || []).filter(
+    (o) =>
+      o.fromTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.toTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.anchorText.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const pendingOpportunities = filteredOpportunities.filter((o) => o.status === "pending");
+  const hasData = data && (data.opportunities.length > 0 || data.orphanPages.length > 0);
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Internal Links</h1>
+          <p className="text-muted-foreground">
+            Optimize your site structure with smart internal linking
+          </p>
+        </div>
+        <Button disabled={selectedLinks.length === 0}>
+          <Zap className="w-4 h-4 mr-2" />
+          Apply Selected ({selectedLinks.length})
+        </Button>
+      </div>
+
+      {/* Error State */}
+      {error && (
+        <Card className="p-6 border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500" />
+            <div>
+              <p className="font-medium text-red-700 dark:text-red-400">Failed to load links</p>
+              <p className="text-sm text-red-600 dark:text-red-300">
+                {error instanceof Error ? error.message : "Please try again"}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto">
+              Retry
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {/* Loading State */}
+      {isLoading && <LinksLoading />}
+
+      {/* Empty State */}
+      {!isLoading && !error && !hasData && <EmptyState />}
+
+      {/* Data View */}
+      {!isLoading && hasData && (
+        <>
+          {/* Stats */}
+          <div className="grid gap-4 sm:grid-cols-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Link2 className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{data.stats.total}</p>
+                    <p className="text-xs text-muted-foreground">Opportunities</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-yellow-500/10">
+                    <ArrowUpRight className="w-5 h-5 text-yellow-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{data.stats.pending}</p>
+                    <p className="text-xs text-muted-foreground">Pending</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-500/10">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{data.stats.applied}</p>
+                    <p className="text-xs text-muted-foreground">Applied</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-red-500/10">
+                    <Unlink className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{data.stats.orphanCount}</p>
+                    <p className="text-xs text-muted-foreground">Orphan Pages</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tabs */}
+          <Tabs defaultValue="opportunities" className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <TabsList>
+                <TabsTrigger value="opportunities">
+                  Opportunities ({pendingOpportunities.length})
+                </TabsTrigger>
+                <TabsTrigger value="orphans">
+                  Orphan Pages ({data.orphanPages.length})
+                </TabsTrigger>
+              </TabsList>
+
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 w-64"
+                />
+              </div>
+            </div>
+
+            {/* Opportunities Tab */}
+            <TabsContent value="opportunities" className="space-y-3">
+              {pendingOpportunities.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <CheckCircle2 className="w-12 h-12 mx-auto text-green-500 mb-3" />
+                  <h3 className="font-semibold mb-2">All caught up!</h3>
+                  <p className="text-muted-foreground">
+                    No pending link opportunities. Run another audit to find more.
+                  </p>
+                </Card>
+              ) : (
+                pendingOpportunities.map((opportunity) => (
+                  <OpportunityCard
+                    key={opportunity.id}
+                    opportunity={opportunity}
+                    selected={selectedLinks.includes(opportunity.id)}
+                    onSelect={() => toggleLink(opportunity.id)}
+                    onApply={() => handleApply(opportunity)}
+                    isApplying={applyingId === opportunity.id}
+                  />
+                ))
+              )}
+            </TabsContent>
+
+            {/* Orphan Pages Tab */}
+            <TabsContent value="orphans">
+              {data.orphanPages.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <Globe className="w-12 h-12 mx-auto text-green-500 mb-3" />
+                  <h3 className="font-semibold mb-2">No Orphan Pages</h3>
+                  <p className="text-muted-foreground">
+                    All your pages have internal links pointing to them.
+                  </p>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                      Pages Without Internal Links
+                    </CardTitle>
+                    <CardDescription>
+                      These pages have no or very few internal links pointing to them
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {data.orphanPages.map((page) => (
+                      <div
+                        key={page.id}
+                        className="flex items-center justify-between p-3 rounded-lg border bg-muted/30"
+                      >
+                        <div>
+                          <p className="font-medium">{page.title}</p>
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            {page.url}
+                            <ExternalLink className="w-3 h-3" />
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-center">
+                            <p className="text-lg font-bold text-red-500">{page.incomingLinks}</p>
+                            <p className="text-xs text-muted-foreground">Incoming</p>
+                          </div>
+                          <Link href={`/content/new?url=${encodeURIComponent(page.url)}`}>
+                            <Button size="sm" variant="outline">
+                              <FileText className="w-4 h-4 mr-1" />
+                              Link to this
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
+    </div>
+  );
+}

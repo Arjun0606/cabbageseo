@@ -554,12 +554,39 @@ function Step4BrandVoice({
 function Step5Complete({ data }: { data: SiteData }) {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleCreate = async () => {
     setIsCreating(true);
-    // In production, this would save to the database
-    await new Promise((r) => setTimeout(r, 1500));
-    router.push("/dashboard");
+    setError(null);
+    
+    try {
+      // Create the site via API
+      const response = await fetch("/api/sites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          domain: data.domain,
+          name: data.name || data.domain,
+          settings: {
+            cmsType: data.cmsType,
+            brandVoice: data.brandVoice,
+            targetAudience: data.targetAudience,
+            mainTopics: data.mainTopics,
+          },
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create site");
+      }
+      
+      router.push("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create site");
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -605,6 +632,12 @@ function Step5Complete({ data }: { data: SiteData }) {
           )}
         </CardContent>
       </Card>
+
+      {error && (
+        <div className="max-w-md mx-auto p-4 rounded-lg bg-red-50 dark:bg-red-950/20 text-red-600 text-sm mb-4">
+          {error}
+        </div>
+      )}
 
       <Button
         size="lg"
