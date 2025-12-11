@@ -52,17 +52,27 @@ export async function updateSession(request: NextRequest) {
     "/",
     "/login",
     "/signup",
+    "/forgot-password",
+    "/terms",
+    "/privacy",
+  ];
+  
+  // Define public API route prefixes (these handle their own auth)
+  const publicApiPrefixes = [
     "/api/webhooks",
-    "/onboarding",
+    "/api/auth",
   ];
   
   const isPublicRoute = publicRoutes.some(
-    (route) => request.nextUrl.pathname === route || 
-               request.nextUrl.pathname.startsWith("/api/webhooks")
+    (route) => request.nextUrl.pathname === route
+  );
+  
+  const isPublicApi = publicApiPrefixes.some(
+    (prefix) => request.nextUrl.pathname.startsWith(prefix)
   );
 
   // If no user and trying to access protected route, redirect to login
-  if (!user && !isPublicRoute && !request.nextUrl.pathname.startsWith("/api/auth")) {
+  if (!user && !isPublicRoute && !isPublicApi) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirectTo", request.nextUrl.pathname);

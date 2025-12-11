@@ -73,7 +73,7 @@ export default function LandingPage() {
             {/* CTA */}
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <Button size="lg" className="h-12 px-6 bg-emerald-600 hover:bg-emerald-500 text-white border-0 gap-2" asChild>
-                <Link href="/onboarding">
+                <Link href="/signup">
                   Try it free
                   <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -298,7 +298,7 @@ export default function LandingPage() {
               no 30-day trial countdown, no sales calls.
             </p>
             <Button size="lg" className="h-12 px-8 bg-emerald-600 hover:bg-emerald-500 text-white border-0 gap-2" asChild>
-              <Link href="/onboarding">
+              <Link href="/signup">
                 <Zap className="h-4 w-4" />
                 Start analyzing
                 <ArrowRight className="h-4 w-4" />
@@ -319,8 +319,8 @@ export default function LandingPage() {
               <span className="text-sm text-zinc-500">CabbageSEO</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-zinc-600">
-              <Link href="#" className="hover:text-zinc-400 transition-colors">Privacy</Link>
-              <Link href="#" className="hover:text-zinc-400 transition-colors">Terms</Link>
+              <Link href="/privacy" className="hover:text-zinc-400 transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-zinc-400 transition-colors">Terms</Link>
               <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-400 transition-colors">Twitter</a>
             </div>
             <p className="text-sm text-zinc-600">
