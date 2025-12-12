@@ -230,6 +230,7 @@ export default function OnboardingPage() {
     { id: "3", label: "Analyzing SEO factors...", status: "pending" },
     { id: "4", label: "Researching keywords...", status: "pending" },
     { id: "5", label: "Generating recommendations...", status: "pending" },
+    { id: "6", label: "Finalizing analysis...", status: "pending" },
   ]);
 
   const updateStep = useCallback((index: number, updates: Partial<AnalysisStep>) => {
@@ -258,6 +259,7 @@ export default function OnboardingPage() {
       { id: "3", label: "Analyzing SEO factors...", status: "pending" },
       { id: "4", label: "Researching keywords...", status: "pending" },
       { id: "5", label: "Generating recommendations...", status: "pending" },
+      { id: "6", label: "Finalizing analysis...", status: "pending" },
     ]);
 
     try {

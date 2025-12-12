@@ -261,9 +261,9 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Calculate word count if content changed
-    if (updates.content) {
-      updates.word_count = updates.content.split(/\s+/).filter(Boolean).length;
+    // Calculate word count if body changed
+    if (updates.body) {
+      updates.word_count = updates.body.split(/\s+/).filter(Boolean).length;
     }
 
     // Update content
