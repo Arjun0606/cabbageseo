@@ -810,6 +810,27 @@ ON CONFLICT (id) DO NOTHING;
 -- PART 13: STORAGE POLICIES
 -- ============================================
 
+-- Drop existing storage policies first (to allow re-running)
+DROP POLICY IF EXISTS "Users can view own org exports" ON storage.objects;
+DROP POLICY IF EXISTS "Users can create own org exports" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own org exports" ON storage.objects;
+DROP POLICY IF EXISTS "Users can view own org uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Users can create own org uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own org uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Public can view content images" ON storage.objects;
+DROP POLICY IF EXISTS "Users can upload content images" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own content images" ON storage.objects;
+DROP POLICY IF EXISTS "Users can view own org screenshots" ON storage.objects;
+DROP POLICY IF EXISTS "Service can create screenshots" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own screenshots" ON storage.objects;
+DROP POLICY IF EXISTS "Users can view own org sitemaps" ON storage.objects;
+DROP POLICY IF EXISTS "Service can create sitemaps" ON storage.objects;
+DROP POLICY IF EXISTS "Service role full access exports" ON storage.objects;
+DROP POLICY IF EXISTS "Service role full access uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Service role full access content-images" ON storage.objects;
+DROP POLICY IF EXISTS "Service role full access screenshots" ON storage.objects;
+DROP POLICY IF EXISTS "Service role full access sitemaps" ON storage.objects;
+
 -- Exports policies
 CREATE POLICY "Users can view own org exports" ON storage.objects FOR SELECT USING (bucket_id = 'exports' AND (storage.foldername(name))[1] IN (SELECT organization_id::text FROM users WHERE id = auth.uid()));
 CREATE POLICY "Users can create own org exports" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'exports' AND (storage.foldername(name))[1] IN (SELECT organization_id::text FROM users WHERE id = auth.uid()));
