@@ -65,7 +65,7 @@ function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onCollapse: ()
           </Link>
         )}
         {collapsed && (
-          <Image src="/logo.png" alt="CabbageSEO" width={32} height={32} className="rounded-lg block mx-auto" />
+          <Image src="/logo.png" alt="CabbageSEO" width={32} height={32} className="rounded-lg mx-auto" />
         )}
       </div>
 
