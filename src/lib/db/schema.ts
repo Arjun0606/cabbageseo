@@ -92,6 +92,7 @@ export const issueTypeEnum = pgEnum("issue_type", [
 ]);
 export const issueSeverityEnum = pgEnum("issue_severity", ["critical", "warning", "info"]);
 export const cmsTypeEnum = pgEnum("cms_type", ["wordpress", "webflow", "shopify", "ghost", "custom"]);
+export const integrationStatusEnum = pgEnum("integration_status", ["active", "error", "disconnected"]);
 
 // ============================================
 // ORGANIZATIONS & USERS
@@ -251,6 +252,141 @@ export const usageEvents = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [index("usage_event_org_idx").on(table.organizationId, table.createdAt)]
+);
+
+// ============================================
+// CREDIT BALANCE
+// ============================================
+
+export const creditBalance = pgTable(
+  "credit_balance",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .references(() => organizations.id, { onDelete: "cascade" })
+      .notNull()
+      .unique(),
+
+    // Prepaid credits (purchased separately)
+    prepaidCredits: integer("prepaid_credits").default(0).notNull(),
+
+    // Bonus credits (promotional, referrals, etc.)
+    bonusCredits: integer("bonus_credits").default(0).notNull(),
+
+    // Expiration
+    expiresAt: timestamp("expires_at"),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [index("credit_balance_org_idx").on(table.organizationId)]
+);
+
+// ============================================
+// USAGE (Monthly usage tracking)
+// ============================================
+
+export const usage = pgTable(
+  "usage",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .references(() => organizations.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Period (YYYY-MM)
+    period: text("period").notNull(),
+
+    // Usage counts
+    articlesGenerated: integer("articles_generated").default(0),
+    keywordsAnalyzed: integer("keywords_analyzed").default(0),
+    serpCalls: integer("serp_calls").default(0),
+    pagesCrawled: integer("pages_crawled").default(0),
+    aioAnalyses: integer("aio_analyses").default(0),
+
+    // Limits snapshot
+    articlesLimit: integer("articles_limit").default(0),
+    keywordsLimit: integer("keywords_limit").default(0),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("usage_org_idx").on(table.organizationId),
+    index("usage_period_idx").on(table.period),
+    uniqueIndex("usage_org_period_unique").on(table.organizationId, table.period),
+  ]
+);
+
+// ============================================
+// CONTENT IDEAS
+// ============================================
+
+export const contentIdeas = pgTable(
+  "content_ideas",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Idea details
+    title: text("title").notNull(),
+    description: text("description"),
+    targetKeyword: text("target_keyword"),
+    searchVolume: integer("search_volume"),
+    difficulty: integer("difficulty"),
+
+    // Classification
+    type: text("type"), // blog, product, landing, comparison
+    priority: text("priority").default("medium"), // high, medium, low
+
+    // Status
+    status: text("status").default("idea"), // idea, queued, writing, published
+    contentId: uuid("content_id"), // links to content table once created
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("content_ideas_site_idx").on(table.siteId),
+    index("content_ideas_status_idx").on(table.status),
+  ]
+);
+
+// ============================================
+// INTEGRATIONS
+// ============================================
+
+export const integrations = pgTable(
+  "integrations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .references(() => organizations.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Integration type (google_search_console, google_analytics, wordpress, webflow, etc.)
+    type: text("type").notNull(),
+
+    // Encrypted credentials
+    credentials: jsonb("credentials").default({}).notNull(),
+
+    // Status
+    status: integrationStatusEnum("status").default("active").notNull(),
+    error: text("error"),
+
+    // Sync tracking
+    lastSyncedAt: timestamp("last_synced_at"),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("integrations_org_idx").on(table.organizationId),
+    index("integrations_type_idx").on(table.type),
+    uniqueIndex("integrations_org_type_unique").on(table.organizationId, table.type),
+  ]
 );
 
 // ============================================
@@ -560,6 +696,54 @@ export const pages = pgTable(
 );
 
 // ============================================
+// AUDITS (Site Audit Results)
+// ============================================
+
+export const audits = pgTable(
+  "audits",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Audit type
+    type: text("type").notNull().default("full"), // full, quick, aio
+
+    // Scores
+    overallScore: integer("overall_score"),
+    technicalScore: integer("technical_score"),
+    contentScore: integer("content_score"),
+    aioScore: integer("aio_score"),
+
+    // Counts
+    pagesScanned: integer("pages_scanned").default(0),
+    issuesFound: integer("issues_found").default(0),
+    criticalIssues: integer("critical_issues").default(0),
+    warningIssues: integer("warning_issues").default(0),
+    infoIssues: integer("info_issues").default(0),
+
+    // Duration
+    durationMs: integer("duration_ms"),
+
+    // Status
+    status: text("status").default("completed"), // running, completed, failed
+    error: text("error"),
+
+    // Results snapshot
+    results: jsonb("results").default({}),
+
+    startedAt: timestamp("started_at"),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("audits_site_idx").on(table.siteId),
+    index("audits_created_idx").on(table.createdAt),
+  ]
+);
+
+// ============================================
 // ISSUES (Technical SEO)
 // ============================================
 
@@ -841,11 +1025,13 @@ export const aioAnalyses = pgTable(
 // RELATIONS
 // ============================================
 
-export const organizationsRelations = relations(organizations, ({ many }) => ({
+export const organizationsRelations = relations(organizations, ({ one, many }) => ({
   users: many(users),
   sites: many(sites),
   usageRecords: many(usageRecords),
   tasks: many(tasks),
+  integrations: many(integrations),
+  creditBalance: one(creditBalance),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -872,6 +1058,42 @@ export const sitesRelations = relations(sites, ({ one, many }) => ({
   entities: many(entities),
   aiCitations: many(aiCitations),
   aioAnalyses: many(aioAnalyses),
+  audits: many(audits),
+}));
+
+export const integrationsRelations = relations(integrations, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [integrations.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
+export const creditBalanceRelations = relations(creditBalance, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [creditBalance.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
+export const auditsRelations = relations(audits, ({ one }) => ({
+  site: one(sites, {
+    fields: [audits.siteId],
+    references: [sites.id],
+  }),
+}));
+
+export const usageRelations = relations(usage, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [usage.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
+export const contentIdeasRelations = relations(contentIdeas, ({ one }) => ({
+  site: one(sites, {
+    fields: [contentIdeas.siteId],
+    references: [sites.id],
+  }),
 }));
 
 export const keywordsRelations = relations(keywords, ({ one, many }) => ({
@@ -989,4 +1211,14 @@ export type AICitation = typeof aiCitations.$inferSelect;
 export type NewAICitation = typeof aiCitations.$inferInsert;
 export type AIOAnalysis = typeof aioAnalyses.$inferSelect;
 export type NewAIOAnalysis = typeof aioAnalyses.$inferInsert;
+export type Integration = typeof integrations.$inferSelect;
+export type NewIntegration = typeof integrations.$inferInsert;
+export type CreditBalance = typeof creditBalance.$inferSelect;
+export type NewCreditBalance = typeof creditBalance.$inferInsert;
+export type Audit = typeof audits.$inferSelect;
+export type NewAudit = typeof audits.$inferInsert;
+export type Usage = typeof usage.$inferSelect;
+export type NewUsage = typeof usage.$inferInsert;
+export type ContentIdea = typeof contentIdeas.$inferSelect;
+export type NewContentIdea = typeof contentIdeas.$inferInsert;
 

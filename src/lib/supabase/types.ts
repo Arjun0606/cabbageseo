@@ -24,6 +24,8 @@ export type SubscriptionStatus = "active" | "canceled" | "past_due" | "trialing"
 export type TaskStatus = "pending" | "queued" | "running" | "completed" | "failed" | "canceled";
 export type TaskType = "research" | "cluster" | "write" | "optimize" | "publish" | "crawl" | "audit" | "refresh" | "link";
 export type IntegrationStatus = "active" | "error" | "disconnected";
+export type AIOIssueType = "aio_low_entity_density" | "aio_poor_answer_structure" | "aio_missing_faq" | "aio_missing_howto" | "aio_weak_quotability" | "aio_missing_definitions" | "aio_no_expert_attribution" | "aio_ambiguous_context" | "aio_stale_content";
+export type AIOPlatform = "google_aio" | "chatgpt" | "perplexity" | "claude" | "gemini";
 
 export interface Database {
   public: {
@@ -841,6 +843,260 @@ export interface Database {
           updated_at?: string;
         };
       };
+      audits: {
+        Row: {
+          id: string;
+          site_id: string;
+          type: string;
+          overall_score: number | null;
+          technical_score: number | null;
+          content_score: number | null;
+          aio_score: number | null;
+          pages_scanned: number;
+          issues_found: number;
+          critical_issues: number;
+          warning_issues: number;
+          info_issues: number;
+          duration_ms: number | null;
+          status: string;
+          error: string | null;
+          results: Json;
+          started_at: string | null;
+          completed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          site_id: string;
+          type?: string;
+          overall_score?: number | null;
+          technical_score?: number | null;
+          content_score?: number | null;
+          aio_score?: number | null;
+          pages_scanned?: number;
+          issues_found?: number;
+          critical_issues?: number;
+          warning_issues?: number;
+          info_issues?: number;
+          duration_ms?: number | null;
+          status?: string;
+          error?: string | null;
+          results?: Json;
+          started_at?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          overall_score?: number | null;
+          technical_score?: number | null;
+          content_score?: number | null;
+          aio_score?: number | null;
+          pages_scanned?: number;
+          issues_found?: number;
+          critical_issues?: number;
+          warning_issues?: number;
+          info_issues?: number;
+          duration_ms?: number | null;
+          status?: string;
+          error?: string | null;
+          results?: Json;
+          started_at?: string | null;
+          completed_at?: string | null;
+        };
+      };
+      credit_balance: {
+        Row: {
+          id: string;
+          organization_id: string;
+          prepaid_credits: number;
+          bonus_credits: number;
+          expires_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          prepaid_credits?: number;
+          bonus_credits?: number;
+          expires_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          prepaid_credits?: number;
+          bonus_credits?: number;
+          expires_at?: string | null;
+          updated_at?: string;
+        };
+      };
+      entities: {
+        Row: {
+          id: string;
+          site_id: string;
+          page_id: string | null;
+          content_id: string | null;
+          name: string;
+          type: string | null;
+          description: string | null;
+          wikidata_id: string | null;
+          wikipedia_url: string | null;
+          mentions: number;
+          context_quality: number | null;
+          first_seen_at: string;
+          last_seen_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          site_id: string;
+          page_id?: string | null;
+          content_id?: string | null;
+          name: string;
+          type?: string | null;
+          description?: string | null;
+          wikidata_id?: string | null;
+          wikipedia_url?: string | null;
+          mentions?: number;
+          context_quality?: number | null;
+          first_seen_at?: string;
+          last_seen_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          type?: string | null;
+          description?: string | null;
+          wikidata_id?: string | null;
+          wikipedia_url?: string | null;
+          mentions?: number;
+          context_quality?: number | null;
+          last_seen_at?: string;
+          updated_at?: string;
+        };
+      };
+      ai_citations: {
+        Row: {
+          id: string;
+          site_id: string;
+          page_id: string | null;
+          platform: AIOPlatform;
+          query: string;
+          citation_type: string | null;
+          snippet: string | null;
+          position: number | null;
+          confidence: number;
+          discovered_at: string;
+          last_verified_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          site_id: string;
+          page_id?: string | null;
+          platform: AIOPlatform;
+          query: string;
+          citation_type?: string | null;
+          snippet?: string | null;
+          position?: number | null;
+          confidence?: number;
+          discovered_at?: string;
+          last_verified_at?: string | null;
+        };
+        Update: {
+          citation_type?: string | null;
+          snippet?: string | null;
+          position?: number | null;
+          confidence?: number;
+          last_verified_at?: string | null;
+        };
+      };
+      aio_analyses: {
+        Row: {
+          id: string;
+          site_id: string;
+          page_id: string;
+          version: number;
+          google_aio_score: number | null;
+          chatgpt_score: number | null;
+          perplexity_score: number | null;
+          claude_score: number | null;
+          gemini_score: number | null;
+          combined_score: number | null;
+          entity_density_score: number | null;
+          quotability_score: number | null;
+          answer_structure_score: number | null;
+          schema_presence_score: number | null;
+          freshness_score: number | null;
+          authority_score: number | null;
+          entities_found: Json;
+          quotable_snippets: Json;
+          missing_elements: Json;
+          improvement_suggestions: Json;
+          google_recommendations: Json;
+          chatgpt_recommendations: Json;
+          perplexity_recommendations: Json;
+          model_used: string;
+          tokens_used: number | null;
+          analysis_duration_ms: number | null;
+          analyzed_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          site_id: string;
+          page_id: string;
+          version?: number;
+          google_aio_score?: number | null;
+          chatgpt_score?: number | null;
+          perplexity_score?: number | null;
+          claude_score?: number | null;
+          gemini_score?: number | null;
+          combined_score?: number | null;
+          entity_density_score?: number | null;
+          quotability_score?: number | null;
+          answer_structure_score?: number | null;
+          schema_presence_score?: number | null;
+          freshness_score?: number | null;
+          authority_score?: number | null;
+          entities_found?: Json;
+          quotable_snippets?: Json;
+          missing_elements?: Json;
+          improvement_suggestions?: Json;
+          google_recommendations?: Json;
+          chatgpt_recommendations?: Json;
+          perplexity_recommendations?: Json;
+          model_used?: string;
+          tokens_used?: number | null;
+          analysis_duration_ms?: number | null;
+          analyzed_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          google_aio_score?: number | null;
+          chatgpt_score?: number | null;
+          perplexity_score?: number | null;
+          claude_score?: number | null;
+          gemini_score?: number | null;
+          combined_score?: number | null;
+          entity_density_score?: number | null;
+          quotability_score?: number | null;
+          answer_structure_score?: number | null;
+          schema_presence_score?: number | null;
+          freshness_score?: number | null;
+          authority_score?: number | null;
+          entities_found?: Json;
+          quotable_snippets?: Json;
+          missing_elements?: Json;
+          improvement_suggestions?: Json;
+          google_recommendations?: Json;
+          chatgpt_recommendations?: Json;
+          perplexity_recommendations?: Json;
+          tokens_used?: number | null;
+          analysis_duration_ms?: number | null;
+        };
+      };
     };
     Views: {};
     Functions: {};
@@ -857,6 +1113,7 @@ export interface Database {
       task_status: TaskStatus;
       task_type: TaskType;
       integration_status: IntegrationStatus;
+      aio_platform: AIOPlatform;
     };
   };
 }
