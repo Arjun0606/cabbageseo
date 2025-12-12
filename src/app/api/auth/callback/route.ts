@@ -5,6 +5,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { emailService } from "@/lib/email";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -60,6 +61,12 @@ export async function GET(request: Request) {
                 role: "owner",
                 email_verified: true,
               } as never);
+            
+            // Send welcome email (async, don't block)
+            emailService.sendWelcome(
+              user.email!, 
+              user.user_metadata?.name || undefined
+            ).catch(err => console.error("Welcome email error:", err));
             
             // Redirect to onboarding for new users
             return NextResponse.redirect(`${origin}/onboarding`);

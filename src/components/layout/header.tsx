@@ -16,6 +16,8 @@ import {
   User,
   CreditCard,
   HelpCircle,
+  Check,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -103,6 +105,17 @@ interface UserData {
   avatarUrl: string | null;
 }
 
+interface NotificationData {
+  id: string;
+  title: string;
+  description: string | null;
+  type: "info" | "success" | "warning" | "error";
+  category: string;
+  read: boolean;
+  actionUrl: string | null;
+  createdAt: string;
+}
+
 // ============================================
 // HEADER COMPONENT
 // ============================================
@@ -117,6 +130,9 @@ export function Header({ className, onCommandPaletteOpen }: HeaderProps) {
   const router = useRouter();
   const [darkMode, setDarkMode] = useState(false);
   const [user, setUser] = useState<UserData | null>(null);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
   // Fetch user data on mount
   useEffect(() => {
@@ -141,6 +157,30 @@ export function Header({ className, onCommandPaletteOpen }: HeaderProps) {
       }
     }
     fetchUser();
+  }, []);
+
+  // Fetch notifications
+  useEffect(() => {
+    async function fetchNotifications() {
+      setLoadingNotifications(true);
+      try {
+        const res = await fetch("/api/notifications?limit=10");
+        if (res.ok) {
+          const data = await res.json();
+          setNotifications(data.notifications || []);
+          setUnreadCount(data.unreadCount || 0);
+        }
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+      } finally {
+        setLoadingNotifications(false);
+      }
+    }
+    fetchNotifications();
+
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // Get page info based on current path
@@ -173,6 +213,44 @@ export function Header({ className, onCommandPaletteOpen }: HeaderProps) {
     router.push("/");
   };
 
+  const handleMarkAllRead = async () => {
+    try {
+      await fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markAll: true }),
+      });
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Failed to mark all as read:", error);
+    }
+  };
+
+  const handleNotificationClick = async (notification: NotificationData) => {
+    // Mark as read
+    if (!notification.read) {
+      try {
+        await fetch("/api/notifications", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notificationIds: [notification.id] }),
+        });
+        setNotifications(prev => 
+          prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error("Failed to mark as read:", error);
+      }
+    }
+
+    // Navigate if action URL exists
+    if (notification.actionUrl) {
+      router.push(notification.actionUrl);
+    }
+  };
+
   // Get user initials for avatar
   const getInitials = () => {
     if (user?.name) {
@@ -182,6 +260,29 @@ export function Header({ className, onCommandPaletteOpen }: HeaderProps) {
       return user.email.slice(0, 2).toUpperCase();
     }
     return "CS";
+  };
+
+  // Format relative time
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  const typeColors = {
+    success: "bg-green-500",
+    warning: "bg-yellow-500",
+    info: "bg-blue-500",
+    error: "bg-red-500",
   };
 
   return (
@@ -231,19 +332,85 @@ export function Header({ className, onCommandPaletteOpen }: HeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative text-muted-foreground">
               <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel className="flex items-center justify-between">
               Notifications
-              <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+              {unreadCount > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-auto py-1 px-2 text-xs"
+                  onClick={handleMarkAllRead}
+                >
+                  <Check className="w-3 h-3 mr-1" />
+                  Mark all read
+                </Button>
+              )}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <div className="py-8 text-center text-muted-foreground">
-              <Bell className="h-8 w-8 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">No notifications yet</p>
-              <p className="text-xs">We&apos;ll notify you about important updates</p>
+            <div className="max-h-80 overflow-y-auto">
+              {loadingNotifications ? (
+                <div className="py-8 text-center">
+                  <Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" />
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="py-8 text-center text-muted-foreground">
+                  <Bell className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No notifications</p>
+                  <p className="text-xs">We&apos;ll notify you about important updates</p>
+                </div>
+              ) : (
+                notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={cn(
+                      "flex gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors",
+                      !notification.read && "bg-primary/5"
+                    )}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <div className={cn(
+                      "mt-1.5 h-2 w-2 rounded-full shrink-0",
+                      typeColors[notification.type]
+                    )} />
+                    <div className="flex-1 space-y-1">
+                      <p className={cn(
+                        "text-sm leading-tight",
+                        !notification.read && "font-medium"
+                      )}>
+                        {notification.title}
+                      </p>
+                      {notification.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {notification.description}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground/60">
+                        {formatTime(notification.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
+            {notifications.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="justify-center text-primary cursor-pointer"
+                  onClick={() => router.push("/settings/notifications")}
+                >
+                  View all notifications
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 
