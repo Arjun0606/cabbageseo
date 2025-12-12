@@ -239,11 +239,11 @@ function SiteCard({ site }: { site: DashboardData["sites"][0] }) {
     return "text-red-500";
   };
 
-  const getScoreBg = (score: number) => {
-    if (score >= 80) return "bg-green-500";
-    if (score >= 60) return "bg-yellow-500";
-    if (score >= 40) return "bg-orange-500";
-    return "bg-red-500";
+  const getScoreStroke = (score: number) => {
+    if (score >= 80) return "stroke-green-500";
+    if (score >= 60) return "stroke-yellow-500";
+    if (score >= 40) return "stroke-orange-500";
+    return "stroke-red-500";
   };
 
   return (
@@ -270,7 +270,7 @@ function SiteCard({ site }: { site: DashboardData["sites"][0] }) {
                 strokeLinecap="round"
                 strokeDasharray={2 * Math.PI * 24}
                 strokeDashoffset={2 * Math.PI * 24 * (1 - site.seoScore / 100)}
-                className={getScoreBg(site.seoScore)}
+                className={getScoreStroke(site.seoScore)}
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
