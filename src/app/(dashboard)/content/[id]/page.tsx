@@ -236,33 +236,33 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id: st
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/content">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Link>
-          </Button>
-          <Separator orientation="vertical" className="h-6" />
-          <div>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/content">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Link>
+            </Button>
+            <Separator orientation="vertical" className="h-6" />
+            <div>
             <h1 className="font-semibold truncate max-w-md">
               {merged.title || "Untitled"}
-            </h1>
-            <div className="flex items-center gap-2 mt-0.5">
+              </h1>
+              <div className="flex items-center gap-2 mt-0.5">
               <Badge variant="secondary">{merged.status}</Badge>
               <span className="text-xs text-muted-foreground">
                 Updated {new Date(merged.updatedAt).toLocaleDateString()}
-              </span>
+                </span>
               {hasChanges && (
                 <Badge variant="outline" className="text-yellow-600">
                   Unsaved changes
                 </Badge>
               )}
             </div>
+            </div>
           </div>
-        </div>
-
-        <div className="flex items-center gap-3">
+          
+          <div className="flex items-center gap-3">
           <SeoScoreDisplay score={merged.seoScore} />
 
           <Button
@@ -271,13 +271,13 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id: st
             disabled={!hasChanges || saveMutation.isPending}
           >
             {saveMutation.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
-            )}
-            Save
-          </Button>
-
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Save
+            </Button>
+            
           {merged.publishedUrl ? (
             <Button variant="outline" asChild>
               <a href={merged.publishedUrl} target="_blank" rel="noopener noreferrer">
@@ -310,15 +310,15 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id: st
               <CardTitle>Content</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
                   value={merged.title || ""}
                   onChange={(e) => updateField("title", e.target.value)}
                   placeholder="Article title..."
-                />
-              </div>
+              />
+            </div>
 
               <div className="space-y-2">
                 <Label htmlFor="content">Body</Label>
@@ -336,32 +336,32 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id: st
               </div>
             </CardContent>
           </Card>
-        </div>
+            </div>
 
         {/* Sidebar */}
         <div className="space-y-4">
           {/* SEO Settings */}
-          <Card>
+            <Card>
             <CardHeader>
               <CardTitle className="text-base">SEO Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="metaTitle">Meta Title</Label>
-                <Input
-                  id="metaTitle"
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="metaTitle">Meta Title</Label>
+                  <Input
+                    id="metaTitle"
                   value={merged.metaTitle || ""}
                   onChange={(e) => updateField("metaTitle", e.target.value)}
                   placeholder="SEO title..."
-                />
+                  />
                 <p className="text-xs text-muted-foreground">
                   {(merged.metaTitle || "").length}/60 characters
                 </p>
-              </div>
+                </div>
 
-              <div className="space-y-2">
+                <div className="space-y-2">
                 <Label htmlFor="metaDescription">Meta Description</Label>
-                <Textarea
+                  <Textarea
                   id="metaDescription"
                   value={merged.metaDescription || ""}
                   onChange={(e) => updateField("metaDescription", e.target.value)}
@@ -371,7 +371,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id: st
                 <p className="text-xs text-muted-foreground">
                   {(merged.metaDescription || "").length}/160 characters
                 </p>
-              </div>
+        </div>
 
               <div className="space-y-2">
                 <Label htmlFor="slug">URL Slug</Label>
@@ -380,10 +380,10 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id: st
                   value={merged.slug || ""}
                   onChange={(e) => updateField("slug", e.target.value)}
                   placeholder="url-slug"
-                />
-              </div>
-            </CardContent>
-          </Card>
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
           {/* Keywords */}
           <Card>
@@ -426,7 +426,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id: st
                       {link.url}
                     </div>
                   ))}
-                </div>
+                    </div>
               ) : (
                 <p className="text-sm text-muted-foreground">No internal links</p>
               )}
@@ -439,12 +439,12 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id: st
                     <Button variant="outline" size="sm" className="w-full">
                       <Wand2 className="w-4 h-4 mr-2" />
                       View Suggestions
-                    </Button>
+                  </Button>
                   </Link>
                 </div>
               )}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
 
           {/* Quick Stats */}
           <Card>
@@ -463,7 +463,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id: st
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">SEO Score</span>
                 <span className="text-sm font-medium">{merged.seoScore || "-"}/100</span>
-              </div>
+                  </div>
               <Separator />
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Created</span>
@@ -497,9 +497,9 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id: st
                   <Trash2 className="w-4 h-4 mr-2" />
                 )}
                 Delete Content
-              </Button>
-            </CardContent>
-          </Card>
+                  </Button>
+                </CardContent>
+              </Card>
         </div>
       </div>
     </div>

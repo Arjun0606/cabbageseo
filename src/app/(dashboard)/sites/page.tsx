@@ -283,9 +283,9 @@ export default function SitesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sites"] });
-      setIsAddDialogOpen(false);
-      setNewSiteDomain("");
-      setNewSiteName("");
+    setIsAddDialogOpen(false);
+    setNewSiteDomain("");
+    setNewSiteName("");
     },
   });
 
@@ -323,44 +323,44 @@ export default function SitesPage() {
             Manage your connected websites
           </p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Add Site
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Site</DialogTitle>
-              <DialogDescription>
-                Enter your website details to start tracking SEO
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="domain">Domain</Label>
-                <Input
-                  id="domain"
-                  placeholder="example.com"
-                  value={newSiteDomain}
-                  onChange={(e) => setNewSiteDomain(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Site Name (optional)</Label>
-                <Input
-                  id="name"
-                  placeholder="My Website"
-                  value={newSiteName}
-                  onChange={(e) => setNewSiteName(e.target.value)}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
+                Add Site
               </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+              <DialogTitle>Add New Site</DialogTitle>
+                <DialogDescription>
+                Enter your website details to start tracking SEO
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="domain">Domain</Label>
+                  <Input
+                    id="domain"
+                    placeholder="example.com"
+                    value={newSiteDomain}
+                    onChange={(e) => setNewSiteDomain(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                <Label htmlFor="name">Site Name (optional)</Label>
+                  <Input
+                    id="name"
+                  placeholder="My Website"
+                    value={newSiteName}
+                    onChange={(e) => setNewSiteName(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  Cancel
+                </Button>
               <Button
                 onClick={handleAddSite}
                 disabled={!newSiteDomain.trim() || createMutation.isPending}
@@ -372,9 +372,9 @@ export default function SitesPage() {
                 )}
                 Add Site
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
       </div>
 
       {/* Error State */}
@@ -431,7 +431,7 @@ export default function SitesPage() {
                     <p className="text-2xl font-bold">{data.stats.withGSC}</p>
                     <p className="text-xs text-muted-foreground">GSC Connected</p>
                   </div>
-                </div>
+                    </div>
               </CardContent>
             </Card>
             <Card>
@@ -458,7 +458,7 @@ export default function SitesPage() {
                 onDelete={() => deleteMutation.mutate(site.id)}
               />
             ))}
-          </div>
+              </div>
         </>
       )}
     </div>

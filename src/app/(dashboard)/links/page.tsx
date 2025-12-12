@@ -274,7 +274,7 @@ export default function LinksPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+                <div>
           <h1 className="text-3xl font-bold tracking-tight">Internal Links</h1>
           <p className="text-muted-foreground">
             Optimize your site structure with smart internal linking
@@ -284,7 +284,7 @@ export default function LinksPage() {
           <Zap className="w-4 h-4 mr-2" />
           Apply Selected ({selectedLinks.length})
         </Button>
-      </div>
+                </div>
 
       {/* Error State */}
       {error && (
@@ -296,12 +296,12 @@ export default function LinksPage() {
               <p className="text-sm text-red-600 dark:text-red-300">
                 {error instanceof Error ? error.message : "Please try again"}
               </p>
-            </div>
+                </div>
             <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto">
               Retry
             </Button>
-          </div>
-        </Card>
+              </div>
+          </Card>
       )}
 
       {/* Loading State */}
@@ -315,45 +315,45 @@ export default function LinksPage() {
         <>
           {/* Stats */}
           <div className="grid gap-4 sm:grid-cols-4">
-            <Card>
+          <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-primary/10">
                     <Link2 className="w-5 h-5 text-primary" />
                   </div>
-                  <div>
+                <div>
                     <p className="text-2xl font-bold">{data.stats.total}</p>
                     <p className="text-xs text-muted-foreground">Opportunities</p>
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-yellow-500/10">
                     <ArrowUpRight className="w-5 h-5 text-yellow-500" />
                   </div>
-                  <div>
+                <div>
                     <p className="text-2xl font-bold">{data.stats.pending}</p>
                     <p className="text-xs text-muted-foreground">Pending</p>
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-green-500/10">
                     <CheckCircle2 className="w-5 h-5 text-green-500" />
                   </div>
-                  <div>
+                <div>
                     <p className="text-2xl font-bold">{data.stats.applied}</p>
                     <p className="text-xs text-muted-foreground">Applied</p>
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
@@ -363,36 +363,36 @@ export default function LinksPage() {
                   <div>
                     <p className="text-2xl font-bold">{data.stats.orphanCount}</p>
                     <p className="text-xs text-muted-foreground">Orphan Pages</p>
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
           </div>
 
           {/* Tabs */}
           <Tabs defaultValue="opportunities" className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <TabsList>
+            <TabsList>
                 <TabsTrigger value="opportunities">
                   Opportunities ({pendingOpportunities.length})
-                </TabsTrigger>
+              </TabsTrigger>
                 <TabsTrigger value="orphans">
                   Orphan Pages ({data.orphanPages.length})
-                </TabsTrigger>
-              </TabsList>
+              </TabsTrigger>
+            </TabsList>
 
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
+                <Input 
                   placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 w-64"
+                  className="pl-9 w-64" 
                 />
-              </div>
             </div>
+          </div>
 
-            {/* Opportunities Tab */}
+          {/* Opportunities Tab */}
             <TabsContent value="opportunities" className="space-y-3">
               {pendingOpportunities.length === 0 ? (
                 <Card className="p-8 text-center">
@@ -401,7 +401,7 @@ export default function LinksPage() {
                   <p className="text-muted-foreground">
                     No pending link opportunities. Run another audit to find more.
                   </p>
-                </Card>
+            </Card>
               ) : (
                 pendingOpportunities.map((opportunity) => (
                   <OpportunityCard
@@ -414,10 +414,10 @@ export default function LinksPage() {
                   />
                 ))
               )}
-            </TabsContent>
+          </TabsContent>
 
-            {/* Orphan Pages Tab */}
-            <TabsContent value="orphans">
+          {/* Orphan Pages Tab */}
+          <TabsContent value="orphans">
               {data.orphanPages.length === 0 ? (
                 <Card className="p-8 text-center">
                   <Globe className="w-12 h-12 mx-auto text-green-500 mb-3" />
@@ -427,16 +427,16 @@ export default function LinksPage() {
                   </p>
                 </Card>
               ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
                       <AlertTriangle className="w-5 h-5 text-yellow-500" />
                       Pages Without Internal Links
-                    </CardTitle>
+                </CardTitle>
                     <CardDescription>
                       These pages have no or very few internal links pointing to them
                     </CardDescription>
-                  </CardHeader>
+              </CardHeader>
                   <CardContent className="space-y-3">
                     {data.orphanPages.map((page) => (
                       <div
@@ -454,21 +454,21 @@ export default function LinksPage() {
                           <div className="text-center">
                             <p className="text-lg font-bold text-red-500">{page.incomingLinks}</p>
                             <p className="text-xs text-muted-foreground">Incoming</p>
-                          </div>
+                      </div>
                           <Link href={`/content/new?url=${encodeURIComponent(page.url)}`}>
                             <Button size="sm" variant="outline">
                               <FileText className="w-4 h-4 mr-1" />
                               Link to this
                             </Button>
                           </Link>
-                        </div>
                       </div>
-                    ))}
-                  </CardContent>
-                </Card>
+                    </div>
+                  ))}
+              </CardContent>
+            </Card>
               )}
-            </TabsContent>
-          </Tabs>
+          </TabsContent>
+        </Tabs>
         </>
       )}
     </div>

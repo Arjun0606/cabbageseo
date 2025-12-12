@@ -54,9 +54,9 @@ export default function LandingPage() {
             </div>
 
             {/* Headline */}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] mb-6">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.15] mb-6">
               <span className="text-zinc-100 block animate-fade-in-up" style={{ animationDelay: '100ms' }}>The first SEO + AIO</span>
-              <span className="bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 bg-clip-text text-transparent block animate-fade-in-up" style={{ animationDelay: '200ms' }}>Operating System.</span>
+              <span className="bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 bg-clip-text text-transparent block animate-fade-in-up pb-2" style={{ animationDelay: '200ms' }}>Operating System.</span>
             </h1>
             
             <p className="text-lg sm:text-xl text-zinc-400 leading-relaxed mb-10 max-w-2xl animate-fade-in-up" style={{ animationDelay: '300ms' }}>
