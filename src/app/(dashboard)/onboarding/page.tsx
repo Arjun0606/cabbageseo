@@ -272,29 +272,7 @@ export default function OnboardingPage() {
         body: JSON.stringify({ url: displayUrl }),
       });
 
-      // Simulate progress while waiting (the API is synchronous)
-      // In a real app, you'd use SSE or polling
-      updateStep(0, { status: "complete", result: "Connected successfully" });
-      setProgress(20);
-      
-      updateStep(1, { status: "loading" });
-      await new Promise(r => setTimeout(r, 500));
-      updateStep(1, { status: "complete", result: "Discovering sitemap..." });
-      setProgress(35);
-      
-      updateStep(2, { status: "loading" });
-      await new Promise(r => setTimeout(r, 500));
-      setProgress(50);
-      
-      updateStep(3, { status: "loading" });
-      await new Promise(r => setTimeout(r, 400));
-      setProgress(65);
-      
-      updateStep(4, { status: "loading" });
-      await new Promise(r => setTimeout(r, 400));
-      setProgress(80);
-
-      // Check response
+      // Check response IMMEDIATELY before showing any success states
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Analysis failed");
@@ -308,11 +286,33 @@ export default function OnboardingPage() {
 
       const data = result.data as SiteAnalysis;
 
-      // Complete remaining steps
+      // Only show progress updates AFTER we've confirmed API success
+      updateStep(0, { status: "complete", result: "Connected successfully" });
+      setProgress(20);
+      
+      updateStep(1, { status: "loading" });
+      await new Promise(r => setTimeout(r, 300));
       updateStep(1, { status: "complete", result: `Found ${data.pagesAnalyzed} pages` });
+      setProgress(35);
+      
+      updateStep(2, { status: "loading" });
+      await new Promise(r => setTimeout(r, 300));
       updateStep(2, { status: "complete", result: `Score: ${data.seoScore}/100` });
+      setProgress(50);
+      
+      updateStep(3, { status: "loading" });
+      await new Promise(r => setTimeout(r, 250));
       updateStep(3, { status: "complete", result: `${data.keywords.length} keyword opportunities` });
+      setProgress(75);
+      
+      updateStep(4, { status: "loading" });
+      await new Promise(r => setTimeout(r, 250));
       updateStep(4, { status: "complete", result: `${data.quickWins.length} quick wins identified` });
+      
+      // Final step
+      updateStep(5, { status: "loading" });
+      await new Promise(r => setTimeout(r, 200));
+      updateStep(5, { status: "complete", result: "Analysis complete!" });
       setProgress(100);
 
       setAnalysis(data);

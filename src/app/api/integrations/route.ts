@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { encryptCredentials, decryptCredentials } from "@/lib/security/encryption";
 
 interface IntegrationRow {
   id: string;
@@ -157,6 +158,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Encrypt credentials before storage
+    const encryptedCredentials = credentials 
+      ? encryptCredentials(credentials) 
+      : null;
+
     // Create integration
     const { data: newIntegration, error } = await supabase
       .from("integrations")
@@ -166,7 +172,7 @@ export async function POST(request: NextRequest) {
         type,
         name: name || getDefaultName(type),
         status: credentials ? "connected" : "pending",
-        credentials: credentials || null,
+        credentials: encryptedCredentials,
         settings: settings || null,
       } as never, { onConflict: "organization_id,type,site_id" })
       .select()
@@ -238,7 +244,10 @@ export async function PATCH(request: NextRequest) {
     };
 
     if (credentials !== undefined) {
-      updates.credentials = credentials;
+      // Encrypt credentials before storage
+      updates.credentials = credentials 
+        ? encryptCredentials(credentials) 
+        : null;
       updates.status = credentials ? "connected" : "disconnected";
     }
     if (settings !== undefined) updates.settings = settings;
