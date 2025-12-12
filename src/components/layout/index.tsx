@@ -191,9 +191,11 @@ function Header({
       </div>
 
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" className="gap-2">
-          <Globe className="w-4 h-4" />
-          <span className="hidden sm:inline">example.com</span>
+        <Button variant="ghost" size="sm" className="gap-2" asChild>
+          <Link href="/sites">
+            <Globe className="w-4 h-4" />
+            <span className="hidden sm:inline">Sites</span>
+          </Link>
         </Button>
         <Button size="sm" className="gap-2">
           <Sparkles className="w-4 h-4" />

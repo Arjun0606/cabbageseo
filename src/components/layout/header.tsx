@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -17,7 +18,6 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { createClient } from "@/lib/supabase/client";
 
 // ============================================
 // PAGE TITLES
@@ -66,6 +67,10 @@ const pageTitles: Record<string, { title: string; description: string }> = {
     title: "Analytics",
     description: "Track your SEO performance",
   },
+  "/aio": {
+    title: "AI Visibility",
+    description: "Optimize for AI search platforms",
+  },
   "/settings": {
     title: "Settings",
     description: "Manage your account",
@@ -89,6 +94,16 @@ const pageTitles: Record<string, { title: string; description: string }> = {
 };
 
 // ============================================
+// TYPES
+// ============================================
+
+interface UserData {
+  email: string;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
+// ============================================
 // HEADER COMPONENT
 // ============================================
 
@@ -99,7 +114,34 @@ interface HeaderProps {
 
 export function Header({ className, onCommandPaletteOpen }: HeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [darkMode, setDarkMode] = useState(false);
+  const [user, setUser] = useState<UserData | null>(null);
+
+  // Fetch user data on mount
+  useEffect(() => {
+    async function fetchUser() {
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        // Try to get profile from users table
+        const { data: profile } = await supabase
+          .from("users")
+          .select("name, avatar_url")
+          .eq("id", authUser.id)
+          .single();
+
+        setUser({
+          email: authUser.email || "",
+          name: (profile as { name?: string } | null)?.name || authUser.user_metadata?.name || null,
+          avatarUrl: (profile as { avatar_url?: string } | null)?.avatar_url || authUser.user_metadata?.avatar_url || null,
+        });
+      }
+    }
+    fetchUser();
+  }, []);
 
   // Get page info based on current path
   const getPageInfo = () => {
@@ -121,6 +163,25 @@ export function Header({ className, onCommandPaletteOpen }: HeaderProps) {
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle("dark");
+  };
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    router.push("/");
+  };
+
+  // Get user initials for avatar
+  const getInitials = () => {
+    if (user?.name) {
+      return user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    }
+    if (user?.email) {
+      return user.email.slice(0, 2).toUpperCase();
+    }
+    return "CS";
   };
 
   return (
@@ -156,7 +217,12 @@ export function Header({ className, onCommandPaletteOpen }: HeaderProps) {
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
         {/* Quick AI Action */}
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-muted-foreground hover:text-primary"
+          onClick={onCommandPaletteOpen}
+        >
           <Sparkles className="h-5 w-5" />
         </Button>
 
@@ -165,41 +231,19 @@ export function Header({ className, onCommandPaletteOpen }: HeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative text-muted-foreground">
               <Bell className="h-5 w-5" />
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                3
-              </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel className="flex items-center justify-between">
               Notifications
-              <Badge variant="secondary" className="text-xs">3 new</Badge>
+              <Badge variant="secondary" className="text-xs">Coming soon</Badge>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <div className="max-h-80 overflow-y-auto">
-              <NotificationItem
-                title="Content generated"
-                description="'10 Best SEO Tools for 2025' is ready for review"
-                time="5 min ago"
-                type="success"
-              />
-              <NotificationItem
-                title="Audit complete"
-                description="example.com scored 85/100"
-                time="1 hour ago"
-                type="info"
-              />
-              <NotificationItem
-                title="Ranking drop detected"
-                description="'best seo tool' dropped 3 positions"
-                time="2 hours ago"
-                type="warning"
-              />
+            <div className="py-8 text-center text-muted-foreground">
+              <Bell className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No notifications yet</p>
+              <p className="text-xs">We&apos;ll notify you about important updates</p>
             </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="justify-center text-primary">
-              View all notifications
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -218,9 +262,9 @@ export function Header({ className, onCommandPaletteOpen }: HeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2 pl-2 pr-1">
               <Avatar className="h-7 w-7">
-                <AvatarImage src="" />
+                <AvatarImage src={user?.avatarUrl || ""} />
                 <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                  CS
+                  {getInitials()}
                 </AvatarFallback>
               </Avatar>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -229,25 +273,34 @@ export function Header({ className, onCommandPaletteOpen }: HeaderProps) {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium">CabbageSEO User</p>
-                <p className="text-xs text-muted-foreground">user@example.com</p>
+                <p className="text-sm font-medium">{user?.name || "CabbageSEO User"}</p>
+                <p className="text-xs text-muted-foreground">{user?.email || ""}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              Profile
+            <DropdownMenuItem asChild>
+              <Link href="/settings">
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <CreditCard className="mr-2 h-4 w-4" />
-              Billing
+            <DropdownMenuItem asChild>
+              <Link href="/settings/billing">
+                <CreditCard className="mr-2 h-4 w-4" />
+                Billing
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <HelpCircle className="mr-2 h-4 w-4" />
-              Help & Support
+            <DropdownMenuItem asChild>
+              <Link href="/learn">
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Help & Support
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive focus:text-destructive">
+            <DropdownMenuItem 
+              className="text-destructive focus:text-destructive cursor-pointer"
+              onClick={handleLogout}
+            >
               <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
@@ -257,38 +310,3 @@ export function Header({ className, onCommandPaletteOpen }: HeaderProps) {
     </header>
   );
 }
-
-// ============================================
-// NOTIFICATION ITEM
-// ============================================
-
-function NotificationItem({
-  title,
-  description,
-  time,
-  type,
-}: {
-  title: string;
-  description: string;
-  time: string;
-  type: "success" | "warning" | "info" | "error";
-}) {
-  const typeColors = {
-    success: "bg-green-500",
-    warning: "bg-yellow-500",
-    info: "bg-blue-500",
-    error: "bg-red-500",
-  };
-
-  return (
-    <div className="flex gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors">
-      <div className={cn("mt-1.5 h-2 w-2 rounded-full shrink-0", typeColors[type])} />
-      <div className="flex-1 space-y-1">
-        <p className="text-sm font-medium leading-tight">{title}</p>
-        <p className="text-xs text-muted-foreground">{description}</p>
-        <p className="text-xs text-muted-foreground/60">{time}</p>
-      </div>
-    </div>
-  );
-}
-

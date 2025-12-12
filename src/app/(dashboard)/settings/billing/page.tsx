@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   CreditCard,
   Check,
@@ -13,19 +13,12 @@ import {
   FileText,
   TrendingUp,
   Package,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -33,25 +26,45 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
 
 // ============================================
 // TYPES
 // ============================================
 
-interface UsageMetric {
-  name: string;
-  used: number;
-  limit: number;
-  unit: string;
-}
-
-interface Invoice {
-  id: string;
-  date: string;
-  amount: number;
-  status: "paid" | "pending" | "failed";
+interface UsageData {
+  plan: {
+    id: string;
+    name: string;
+    status: string;
+    currentPeriodStart: string | null;
+    currentPeriodEnd: string | null;
+  };
+  usage: {
+    articles: number;
+    keywords: number;
+    serpCalls: number;
+    pageCrawls: number;
+    aioAnalyses: number;
+  };
+  limits: {
+    articles: number;
+    keywords: number;
+    serpCalls: number;
+    pageCrawls: number;
+  };
+  percentages: {
+    articles: number;
+    keywords: number;
+    serpCalls: number;
+    pageCrawls: number;
+  };
+  credits: {
+    prepaid: number;
+    bonus: number;
+    total: number;
+    expiresAt: string | null;
+  };
 }
 
 interface Plan {
@@ -63,32 +76,8 @@ interface Plan {
   popular?: boolean;
 }
 
-// ============================================
-// MOCK DATA
-// ============================================
-
-const currentPlan = {
-  name: "Growth",
-  price: 79,
-  interval: "month" as const,
-  renewsAt: "January 15, 2025",
-};
-
-const usage: UsageMetric[] = [
-  { name: "Articles Generated", used: 12, limit: 50, unit: "articles" },
-  { name: "Keywords Tracked", used: 450, limit: 1000, unit: "keywords" },
-  { name: "Pages Crawled", used: 2340, limit: 10000, unit: "pages" },
-  { name: "API Calls", used: 8500, limit: 50000, unit: "calls" },
-];
-
-const invoices: Invoice[] = [
-  { id: "INV-001", date: "Dec 15, 2024", amount: 79, status: "paid" },
-  { id: "INV-002", date: "Nov 15, 2024", amount: 79, status: "paid" },
-  { id: "INV-003", date: "Oct 15, 2024", amount: 79, status: "paid" },
-  { id: "INV-004", date: "Sep 15, 2024", amount: 79, status: "paid" },
-];
-
-const plans: Plan[] = [
+// Available plans (these would typically come from an API too)
+const availablePlans: Plan[] = [
   {
     id: "starter",
     name: "Starter",
@@ -103,8 +92,8 @@ const plans: Plan[] = [
     ],
   },
   {
-    id: "growth",
-    name: "Growth",
+    id: "pro",
+    name: "Pro",
     price: 79,
     interval: "month",
     popular: true,
@@ -112,15 +101,15 @@ const plans: Plan[] = [
       "50 articles/month",
       "1,000 keywords tracked",
       "3 websites",
-      "Advanced SEO audit",
+      "Advanced SEO + AIO audit",
       "Auto-fix issues",
       "CMS publishing",
       "Priority support",
     ],
   },
   {
-    id: "scale",
-    name: "Scale",
+    id: "pro_plus",
+    name: "Pro+",
     price: 199,
     interval: "month",
     features: [
@@ -201,6 +190,69 @@ function PlanCard({
 
 export default function BillingPage() {
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<UsageData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchUsage() {
+      try {
+        const res = await fetch("/api/billing/usage");
+        if (!res.ok) throw new Error("Failed to fetch usage data");
+        const json = await res.json();
+        setData(json);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load billing data");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchUsage();
+  }, []);
+
+  const handleManageBilling = async () => {
+    try {
+      const res = await fetch("/api/billing/portal", { method: "POST" });
+      const json = await res.json();
+      if (json.url) {
+        window.location.href = json.url;
+      }
+    } catch {
+      console.error("Failed to open billing portal");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-lg font-medium mb-2">Unable to load billing data</p>
+          <p className="text-muted-foreground mb-4">{error || "Please try again later"}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const usageMetrics = [
+    { name: "Articles Generated", used: data.usage.articles, limit: data.limits.articles, unit: "articles", pct: data.percentages.articles },
+    { name: "Keywords Tracked", used: data.usage.keywords, limit: data.limits.keywords, unit: "keywords", pct: data.percentages.keywords },
+    { name: "Pages Crawled", used: data.usage.pageCrawls, limit: data.limits.pageCrawls, unit: "pages", pct: data.percentages.pageCrawls },
+    { name: "SERP Calls", used: data.usage.serpCalls, limit: data.limits.serpCalls, unit: "calls", pct: data.percentages.serpCalls },
+  ];
+
+  const daysUntilRenewal = data.plan.currentPeriodEnd 
+    ? Math.max(0, Math.ceil((new Date(data.plan.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
 
   return (
     <div className="space-y-8">
@@ -217,24 +269,28 @@ export default function BillingPage() {
                 Your subscription details and billing
               </CardDescription>
             </div>
-            <Badge variant="secondary" className="text-lg px-3 py-1">
-              {currentPlan.name}
+            <Badge variant="secondary" className="text-lg px-3 py-1 capitalize">
+              {data.plan.name}
             </Badge>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 sm:grid-cols-3">
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Monthly Price</p>
-              <p className="text-2xl font-bold">${currentPlan.price}</p>
+              <p className="text-sm text-muted-foreground">Status</p>
+              <p className="text-2xl font-bold capitalize">{data.plan.status}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Billing Cycle</p>
-              <p className="text-2xl font-bold capitalize">{currentPlan.interval}ly</p>
+              <p className="text-2xl font-bold">Monthly</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Next Renewal</p>
-              <p className="text-2xl font-bold">{currentPlan.renewsAt}</p>
+              <p className="text-2xl font-bold">
+                {data.plan.currentPeriodEnd 
+                  ? new Date(data.plan.currentPeriodEnd).toLocaleDateString()
+                  : "—"}
+              </p>
             </div>
           </div>
           <div className="flex gap-3 mt-6">
@@ -242,7 +298,7 @@ export default function BillingPage() {
               <DialogTrigger asChild>
                 <Button>
                   <Zap className="w-4 h-4 mr-2" />
-                  Upgrade Plan
+                  Change Plan
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl">
@@ -253,23 +309,24 @@ export default function BillingPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 sm:grid-cols-3 py-4">
-                  {plans.map((plan) => (
+                  {availablePlans.map((plan) => (
                     <PlanCard
                       key={plan.id}
                       plan={plan}
-                      isCurrent={plan.name === currentPlan.name}
-                      onSelect={() => setShowUpgrade(false)}
+                      isCurrent={plan.id === data.plan.id}
+                      onSelect={() => {
+                        setShowUpgrade(false);
+                        // In production, this would call the checkout API
+                        window.location.href = `/api/billing/checkout?plan=${plan.id}`;
+                      }}
                     />
                   ))}
                 </div>
               </DialogContent>
             </Dialog>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleManageBilling}>
               <CreditCard className="w-4 h-4 mr-2" />
-              Update Payment
-            </Button>
-            <Button variant="ghost" className="text-red-500">
-              Cancel Plan
+              Manage Billing
             </Button>
           </div>
         </CardContent>
@@ -288,18 +345,19 @@ export default function BillingPage() {
                 Track your resource consumption
               </CardDescription>
             </div>
-            <Badge variant="outline">
-              <Clock className="w-3 h-3 mr-1" />
-              Resets in 12 days
-            </Badge>
+            {daysUntilRenewal !== null && (
+              <Badge variant="outline">
+                <Clock className="w-3 h-3 mr-1" />
+                Resets in {daysUntilRenewal} days
+              </Badge>
+            )}
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 sm:grid-cols-2">
-            {usage.map((metric) => {
-              const percentage = Math.round((metric.used / metric.limit) * 100);
-              const isNearLimit = percentage >= 80;
-              const isOverLimit = percentage >= 100;
+            {usageMetrics.map((metric) => {
+              const isNearLimit = metric.pct >= 80;
+              const isOverLimit = metric.pct >= 100;
 
               return (
                 <div key={metric.name} className="space-y-2">
@@ -318,7 +376,7 @@ export default function BillingPage() {
                     </span>
                   </div>
                   <Progress
-                    value={Math.min(percentage, 100)}
+                    value={Math.min(metric.pct, 100)}
                     className={`h-2 ${
                       isOverLimit
                         ? "[&>div]:bg-red-500"
@@ -338,24 +396,22 @@ export default function BillingPage() {
             })}
           </div>
 
+          {/* AIO Analyses (bonus metric) */}
           <div className="mt-6 p-4 bg-muted/50 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">Need more resources?</p>
+                <p className="font-medium">AIO Analyses This Month</p>
                 <p className="text-sm text-muted-foreground">
-                  Add on-demand credits or upgrade your plan
+                  {data.usage.aioAnalyses} AI visibility analyses performed
                 </p>
               </div>
-              <Button variant="outline" size="sm">
-                <Sparkles className="w-4 h-4 mr-2" />
-                Buy Credits
-              </Button>
+              <Badge variant="secondary">{data.usage.aioAnalyses}</Badge>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* On-Demand Credits */}
+      {/* Credits */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -370,7 +426,13 @@ export default function BillingPage() {
           <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg mb-4">
             <div>
               <p className="font-medium">Available Credits</p>
-              <p className="text-3xl font-bold">$0.00</p>
+              <p className="text-3xl font-bold">${(data.credits.total / 100).toFixed(2)}</p>
+              {data.credits.prepaid > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  ${(data.credits.prepaid / 100).toFixed(2)} prepaid
+                  {data.credits.bonus > 0 && ` + $${(data.credits.bonus / 100).toFixed(2)} bonus`}
+                </p>
+              )}
             </div>
             <Button>
               <CreditCard className="w-4 h-4 mr-2" />
@@ -378,18 +440,18 @@ export default function BillingPage() {
             </Button>
           </div>
           <div className="text-sm text-muted-foreground">
-            <p className="mb-2">On-demand pricing (90% markup):</p>
+            <p className="mb-2">On-demand pricing:</p>
             <ul className="space-y-1 ml-4">
               <li>• Articles: $0.50 per article</li>
               <li>• Keywords: $0.01 per keyword</li>
               <li>• Pages crawled: $0.001 per page</li>
-              <li>• API calls: $0.0001 per call</li>
+              <li>• SERP calls: $0.01 per call</li>
             </ul>
           </div>
         </CardContent>
       </Card>
 
-      {/* Invoices */}
+      {/* Billing History Placeholder */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -404,46 +466,14 @@ export default function BillingPage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Invoice</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoices.map((invoice) => (
-                <TableRow key={invoice.id}>
-                  <TableCell className="font-medium">{invoice.id}</TableCell>
-                  <TableCell>{invoice.date}</TableCell>
-                  <TableCell>${invoice.amount.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        invoice.status === "paid"
-                          ? "default"
-                          : invoice.status === "pending"
-                          ? "secondary"
-                          : "destructive"
-                      }
-                    >
-                      {invoice.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            <Download className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p>Invoice history available in billing portal</p>
+            <Button variant="link" onClick={handleManageBilling} className="mt-2">
+              Open Billing Portal →
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
