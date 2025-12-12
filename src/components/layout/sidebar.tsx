@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -228,9 +229,13 @@ export function Sidebar({ className }: SidebarProps) {
           )}
         >
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-lg">
-              🥬
-            </div>
+            <Image
+              src="/logo.png"
+              alt="CabbageSEO"
+              width={36}
+              height={36}
+              className="rounded-lg"
+            />
             {!collapsed && (
               <span className="text-lg font-bold tracking-tight">
                 Cabbage<span className="text-primary">SEO</span>

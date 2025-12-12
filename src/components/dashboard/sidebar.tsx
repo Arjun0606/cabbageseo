@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -63,9 +64,7 @@ export function Sidebar() {
         "flex items-center h-16 px-4 border-b border-slate-800",
         collapsed ? "justify-center" : "gap-3"
       )}>
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cabbage-400 to-cabbage-600 flex items-center justify-center shrink-0">
-          <span className="text-lg">🥬</span>
-        </div>
+        <Image src="/logo.png" alt="CabbageSEO" width={36} height={36} className="rounded-lg shrink-0" />
         {!collapsed && (
           <span className="font-bold text-white text-lg">CabbageSEO</span>
         )}

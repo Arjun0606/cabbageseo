@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -30,9 +31,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center group-hover:border-emerald-500/40 transition-colors">
-                <span className="text-lg">🥬</span>
-              </div>
+              <Image src="/logo.png" alt="CabbageSEO" width={36} height={36} className="rounded-lg" />
               <span className="text-lg font-semibold tracking-tight">CabbageSEO</span>
             </Link>
             <div className="flex items-center gap-3">
@@ -326,9 +325,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-emerald-500/10 flex items-center justify-center">
-                <span className="text-xs">🥬</span>
-              </div>
+              <Image src="/logo.png" alt="CabbageSEO" width={24} height={24} className="rounded" />
               <span className="text-sm text-zinc-500">CabbageSEO</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-zinc-600">

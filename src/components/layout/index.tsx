@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -59,16 +60,12 @@ function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onCollapse: ()
       <div className="h-16 flex items-center justify-between px-4 border-b">
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-lg">🥬</span>
-            </div>
+            <Image src="/logo.png" alt="CabbageSEO" width={32} height={32} className="rounded-lg" />
             <span className="font-bold text-lg">CabbageSEO</span>
           </Link>
         )}
         {collapsed && (
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center mx-auto">
-            <span className="text-lg">🥬</span>
-          </div>
+          <Image src="/logo.png" alt="CabbageSEO" width={32} height={32} className="rounded-lg mx-auto" />
         )}
       </div>
 
@@ -231,9 +228,7 @@ function MobileNav({
       <aside className="fixed left-0 top-0 z-50 w-64 h-screen bg-background lg:hidden">
         <div className="h-16 flex items-center justify-between px-4 border-b">
           <Link href="/dashboard" className="flex items-center gap-2" onClick={onClose}>
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-lg">🥬</span>
-            </div>
+            <Image src="/logo.png" alt="CabbageSEO" width={32} height={32} className="rounded-lg" />
             <span className="font-bold text-lg">CabbageSEO</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={onClose}>

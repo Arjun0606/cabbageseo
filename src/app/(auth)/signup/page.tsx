@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -109,7 +110,7 @@ export default function SignupPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
-            <span className="text-3xl">🥬</span>
+            <Image src="/logo.png" alt="CabbageSEO" width={40} height={40} className="rounded-lg" />
             <span className="text-2xl font-bold text-white">CabbageSEO</span>
           </Link>
           <p className="mt-2 text-zinc-400">Start your SEO autopilot journey</p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -85,9 +86,7 @@ export function SEOScoreCard({
       {/* Header */}
       <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cabbage-400 to-cabbage-600 flex items-center justify-center">
-            <span className="text-sm">🥬</span>
-          </div>
+          <Image src="/logo.png" alt="CabbageSEO" width={32} height={32} className="rounded-lg" />
           <div>
             <p className="text-white font-semibold">CabbageSEO Score</p>
             <p className="text-xs text-slate-400">{domain}</p>

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Loader2, Sparkles } from "lucide-react";
 
@@ -74,8 +75,8 @@ export function PageLoading({ message = "Loading..." }: PageLoadingProps) {
       <div className="flex flex-col items-center gap-4 animate-fade-in">
         <div className="relative">
           <div className="h-16 w-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-          <div className="absolute inset-0 flex items-center justify-center text-2xl">
-            🥬
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Image src="/logo.png" alt="Loading" width={32} height={32} className="rounded-lg" />
           </div>
         </div>
         <p className="text-sm font-medium text-muted-foreground">{message}</p>
