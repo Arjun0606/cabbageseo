@@ -242,7 +242,8 @@ export async function POST(request: NextRequest) {
               status: "fixed",
               fixed_at: new Date().toISOString(),
             } as never)
-            .in("id", (fixableIssues as { id: string }[]).map(i => i.id));
+            .in("id", (fixableIssues as { id: string }[]).map(i => i.id))
+            .in("site_id", siteIds); // Defensive: verify ownership
 
           if (updateError) throw updateError;
         }
