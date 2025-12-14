@@ -3,9 +3,16 @@
  * 
  * Philosophy:
  * - Simple, predictable pricing
- * - Usage-based overages (prepaid credits)
- * - 90% margin on overages
- * - White-label included in all plans
+ * - Usage-based overages via prepaid credits
+ * - 85-90%+ margin on all overages
+ * - Hard limits prevent runaway costs
+ * 
+ * Third-Party Costs (per operation):
+ * - AI Article: ~$0.20 (Claude Sonnet)
+ * - 100 Keywords: ~$0.15 (DataForSEO)
+ * - SERP Analysis: ~$0.02 (DataForSEO)
+ * - Audit (100 pages): ~$0.10 (crawl + Claude)
+ * - AIO Analysis: ~$0.08 (Claude Haiku)
  */
 
 // ============================================
@@ -18,6 +25,7 @@ export interface PlanLimits {
   articlesPerMonth: number;
   keywordsTracked: number;
   auditsPerMonth: number;
+  aioAnalysesPerMonth: number;
   teamMembers: number;
   aiCreditsPerMonth: number;  // ~1 credit = 1 Claude Haiku call
 }
@@ -39,13 +47,14 @@ export const PLANS: Record<string, Plan> = {
     name: "Starter",
     description: "Perfect for small sites and bloggers",
     monthlyPrice: 29,
-    yearlyPrice: 24,  // 17% off
+    yearlyPrice: 24,  // 17% off (~$60 savings/year)
     limits: {
       sites: 1,
       pagesPerSite: 100,
       articlesPerMonth: 10,
       keywordsTracked: 100,
       auditsPerMonth: 5,
+      aioAnalysesPerMonth: 20,
       teamMembers: 1,
       aiCreditsPerMonth: 1000,
     },
@@ -53,7 +62,8 @@ export const PLANS: Record<string, Plan> = {
       "1 website",
       "10 AI articles/month",
       "100 keywords tracked",
-      "Technical SEO audits",
+      "5 technical audits/month",
+      "20 AIO analyses/month",
       "Content optimization",
       "WordPress/Webflow publishing",
       "Email support",
@@ -62,9 +72,9 @@ export const PLANS: Record<string, Plan> = {
   pro: {
     id: "pro",
     name: "Pro",
-    description: "For growing businesses and agencies",
+    description: "For growing businesses and consultants",
     monthlyPrice: 79,
-    yearlyPrice: 66,  // 16% off
+    yearlyPrice: 66,  // 16% off (~$156 savings/year)
     popular: true,
     limits: {
       sites: 5,
@@ -72,6 +82,7 @@ export const PLANS: Record<string, Plan> = {
       articlesPerMonth: 50,
       keywordsTracked: 500,
       auditsPerMonth: 20,
+      aioAnalysesPerMonth: 100,
       teamMembers: 5,
       aiCreditsPerMonth: 5000,
     },
@@ -79,10 +90,11 @@ export const PLANS: Record<string, Plan> = {
       "5 websites",
       "50 AI articles/month",
       "500 keywords tracked",
-      "Advanced technical audits",
-      "Content optimization",
+      "20 technical audits/month",
+      "100 AIO analyses/month",
+      "Advanced content optimization",
       "All CMS integrations",
-      "Team collaboration",
+      "Team collaboration (5 seats)",
       "Priority support",
       "API access",
     ],
@@ -92,13 +104,14 @@ export const PLANS: Record<string, Plan> = {
     name: "Pro+",
     description: "For agencies and large sites",
     monthlyPrice: 199,
-    yearlyPrice: 166,  // 17% off
+    yearlyPrice: 166,  // 17% off (~$396 savings/year)
     limits: {
       sites: 20,
       pagesPerSite: 2000,
       articlesPerMonth: 200,
       keywordsTracked: 2000,
-      auditsPerMonth: 100,
+      auditsPerMonth: 100,  // "Unlimited" with soft cap
+      aioAnalysesPerMonth: 500,
       teamMembers: 20,
       aiCreditsPerMonth: 20000,
     },
@@ -106,7 +119,9 @@ export const PLANS: Record<string, Plan> = {
       "20 websites",
       "200 AI articles/month",
       "2,000 keywords tracked",
-      "Unlimited audits",
+      "Unlimited audits*",
+      "500 AIO analyses/month",
+      "Premium content (Claude Opus)",
       "White-label reports",
       "All CMS integrations",
       "Unlimited team members",
@@ -118,49 +133,144 @@ export const PLANS: Record<string, Plan> = {
 };
 
 // ============================================
-// OVERAGE PRICING (Prepaid Credits)
+// INTERNAL COSTS (in cents) - Our actual costs
 // ============================================
 
-// Cost to us (in cents)
 export const INTERNAL_COSTS = {
-  aiCredit: 0.1,           // $0.001 per credit (Claude Haiku avg)
-  article: 50,             // $0.50 per article (Sonnet usage)
-  keywordLookup: 0.5,      // $0.005 per keyword (DataForSEO)
-  serpAnalysis: 1,         // $0.01 per SERP (SerpAPI)
-  audit: 10,               // $0.10 per audit (crawl + analysis)
+  // AI Costs (Claude)
+  aiCreditHaiku: 0.01,      // $0.0001 per Haiku credit
+  aiCreditSonnet: 0.1,      // $0.001 per Sonnet-equivalent credit
+  article: 20,              // $0.20 per article (Sonnet, ~8K output tokens)
+  aioAnalysis: 8,           // $0.08 per AIO analysis (Haiku)
+  
+  // SEO Data Costs (DataForSEO)
+  keywordLookup: 0.15,      // $0.0015 per keyword
+  keywordBatch100: 15,      // $0.15 per 100 keywords
+  serpAnalysis: 2,          // $0.02 per SERP
+  backlinkSummary: 2,       // $0.02 per domain
+  backlinkList: 4,          // $0.04 per request
+  
+  // Crawling
+  pageCrawl: 0.01,          // $0.0001 per page (mostly bandwidth)
+  auditFull: 10,            // $0.10 per full audit (100 pages + analysis)
 };
 
-// Price to customer (90% markup over cost)
+// ============================================
+// OVERAGE PRICING (Prepaid Credits) - 85-90% margin
+// ============================================
+
 export const OVERAGE_PRICES = {
-  aiCredits: {
-    name: "AI Credits",
-    unit: "1,000 credits",
-    pricePerUnit: 2,       // $2 per 1,000 credits (cost: ~$1)
-  },
   articles: {
     name: "Extra Articles",
     unit: "article",
-    pricePerUnit: 3,       // $3 per article (cost: ~$0.50)
+    pricePerUnit: 300,      // $3.00 per article
+    costPerUnit: 20,        // $0.20 cost
+    margin: 0.93,           // 93% margin
   },
   keywords: {
     name: "Extra Keywords",
     unit: "100 keywords",
-    pricePerUnit: 5,       // $5 per 100 keywords (cost: ~$0.50)
+    pricePerUnit: 500,      // $5.00 per 100 keywords
+    costPerUnit: 15,        // $0.15 cost
+    margin: 0.97,           // 97% margin
   },
   audits: {
     name: "Extra Audits",
     unit: "audit",
-    pricePerUnit: 1,       // $1 per audit (cost: ~$0.10)
+    pricePerUnit: 100,      // $1.00 per audit
+    costPerUnit: 10,        // $0.10 cost
+    margin: 0.90,           // 90% margin
+  },
+  aioAnalyses: {
+    name: "AIO Analyses",
+    unit: "analysis",
+    pricePerUnit: 50,       // $0.50 per analysis
+    costPerUnit: 8,         // $0.08 cost
+    margin: 0.84,           // 84% margin
+  },
+  aiCredits: {
+    name: "AI Credits",
+    unit: "1,000 credits",
+    pricePerUnit: 200,      // $2.00 per 1,000 credits
+    costPerUnit: 10,        // $0.10 cost
+    margin: 0.95,           // 95% margin
+  },
+  serpAnalysis: {
+    name: "SERP Analysis",
+    unit: "analysis",
+    pricePerUnit: 25,       // $0.25 per SERP
+    costPerUnit: 2,         // $0.02 cost
+    margin: 0.92,           // 92% margin
+  },
+  backlinks: {
+    name: "Backlink Analysis",
+    unit: "domain",
+    pricePerUnit: 50,       // $0.50 per domain
+    costPerUnit: 6,         // $0.06 cost
+    margin: 0.88,           // 88% margin
   },
 };
 
-// Credit packages for prepaid purchase
+// ============================================
+// CREDIT PACKAGES (Prepaid wallet)
+// ============================================
+
 export const CREDIT_PACKAGES = [
-  { credits: 1000, price: 10, bonus: 0, perCredit: 0.01 },
-  { credits: 5000, price: 45, bonus: 500, perCredit: 0.009 },   // 10% bonus
-  { credits: 10000, price: 80, bonus: 2000, perCredit: 0.008 }, // 20% bonus
-  { credits: 50000, price: 350, bonus: 15000, perCredit: 0.007 }, // 30% bonus
+  { 
+    id: "credits_10",
+    credits: 1000, 
+    price: 1000,        // $10.00
+    bonus: 0, 
+    perCreditCents: 1.0,
+    savings: "0%",
+  },
+  { 
+    id: "credits_45",
+    credits: 5000, 
+    price: 4500,        // $45.00
+    bonus: 500,         // 10% bonus
+    perCreditCents: 0.82,
+    savings: "18%",
+  },
+  { 
+    id: "credits_80",
+    credits: 10000, 
+    price: 8000,        // $80.00
+    bonus: 2000,        // 20% bonus
+    perCreditCents: 0.67,
+    savings: "33%",
+  },
+  { 
+    id: "credits_350",
+    credits: 50000, 
+    price: 35000,       // $350.00
+    bonus: 15000,       // 30% bonus
+    perCreditCents: 0.54,
+    savings: "46%",
+  },
 ];
+
+// ============================================
+// RATE LIMITS BY PLAN
+// ============================================
+
+export const RATE_LIMITS = {
+  starter: {
+    requestsPerMinute: 10,
+    tokensPerMinute: 50000,
+    concurrentRequests: 2,
+  },
+  pro: {
+    requestsPerMinute: 30,
+    tokensPerMinute: 200000,
+    concurrentRequests: 5,
+  },
+  pro_plus: {
+    requestsPerMinute: 60,
+    tokensPerMinute: 500000,
+    concurrentRequests: 10,
+  },
+};
 
 // ============================================
 // HELPERS
@@ -168,6 +278,10 @@ export const CREDIT_PACKAGES = [
 
 export function getPlan(planId: string): Plan {
   return PLANS[planId] || PLANS.starter;
+}
+
+export function getPlans(): Plan[] {
+  return Object.values(PLANS);
 }
 
 export function getPlanLimits(planId: string): PlanLimits {
@@ -203,12 +317,100 @@ export function getOverageAmount(
 }
 
 export function calculateOverageCost(
-  resource: "aiCredits" | "articles" | "keywords" | "audits",
+  resource: keyof typeof OVERAGE_PRICES,
   amount: number
 ): number {
   const pricing = OVERAGE_PRICES[resource];
-  const units = resource === "keywords" ? Math.ceil(amount / 100) : 
-                resource === "aiCredits" ? Math.ceil(amount / 1000) : 
-                amount;
+  if (!pricing) return 0;
+  
+  // Calculate units based on resource type
+  let units = amount;
+  if (resource === "keywords") {
+    units = Math.ceil(amount / 100);
+  } else if (resource === "aiCredits") {
+    units = Math.ceil(amount / 1000);
+  }
+  
   return units * pricing.pricePerUnit;
+}
+
+export function getInternalCost(
+  resource: keyof typeof OVERAGE_PRICES,
+  amount: number
+): number {
+  const pricing = OVERAGE_PRICES[resource];
+  if (!pricing) return 0;
+  
+  let units = amount;
+  if (resource === "keywords") {
+    units = Math.ceil(amount / 100);
+  } else if (resource === "aiCredits") {
+    units = Math.ceil(amount / 1000);
+  }
+  
+  return units * pricing.costPerUnit;
+}
+
+export function getMargin(
+  resource: keyof typeof OVERAGE_PRICES,
+  amount: number
+): number {
+  const revenue = calculateOverageCost(resource, amount);
+  const cost = getInternalCost(resource, amount);
+  
+  if (revenue === 0) return 0;
+  return (revenue - cost) / revenue;
+}
+
+// ============================================
+// USAGE ENFORCEMENT
+// ============================================
+
+export interface UsageCheckResult {
+  allowed: boolean;
+  reason?: string;
+  overageRequired?: number;
+  overageResource?: keyof typeof OVERAGE_PRICES;
+}
+
+export function checkUsage(
+  planId: string,
+  resource: keyof PlanLimits,
+  currentUsage: number,
+  requestedAmount: number = 1
+): UsageCheckResult {
+  const limits = getPlanLimits(planId);
+  const limit = limits[resource];
+  const projectedUsage = currentUsage + requestedAmount;
+  
+  if (projectedUsage <= limit) {
+    return { allowed: true };
+  }
+  
+  const overage = projectedUsage - limit;
+  
+  // Map plan resources to overage resources
+  const overageMap: Partial<Record<keyof PlanLimits, keyof typeof OVERAGE_PRICES>> = {
+    articlesPerMonth: "articles",
+    keywordsTracked: "keywords",
+    auditsPerMonth: "audits",
+    aioAnalysesPerMonth: "aioAnalyses",
+    aiCreditsPerMonth: "aiCredits",
+  };
+  
+  const overageResource = overageMap[resource];
+  
+  if (!overageResource) {
+    return {
+      allowed: false,
+      reason: `${resource} limit reached. Upgrade your plan for more.`,
+    };
+  }
+  
+  return {
+    allowed: false,
+    reason: `${resource} limit reached. You can purchase additional ${overageResource} to continue.`,
+    overageRequired: overage,
+    overageResource,
+  };
 }
