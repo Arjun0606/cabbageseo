@@ -128,9 +128,19 @@
 
 ## Overage Pricing (90% Margin Target)
 
-### Strategy: Prepaid Credit Wallet
+### Strategy: Pay-as-You-Go with Spending Cap
 
-Users buy credits upfront. Credits are deducted per operation.
+**NOT prepaid credits.** Users set a spending limit, use at will, get billed for actual usage.
+
+#### How It Works:
+1. **User hits plan limit** → Prompted to:
+   - Upgrade plan, OR
+   - Set a spending cap (e.g., $100)
+2. **With cap enabled** → Continue using at 90% markup
+3. **Cap reached** → Blocked until they:
+   - Increase the cap (e.g., +$50)
+   - Upgrade plan
+4. **We bill in real-time** → Never front costs ✅
 
 | Resource | Our Cost | Overage Price | Margin |
 |----------|----------|---------------|--------|
@@ -139,17 +149,59 @@ Users buy credits upfront. Credits are deducted per operation.
 | Extra Audit | $0.10 | $1.00 | 90% |
 | 1,000 AI Credits | $0.10 | $2.00 | 95% |
 | AIO Analysis | $0.08 | $0.50 | 84% |
+| SERP Analysis | $0.02 | $0.25 | 92% |
+| Backlink Analysis | $0.06 | $0.50 | 88% |
 
-### Credit Packages (Bulk Discounts)
+### Spending Cap Options
 
-| Credits | Price | Bonus | Effective Price | Our Margin |
-|---------|-------|-------|-----------------|------------|
-| $10 | 1,000 | 0 | $0.010/credit | 90% |
-| $45 | 5,500 | 500 (10%) | $0.0082/credit | 88% |
-| $80 | 12,000 | 2,000 (20%) | $0.0067/credit | 85% |
-| $350 | 65,000 | 15,000 (30%) | $0.0054/credit | 82% |
+Users set their own limit. Minimum: $10. Common presets:
 
-**Minimum margin on bulk: 82%** ✅
+| Cap | Use Case |
+|-----|----------|
+| $10 | Just testing overages |
+| $50 | Light overflow |
+| $100 | Standard buffer |
+| $250 | Heavy usage month |
+| $500 | Agency client work |
+
+### Auto-Increase Option
+
+Users can enable **auto-bump** when cap is hit:
+- Default: OFF (must manually increase)
+- If ON: Cap increases by $50 automatically
+- User notified at 50%, 80%, 100% of cap
+
+### Why This Is Safer Than Prepaid Credits
+
+| Prepaid Credits | Pay-as-You-Go with Cap |
+|-----------------|------------------------|
+| Revenue upfront, cost later | Revenue = Cost timing |
+| Users may never use credits | Users pay for what they use |
+| Refund headaches | No refunds needed |
+| Complex balance tracking | Simple: usage → charge |
+| Users forget they have credits | Clear cap = clear expectations |
+
+**We never get screwed because:**
+1. Cap is set BEFORE usage starts
+2. Usage stops at cap (hard block)
+3. Billed in real-time via Dodo Payments
+4. 90% margin on every overage transaction
+
+### Implementation
+
+```
+POST /api/billing/overages
+{
+  "spendingCapDollars": 100,
+  "autoIncrease": false
+}
+
+PATCH /api/billing/overages
+{
+  "action": "increase_cap",
+  "amount": 50
+}
+```
 
 ---
 
