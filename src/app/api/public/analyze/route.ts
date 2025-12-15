@@ -246,6 +246,7 @@ export async function POST(request: NextRequest) {
       maxPages: 1,
       respectRobotsTxt: true,
       timeout: 15000,
+      includeRawContent: true, // Required for AIO analysis
     });
 
     const crawlResult = await crawler.crawl(url);
@@ -269,8 +270,8 @@ export async function POST(request: NextRequest) {
     );
     const seoScore = Object.values(seoBreakdown).reduce((a, b) => a + b, 0);
 
-    // Analyze AIO factors
-    const aioFactors = analyzeAIOFactors(page.html || "", page.textContent || "");
+    // Analyze AIO factors (use rawHtml from crawler)
+    const aioFactors = analyzeAIOFactors(page.rawHtml || "", page.textContent || "");
     const aioBreakdown = calculateAIOBreakdown(aioFactors);
     const aioScore = Object.values(aioBreakdown).reduce((a, b) => a + b, 0);
 
@@ -288,7 +289,7 @@ export async function POST(request: NextRequest) {
     if (seoBreakdown.technicalScore < 15) {
       seoRecommendations.push("Fix broken links and optimize page loading speed");
     }
-    if (!page.schemaTypes?.length) {
+    if (!page.schemaMarkup?.length) {
       seoRecommendations.push("Add structured data (Schema.org) to help search engines understand your content");
     }
 
@@ -391,9 +392,9 @@ export async function POST(request: NextRequest) {
         // Page info
         pageInfo: {
           wordCount: page.wordCount || 0,
-          hasH1: !!page.h1,
+          hasH1: (page.h1?.length || 0) > 0,
           hasMetaDescription: !!page.metaDescription,
-          schemaTypes: page.schemaTypes || [],
+          schemaTypes: page.schemaMarkup?.map((s: { "@type"?: string }) => s["@type"]).filter(Boolean) || [],
           loadTime: "N/A", // Would need performance API
         },
         
