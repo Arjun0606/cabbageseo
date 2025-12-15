@@ -165,7 +165,7 @@ interface SEOBreakdown {
   accessibilityScore: number;
 }
 
-function calculateSEOBreakdown(issues: { severity: string; type: string }[]): SEOBreakdown {
+function calculateSEOBreakdown(issues: { severity: string; category: string }[]): SEOBreakdown {
   const breakdown: SEOBreakdown = {
     technicalScore: 20,
     contentScore: 20,
@@ -174,24 +174,32 @@ function calculateSEOBreakdown(issues: { severity: string; type: string }[]): SE
     accessibilityScore: 20,
   };
   
-  const technicalIssues = ["broken_link", "redirect_chain", "slow_page", "missing_schema"];
-  const contentIssues = ["thin_content", "duplicate_title", "missing_h1", "multiple_h1"];
-  const metaIssues = ["missing_meta_title", "missing_meta_description"];
-  const accessibilityIssues = ["missing_alt"];
+  // Map categories to score types
+  // Categories: meta, headings, images, links, content, technical, performance, schema
   
   for (const issue of issues) {
     const penalty = issue.severity === "critical" ? 5 : issue.severity === "warning" ? 3 : 1;
     
-    if (technicalIssues.includes(issue.type)) {
-      breakdown.technicalScore = Math.max(0, breakdown.technicalScore - penalty);
-    } else if (contentIssues.includes(issue.type)) {
-      breakdown.contentScore = Math.max(0, breakdown.contentScore - penalty);
-    } else if (metaIssues.includes(issue.type)) {
-      breakdown.metaScore = Math.max(0, breakdown.metaScore - penalty);
-    } else if (accessibilityIssues.includes(issue.type)) {
-      breakdown.accessibilityScore = Math.max(0, breakdown.accessibilityScore - penalty);
-    } else {
-      breakdown.performanceScore = Math.max(0, breakdown.performanceScore - penalty);
+    switch (issue.category) {
+      case "technical":
+      case "links":
+      case "schema":
+        breakdown.technicalScore = Math.max(0, breakdown.technicalScore - penalty);
+        break;
+      case "content":
+      case "headings":
+        breakdown.contentScore = Math.max(0, breakdown.contentScore - penalty);
+        break;
+      case "meta":
+        breakdown.metaScore = Math.max(0, breakdown.metaScore - penalty);
+        break;
+      case "images":
+        breakdown.accessibilityScore = Math.max(0, breakdown.accessibilityScore - penalty);
+        break;
+      case "performance":
+      default:
+        breakdown.performanceScore = Math.max(0, breakdown.performanceScore - penalty);
+        break;
     }
   }
   
@@ -267,7 +275,7 @@ export async function POST(request: NextRequest) {
     
     // Calculate SEO breakdown
     const seoBreakdown = calculateSEOBreakdown(
-      auditResult.issues.map(i => ({ severity: i.severity, type: i.type }))
+      auditResult.issues.map(i => ({ severity: i.severity, category: i.category }))
     );
     const seoScore = Object.values(seoBreakdown).reduce((a, b) => a + b, 0);
 
