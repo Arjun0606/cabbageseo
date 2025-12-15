@@ -1,17 +1,45 @@
 /**
- * Checkout API
- * Creates checkout sessions for subscriptions and credit purchases
+ * Checkout API - Create checkout sessions for subscriptions
+ * 
+ * Uses Dodo Payments to create checkout sessions for plan upgrades
+ * 
+ * POST /api/billing/checkout
+ * {
+ *   "planId": "pro" | "pro_plus",
+ *   "interval": "monthly" | "yearly"
+ * }
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { payments } from "@/lib/billing/payments";
-import { PLANS, CREDIT_PACKAGES } from "@/lib/billing/plans";
+import { dodo } from "@/lib/billing/dodo-client";
+import { PLANS } from "@/lib/billing/plans";
+
+// Dodo Product IDs (configured in Dodo Dashboard)
+const PRODUCT_IDS: Record<string, Record<string, string>> = {
+  starter: {
+    monthly: process.env.DODO_STARTER_MONTHLY_ID || "prod_starter_monthly",
+    yearly: process.env.DODO_STARTER_YEARLY_ID || "prod_starter_yearly",
+  },
+  pro: {
+    monthly: process.env.DODO_PRO_MONTHLY_ID || "prod_pro_monthly",
+    yearly: process.env.DODO_PRO_YEARLY_ID || "prod_pro_yearly",
+  },
+  pro_plus: {
+    monthly: process.env.DODO_PRO_PLUS_MONTHLY_ID || "prod_pro_plus_monthly",
+    yearly: process.env.DODO_PRO_PLUS_YEARLY_ID || "prod_pro_plus_yearly",
+  },
+};
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
+  
   if (!supabase) {
-    return NextResponse.json({ error: "Not configured" }, { status: 500 });
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
+
+  if (!dodo.isConfigured()) {
+    return NextResponse.json({ error: "Payments not configured" }, { status: 503 });
   }
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -21,42 +49,59 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { type, planId, billingInterval, packageIndex } = body;
+    const { planId, interval = "monthly" } = body;
+
+    // Validate plan
+    if (!PLANS[planId]) {
+      return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+    }
+
+    if (interval !== "monthly" && interval !== "yearly") {
+      return NextResponse.json({ error: "Invalid interval" }, { status: 400 });
+    }
 
     // Get user's organization
-    const { data: profileData } = await supabase
+    const { data: userData } = await supabase
       .from("users")
-      .select("organization_id")
+      .select("organization_id, email, name")
       .eq("id", user.id)
       .single();
 
-    const profile = profileData as { organization_id: string } | null;
+    const profile = userData as { organization_id?: string; email?: string; name?: string } | null;
     if (!profile?.organization_id) {
       return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
-    // Get or create payment customer
+    // Get organization
     const { data: orgData } = await supabase
       .from("organizations")
-      .select("id, name, stripe_customer_id")
+      .select("id, name, stripe_customer_id, plan")
       .eq("id", profile.organization_id)
       .single();
 
-    const org = orgData as { id: string; name: string; stripe_customer_id: string | null } | null;
+    const org = orgData as { id: string; name: string; stripe_customer_id?: string; plan?: string } | null;
     if (!org) {
-      return NextResponse.json({ error: "Organization not found" }, { status: 400 });
+      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
+    // Check if already on this plan
+    if (org.plan === planId) {
+      return NextResponse.json({ error: "Already on this plan" }, { status: 400 });
+    }
+
+    // Get or create Dodo customer
     let customerId = org.stripe_customer_id;
-
+    
     if (!customerId) {
-      // Create customer
-      const customer = await payments.createCustomer({
-        email: user.email!,
-        name: org.name,
-        organizationId: org.id,
+      // Create customer in Dodo
+      const customer = await dodo.createCustomer({
+        email: profile.email || user.email || "",
+        name: profile.name || org.name,
+        metadata: {
+          organization_id: org.id,
+        },
       });
-
+      
       customerId = customer.id;
 
       // Save customer ID
@@ -66,48 +111,43 @@ export async function POST(request: NextRequest) {
         .eq("id", org.id);
     }
 
-    const origin = request.headers.get("origin") || "http://localhost:3000";
-
-    // Handle subscription checkout
-    if (type === "subscription") {
-      if (!planId || !PLANS[planId]) {
-        return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
-      }
-
-      const session = await payments.createCheckoutSession({
-        customerId,
-        planId,
-        billingInterval: billingInterval || "monthly",
-        successUrl: `${origin}/settings/billing?success=true`,
-        cancelUrl: `${origin}/settings/billing?canceled=true`,
-      });
-
-      return NextResponse.json({ checkoutUrl: session.checkoutUrl });
+    // Get product ID for the plan
+    const productId = PRODUCT_IDS[planId]?.[interval];
+    if (!productId) {
+      return NextResponse.json({ error: "Product not configured" }, { status: 500 });
     }
 
-    // Handle credit purchase
-    if (type === "credits") {
-      if (packageIndex === undefined || !CREDIT_PACKAGES[packageIndex]) {
-        return NextResponse.json({ error: "Invalid package" }, { status: 400 });
-      }
+    // Get URLs
+    const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "";
+    const successUrl = `${origin}/settings/billing?success=true&plan=${planId}`;
+    const cancelUrl = `${origin}/settings/billing?canceled=true`;
 
-      const session = await payments.createCreditCheckoutSession({
-        customerId,
-        packageIndex,
-        successUrl: `${origin}/settings/billing?credits=success`,
-        cancelUrl: `${origin}/settings/billing?credits=canceled`,
-      });
+    // Create checkout session
+    const session = await dodo.createCheckoutSession({
+      customer_id: customerId,
+      product_id: productId,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata: {
+        organization_id: org.id,
+        plan_id: planId,
+        interval,
+      },
+    });
 
-      return NextResponse.json({ checkoutUrl: session.checkoutUrl });
-    }
+    return NextResponse.json({
+      success: true,
+      data: {
+        checkoutUrl: session.url,
+        sessionId: session.id,
+      },
+    });
 
-    return NextResponse.json({ error: "Invalid checkout type" }, { status: 400 });
   } catch (error) {
-    console.error("Checkout error:", error);
+    console.error("[Checkout API] Error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Checkout failed" },
+      { error: error instanceof Error ? error.message : "Failed to create checkout" },
       { status: 500 }
     );
   }
 }
-

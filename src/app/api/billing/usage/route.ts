@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createUsageTracker } from "@/lib/billing/usage-tracker";
 import { getPlan } from "@/lib/billing/plans";
+import { getOverageSummary } from "@/lib/billing/overage-manager";
 
 export async function GET() {
   const supabase = await createClient();
@@ -35,7 +36,7 @@ export async function GET() {
     // Get organization
     const { data: orgData } = await supabase
       .from("organizations")
-      .select("plan, subscription_status, current_period_start, current_period_end")
+      .select("plan, subscription_status, current_period_start, current_period_end, overage_settings")
       .eq("id", profile.organization_id)
       .single();
 
@@ -56,6 +57,9 @@ export async function GET() {
     const credits = await tracker.getCreditBalance();
     const plan = getPlan(org.plan);
 
+    // Get overage summary
+    const overages = await getOverageSummary(profile.organization_id);
+
     return NextResponse.json({
       plan: {
         id: plan.id,
@@ -72,6 +76,14 @@ export async function GET() {
         bonus: credits.bonusCredits,
         total: credits.totalCredits,
         expiresAt: credits.expiresAt,
+      },
+      overages: {
+        enabled: overages.enabled,
+        spendingCapDollars: overages.spendingCapDollars,
+        currentSpendDollars: overages.currentSpendDollars,
+        remainingDollars: overages.remainingDollars,
+        percentUsed: overages.percentUsed,
+        autoIncrease: overages.autoIncrease,
       },
     });
   } catch (error) {

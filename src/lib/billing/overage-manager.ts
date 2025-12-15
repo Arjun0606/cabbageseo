@@ -13,6 +13,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getPlanLimits, OVERAGE_PRICES, INTERNAL_COSTS } from "./plans";
+import { dodo } from "./dodo-client";
 
 // ============================================
 // TYPES
@@ -239,6 +240,33 @@ export async function recordOverage(
     description: resource.description || `${resource.amount} ${resource.type}`,
     created_at: new Date().toISOString(),
   } as never);
+
+  // Report usage to Dodo for real-time billing
+  if (dodo.isConfigured()) {
+    try {
+      // Get org's subscription ID
+      const { data: orgSub } = await supabase
+        .from("organizations")
+        .select("stripe_subscription_id")
+        .eq("id", organizationId)
+        .single();
+      
+      const subscriptionId = (orgSub as { stripe_subscription_id?: string } | null)?.stripe_subscription_id;
+      
+      if (subscriptionId) {
+        await dodo.reportUsage({
+          subscription_id: subscriptionId,
+          quantity: costCents, // Report in cents
+          timestamp: new Date().toISOString(),
+          action: resource.type,
+          idempotency_key: `${organizationId}-${resource.type}-${Date.now()}`,
+        });
+      }
+    } catch (e) {
+      console.error("Failed to report usage to Dodo:", e);
+      // Don't fail the operation - usage is still tracked locally
+    }
+  }
 
   // Check if we need to send notification
   await checkAndNotify(organizationId, settings, newSpend);

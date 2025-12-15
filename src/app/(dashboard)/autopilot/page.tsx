@@ -337,17 +337,17 @@ function AutopilotContent() {
         </div>
         <div className="flex gap-3">
           <Badge variant={isRunning ? "default" : "secondary"} className="px-4 py-2">
-            {isRunning ? (
+          {isRunning ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Running
               </>
-            ) : (
+          ) : (
               <>
                 <Clock className="w-4 h-4 mr-2" />
                 Idle
               </>
-            )}
+          )}
           </Badge>
         </div>
       </div>
@@ -373,86 +373,86 @@ function AutopilotContent() {
       {/* Main Content */}
       {!isLoading && (
         <>
-          {/* Stats */}
-          <div className="grid gap-4 sm:grid-cols-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-500/10">
-                    <Loader2 className={`w-5 h-5 text-blue-500 ${isRunning ? "animate-spin" : ""}`} />
-                  </div>
-                  <div>
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <Loader2 className={`w-5 h-5 text-blue-500 ${isRunning ? "animate-spin" : ""}`} />
+              </div>
+              <div>
                     <p className="text-2xl font-bold">{stats.running}</p>
-                    <p className="text-xs text-muted-foreground">Running</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-gray-500/10">
-                    <Clock className="w-5 h-5 text-gray-500" />
-                  </div>
-                  <div>
+                <p className="text-xs text-muted-foreground">Running</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gray-500/10">
+                <Clock className="w-5 h-5 text-gray-500" />
+              </div>
+              <div>
                     <p className="text-2xl font-bold">{stats.pending}</p>
                     <p className="text-xs text-muted-foreground">Pending</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-green-500/10">
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                  </div>
-                  <div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-500/10">
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              </div>
+              <div>
                     <p className="text-2xl font-bold">{stats.completed}</p>
-                    <p className="text-xs text-muted-foreground">Completed</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Brain className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
+                <p className="text-xs text-muted-foreground">Completed</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Brain className="w-5 h-5 text-primary" />
+              </div>
+              <div>
                     <p className="text-2xl font-bold">{isRunning ? "Active" : "Idle"}</p>
-                    <p className="text-xs text-muted-foreground">Status</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                <p className="text-xs text-muted-foreground">Status</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Task Queue */}
-            <div className="lg:col-span-2 space-y-4">
-              {/* New Task Input */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-primary" />
-                    Add New Task
-                  </CardTitle>
-                  <CardDescription>
-                    Describe what you want the AI to do
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-2">
-                    <Textarea
-                      value={newTaskPrompt}
-                      onChange={(e) => setNewTaskPrompt(e.target.value)}
-                      placeholder="e.g., Generate an article about 'best SEO practices for e-commerce sites'"
-                      className="min-h-[80px]"
-                    />
-                  </div>
-                  <div className="flex justify-end mt-3">
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Task Queue */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* New Task Input */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                Add New Task
+              </CardTitle>
+              <CardDescription>
+                Describe what you want the AI to do
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <Textarea
+                  value={newTaskPrompt}
+                  onChange={(e) => setNewTaskPrompt(e.target.value)}
+                  placeholder="e.g., Generate an article about 'best SEO practices for e-commerce sites'"
+                  className="min-h-[80px]"
+                />
+              </div>
+              <div className="flex justify-end mt-3">
                     <Button
                       onClick={addTask}
                       disabled={!newTaskPrompt.trim() || createMutation.isPending}
@@ -460,17 +460,17 @@ function AutopilotContent() {
                       {createMutation.isPending ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       ) : (
-                        <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-4 h-4 mr-2" />
                       )}
-                      Add to Queue
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  Add to Queue
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-              {/* Task List */}
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Task Queue</h2>
+          {/* Task List */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Task Queue</h2>
                 {stats.completed > 0 && (
                   <Button 
                     variant="ghost" 
@@ -481,19 +481,19 @@ function AutopilotContent() {
                     {clearCompletedMutation.isPending ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     ) : null}
-                    Clear Completed
-                  </Button>
-                )}
-              </div>
+                Clear Completed
+              </Button>
+            )}
+          </div>
 
-              <div className="space-y-3">
-                {tasks.length === 0 ? (
+          <div className="space-y-3">
+            {tasks.length === 0 ? (
                   <EmptyState />
-                ) : (
-                  tasks.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
+            ) : (
+              tasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
                       onRemove={() => cancelMutation.mutate(task.id)}
                       onRetry={() => {
                         // Retry by creating a new task with same description
@@ -502,157 +502,157 @@ function AutopilotContent() {
                           description: task.description,
                         });
                       }}
-                    />
-                  ))
-                )}
+                />
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Settings Sidebar */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Autopilot Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="auto-publish">Auto-Publish</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Publish content automatically
+                  </p>
+                </div>
+                <Switch
+                  id="auto-publish"
+                  checked={settings.autoPublish}
+                  onCheckedChange={(checked) =>
+                    setSettings((s) => ({ ...s, autoPublish: checked }))
+                  }
+                />
               </div>
-            </div>
 
-            {/* Settings Sidebar */}
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="w-5 h-5" />
-                    Autopilot Settings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="auto-publish">Auto-Publish</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Publish content automatically
-                      </p>
-                    </div>
-                    <Switch
-                      id="auto-publish"
-                      checked={settings.autoPublish}
-                      onCheckedChange={(checked) =>
-                        setSettings((s) => ({ ...s, autoPublish: checked }))
-                      }
-                    />
-                  </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="notify">Notifications</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Notify when tasks complete
+                  </p>
+                </div>
+                <Switch
+                  id="notify"
+                  checked={settings.notifyOnComplete}
+                  onCheckedChange={(checked) =>
+                    setSettings((s) => ({ ...s, notifyOnComplete: checked }))
+                  }
+                />
+              </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="notify">Notifications</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Notify when tasks complete
-                      </p>
-                    </div>
-                    <Switch
-                      id="notify"
-                      checked={settings.notifyOnComplete}
-                      onCheckedChange={(checked) =>
-                        setSettings((s) => ({ ...s, notifyOnComplete: checked }))
-                      }
-                    />
-                  </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="pause-error">Pause on Error</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Stop queue if task fails
+                  </p>
+                </div>
+                <Switch
+                  id="pause-error"
+                  checked={settings.pauseOnError}
+                  onCheckedChange={(checked) =>
+                    setSettings((s) => ({ ...s, pauseOnError: checked }))
+                  }
+                />
+              </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="pause-error">Pause on Error</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Stop queue if task fails
-                      </p>
-                    </div>
-                    <Switch
-                      id="pause-error"
-                      checked={settings.pauseOnError}
-                      onCheckedChange={(checked) =>
-                        setSettings((s) => ({ ...s, pauseOnError: checked }))
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="concurrent">Concurrent Tasks</Label>
-                    <Select
-                      value={settings.maxConcurrent.toString()}
-                      onValueChange={(v) =>
-                        setSettings((s) => ({ ...s, maxConcurrent: parseInt(v) }))
-                      }
-                    >
+              <div>
+                <Label htmlFor="concurrent">Concurrent Tasks</Label>
+                <Select
+                  value={settings.maxConcurrent.toString()}
+                  onValueChange={(v) =>
+                    setSettings((s) => ({ ...s, maxConcurrent: parseInt(v) }))
+                  }
+                >
                       <SelectTrigger className="mt-2">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 task at a time</SelectItem>
-                        <SelectItem value="2">2 tasks at a time</SelectItem>
-                        <SelectItem value="3">3 tasks at a time</SelectItem>
-                        <SelectItem value="5">5 tasks at a time</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 task at a time</SelectItem>
+                    <SelectItem value="2">2 tasks at a time</SelectItem>
+                    <SelectItem value="3">3 tasks at a time</SelectItem>
+                    <SelectItem value="5">5 tasks at a time</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
 
-              {/* Quick Actions */}
-              <Card>
-                <CardHeader>
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Zap className="w-5 h-5 text-yellow-500" />
                     Quick Actions
                   </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() =>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() =>
                       createMutation.mutate({
                         type: "audit",
                         description: "Run a full technical SEO audit",
                       })
-                    }
-                  >
+                }
+              >
                     <AlertTriangle className="w-4 h-4 mr-2 text-yellow-500" />
                     Run Technical Audit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() =>
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() =>
                       createMutation.mutate({
                         type: "keywords",
                         description: "Research new keyword opportunities",
                       })
-                    }
-                  >
+                }
+              >
                     <Search className="w-4 h-4 mr-2 text-purple-500" />
-                    Research Keywords
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() =>
+                Research Keywords
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() =>
                       createMutation.mutate({
                         type: "content",
                         description: "Generate a new SEO article",
                       })
-                    }
-                  >
+                }
+              >
                     <FileText className="w-4 h-4 mr-2 text-blue-500" />
                     Generate Content
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() =>
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() =>
                       createMutation.mutate({
                         type: "analyze",
                         description: "Analyze site performance and rankings",
                       })
-                    }
-                  >
+                }
+              >
                     <Target className="w-4 h-4 mr-2 text-pink-500" />
                     Analyze Performance
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
         </>
       )}
     </div>

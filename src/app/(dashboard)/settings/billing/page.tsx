@@ -14,6 +14,8 @@ import {
   TrendingUp,
   Package,
   Loader2,
+  Shield,
+  DollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -27,10 +29,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 
 // ============================================
 // TYPES
 // ============================================
+
+interface OverageSettings {
+  enabled: boolean;
+  spendingCapDollars: number;
+  currentSpendDollars: number;
+  remainingDollars: number;
+  percentUsed: number;
+  autoIncrease: boolean;
+}
 
 interface UsageData {
   plan: {
@@ -65,6 +78,7 @@ interface UsageData {
     total: number;
     expiresAt: string | null;
   };
+  overages?: OverageSettings;
 }
 
 interface Plan {
@@ -132,10 +146,12 @@ function PlanCard({
   plan,
   isCurrent,
   onSelect,
+  loading,
 }: {
   plan: Plan;
   isCurrent: boolean;
   onSelect: () => void;
+  loading?: boolean;
 }) {
   return (
     <Card
@@ -167,10 +183,12 @@ function PlanCard({
         <Button
           className="w-full"
           variant={isCurrent ? "secondary" : plan.popular ? "default" : "outline"}
-          disabled={isCurrent}
+          disabled={isCurrent || loading}
           onClick={onSelect}
         >
-          {isCurrent ? (
+          {loading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : isCurrent ? (
             "Current Plan"
           ) : (
             <>
@@ -193,6 +211,9 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<UsageData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [upgrading, setUpgrading] = useState<string | null>(null);
+  const [spendingCap, setSpendingCap] = useState("100");
+  const [savingOverages, setSavingOverages] = useState(false);
 
   useEffect(() => {
     async function fetchUsage() {
@@ -201,6 +222,9 @@ export default function BillingPage() {
         if (!res.ok) throw new Error("Failed to fetch usage data");
         const json = await res.json();
         setData(json);
+        if (json.overages?.spendingCapDollars) {
+          setSpendingCap(String(json.overages.spendingCapDollars));
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load billing data");
       } finally {
@@ -214,11 +238,100 @@ export default function BillingPage() {
     try {
       const res = await fetch("/api/billing/portal", { method: "POST" });
       const json = await res.json();
-      if (json.url) {
-        window.location.href = json.url;
+      if (json.data?.portalUrl) {
+        window.location.href = json.data.portalUrl;
       }
     } catch {
       console.error("Failed to open billing portal");
+    }
+  };
+
+  const handleUpgrade = async (planId: string) => {
+    setUpgrading(planId);
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId, interval: "monthly" }),
+      });
+      const json = await res.json();
+      if (json.data?.checkoutUrl) {
+        window.location.href = json.data.checkoutUrl;
+      } else if (json.error) {
+        setError(json.error);
+      }
+    } catch {
+      setError("Failed to start checkout");
+    } finally {
+      setUpgrading(null);
+    }
+  };
+
+  const handleToggleOverages = async (enabled: boolean) => {
+    setSavingOverages(true);
+    try {
+      if (enabled) {
+        const res = await fetch("/api/billing/overages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            spendingCapDollars: Number(spendingCap) || 100,
+            autoIncrease: false 
+          }),
+        });
+        const json = await res.json();
+        if (json.success && data) {
+          setData({
+            ...data,
+            overages: {
+              enabled: true,
+              spendingCapDollars: Number(spendingCap),
+              currentSpendDollars: 0,
+              remainingDollars: Number(spendingCap),
+              percentUsed: 0,
+              autoIncrease: false,
+            },
+          });
+        }
+      } else {
+        await fetch("/api/billing/overages", { method: "DELETE" });
+        if (data) {
+          setData({
+            ...data,
+            overages: { ...data.overages!, enabled: false },
+          });
+        }
+      }
+    } catch {
+      setError("Failed to update overage settings");
+    } finally {
+      setSavingOverages(false);
+    }
+  };
+
+  const handleSetCap = async () => {
+    setSavingOverages(true);
+    try {
+      const res = await fetch("/api/billing/overages", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set_cap", amount: Number(spendingCap) }),
+      });
+      const json = await res.json();
+      if (json.success && data) {
+        setData({
+          ...data,
+          overages: {
+            ...data.overages!,
+            spendingCapDollars: Number(spendingCap),
+            remainingDollars: Number(spendingCap) - (data.overages?.currentSpendDollars || 0),
+          },
+        });
+      }
+    } catch {
+      setError("Failed to update spending cap");
+    } finally {
+      setSavingOverages(false);
     }
   };
 
@@ -314,11 +427,8 @@ export default function BillingPage() {
                       key={plan.id}
                       plan={plan}
                       isCurrent={plan.id === data.plan.id}
-                      onSelect={() => {
-                        setShowUpgrade(false);
-                        // In production, this would call the checkout API
-                        window.location.href = `/api/billing/checkout?plan=${plan.id}`;
-                      }}
+                      onSelect={() => handleUpgrade(plan.id)}
+                      loading={upgrading === plan.id}
                     />
                   ))}
                 </div>
@@ -411,15 +521,106 @@ export default function BillingPage() {
         </CardContent>
       </Card>
 
-      {/* Credits */}
+      {/* Overage / Pay-as-you-go */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5" />
+            Pay-as-You-Go (Overages)
+          </CardTitle>
+          <CardDescription>
+            Continue using CabbageSEO when you hit plan limits
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Toggle */}
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+              <div>
+                <p className="font-medium">Enable overages</p>
+                <p className="text-sm text-muted-foreground">
+                  {data.overages?.enabled 
+                    ? "You won't be blocked when you hit plan limits" 
+                    : "You'll be blocked when you reach plan limits"}
+                </p>
+              </div>
+              <Switch
+                checked={data.overages?.enabled ?? false}
+                onCheckedChange={handleToggleOverages}
+                disabled={savingOverages}
+              />
+            </div>
+
+            {/* Spending Cap */}
+            {data.overages?.enabled && (
+              <>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Spending Cap</span>
+                    <span className="text-sm text-muted-foreground">
+                      ${data.overages.currentSpendDollars.toFixed(2)} / ${data.overages.spendingCapDollars.toFixed(2)}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={data.overages.percentUsed} 
+                    className={`h-2 ${data.overages.percentUsed >= 80 ? "[&>div]:bg-yellow-500" : ""}`}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    ${data.overages.remainingDollars.toFixed(2)} remaining this billing period
+                  </p>
+                </div>
+
+                <div className="flex gap-3 items-end">
+                  <div className="flex-1">
+                    <label className="text-sm font-medium mb-2 block">
+                      Set new cap ($)
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type="number"
+                        min="10"
+                        step="10"
+                        value={spendingCap}
+                        onChange={(e) => setSpendingCap(e.target.value)}
+                        className="pl-8"
+                      />
+                    </div>
+                  </div>
+                  <Button onClick={handleSetCap} disabled={savingOverages}>
+                    {savingOverages ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Update Cap"
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* Pricing info */}
+            <div className="text-sm text-muted-foreground border-t pt-4 mt-4">
+              <p className="mb-2 font-medium text-foreground">Overage pricing (90% markup):</p>
+              <ul className="space-y-1 ml-4">
+                <li>• Articles: $5.00 per article</li>
+                <li>• Keywords: $1.00 per 100 keywords</li>
+                <li>• Audits: $0.50 per audit</li>
+                <li>• AIO Analyses: $0.50 per analysis</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Prepaid Credits */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5" />
-            On-Demand Credits
+            Prepaid Credits
           </CardTitle>
           <CardDescription>
-            Pay-as-you-go credits for extra usage
+            Buy credits in advance for discounted rates
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -434,19 +635,42 @@ export default function BillingPage() {
                 </p>
               )}
             </div>
-            <Button>
+            <Button 
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/billing/credits", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ packageId: "medium" }),
+                  });
+                  const json = await res.json();
+                  if (json.data?.checkoutUrl) {
+                    window.location.href = json.data.checkoutUrl;
+                  }
+                } catch {
+                  setError("Failed to open credits checkout");
+                }
+              }}
+            >
               <CreditCard className="w-4 h-4 mr-2" />
-              Add Credits
+              Buy Credits
             </Button>
           </div>
-          <div className="text-sm text-muted-foreground">
-            <p className="mb-2">On-demand pricing:</p>
-            <ul className="space-y-1 ml-4">
-              <li>• Articles: $0.50 per article</li>
-              <li>• Keywords: $0.01 per keyword</li>
-              <li>• Pages crawled: $0.001 per page</li>
-              <li>• SERP calls: $0.01 per call</li>
-            </ul>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="p-3 border rounded-lg text-center">
+              <p className="font-bold">$25</p>
+              <p className="text-sm text-muted-foreground">50 credits</p>
+            </div>
+            <div className="p-3 border rounded-lg text-center border-primary bg-primary/5">
+              <p className="font-bold">$50</p>
+              <p className="text-sm text-muted-foreground">110 credits</p>
+              <Badge variant="secondary" className="mt-1 text-xs">+10% bonus</Badge>
+            </div>
+            <div className="p-3 border rounded-lg text-center">
+              <p className="font-bold">$100</p>
+              <p className="text-sm text-muted-foreground">250 credits</p>
+              <Badge variant="secondary" className="mt-1 text-xs">+25% bonus</Badge>
+            </div>
           </div>
         </CardContent>
       </Card>
