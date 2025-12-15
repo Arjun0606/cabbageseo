@@ -242,6 +242,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Crawl the page (just the homepage for free tier)
+    // Enable raw content for AIO analysis
     const crawler = new SiteCrawler({
       maxPages: 1,
       respectRobotsTxt: true,
@@ -270,7 +271,7 @@ export async function POST(request: NextRequest) {
     );
     const seoScore = Object.values(seoBreakdown).reduce((a, b) => a + b, 0);
 
-    // Analyze AIO factors (use rawHtml from crawler)
+    // Analyze AIO factors using real HTML and text content
     const aioFactors = analyzeAIOFactors(page.rawHtml || "", page.textContent || "");
     const aioBreakdown = calculateAIOBreakdown(aioFactors);
     const aioScore = Object.values(aioBreakdown).reduce((a, b) => a + b, 0);
@@ -392,10 +393,10 @@ export async function POST(request: NextRequest) {
         // Page info
         pageInfo: {
           wordCount: page.wordCount || 0,
-          hasH1: (page.h1?.length || 0) > 0,
+          hasH1: !!page.h1?.length,
           hasMetaDescription: !!page.metaDescription,
-          schemaTypes: page.schemaMarkup?.map((s: { "@type"?: string }) => s["@type"]).filter(Boolean) || [],
-          loadTime: "N/A", // Would need performance API
+          schemaTypes: (page.schemaMarkup || []).map((s: { "@type"?: string }) => s["@type"]).filter(Boolean),
+          loadTime: `${page.loadTimeMs}ms`,
         },
         
         // CTA
