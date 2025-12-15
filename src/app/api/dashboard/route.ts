@@ -101,7 +101,7 @@ export async function GET() {
     // ========================================
     const { data: sitesData } = await supabase
       .from("sites")
-      .select("id, domain, name, seo_score, status, pages_count, last_crawled_at")
+      .select("id, domain, name, seo_score, is_active, last_crawl_at")
       .eq("organization_id", orgId)
       .order("created_at", { ascending: false });
 
@@ -110,19 +110,38 @@ export async function GET() {
       domain: string;
       name: string;
       seo_score: number | null;
-      status: string;
-      pages_count: number | null;
-      last_crawled_at: string | null;
+      is_active: boolean | null;
+      last_crawl_at: string | null;
     }>) || []).map(site => ({
       id: site.id,
       domain: site.domain,
       name: site.name || site.domain,
       seoScore: site.seo_score || 0,
-      status: site.status || "active",
-      pagesCount: site.pages_count || 0,
+      status: site.is_active !== false ? "active" : "inactive",
+      pagesCount: 0, // Will be filled below
       issuesCount: 0, // Will be filled below
-      lastCrawled: site.last_crawled_at,
+      lastCrawled: site.last_crawl_at,
     }));
+
+    // Get page counts for each site
+    if (sites.length > 0) {
+      const siteIds = sites.map(s => s.id);
+      const { data: pagesData } = await supabase
+        .from("pages")
+        .select("site_id")
+        .in("site_id", siteIds);
+
+      if (pagesData) {
+        const pagesBySite = (pagesData as Array<{ site_id: string }>).reduce((acc, page) => {
+          acc[page.site_id] = (acc[page.site_id] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+
+        sites.forEach(site => {
+          site.pagesCount = pagesBySite[site.id] || 0;
+        });
+      }
+    }
 
     // Get issue counts for each site
     if (sites.length > 0) {
@@ -131,7 +150,7 @@ export async function GET() {
         .from("issues")
         .select("site_id, severity")
         .in("site_id", siteIds)
-        .eq("status", "open");
+        .eq("is_resolved", false);
 
       if (issuesData) {
         const issuesBySite = (issuesData as Array<{ site_id: string; severity: string }>).reduce((acc, issue) => {
@@ -213,7 +232,7 @@ export async function GET() {
         .from("issues")
         .select("severity")
         .in("site_id", siteIds)
-        .eq("status", "open");
+        .eq("is_resolved", false);
 
       if (allIssues) {
         stats.totalIssues = allIssues.length;

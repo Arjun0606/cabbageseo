@@ -101,7 +101,7 @@ export async function GET() {
     }
 
     // Get organization billing info
-    const { data: orgData } = await supabase
+    const { data: orgResult } = await supabase
       .from("organizations")
       .select(`
         plan,
@@ -116,6 +116,18 @@ export async function GET() {
       `)
       .eq("id", profile.organization_id)
       .single();
+
+    const orgData = orgResult as {
+      plan?: string;
+      billing_interval?: string;
+      subscription_status?: string;
+      trial_ends_at?: string;
+      current_period_start?: string;
+      current_period_end?: string;
+      cancel_at_period_end?: boolean;
+      stripe_customer_id?: string;
+      overage_settings?: Record<string, unknown>;
+    } | null;
 
     if (!orgData) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });

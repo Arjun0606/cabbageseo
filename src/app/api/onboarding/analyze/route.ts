@@ -391,10 +391,10 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
     await supabase
       .from("sites")
       .update({
-        status: "active",
+        is_active: true,
         seo_score: seoScore,
-        pages_count: pagesAnalyzed,
-        last_crawled_at: new Date().toISOString(),
+        last_crawl_at: new Date().toISOString(),
+        last_crawl_pages_count: pagesAnalyzed,
       } as never)
       .eq("id", siteId);
 
@@ -403,12 +403,14 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
       .from("audits")
       .upsert({
         site_id: siteId,
-        score: seoScore,
-        issues_count: issues.length,
-        critical_count: criticalCount,
-        warning_count: warningCount,
-        passed_count: passedCount,
-        data: auditResult,
+        overall_score: seoScore,
+        issues_found: issues.length,
+        critical_issues: criticalCount,
+        warning_issues: warningCount,
+        info_issues: passedCount,
+        results: auditResult,
+        status: "completed",
+        completed_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
       } as never);
 

@@ -263,7 +263,7 @@ export async function POST(request: NextRequest) {
 
     // Run technical SEO audit
     const auditEngine = new TechnicalAuditEngine();
-    const auditResult = auditEngine.audit(crawlResult.pages);
+    const auditResult = auditEngine.audit(crawlResult);
     
     // Calculate SEO breakdown
     const seoBreakdown = calculateSEOBreakdown(

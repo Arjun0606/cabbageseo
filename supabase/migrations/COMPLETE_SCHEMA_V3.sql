@@ -10,6 +10,8 @@
 
 -- Drop existing tables (in correct order due to foreign keys)
 DROP TABLE IF EXISTS "overage_charges" CASCADE;
+DROP TABLE IF EXISTS "invoices" CASCADE;
+DROP TABLE IF EXISTS "credit_transactions" CASCADE;
 DROP TABLE IF EXISTS "notifications" CASCADE;
 DROP TABLE IF EXISTS "aio_analyses" CASCADE;
 DROP TABLE IF EXISTS "ai_citations" CASCADE;
@@ -217,6 +219,34 @@ CREATE TABLE "overage_charges" (
   "metadata" jsonb DEFAULT '{}'::jsonb,
   "billed" boolean DEFAULT false,-- Has this been included in an invoice?
   "billed_at" timestamp,
+  "created_at" timestamp DEFAULT now() NOT NULL
+);
+
+-- Invoice history table (tracks payment provider invoices)
+CREATE TABLE "invoices" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  "organization_id" uuid NOT NULL,
+  "external_id" text NOT NULL UNIQUE,  -- Dodo invoice ID
+  "amount" numeric(10, 2) NOT NULL,
+  "currency" text DEFAULT 'USD',
+  "status" text NOT NULL,              -- paid, pending, failed
+  "paid_at" timestamp,
+  "invoice_url" text,
+  "pdf_url" text,
+  "metadata" jsonb DEFAULT '{}'::jsonb,
+  "created_at" timestamp DEFAULT now() NOT NULL
+);
+
+-- Credit transactions table (tracks credit purchases and usage)
+CREATE TABLE "credit_transactions" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  "organization_id" uuid NOT NULL,
+  "type" text NOT NULL,                -- purchase, bonus, usage, refund
+  "credits" integer NOT NULL,          -- Positive for add, negative for usage
+  "amount" numeric(10, 2),             -- Dollar amount (for purchases)
+  "payment_id" text,                   -- Dodo payment ID
+  "description" text,
+  "metadata" jsonb DEFAULT '{}'::jsonb,
   "created_at" timestamp DEFAULT now() NOT NULL
 );
 
@@ -609,6 +639,8 @@ ALTER TABLE "usage" ADD CONSTRAINT "usage_organization_id_fk" FOREIGN KEY ("orga
 ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE;
 ALTER TABLE "notifications" ADD CONSTRAINT "notifications_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE;
 ALTER TABLE "overage_charges" ADD CONSTRAINT "overage_charges_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE;
+ALTER TABLE "invoices" ADD CONSTRAINT "invoices_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE;
+ALTER TABLE "credit_transactions" ADD CONSTRAINT "credit_transactions_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE;
 ALTER TABLE "sites" ADD CONSTRAINT "sites_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE;
 ALTER TABLE "keyword_clusters" ADD CONSTRAINT "keyword_clusters_site_id_fk" FOREIGN KEY ("site_id") REFERENCES "sites"("id") ON DELETE CASCADE;
 ALTER TABLE "keywords" ADD CONSTRAINT "keywords_site_id_fk" FOREIGN KEY ("site_id") REFERENCES "sites"("id") ON DELETE CASCADE;
@@ -664,6 +696,12 @@ CREATE INDEX "overage_charges_org_idx" ON "overage_charges"("organization_id");
 CREATE INDEX "overage_charges_created_idx" ON "overage_charges"("created_at");
 CREATE INDEX "overage_charges_billed_idx" ON "overage_charges"("billed") WHERE billed = false;
 CREATE INDEX "overage_charges_resource_idx" ON "overage_charges"("resource_type");
+CREATE INDEX "invoices_org_idx" ON "invoices"("organization_id");
+CREATE INDEX "invoices_external_idx" ON "invoices"("external_id");
+CREATE INDEX "invoices_created_idx" ON "invoices"("created_at");
+CREATE INDEX "credit_transactions_org_idx" ON "credit_transactions"("organization_id");
+CREATE INDEX "credit_transactions_type_idx" ON "credit_transactions"("type");
+CREATE INDEX "credit_transactions_created_idx" ON "credit_transactions"("created_at");
 CREATE INDEX "site_org_idx" ON "sites"("organization_id");
 CREATE INDEX "site_domain_idx" ON "sites"("domain");
 CREATE INDEX "cluster_site_idx" ON "keyword_clusters"("site_id");
@@ -806,6 +844,8 @@ ALTER TABLE credit_balance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE usage ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE overage_charges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE credit_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE keyword_clusters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE keywords ENABLE ROW LEVEL SECURITY;
@@ -843,6 +883,14 @@ CREATE POLICY "Service role can insert notifications" ON notifications FOR INSER
 -- Overage policies
 CREATE POLICY "Users can view own org overage charges" ON overage_charges FOR SELECT USING (organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid()));
 CREATE POLICY "Service role can manage overage charges" ON overage_charges FOR ALL USING (auth.role() = 'service_role');
+
+-- Invoice policies
+CREATE POLICY "Users can view own org invoices" ON invoices FOR SELECT USING (organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid()));
+CREATE POLICY "Service role can manage invoices" ON invoices FOR ALL USING (auth.role() = 'service_role');
+
+-- Credit transaction policies
+CREATE POLICY "Users can view own org credit transactions" ON credit_transactions FOR SELECT USING (organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid()));
+CREATE POLICY "Service role can manage credit transactions" ON credit_transactions FOR ALL USING (auth.role() = 'service_role');
 
 -- Site policies
 CREATE POLICY "Users can manage own org sites" ON sites FOR ALL USING (organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid()));

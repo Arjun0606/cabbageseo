@@ -62,6 +62,7 @@ export async function updateSession(request: NextRequest) {
   const publicApiPrefixes = [
     "/api/webhooks",
     "/api/auth",
+    "/api/public",  // Public free tools (no auth required)
   ];
   
   const isPublicRoute = publicRoutes.some(

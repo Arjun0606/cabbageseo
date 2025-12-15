@@ -87,12 +87,14 @@ export class UsageTracker {
       await supabase.from("usage").insert({
         organization_id: this.organizationId,
         period,
-        ai_credits: 0,
-        articles: 0,
-        keywords: 0,
-        audits: 0,
+        ai_credits_used: 0,
+        articles_generated: 0,
+        keywords_analyzed: 0,
+        audits_run: 0,
         serp_calls: 0,
-        crawls: 0,
+        pages_crawled: 0,
+        aio_analyses: 0,
+        backlink_checks: 0,
       } as never);
 
       return this.emptyUsage();
@@ -102,12 +104,12 @@ export class UsageTracker {
     return {
       organizationId: this.organizationId,
       period,
-      aiCredits: usage.ai_credits || 0,
-      articles: usage.articles || 0,
-      keywords: usage.keywords || 0,
-      audits: usage.audits || 0,
+      aiCredits: usage.ai_credits_used || 0,
+      articles: usage.articles_generated || 0,
+      keywords: usage.keywords_analyzed || 0,
+      audits: usage.audits_run || 0,
       serpCalls: usage.serp_calls || 0,
-      crawls: usage.crawls || 0,
+      crawls: usage.pages_crawled || 0,
     };
   }
 
@@ -170,12 +172,12 @@ export class UsageTracker {
 
     const period = this.getCurrentPeriod();
     const columnMap: Record<string, string> = {
-      aiCredits: "ai_credits",
-      articles: "articles",
-      keywords: "keywords",
-      audits: "audits",
+      aiCredits: "ai_credits_used",
+      articles: "articles_generated",
+      keywords: "keywords_analyzed",
+      audits: "audits_run",
       serpCalls: "serp_calls",
-      crawls: "crawls",
+      crawls: "pages_crawled",
     };
     const column = columnMap[resource];
 

@@ -75,7 +75,7 @@ export async function GET() {
           .from("issues")
           .select("id", { count: "exact" })
           .eq("site_id", site.id)
-          .eq("status", "open");
+          .eq("is_resolved", false);
 
         // Get integrations
         const { data: integrations } = await supabase
