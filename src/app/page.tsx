@@ -68,21 +68,21 @@ export default function LandingPage() {
             {/* CTA */}
             <div className="flex flex-wrap gap-4 mb-5 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
               <Button size="lg" className="h-12 px-8 bg-emerald-600 hover:bg-emerald-500 text-white border-0 gap-2 text-base font-semibold transition-all hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/25" asChild>
-                <Link href="/signup">
-                  Try it free
+                <Link href="/analyze">
+                  Get Your Free Score
                   <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="h-12 px-8 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 hover:border-zinc-600 gap-2 text-base transition-all hover:scale-105" asChild>
-                <Link href="/login">
-                  <Terminal className="h-5 w-5" />
-                  I have an account
+                <Link href="/signup">
+                  Start Free Trial
+                  <Sparkles className="h-5 w-5" />
                 </Link>
               </Button>
             </div>
 
             <p className="text-sm text-zinc-500 animate-fade-in-up" style={{ animationDelay: '500ms' }}>
-              No credit card required. Analyze your first site in under a minute.
+              No signup required for instant SEO + AIO analysis. See your scores in seconds.
             </p>
           </div>
         </div>
