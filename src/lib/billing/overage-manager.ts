@@ -449,7 +449,7 @@ async function checkAndNotify(
       if (lastNotified < hourAgo) {
         // Send notification (import dynamically to avoid circular deps)
         try {
-          const { sendUsageAlertEmail } = await import("@/lib/email");
+          const { emailService } = await import("@/lib/email");
           const supabase = await createClient();
           
           if (supabase) {
@@ -463,11 +463,10 @@ async function checkAndNotify(
 
             if (owner) {
               const ownerData = owner as { email: string; name: string };
-              await sendUsageAlertEmail(
+              await emailService.sendUsageAlert(
                 ownerData.email,
-                ownerData.name,
-                "spending",
-                percentUsed,
+                "Overage Spending",
+                Math.round(percentUsed),
                 100
               );
             }
