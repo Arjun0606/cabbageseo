@@ -509,7 +509,7 @@ export default function LandingPage() {
 
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
                 {[
-                  { icon: Target, title: "Keyword Research", desc: "Pull data from DataForSEO or SerpAPI. Cluster with AI." },
+                  { icon: Target, title: "Keyword Research", desc: "Pull real keyword data from DataForSEO. Cluster with AI." },
                   { icon: FileText, title: "Content Generation", desc: "Claude writes SEO + AI-optimized content." },
                   { icon: Sparkles, title: "AI Visibility Score", desc: "See how you rank in ChatGPT, Perplexity, Google AI.", badge: "NEW" },
                   { icon: BarChart3, title: "Technical Audit", desc: "Scan for SEO issues and AI optimization gaps." },
@@ -583,8 +583,8 @@ export default function LandingPage() {
                 </div>
                 <div className="space-y-3">
                   {[
-                    { label: "Keyword Research", tools: "DataForSEO, SerpAPI" },
-                    { label: "Content", tools: "Claude, GPT-4" },
+                    { label: "Keyword Research", tools: "DataForSEO" },
+                    { label: "Content Generation", tools: "Claude (Anthropic)" },
                     { label: "Publishing", tools: "WordPress, Webflow" },
                     { label: "Analytics", tools: "Google Search Console" },
                   ].map((row) => (
