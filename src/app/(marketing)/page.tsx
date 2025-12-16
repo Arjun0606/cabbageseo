@@ -221,7 +221,7 @@ export default function LandingPage() {
           </div>
 
           <p className="text-sm text-muted-foreground">
-            No credit card required • 14-day free trial • Cancel anytime
+            Free homepage analysis • Plans from $29/mo • Cancel anytime
           </p>
 
           {/* Hero Visual */}
@@ -405,12 +405,12 @@ export default function LandingPage() {
               </h2>
               <p className="text-muted-foreground max-w-xl mx-auto mb-8">
                 Join thousands of businesses using CabbageSEO to grow their organic traffic. 
-                Start your free trial today — no credit card required.
+                Try the free homepage analyzer above, then unlock full access.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button size="lg" className="gap-2 px-8" asChild>
                   <Link href="/signup">
-                    Start Free Trial
+                    Get Full Access
                     <ArrowRight className="w-5 h-5" />
                   </Link>
                 </Button>

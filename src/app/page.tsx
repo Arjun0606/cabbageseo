@@ -219,13 +219,13 @@ export default function LandingPage() {
             <Image src="/logo.png" alt="CabbageSEO" width={44} height={44} className="rounded-xl transition-transform group-hover:rotate-3" />
             <span className="text-xl font-bold tracking-tight">CabbageSEO</span>
           </Link>
-          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
             <Button variant="ghost" className="text-zinc-400 hover:text-zinc-100 h-10 px-4 transition-all hover:bg-zinc-800" asChild>
               <Link href="/login">Log in</Link>
-            </Button>
+              </Button>
             <Button className="bg-emerald-600 hover:bg-emerald-500 text-white border-0 h-10 px-5 transition-all hover:shadow-lg hover:shadow-emerald-500/20" asChild>
               <Link href="/signup">Get started</Link>
-            </Button>
+              </Button>
           </div>
         </div>
       </nav>
@@ -287,7 +287,7 @@ export default function LandingPage() {
                       Analyze
                     </>
                   )}
-                </Button>
+              </Button>
               </div>
             </form>
 
@@ -333,19 +333,19 @@ export default function LandingPage() {
               {/* Header */}
               <div className="bg-gradient-to-r from-emerald-500/10 to-violet-500/10 p-6 border-b border-zinc-800/60">
                 <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div>
+                      <div>
                     <div className="flex items-center gap-2 text-sm text-zinc-400 mb-1">
                       <Globe className="w-4 h-4" />
                       <span className="truncate">{result.url}</span>
                     </div>
                     <h2 className="text-xl font-bold truncate">{result.title}</h2>
-                  </div>
+                      </div>
                   <Button variant="outline" size="sm" onClick={handleReset} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Analyze Another
                   </Button>
-                </div>
-              </div>
+                        </div>
+                      </div>
               
               {/* Scores */}
               <div className="p-8">
@@ -482,14 +482,14 @@ export default function LandingPage() {
               <div className="flex gap-4 justify-center">
                 <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white" asChild>
                   <Link href="/signup">
-                    Start Free Trial
+                    Get Full Access
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Link>
                 </Button>
-              </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
       )}
 
       {/* Features Section (shown when no result) */}
@@ -532,11 +532,11 @@ export default function LandingPage() {
                     </div>
                     <h3 className="font-semibold text-lg mb-1.5">{item.title}</h3>
                     <p className="text-sm text-zinc-500">{item.desc}</p>
-                  </div>
-                ))}
               </div>
-            </div>
-          </section>
+            ))}
+          </div>
+        </div>
+      </section>
 
           {/* How it works */}
           <section className="py-20 border-t border-zinc-800/50 bg-gradient-to-b from-zinc-900/50 to-transparent">
@@ -553,11 +553,11 @@ export default function LandingPage() {
                     <div className="text-5xl font-black bg-gradient-to-br from-emerald-500/40 to-emerald-500/10 bg-clip-text text-transparent mb-4">{item.step}</div>
                     <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
                     <p className="text-zinc-500 leading-relaxed">{item.desc}</p>
-                  </div>
-                ))}
               </div>
-            </div>
-          </section>
+            ))}
+          </div>
+        </div>
+      </section>
 
           {/* Philosophy Section */}
           <section className="py-20 border-t border-zinc-800/50">
@@ -566,7 +566,7 @@ export default function LandingPage() {
                 <div>
                   <h2 className="text-3xl sm:text-4xl font-bold mb-6">
                     SEO is evolving.<br />Your tools should too.
-                  </h2>
+            </h2>
                   <div className="space-y-4 text-zinc-400 leading-relaxed">
                     <p>
                       Google isn&apos;t the only search anymore. ChatGPT, Perplexity, Claude—they&apos;re 
@@ -593,20 +593,20 @@ export default function LandingPage() {
                       <div>
                         <p className="font-medium">{row.label}</p>
                         <p className="text-sm text-zinc-500">{row.tools}</p>
-                      </div>
-                    </div>
+          </div>
+        </div>
                   ))}
                   <div className="flex items-center gap-4 p-4 rounded-xl border-2 border-emerald-500/40 bg-emerald-500/10">
                     <Code2 className="h-5 w-5 text-emerald-400 shrink-0" />
                     <div>
                       <p className="font-semibold text-emerald-400">CabbageSEO</p>
                       <p className="text-sm text-zinc-400">Connects everything. Automates the rest.</p>
-                    </div>
+                  </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </section>
+          </div>
+        </div>
+      </section>
         </>
       )}
 
@@ -632,9 +632,9 @@ export default function LandingPage() {
                   <ArrowRight className="h-5 w-5" />
                 </Link>
               </Button>
-            </div>
           </div>
-        </section>
+        </div>
+      </section>
       )}
 
       {/* Footer */}

@@ -570,7 +570,7 @@ export default function FreeScoringPage() {
                 <div className="flex gap-4 justify-center">
                   <Link href="/signup">
                     <Button size="lg">
-                      Start Free Trial
+                      Get Full Access
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </Link>
