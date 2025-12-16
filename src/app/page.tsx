@@ -583,12 +583,12 @@ export default function LandingPage() {
                 </div>
                 <div className="space-y-3">
                   {[
-                    { label: "Keyword Research", tools: "DataForSEO" },
-                    { label: "Content Generation", tools: "Claude (Anthropic)" },
-                    { label: "Publishing", tools: "WordPress, Webflow" },
-                    { label: "Analytics", tools: "Google Search Console" },
+                    { id: "keywords", label: "Keyword Research", tools: "DataForSEO" },
+                    { id: "content", label: "Content Generation", tools: "Claude (Anthropic)" },
+                    { id: "publishing", label: "Publishing", tools: "WordPress, Webflow" },
+                    { id: "analytics", label: "Analytics", tools: "Google Search Console" },
                   ].map((row) => (
-                    <div key={row.label} className="flex items-center gap-4 p-4 rounded-xl border border-zinc-800/60 bg-zinc-900/40 hover:bg-zinc-800/50 transition-all hover:translate-x-2">
+                    <div key={row.id} className="flex items-center gap-4 p-4 rounded-xl border border-zinc-800/60 bg-zinc-900/40 hover:bg-zinc-800/50 transition-all hover:translate-x-2">
                       <Layers className="h-5 w-5 text-emerald-500 shrink-0" />
                       <div>
                         <p className="font-medium">{row.label}</p>

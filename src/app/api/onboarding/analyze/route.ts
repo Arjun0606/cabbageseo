@@ -407,7 +407,7 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
         issues_found: issues.length,
         critical_issues: criticalCount,
         warning_issues: warningCount,
-        info_issues: passedCount,
+        info_issues: infoCount,
         results: auditResult,
         status: "completed",
         completed_at: new Date().toISOString(),
