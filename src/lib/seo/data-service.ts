@@ -160,7 +160,7 @@ export class SEODataService {
 
   /**
    * Get keyword metrics (volume, difficulty, CPC)
-   * Primary: DataForSEO | Fallback: Mock data
+   * Requires DataForSEO - no mock data fallback
    */
   async getKeywordMetrics(
     keywords: string[],
@@ -190,11 +190,11 @@ export class SEODataService {
         return result;
       } catch (error) {
         console.error("DataForSEO error:", error);
-        // Fall through to mock data
+        // Fall through to error - no mock data
       }
     }
 
-    // No mock data - require real API
+    // Require real API - no mock data
     throw new Error("DataForSEO not configured. Set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD in environment.");
   }
 

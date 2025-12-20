@@ -335,6 +335,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Platform-specific scores
+    // Only include platforms that actually have search/citation products:
+    // - Google AI Overviews: AI summaries in Google Search
+    // - Perplexity: AI search engine that cites sources
+    // - ChatGPT/SearchGPT: OpenAI's search product
+    // - Bing Copilot: Microsoft's AI search with citations
+    // NOTE: Claude (Anthropic) is NOT included - it's a chat assistant, not a search engine
     const platformScores = {
       googleAIO: Math.min(100, Math.round(
         (aioBreakdown.structureScore * 2) + 
@@ -351,10 +357,11 @@ export async function POST(request: NextRequest) {
         (aioBreakdown.contentQualityScore * 2) + 
         (aioBreakdown.quotabilityScore * 1.5)
       )),
-      claude: Math.min(100, Math.round(
-        (aioBreakdown.contentQualityScore * 2) + 
-        (aioBreakdown.authorityScore * 1.5) + 
-        (aioBreakdown.structureScore * 1.5)
+      bingCopilot: Math.min(100, Math.round(
+        (aioBreakdown.authorityScore * 2) + 
+        (aioBreakdown.schemaScore * 1.5) + 
+        (aioBreakdown.structureScore * 1.5) +
+        (seoScore * 0.2)
       )),
     };
 

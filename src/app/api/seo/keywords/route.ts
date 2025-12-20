@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
           success: true,
           data: metrics,
           count: metrics.length,
-          provider: status.dataForSEO ? "dataforseo" : "mock",
+          provider: "dataforseo",
         });
       }
 
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
           data: suggestions,
           count: suggestions.length,
           seedKeyword,
-          provider: status.dataForSEO ? "dataforseo" : status.serpAPI ? "serpapi" : "mock",
+          provider: status.dataForSEO ? "dataforseo" : "serpapi",
         });
       }
 
@@ -176,7 +176,7 @@ export async function GET() {
     providers: status,
     message: status.anyAvailable
       ? "SEO data providers are configured"
-      : "No SEO data providers configured. Using mock data.",
+      : "No SEO data providers configured. Please configure DataForSEO or SerpAPI.",
     instructions: !status.anyAvailable ? {
       dataForSEO: "Set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD",
       serpAPI: "Set SERPAPI_KEY",

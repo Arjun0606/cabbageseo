@@ -73,7 +73,7 @@ interface AnalysisResult {
       googleAIO: number;
       perplexity: number;
       chatGPT: number;
-      claude: number;
+      bingCopilot: number;
     };
     recommendations: string[];
   };
@@ -361,7 +361,7 @@ export default function LandingPage() {
                     { name: "Google AI", score: result.aio.platformScores.googleAIO, emoji: "🔍" },
                     { name: "Perplexity", score: result.aio.platformScores.perplexity, emoji: "🔮" },
                     { name: "ChatGPT", score: result.aio.platformScores.chatGPT, emoji: "🤖" },
-                    { name: "Claude", score: result.aio.platformScores.claude, emoji: "🧠" },
+                    { name: "Bing Copilot", score: result.aio.platformScores.bingCopilot, emoji: "🪟" },
                   ].map((platform) => (
                     <div key={platform.name} className="text-center">
                       <span className="text-xl">{platform.emoji}</span>
@@ -569,7 +569,7 @@ export default function LandingPage() {
             </h2>
                   <div className="space-y-4 text-zinc-400 leading-relaxed">
                     <p>
-                      Google isn&apos;t the only search anymore. ChatGPT, Perplexity, Claude—they&apos;re 
+                      Google isn&apos;t the only search anymore. ChatGPT, Perplexity, Bing Copilot—they&apos;re 
                       answering questions with your content (or your competitor&apos;s).
                     </p>
                     <p>

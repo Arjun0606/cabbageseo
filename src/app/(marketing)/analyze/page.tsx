@@ -74,7 +74,7 @@ interface AnalysisResult {
       googleAIO: number;
       perplexity: number;
       chatGPT: number;
-      claude: number;
+      bingCopilot: number;
     };
     recommendations: string[];
   };
@@ -413,7 +413,7 @@ export default function FreeScoringPage() {
                     { name: "Google AI Overviews", score: result.aio.platformScores.googleAIO, icon: "🔍" },
                     { name: "Perplexity", score: result.aio.platformScores.perplexity, icon: "🔮" },
                     { name: "ChatGPT", score: result.aio.platformScores.chatGPT, icon: "🤖" },
-                    { name: "Claude", score: result.aio.platformScores.claude, icon: "🧠" },
+                    { name: "Bing Copilot", score: result.aio.platformScores.bingCopilot, icon: "🪟" },
                   ].map((platform) => (
                     <div 
                       key={platform.name}
