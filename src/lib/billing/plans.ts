@@ -94,7 +94,7 @@ export const PLANS: Record<PlanId, Plan> = {
       apiAccess: false,
       priorityQueue: false,
       bulkOperations: false,
-      whiteLabel: false,
+      whiteLabel: true,  // Available on all plans
       premiumAI: false,
       customIntegrations: false,
       sla: false,
@@ -140,7 +140,7 @@ export const PLANS: Record<PlanId, Plan> = {
       apiAccess: true,
       priorityQueue: false,
       bulkOperations: false,
-      whiteLabel: false,
+      whiteLabel: true,  // Available on all plans
       premiumAI: false,
       customIntegrations: false,
       sla: false,
