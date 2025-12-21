@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -327,7 +327,7 @@ function FactorCheck({
 // MAIN PAGE
 // ============================================
 
-export default function FreeScoringPage() {
+function FreeScoringPageContent() {
   const searchParams = useSearchParams();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -943,5 +943,21 @@ export default function FreeScoringPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+// Wrap with Suspense for useSearchParams
+export default function FreeScoringPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-400 mx-auto mb-4" />
+          <p className="text-zinc-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <FreeScoringPageContent />
+    </Suspense>
   );
 }
