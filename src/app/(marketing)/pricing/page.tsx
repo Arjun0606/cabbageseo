@@ -33,7 +33,7 @@ const plans = [
   {
     id: "starter",
     name: "Starter",
-    description: "Perfect for content creators tracking AI visibility",
+    description: "Do your own SEO & AIO optimization",
     monthlyPrice: 29,
     yearlyPrice: 24,
     icon: Zap,
@@ -41,12 +41,12 @@ const plans = [
     features: [
       { text: "1 website", included: true },
       { text: "20 AIO visibility checks/month", included: true, highlight: true },
-      { text: "4 platform tracking (ChatGPT, Perplexity, Google AI, Bing)", included: true, highlight: true },
+      { text: "4 AI platforms (ChatGPT, Perplexity, Google AI, Bing)", included: true, highlight: true },
       { text: "10 AI articles/month", included: true },
       { text: "100 keywords tracked", included: true },
       { text: "5 SEO audits/month", included: true },
-      { text: "White-label reports", included: true },
-      { text: "WordPress & Webflow", included: true },
+      { text: "WordPress & Webflow publishing", included: true },
+      { text: "Email support", included: true },
     ],
     cta: "Get Started",
     highlight: false,
@@ -54,7 +54,7 @@ const plans = [
   {
     id: "pro",
     name: "Pro",
-    description: "For teams serious about AI search visibility",
+    description: "Scale your SEO 10x faster",
     monthlyPrice: 79,
     yearlyPrice: 66,
     icon: TrendingUp,
@@ -62,14 +62,12 @@ const plans = [
     features: [
       { text: "5 websites", included: true },
       { text: "100 AIO visibility checks/month", included: true, highlight: true },
-      { text: "Real-time AI citation tracking", included: true, highlight: true },
+      { text: "Daily AI platform monitoring", included: true, highlight: true },
       { text: "50 AI articles/month", included: true },
       { text: "500 keywords tracked", included: true },
       { text: "20 SEO audits/month", included: true },
-      { text: "White-label reports", included: true },
-      { text: "All CMS integrations", included: true },
-      { text: "5 team members", included: true },
-      { text: "Priority support", included: true },
+      { text: "WordPress, Webflow & Shopify", included: true },
+      { text: "Priority email support", included: true },
     ],
     cta: "Get Started",
     highlight: true,
@@ -77,7 +75,7 @@ const plans = [
   {
     id: "pro_plus",
     name: "Pro+",
-    description: "For agencies dominating AI search for clients",
+    description: "Agency-level SEO & AIO at scale",
     monthlyPrice: 199,
     yearlyPrice: 166,
     icon: Building2,
@@ -85,14 +83,12 @@ const plans = [
     features: [
       { text: "20 websites", included: true },
       { text: "500 AIO visibility checks/month", included: true, highlight: true },
-      { text: "Citation alerts & monitoring", included: true, highlight: true },
+      { text: "Hourly AI platform monitoring", included: true, highlight: true },
       { text: "200 AI articles/month", included: true },
       { text: "2,000 keywords tracked", included: true },
-      { text: "Unlimited audits", included: true },
-      { text: "White-label reports", included: true },
-      { text: "Dedicated support + SLA", included: true },
-      { text: "Unlimited team members", included: true },
-      { text: "Custom integrations", included: true },
+      { text: "Unlimited SEO audits", included: true },
+      { text: "All CMS integrations", included: true },
+      { text: "Priority support", included: true },
     ],
     cta: "Get Started",
     highlight: false,
@@ -359,17 +355,49 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Comparison Section */}
+      {/* Value Proposition */}
       <section className="py-16 md:py-24 border-t border-zinc-800/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Why CabbageSEO?</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">Do Your Own SEO. No Agency Needed.</h2>
             <p className="text-zinc-400 max-w-2xl mx-auto">
-              The only SEO tool that optimizes for both traditional search AND AI search
+              CabbageSEO gives you everything you need to optimize for Google AND AI search — 
+              without hiring anyone or learning complex tools.
             </p>
           </div>
 
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-16">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                <Bot className="w-6 h-6 text-emerald-400" />
+              </div>
+              <h3 className="font-semibold text-white mb-2">AI Does the Heavy Lifting</h3>
+              <p className="text-sm text-zinc-400">
+                Generate SEO-optimized articles, fix technical issues, and publish — all with AI assistance.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="w-6 h-6 text-emerald-400" />
+              </div>
+              <h3 className="font-semibold text-white mb-2">10x Faster Than Manual SEO</h3>
+              <p className="text-sm text-zinc-400">
+                What takes agencies weeks, you can do in hours. Built for speed and results.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-6 h-6 text-emerald-400" />
+              </div>
+              <h3 className="font-semibold text-white mb-2">Future-Proof Your Traffic</h3>
+              <p className="text-sm text-zinc-400">
+                Track visibility in ChatGPT, Perplexity, and Google AI — where search is heading.
+              </p>
+            </div>
+          </div>
+
           <div className="max-w-3xl mx-auto">
+            <h3 className="text-center font-semibold text-white mb-6">vs. Traditional SEO Tools</h3>
             <div className="grid grid-cols-4 gap-4 mb-4 text-sm font-medium text-center">
               <div></div>
               <div className="text-zinc-500">Ahrefs/Semrush</div>
@@ -377,13 +405,12 @@ export default function PricingPage() {
               <div className="text-emerald-400">CabbageSEO</div>
             </div>
             {[
-              { feature: "Keyword Research", ahrefs: true, surfer: false, cabbage: true },
-              { feature: "Technical SEO Audit", ahrefs: true, surfer: false, cabbage: true },
-              { feature: "Content Optimization", ahrefs: false, surfer: true, cabbage: true },
-              { feature: "AI Article Generation", ahrefs: false, surfer: false, cabbage: true },
+              { feature: "SEO Audits", ahrefs: true, surfer: false, cabbage: true },
+              { feature: "Keyword Tracking", ahrefs: true, surfer: false, cabbage: true },
+              { feature: "AI Content Generation", ahrefs: false, surfer: false, cabbage: true },
               { feature: "AIO Score (AI Visibility)", ahrefs: false, surfer: false, cabbage: true },
               { feature: "ChatGPT/Perplexity Tracking", ahrefs: false, surfer: false, cabbage: true },
-              { feature: "Google AI Overview Tracking", ahrefs: false, surfer: false, cabbage: true },
+              { feature: "Publish to CMS", ahrefs: false, surfer: false, cabbage: true },
               { feature: "Starting Price", ahrefs: "$99/mo", surfer: "$89/mo", cabbage: "$29/mo" },
             ].map((row, i) => (
               <div
