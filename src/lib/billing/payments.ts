@@ -5,14 +5,17 @@
  * 
  * Features:
  * - Subscriptions (monthly/yearly)
- * - Usage-based billing
- * - Prepaid credits
+ * - Usage-based billing (overages with spending cap)
  * - Webhooks
  * 
- * Note: Replace API calls with Dodo Payments SDK once available
+ * Pricing Model:
+ * - FREE: URL analyzer (SEO + AIO scores)
+ * - PAID: Subscriptions at $29/$79/$199 with pay-as-you-go overages
+ * 
+ * Note: Prepaid credits are NOT part of this model
  */
 
-import { PLANS, CREDIT_PACKAGES, type Plan } from "./plans";
+import { PLANS, type Plan } from "./plans";
 
 // ============================================
 // TYPES
@@ -216,31 +219,14 @@ class PaymentClient {
     });
   }
 
+  /**
+   * @deprecated Prepaid credits are not available. Use subscription plans with overages.
+   */
   async purchaseCredits(
-    customerId: string,
-    packageIndex: number
+    _customerId: string,
+    _packageIndex: number
   ): Promise<{ paymentIntent: PaymentIntent; credits: number; bonus: number }> {
-    const pkg = CREDIT_PACKAGES[packageIndex];
-    if (!pkg) {
-      throw new Error("Invalid credit package");
-    }
-
-    const paymentIntent = await this.createPaymentIntent({
-      customerId,
-      amount: pkg.price,
-      description: `${pkg.credits + pkg.bonus} AI Credits`,
-      metadata: {
-        type: "credit_purchase",
-        credits: String(pkg.credits),
-        bonus: String(pkg.bonus),
-      },
-    });
-
-    return {
-      paymentIntent,
-      credits: pkg.credits,
-      bonus: pkg.bonus,
-    };
+    throw new Error("Prepaid credits are not available. Please use a subscription plan with overages.");
   }
 
   // ============================================
@@ -298,38 +284,16 @@ class PaymentClient {
     });
   }
 
-  async createCreditCheckoutSession(data: {
+  /**
+   * @deprecated Prepaid credits are not available. Use subscription plans with overages.
+   */
+  async createCreditCheckoutSession(_data: {
     customerId: string;
     packageIndex: number;
     successUrl: string;
     cancelUrl: string;
   }): Promise<{ checkoutUrl: string; sessionId: string }> {
-    const pkg = CREDIT_PACKAGES[data.packageIndex];
-    if (!pkg) {
-      throw new Error("Invalid credit package");
-    }
-
-    return this.request<{ checkoutUrl: string; sessionId: string }>("/checkout/sessions", {
-      method: "POST",
-      body: JSON.stringify({
-        customer_id: data.customerId,
-        mode: "payment",
-        line_items: [{
-          name: `${pkg.credits + pkg.bonus} AI Credits`,
-          description: pkg.bonus > 0 ? `Includes ${pkg.bonus} bonus credits!` : undefined,
-          amount: pkg.price * 100,
-          quantity: 1,
-        }],
-        success_url: data.successUrl,
-        cancel_url: data.cancelUrl,
-        metadata: {
-          type: "credit_purchase",
-          credits: String(pkg.credits),
-          bonus: String(pkg.bonus),
-          package_index: String(data.packageIndex),
-        },
-      }),
-    });
+    throw new Error("Prepaid credits are not available. Please use a subscription plan with overages.");
   }
 
   // ============================================
