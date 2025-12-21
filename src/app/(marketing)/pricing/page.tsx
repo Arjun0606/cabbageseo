@@ -359,10 +359,9 @@ export default function PricingPage() {
       <section className="py-16 md:py-24 border-t border-zinc-800/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Do Your Own SEO. No Agency Needed.</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">Do Your Own SEO — Without an Agency.</h2>
             <p className="text-zinc-400 max-w-2xl mx-auto">
-              CabbageSEO gives you everything you need to optimize for Google AND AI search — 
-              without hiring anyone or learning complex tools.
+              Content, audits, publishing — in one tool. Built for Google and AI search.
             </p>
           </div>
 
@@ -373,25 +372,25 @@ export default function PricingPage() {
               </div>
               <h3 className="font-semibold text-white mb-2">AI Does the Heavy Lifting</h3>
               <p className="text-sm text-zinc-400">
-                Generate SEO-optimized articles, fix technical issues, and publish — all with AI assistance.
+                Generate articles, fix issues, publish to your CMS. All automated.
               </p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
                 <TrendingUp className="w-6 h-6 text-emerald-400" />
               </div>
-              <h3 className="font-semibold text-white mb-2">10x Faster Than Manual SEO</h3>
+              <h3 className="font-semibold text-white mb-2">10× Faster Than Manual</h3>
               <p className="text-sm text-zinc-400">
-                What takes agencies weeks, you can do in hours. Built for speed and results.
+                What takes agencies weeks, you do in hours. Ship faster, rank faster.
               </p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-6 h-6 text-emerald-400" />
               </div>
-              <h3 className="font-semibold text-white mb-2">Future-Proof Your Traffic</h3>
+              <h3 className="font-semibold text-white mb-2">Google + AI Search</h3>
               <p className="text-sm text-zinc-400">
-                Track visibility in ChatGPT, Perplexity, and Google AI — where search is heading.
+                Rank in traditional search AND get cited by ChatGPT, Perplexity, Google AI.
               </p>
             </div>
           </div>

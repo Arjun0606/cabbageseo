@@ -304,11 +304,11 @@ export default function LandingPage() {
               <tbody className="divide-y divide-zinc-800">
                 {[
                   { feature: "SEO Audits", a: true, s: true, c: true },
-                  { feature: "Keyword Research", a: true, s: true, c: true },
-                  { feature: "Content Generation", a: false, s: false, c: true },
+                  { feature: "Keyword Tracking", a: true, s: true, c: true },
+                  { feature: "AI Content Generation", a: false, s: false, c: true },
                   { feature: "AI Visibility Score", a: false, s: false, c: true },
-                  { feature: "AI Platform Tracking", a: false, s: false, c: true },
-                  { feature: "Citation Monitoring", a: false, s: false, c: true },
+                  { feature: "4 AI Platforms Tracked", a: false, s: false, c: true },
+                  { feature: "Publish to CMS", a: false, s: false, c: true },
                 ].map((row, i) => (
                   <tr key={i}>
                     <td className="py-4 px-4 text-zinc-300">{row.feature}</td>
