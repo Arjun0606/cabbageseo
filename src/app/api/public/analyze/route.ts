@@ -382,7 +382,7 @@ function analyzeSEO(page: {
       : "No ARIA landmarks found - helps screen readers navigate",
     howToFix: hasAria ? undefined : "Add role='main', role='navigation' and aria-label attributes",
   });
-
+  
   return breakdown;
 }
 
@@ -769,7 +769,7 @@ function analyzeAIO(page: {
       : "No text emphasis - highlight key terms",
     howToFix: "Bold important terms and key phrases",
   });
-
+  
   return breakdown;
 }
 
@@ -855,30 +855,13 @@ export async function POST(request: NextRequest) {
 
     const page = crawlResult.pages[0];
 
-    // Map page data for analysis functions
-    // Convert crawler types to what analyzeSEO/analyzeAIO expect
+    // Map page data for analysis functions (convert null to undefined for images.alt)
     const pageForAnalysis = {
-      url: page.url,
-      title: page.title,
-      metaDescription: page.metaDescription,
-      h1: page.h1,
-      h2: page.h2,
-      wordCount: page.wordCount,
-      loadTimeMs: page.loadTimeMs,
-      htmlSize: page.htmlSize,
-      schemaMarkup: page.schemaMarkup,
-      rawHtml: page.rawHtml,
-      textContent: page.textContent,
-      // Convert images: map null alt to undefined
+      ...page,
       images: page.images?.map(img => ({
-        src: img.src,
+        ...img,
         alt: img.alt ?? undefined,
       })),
-      // Convert links: from LinkData[] to { internal: string[], external: string[] }
-      links: page.links ? {
-        internal: page.links.filter(l => l.isInternal).map(l => l.href),
-        external: page.links.filter(l => !l.isInternal).map(l => l.href),
-      } : undefined,
     };
 
     // Analyze SEO
@@ -983,25 +966,25 @@ export async function POST(request: NextRequest) {
     if (!platformScoresAreReal) {
       platformScores = {
         // Google AI Overviews - weights schema and structure heavily
-        googleAIO: Math.min(100, Math.round(
+      googleAIO: Math.min(100, Math.round(
           (aioCategoryScores.structureScore * 2) + 
           (aioCategoryScores.schemaScore * 2.5) + 
           (seoScore * 0.25)
         )),
         // Perplexity - heavily weights citations, sources, and quotability
-        perplexity: Math.min(100, Math.round(
+      perplexity: Math.min(100, Math.round(
           (aioCategoryScores.quotabilityScore * 2.5) + 
           (aioCategoryScores.authorityScore * 2) + 
           (aioCategoryScores.contentQualityScore * 1)
         )),
         // ChatGPT/SearchGPT - weights structure and content quality
-        chatGPT: Math.min(100, Math.round(
+      chatGPT: Math.min(100, Math.round(
           (aioCategoryScores.structureScore * 2) + 
           (aioCategoryScores.contentQualityScore * 2) + 
           (aioCategoryScores.quotabilityScore * 1)
         )),
         // Bing Copilot - Microsoft's AI, weights authority and freshness
-        bingCopilot: Math.min(100, Math.round(
+      bingCopilot: Math.min(100, Math.round(
           (aioCategoryScores.authorityScore * 2) + 
           (aioCategoryScores.schemaScore * 1.5) + 
           (aioCategoryScores.structureScore * 1.5)
@@ -1083,4 +1066,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
