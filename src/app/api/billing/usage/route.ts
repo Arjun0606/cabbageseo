@@ -116,24 +116,24 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data: {
-        plan: {
-          id: plan.id,
-          name: plan.name,
-          status: org.subscription_status || "active",
+      plan: {
+        id: plan.id,
+        name: plan.name,
+        status: org.subscription_status || "active",
           billingInterval: org.billing_interval || "monthly",
-          currentPeriodStart: org.current_period_start,
-          currentPeriodEnd: org.current_period_end,
-        },
+        currentPeriodStart: org.current_period_start,
+        currentPeriodEnd: org.current_period_end,
+      },
         usage: currentUsage,
         limits: currentLimits,
         percentages,
-        overages: {
-          enabled: overages.enabled,
-          spendingCapDollars: overages.spendingCapDollars,
-          currentSpendDollars: overages.currentSpendDollars,
-          remainingDollars: overages.remainingDollars,
-          percentUsed: overages.percentUsed,
-          autoIncrease: overages.autoIncrease,
+      overages: {
+        enabled: overages.enabled,
+        spendingCapDollars: overages.spendingCapDollars,
+        currentSpendDollars: overages.currentSpendDollars,
+        remainingDollars: overages.remainingDollars,
+        percentUsed: overages.percentUsed,
+        autoIncrease: overages.autoIncrease,
         },
       },
     });

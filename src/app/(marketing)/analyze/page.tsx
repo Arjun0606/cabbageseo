@@ -189,7 +189,7 @@ function ScoreRing({
         </div>
       </div>
       <p className="mt-2 font-medium">{label}</p>
-      {sublabel && <p className="text-xs text-muted-foreground">{sublabel}</p>}
+      {sublabel && <p className="text-xs text-zinc-500">{sublabel}</p>}
     </div>
   );
 }
@@ -219,7 +219,7 @@ function ScoreItemRow({ item }: { item: ScoreItem }) {
           {item.score}/{item.maxScore}
         </span>
       </div>
-      <p className="text-xs text-muted-foreground ml-6">{item.reason}</p>
+      <p className="text-xs text-zinc-500 ml-6">{item.reason}</p>
       {item.howToFix && item.status !== "pass" && (
         <div className="ml-6 mt-1 flex items-start gap-1">
           <Lightbulb className="w-3 h-3 text-yellow-500 mt-0.5 flex-shrink-0" />
@@ -298,13 +298,13 @@ function FactorCheck({
       ) : (
         <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
       )}
-      <span className={`text-sm ${checked ? "text-foreground" : "text-muted-foreground"}`}>
+      <span className={`text-sm ${checked ? "text-zinc-100" : "text-zinc-500"}`}>
         {label}
       </span>
       {impact === "high" && !checked && (
         <Badge variant="destructive" className="text-[10px] px-1 py-0">High Impact</Badge>
       )}
-      {tooltip && <Info className="w-3 h-3 text-muted-foreground" />}
+      {tooltip && <Info className="w-3 h-3 text-zinc-500" />}
     </div>
   );
 
@@ -362,20 +362,20 @@ export default function FreeScoringPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
       {/* Header */}
-      <header className="border-b">
+      <header className="border-b border-zinc-800">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-10 w-auto" />
-            <span className="font-bold text-xl tracking-tight">CabbageSEO</span>
+            <span className="font-bold text-xl tracking-tight text-white">CabbageSEO</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/login">
-              <Button variant="ghost" size="sm">Log in</Button>
+              <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">Log in</Button>
             </Link>
             <Link href="/signup">
-              <Button size="sm">Get Started Free</Button>
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">Get Started Free</Button>
             </Link>
           </div>
         </div>
@@ -384,40 +384,45 @@ export default function FreeScoringPage() {
       {/* Hero / Form */}
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-3xl text-center">
-          <Badge className="mb-4" variant="secondary">
-            <Bot className="w-3 h-3 mr-1" />
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-6">
+            <Bot className="w-4 h-4" />
             Free AI Visibility + SEO Analysis
-          </Badge>
+          </div>
           
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">
             Is{" "}
-            <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+            <span className="text-emerald-400">
               ChatGPT
             </span>{" "}
             Citing{" "}
-            <span className="bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
+            <span className="text-emerald-400">
               Your Content?
             </span>
           </h1>
           
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-lg text-zinc-400 mb-8 max-w-2xl mx-auto">
             See if ChatGPT, Perplexity, Google AI, and Bing Copilot are citing your content. 
             Plus complete SEO analysis with actionable fixes.
           </p>
 
           <form onSubmit={handleAnalyze} className="flex gap-2 max-w-xl mx-auto">
             <div className="relative flex-1">
-              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
               <Input
                 type="text"
                 placeholder="Enter your website URL..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                className="pl-10 h-12 text-lg"
+                className="pl-10 h-12 text-lg bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:ring-emerald-500/20"
                 disabled={loading}
               />
             </div>
-            <Button type="submit" size="lg" disabled={loading || !url.trim()}>
+            <Button 
+              type="submit" 
+              size="lg" 
+              disabled={loading || !url.trim()}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white h-12"
+            >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -433,7 +438,7 @@ export default function FreeScoringPage() {
           </form>
 
           {error && (
-            <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 flex items-center gap-2 max-w-xl mx-auto">
+            <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 flex items-center gap-2 max-w-xl mx-auto">
               <AlertTriangle className="w-5 h-5 flex-shrink-0" />
               <span>{error}</span>
             </div>
@@ -453,6 +458,7 @@ export default function FreeScoringPage() {
                   setResult(null);
                   setUrl("");
                 }}
+                className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Analyze Another
@@ -460,13 +466,13 @@ export default function FreeScoringPage() {
             </div>
 
             {/* Score Summary */}
-            <Card className="mb-8 overflow-hidden">
-              <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 p-6 border-b">
+            <Card className="mb-8 overflow-hidden bg-zinc-900 border-zinc-800">
+              <div className="bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 p-6 border-b border-zinc-800">
                 <div className="flex items-center gap-3 mb-2">
-                  <Globe className="w-5 h-5" />
-                  <span className="font-medium truncate">{result.url}</span>
+                  <Globe className="w-5 h-5 text-zinc-400" />
+                  <span className="font-medium truncate text-zinc-300">{result.url}</span>
                 </div>
-                <h2 className="text-xl font-bold truncate">{result.title}</h2>
+                <h2 className="text-xl font-bold truncate text-white">{result.title}</h2>
               </div>
               
               <CardContent className="p-8">
@@ -491,10 +497,10 @@ export default function FreeScoringPage() {
             </Card>
 
             {/* Platform Scores */}
-            <Card className="mb-8">
+            <Card className="mb-8 bg-zinc-900 border-zinc-800">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bot className="w-5 h-5 text-purple-500" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Bot className="w-5 h-5 text-emerald-400" />
                   AI Platform Visibility
                   {result.aio.platformScoresAreReal ? (
                     <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
@@ -510,7 +516,7 @@ export default function FreeScoringPage() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
-                        <Info className="w-4 h-4 text-muted-foreground" />
+                        <Info className="w-4 h-4 text-zinc-500" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         {result.aio.platformScoresAreReal ? (
@@ -565,7 +571,7 @@ export default function FreeScoringPage() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground mb-4 -mt-2">
+                  <p className="text-xs text-zinc-500 mb-4 -mt-2">
                     Estimated visibility based on content factors. Sign up for real platform monitoring.
                   </p>
                 )}
@@ -580,13 +586,13 @@ export default function FreeScoringPage() {
                       key={platform.name}
                       className={`p-4 rounded-lg border text-center ${
                         result.aio.platformScoresAreReal 
-                          ? "bg-background border-border" 
-                          : "bg-muted/30"
+                          ? "bg-zinc-800 border-zinc-700" 
+                          : "bg-zinc-800/50 border-zinc-700"
                       }`}
                     >
                       <span className="text-2xl">{platform.icon}</span>
                       <p className="text-sm font-medium mt-1">{platform.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{platform.desc}</p>
+                      <p className="text-[10px] text-zinc-500">{platform.desc}</p>
                       <p className={`text-2xl font-bold mt-1 ${
                         platform.score >= 70 ? "text-green-500" :
                         platform.score >= 50 ? "text-yellow-500" :
@@ -600,7 +606,7 @@ export default function FreeScoringPage() {
                         )}
                       </p>
                       {result.aio.platformScoresAreReal && (
-                        <p className="text-[9px] text-muted-foreground mt-1">
+                        <p className="text-[9px] text-zinc-500 mt-1">
                           {platform.score > 0 ? "cited" : "not found"}
                         </p>
                       )}
@@ -613,11 +619,11 @@ export default function FreeScoringPage() {
             {/* Detailed Breakdown */}
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               {/* SEO Breakdown */}
-              <Card>
+              <Card className="bg-zinc-900 border-zinc-800">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-blue-500" />
+                    <CardTitle className="flex items-center gap-2 text-white">
+                      <TrendingUp className="w-5 h-5 text-emerald-400" />
                       SEO Breakdown
                     </CardTitle>
                     <div className="flex gap-2">
@@ -670,10 +676,10 @@ export default function FreeScoringPage() {
               </Card>
 
               {/* AIO Breakdown */}
-              <Card>
+              <Card className="bg-zinc-900 border-zinc-800">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Bot className="w-5 h-5 text-purple-500" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Bot className="w-5 h-5 text-emerald-400" />
                     AI Visibility Breakdown
                   </CardTitle>
                 </CardHeader>
@@ -719,9 +725,9 @@ export default function FreeScoringPage() {
             </div>
 
             {/* AI Factors Checklist */}
-            <Card className="mb-8">
+            <Card className="mb-8 bg-zinc-900 border-zinc-800">
               <CardHeader>
-                <CardTitle>AI Optimization Factors</CardTitle>
+                <CardTitle className="text-white">AI Optimization Factors</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-2 gap-x-8">
@@ -777,10 +783,10 @@ export default function FreeScoringPage() {
 
             {/* Top Recommendations */}
             <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <Card>
+              <Card className="bg-zinc-900 border-zinc-800">
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
+                  <CardTitle className="text-base flex items-center gap-2 text-white">
+                    <TrendingUp className="w-4 h-4 text-emerald-400" />
                     Top SEO Fixes
                   </CardTitle>
                 </CardHeader>
@@ -788,13 +794,13 @@ export default function FreeScoringPage() {
                   <ul className="space-y-2">
                     {result.seo.recommendations.length > 0 ? (
                       result.seo.recommendations.map((rec, i) => (
-                        <li key={i} className="flex gap-2 text-sm">
-                          <span className="text-green-500 font-bold">{i + 1}.</span>
+                        <li key={i} className="flex gap-2 text-sm text-zinc-300">
+                          <span className="text-emerald-400 font-bold">{i + 1}.</span>
                           <span>{rec}</span>
                         </li>
                       ))
                     ) : (
-                      <li className="text-green-600 flex items-center gap-2">
+                      <li className="text-emerald-400 flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4" />
                         Great job! No major SEO issues found.
                       </li>
@@ -803,10 +809,10 @@ export default function FreeScoringPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-zinc-900 border-zinc-800">
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Bot className="w-4 h-4" />
+                  <CardTitle className="text-base flex items-center gap-2 text-white">
+                    <Bot className="w-4 h-4 text-emerald-400" />
                     Top AI Visibility Fixes
                   </CardTitle>
                 </CardHeader>
@@ -814,13 +820,13 @@ export default function FreeScoringPage() {
                   <ul className="space-y-2">
                     {result.aio.recommendations.length > 0 ? (
                       result.aio.recommendations.map((rec, i) => (
-                        <li key={i} className="flex gap-2 text-sm">
-                          <span className="text-purple-500 font-bold">{i + 1}.</span>
+                        <li key={i} className="flex gap-2 text-sm text-zinc-300">
+                          <span className="text-emerald-400 font-bold">{i + 1}.</span>
                           <span>{rec}</span>
                         </li>
                       ))
                     ) : (
-                      <li className="text-green-600 flex items-center gap-2">
+                      <li className="text-emerald-400 flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4" />
                         Excellent! Your content is AI-optimized.
                       </li>
@@ -831,10 +837,10 @@ export default function FreeScoringPage() {
             </div>
 
             {/* CTA */}
-            <Card className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20">
+            <Card className="bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 border-emerald-500/20">
               <CardContent className="p-8 text-center">
-                <h3 className="text-2xl font-bold mb-2">{result.cta.message}</h3>
-                <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+                <h3 className="text-2xl font-bold mb-2 text-white">{result.cta.message}</h3>
+                <p className="text-zinc-400 mb-6 max-w-xl mx-auto">
                   This was just your homepage. Sign up to analyze your entire site, 
                   get auto-fixes, and let CabbageSEO run on autopilot.
                 </p>
@@ -850,16 +856,16 @@ export default function FreeScoringPage() {
                   ].map(({ icon: Icon, label }) => (
                     <div 
                       key={label}
-                      className="flex items-center gap-2 text-sm bg-background/50 rounded-lg p-2"
+                      className="flex items-center gap-2 text-sm bg-zinc-800/50 rounded-lg p-2 text-zinc-300"
                     >
-                      <Icon className="w-4 h-4 text-green-500" />
+                      <Icon className="w-4 h-4 text-emerald-400" />
                       <span>{label}</span>
                     </div>
                   ))}
                 </div>
 
                 <Link href="/signup">
-                  <Button size="lg">
+                  <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white">
                     Get Full Access
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -872,39 +878,39 @@ export default function FreeScoringPage() {
 
       {/* Features (no result) */}
       {!result && !loading && (
-        <section className="py-16 px-4 border-t">
+        <section className="py-16 px-4 border-t border-zinc-800">
           <div className="container mx-auto max-w-4xl">
-            <h2 className="text-2xl font-bold text-center mb-8">
+            <h2 className="text-2xl font-bold text-center mb-8 text-white">
               Why AI Visibility Matters
             </h2>
             
             <div className="grid md:grid-cols-3 gap-6">
               <div className="text-center p-6">
-                <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
-                  <Bot className="w-6 h-6 text-purple-500" />
+                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                  <Bot className="w-6 h-6 text-emerald-400" />
                 </div>
-                <h3 className="font-semibold mb-2">ChatGPT & Perplexity</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-semibold mb-2 text-white">ChatGPT & Perplexity</h3>
+                <p className="text-sm text-zinc-400">
                   Millions search through AI. If your content isn't optimized, you're invisible.
                 </p>
               </div>
               
               <div className="text-center p-6">
-                <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-6 h-6 text-green-500" />
+                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-6 h-6 text-emerald-400" />
                 </div>
-                <h3 className="font-semibold mb-2">Google AI Overviews</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-semibold mb-2 text-white">Google AI Overviews</h3>
+                <p className="text-sm text-zinc-400">
                   Google shows AI summaries above search results. Get cited or get buried.
                 </p>
               </div>
               
               <div className="text-center p-6">
-                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
-                  <TrendingUp className="w-6 h-6 text-blue-500" />
+                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                  <TrendingUp className="w-6 h-6 text-emerald-400" />
                 </div>
-                <h3 className="font-semibold mb-2">Future-Proof SEO</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-semibold mb-2 text-white">Future-Proof SEO</h3>
+                <p className="text-sm text-zinc-400">
                   AI search is the future. Optimize now or play catch-up forever.
                 </p>
               </div>
@@ -914,8 +920,8 @@ export default function FreeScoringPage() {
       )}
 
       {/* Footer */}
-      <footer className="border-t py-8 px-4">
-        <div className="container mx-auto text-center text-sm text-muted-foreground">
+      <footer className="border-t border-zinc-800 py-8 px-4">
+        <div className="container mx-auto text-center text-sm text-zinc-500">
           <p>© {new Date().getFullYear()} CabbageSEO. The AI-Native SEO OS.</p>
         </div>
       </footer>
