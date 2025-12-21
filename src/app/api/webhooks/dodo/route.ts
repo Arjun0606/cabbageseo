@@ -11,7 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/server";
 import crypto from "crypto";
 
 // ============================================
@@ -95,11 +95,9 @@ export async function POST(request: NextRequest) {
   console.log(`[Dodo Webhook] Received: ${event.type}`);
 
   // Create admin Supabase client (bypasses RLS)
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  );
+  // Using 'any' type to avoid strict typing issues with webhook updates
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createServiceClient() as any;
 
   try {
     switch (event.type) {
@@ -207,7 +205,7 @@ export async function POST(request: NextRequest) {
 // ============================================
 
 async function handleSubscriptionCreated(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   subscription: SubscriptionData
 ) {
   const orgId = subscription.metadata?.organization_id;
@@ -246,7 +244,7 @@ async function handleSubscriptionCreated(
 }
 
 async function handleSubscriptionUpdated(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   subscription: SubscriptionData
 ) {
   // Find org by subscription ID
@@ -290,7 +288,7 @@ async function handleSubscriptionUpdated(
 }
 
 async function handleSubscriptionCanceled(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   subscription: SubscriptionData
 ) {
   const { data: org } = await supabase
@@ -323,7 +321,7 @@ async function handleSubscriptionCanceled(
 }
 
 async function handleSubscriptionPaused(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   subscription: SubscriptionData
 ) {
   const { data: org } = await supabase
@@ -346,7 +344,7 @@ async function handleSubscriptionPaused(
 }
 
 async function handleSubscriptionResumed(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   subscription: SubscriptionData
 ) {
   const { data: org } = await supabase
@@ -369,7 +367,7 @@ async function handleSubscriptionResumed(
 }
 
 async function handlePaymentSucceeded(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   payment: PaymentData
 ) {
   // If this is a one-time payment for credits, add them
@@ -418,7 +416,7 @@ async function handlePaymentSucceeded(
 }
 
 async function handlePaymentFailed(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   payment: PaymentData
 ) {
   // Find org by customer ID
@@ -441,7 +439,7 @@ async function handlePaymentFailed(
 }
 
 async function handleInvoicePaid(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   invoice: PaymentData
 ) {
   // Record invoice
@@ -503,7 +501,7 @@ async function handleInvoicePaid(
 }
 
 async function handleInvoicePaymentFailed(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   invoice: PaymentData
 ) {
   const { data: org } = await supabase
@@ -533,7 +531,7 @@ async function handleInvoicePaymentFailed(
 }
 
 async function handleCheckoutCompleted(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   checkout: { id: string; customer_id: string; subscription_id?: string; metadata?: Record<string, string> }
 ) {
   const orgId = checkout.metadata?.organization_id;
@@ -579,7 +577,7 @@ function getPlanFromProductId(productId: string): string {
 }
 
 async function createNotification(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string,
   notification: {
     type: "info" | "success" | "warning" | "error";

@@ -113,15 +113,16 @@ export function checkUsageAllowed(
   quantity: number = 1
 ): UsageCheckResult {
   // Map usage type to the right counters
-  const mapping: Record<UsageType, { used: keyof UsageRecord; limit: keyof UsageRecord; costKey: string }> = {
+  type OverageKey = keyof typeof OVERAGES;
+  const mapping: Record<UsageType, { used: keyof UsageRecord; limit: keyof UsageRecord; costKey: OverageKey }> = {
     article_generation: { used: "articlesGenerated", limit: "articlesLimit", costKey: "article_generation" },
     keyword_analysis: { used: "keywordsAnalyzed", limit: "keywordsLimit", costKey: "keyword_analysis" },
     serp_call: { used: "serpCalls", limit: "serpCallsLimit", costKey: "serp_call" },
     page_crawl: { used: "pagesCrawled", limit: "crawlPagesLimit", costKey: "page_crawl" },
-    content_optimization: { used: "optimizations", limit: "articlesLimit", costKey: "content_optimization" },
-    internal_link_analysis: { used: "pagesCrawled", limit: "crawlPagesLimit", costKey: "internal_link_analysis" },
-    schema_generation: { used: "articlesGenerated", limit: "articlesLimit", costKey: "schema_generation" },
-    meta_generation: { used: "articlesGenerated", limit: "articlesLimit", costKey: "meta_generation" },
+    content_optimization: { used: "optimizations", limit: "articlesLimit", costKey: "article_generation" }, // Map to article
+    internal_link_analysis: { used: "pagesCrawled", limit: "crawlPagesLimit", costKey: "page_crawl" }, // Map to page crawl
+    schema_generation: { used: "articlesGenerated", limit: "articlesLimit", costKey: "article_generation" }, // Map to article
+    meta_generation: { used: "articlesGenerated", limit: "articlesLimit", costKey: "article_generation" }, // Map to article
   };
   
   const { used, limit, costKey } = mapping[usageType];
@@ -209,23 +210,23 @@ export function getUsageSummary(
   return {
     articles: {
       used: usage.articlesGenerated,
-      limit: planLimits.articles,
-      percentage: Math.min(100, (usage.articlesGenerated / planLimits.articles) * 100),
+      limit: planLimits.articlesPerMonth,
+      percentage: Math.min(100, (usage.articlesGenerated / planLimits.articlesPerMonth) * 100),
     },
     keywords: {
       used: usage.keywordsAnalyzed,
-      limit: planLimits.keywords,
-      percentage: Math.min(100, (usage.keywordsAnalyzed / planLimits.keywords) * 100),
+      limit: planLimits.keywordsTracked,
+      percentage: Math.min(100, (usage.keywordsAnalyzed / planLimits.keywordsTracked) * 100),
     },
     serpCalls: {
       used: usage.serpCalls,
-      limit: planLimits.serpCalls,
-      percentage: Math.min(100, (usage.serpCalls / planLimits.serpCalls) * 100),
+      limit: planLimits.aiCreditsPerMonth, // Use AI credits as proxy for SERP calls
+      percentage: Math.min(100, (usage.serpCalls / planLimits.aiCreditsPerMonth) * 100),
     },
     crawlPages: {
       used: usage.pagesCrawled,
-      limit: planLimits.crawlPages,
-      percentage: Math.min(100, (usage.pagesCrawled / planLimits.crawlPages) * 100),
+      limit: planLimits.pagesPerSite,
+      percentage: Math.min(100, (usage.pagesCrawled / planLimits.pagesPerSite) * 100),
     },
     onDemand: {
       enabled: usage.onDemandEnabled,

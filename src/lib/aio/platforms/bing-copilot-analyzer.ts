@@ -34,13 +34,13 @@ export class BingCopilotAnalyzer extends BasePlatformAnalyzer {
     const schemaScore = this.analyzeSchema(input);
 
     // 1. Schema & Structured Data (25%) - Bing heavily weights this
-    factors.push(this.calculateSchemaFactor(schemaScore, input));
+    factors.push(this.buildSchemaFactor(schemaScore));
 
     // 2. Entity Clarity (20%)
     factors.push(this.calculateEntityClarityFactor(entities, wordCount));
 
     // 3. Answer Structure (20%)
-    factors.push(this.calculateAnswerStructureFactor(structure));
+    factors.push(this.buildAnswerStructureFactor(structure));
 
     // 4. Content Quality (15%)
     factors.push(this.calculateContentQualityFactor(input, structure, wordCount));
@@ -223,7 +223,7 @@ export class BingCopilotAnalyzer extends BasePlatformAnalyzer {
     return (html.match(/href="https?:\/\//g) || []).length;
   }
 
-  private calculateSchemaFactor(schemaScore: number, input: AIOAnalysisInput): ScoreFactor {
+  private buildSchemaFactor(schemaScore: number): ScoreFactor {
     return {
       name: "Schema & Structured Data",
       score: schemaScore,
@@ -254,7 +254,7 @@ export class BingCopilotAnalyzer extends BasePlatformAnalyzer {
     };
   }
 
-  private calculateAnswerStructureFactor(structure: ContentStructure): ScoreFactor {
+  private buildAnswerStructureFactor(structure: ContentStructure): ScoreFactor {
     let score = 0;
 
     if (structure.hasDirectAnswer) score += 30;

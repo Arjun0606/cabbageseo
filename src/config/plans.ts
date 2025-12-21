@@ -49,11 +49,35 @@ export type { UsageCheckResult } from "@/lib/billing/plans";
 // LEGACY EXPORTS (for backwards compatibility)
 // ============================================
 
-import { PLANS as PLAN_DATA, type PlanId as PlanIdType, type BillingInterval as BillingIntervalType } from "@/lib/billing/plans";
+import { PLANS as PLAN_DATA, OVERAGE_PRICES, type PlanId as PlanIdType, type BillingInterval as BillingIntervalType } from "@/lib/billing/plans";
 
 // Type aliases for old code
 export type { PlanIdType as OldPlanId };
 export type { BillingIntervalType as OldBillingInterval };
+
+// Legacy OVERAGES format (maps to new OVERAGE_PRICES structure)
+export const OVERAGES = {
+  article_generation: {
+    name: "Article Generation",
+    priceCents: OVERAGE_PRICES.articles.pricePerUnit,
+  },
+  keyword_analysis: {
+    name: "Keyword Analysis",
+    priceCents: OVERAGE_PRICES.keywords.pricePerUnit,
+  },
+  serp_call: {
+    name: "SERP API Call",
+    priceCents: OVERAGE_PRICES.aiCredits.pricePerUnit, // Map to AI credits
+  },
+  page_crawl: {
+    name: "Page Crawl",
+    priceCents: OVERAGE_PRICES.audits.pricePerUnit,
+  },
+  aio_analysis: {
+    name: "AIO Analysis",
+    priceCents: OVERAGE_PRICES.aioAnalyses.pricePerUnit,
+  },
+};
 
 // Default export for old imports
 export default PLAN_DATA;

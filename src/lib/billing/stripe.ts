@@ -126,10 +126,10 @@ export function calculateOverages(usage: {
   pagesCrawled: number;
   optimizations: number;
 }, planLimits: {
-  articles: number;
-  keywords: number;
-  serpCalls: number;
-  crawlPages: number;
+  articlesPerMonth: number;
+  keywordsTracked: number;
+  aiCreditsPerMonth: number;
+  pagesPerSite: number;
 }): {
   totalCents: number;
   breakdown: Array<{
@@ -147,8 +147,8 @@ export function calculateOverages(usage: {
   }> = [];
 
   // Articles overage
-  if (usage.articlesGenerated > planLimits.articles) {
-    const overageQty = usage.articlesGenerated - planLimits.articles;
+  if (usage.articlesGenerated > planLimits.articlesPerMonth) {
+    const overageQty = usage.articlesGenerated - planLimits.articlesPerMonth;
     const unitPrice = OVERAGES.article_generation.priceCents;
     breakdown.push({
       type: "article_generation",
@@ -159,9 +159,9 @@ export function calculateOverages(usage: {
   }
 
   // Keywords overage (per 1000)
-  if (usage.keywordsAnalyzed > planLimits.keywords) {
+  if (usage.keywordsAnalyzed > planLimits.keywordsTracked) {
     const overageQty = Math.ceil(
-      (usage.keywordsAnalyzed - planLimits.keywords) / 1000
+      (usage.keywordsAnalyzed - planLimits.keywordsTracked) / 1000
     );
     const unitPrice = OVERAGES.keyword_analysis.priceCents;
     breakdown.push({
@@ -172,9 +172,9 @@ export function calculateOverages(usage: {
     });
   }
 
-  // SERP calls overage
-  if (usage.serpCalls > planLimits.serpCalls) {
-    const overageQty = usage.serpCalls - planLimits.serpCalls;
+  // SERP calls overage (using AI credits as proxy)
+  if (usage.serpCalls > planLimits.aiCreditsPerMonth) {
+    const overageQty = usage.serpCalls - planLimits.aiCreditsPerMonth;
     const unitPrice = OVERAGES.serp_call.priceCents;
     breakdown.push({
       type: "serp_call",
@@ -184,9 +184,9 @@ export function calculateOverages(usage: {
     });
   }
 
-  // Page crawl overage
-  if (usage.pagesCrawled > planLimits.crawlPages) {
-    const overageQty = usage.pagesCrawled - planLimits.crawlPages;
+  // Page crawl overage (using pagesPerSite as proxy)
+  if (usage.pagesCrawled > planLimits.pagesPerSite) {
+    const overageQty = usage.pagesCrawled - planLimits.pagesPerSite;
     const unitPrice = OVERAGES.page_crawl.priceCents;
     breakdown.push({
       type: "page_crawl",

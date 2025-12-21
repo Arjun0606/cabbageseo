@@ -25,7 +25,7 @@ export type TaskStatus = "pending" | "queued" | "running" | "completed" | "faile
 export type TaskType = "research" | "cluster" | "write" | "optimize" | "publish" | "crawl" | "audit" | "refresh" | "link";
 export type IntegrationStatus = "active" | "error" | "disconnected";
 export type AIOIssueType = "aio_low_entity_density" | "aio_poor_answer_structure" | "aio_missing_faq" | "aio_missing_howto" | "aio_weak_quotability" | "aio_missing_definitions" | "aio_no_expert_attribution" | "aio_ambiguous_context" | "aio_stale_content";
-export type AIOPlatform = "google_aio" | "chatgpt" | "perplexity" | "claude" | "gemini";
+export type AIOPlatform = "google_aio" | "chatgpt" | "perplexity" | "bing_copilot";
 
 export interface Database {
   public: {
@@ -47,6 +47,7 @@ export interface Database {
           autopilot_enabled: boolean;
           settings: Json;
           brand_voice: string | null;
+          overage_settings: Json | null;
           created_at: string;
           updated_at: string;
         };
@@ -78,10 +79,13 @@ export interface Database {
           billing_interval?: BillingInterval | null;
           subscription_status?: SubscriptionStatus | null;
           trial_ends_at?: string | null;
+          current_period_start?: string | null;
+          current_period_end?: string | null;
           cancel_at_period_end?: boolean;
           autopilot_enabled?: boolean;
           settings?: Json;
           brand_voice?: string | null;
+          overage_settings?: Json;
           updated_at?: string;
         };
       };

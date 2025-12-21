@@ -65,8 +65,7 @@ export interface PageData {
     google_aio: number;
     chatgpt: number;
     perplexity: number;
-    claude: number;
-    gemini: number;
+    bing_copilot: number;
   };
   entityCount?: number;
   quotabilityScore?: number;
@@ -316,8 +315,7 @@ export class SiteCrawler {
             google_aio: aioResult.scores.platforms.google_aio,
             chatgpt: aioResult.scores.platforms.chatgpt,
             perplexity: aioResult.scores.platforms.perplexity,
-            claude: aioResult.scores.platforms.claude,
-            gemini: aioResult.scores.platforms.gemini,
+            bing_copilot: aioResult.scores.platforms.bing_copilot,
           };
           pageData.entityCount = aioResult.entities.length;
           pageData.quotabilityScore = aioResult.quotabilityScore;

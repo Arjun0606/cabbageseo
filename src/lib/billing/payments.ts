@@ -15,7 +15,7 @@
  * Note: Prepaid credits are NOT part of this model
  */
 
-import { PLANS, type Plan } from "./plans";
+import { PLANS, type Plan, type PlanId } from "./plans";
 
 // ============================================
 // TYPES
@@ -31,7 +31,7 @@ export interface PaymentCustomer {
 export interface Subscription {
   id: string;
   customerId: string;
-  planId: string;
+  planId: PlanId;
   status: "active" | "canceled" | "past_due" | "trialing" | "paused";
   currentPeriodStart: Date;
   currentPeriodEnd: Date;
@@ -137,7 +137,7 @@ class PaymentClient {
 
   async createSubscription(data: {
     customerId: string;
-    planId: string;
+    planId: PlanId;
     billingInterval: "monthly" | "yearly";
     trialDays?: number;
   }): Promise<Subscription> {
@@ -251,7 +251,7 @@ class PaymentClient {
 
   async createCheckoutSession(data: {
     customerId: string;
-    planId: string;
+    planId: PlanId;
     billingInterval: "monthly" | "yearly";
     successUrl: string;
     cancelUrl: string;

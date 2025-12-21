@@ -35,7 +35,15 @@ import {
 // NAVIGATION CONFIG
 // ============================================
 
-const mainNavItems = [
+interface NavItemType {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
+  badge?: string;
+}
+
+const mainNavItems: NavItemType[] = [
   {
     name: "Dashboard",
     href: "/dashboard",
@@ -51,7 +59,7 @@ const mainNavItems = [
 ];
 
 // AIO items - THE MAIN DIFFERENTIATOR
-const aioNavItems = [
+const aioNavItems: NavItemType[] = [
   {
     name: "AI Visibility",
     href: "/aio",
@@ -68,7 +76,7 @@ const aioNavItems = [
   },
 ];
 
-const seoNavItems = [
+const seoNavItems: NavItemType[] = [
   {
     name: "Keywords",
     href: "/keywords",
@@ -140,7 +148,7 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
-  const NavItem = ({ item }: { item: typeof mainNavItems[0] }) => {
+  const NavItem = ({ item }: { item: NavItemType }) => {
     const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
     const Icon = item.icon;
 
@@ -165,7 +173,7 @@ export function Sidebar({ className }: SidebarProps) {
         {!collapsed && (
           <>
             <span className="truncate">{item.name}</span>
-            {"badge" in item && item.badge && (
+            {item.badge && (
               <span className="ml-auto rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
                 {item.badge}
               </span>
@@ -181,7 +189,7 @@ export function Sidebar({ className }: SidebarProps) {
           <TooltipTrigger asChild>{content}</TooltipTrigger>
           <TooltipContent side="right" className="flex items-center gap-2">
             {item.name}
-            {"badge" in item && item.badge && (
+            {item.badge && (
               <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
                 {item.badge}
               </span>
@@ -199,7 +207,7 @@ export function Sidebar({ className }: SidebarProps) {
     items,
   }: {
     title: string;
-    items: typeof mainNavItems;
+    items: NavItemType[];
   }) => (
     <div className="space-y-1">
       {!collapsed && (

@@ -204,7 +204,7 @@ export class AIVisibilityChecker {
 
         // Check for AI Overview in response
         // SerpAPI returns ai_overview field when Google shows one
-        const response = serpResult as Record<string, unknown>;
+        const response = serpResult as unknown as Record<string, unknown>;
         const aiOverview = response.ai_overview as {
           text?: string;
           sources?: Array<{ link: string; title?: string; snippet?: string }>;
