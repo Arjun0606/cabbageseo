@@ -855,12 +855,21 @@ export async function POST(request: NextRequest) {
 
     const page = crawlResult.pages[0];
 
+    // Map page data for analysis functions (convert null to undefined for images.alt)
+    const pageForAnalysis = {
+      ...page,
+      images: page.images?.map(img => ({
+        ...img,
+        alt: img.alt ?? undefined,
+      })),
+    };
+
     // Analyze SEO
-    const seoBreakdown = analyzeSEO(page);
+    const seoBreakdown = analyzeSEO(pageForAnalysis);
     const seoScore = calculateTotalScore(seoBreakdown);
 
     // Analyze AIO
-    const aioBreakdown = analyzeAIO(page);
+    const aioBreakdown = analyzeAIO(pageForAnalysis);
     const aioScore = calculateTotalScore(aioBreakdown);
 
     // Calculate category scores (out of 20)
