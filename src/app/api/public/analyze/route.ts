@@ -11,10 +11,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SiteCrawler } from "@/lib/crawler/site-crawler";
 
-// Rate limiting
+// Rate limiting - 20 requests per IP per hour for free tool
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 5;
-const RATE_WINDOW = 60 * 60 * 1000;
+const RATE_LIMIT = 20;
+const RATE_WINDOW = 60 * 60 * 1000; // 1 hour
 
 function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
   const now = Date.now();
