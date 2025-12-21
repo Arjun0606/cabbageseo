@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -327,14 +328,25 @@ function FactorCheck({
 // ============================================
 
 export default function FreeScoringPage() {
+  const searchParams = useSearchParams();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [hasAutoAnalyzed, setHasAutoAnalyzed] = useState(false);
 
-  const handleAnalyze = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!url.trim()) return;
+  // Auto-analyze if URL is provided in query params
+  useEffect(() => {
+    const urlParam = searchParams.get("url");
+    if (urlParam && !hasAutoAnalyzed) {
+      setUrl(urlParam);
+      setHasAutoAnalyzed(true);
+      runAnalysis(urlParam);
+    }
+  }, [searchParams, hasAutoAnalyzed]);
+
+  const runAnalysis = async (targetUrl: string) => {
+    if (!targetUrl.trim()) return;
 
     setLoading(true);
     setError(null);
@@ -344,7 +356,7 @@ export default function FreeScoringPage() {
       const res = await fetch("/api/public/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim() }),
+        body: JSON.stringify({ url: targetUrl.trim() }),
       });
 
       const data = await res.json();
@@ -359,6 +371,11 @@ export default function FreeScoringPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAnalyze = async (e: React.FormEvent) => {
+    e.preventDefault();
+    runAnalysis(url);
   };
 
   return (
