@@ -290,6 +290,48 @@ export const OVERAGE_PRICES = {
 };
 
 // ============================================
+// CREDIT PACKAGES (for prepaid credit purchases)
+// ============================================
+
+export interface CreditPackage {
+  id: string;
+  name: string;
+  credits: number;
+  bonus: number;       // Bonus credits (free)
+  priceCents: number;  // Price in cents
+  pricePerCredit: number; // Effective price per credit after bonus
+  popular?: boolean;
+}
+
+export const CREDIT_PACKAGES: CreditPackage[] = [
+  {
+    id: "small",
+    name: "500 Credits",
+    credits: 500,
+    bonus: 0,
+    priceCents: 999,   // $9.99
+    pricePerCredit: 0.02,
+  },
+  {
+    id: "medium",
+    name: "2,000 Credits",
+    credits: 2000,
+    bonus: 200,        // 10% bonus
+    priceCents: 2999,  // $29.99
+    pricePerCredit: 0.014,
+    popular: true,
+  },
+  {
+    id: "large",
+    name: "5,000 Credits",
+    credits: 5000,
+    bonus: 1000,       // 20% bonus
+    priceCents: 5999,  // $59.99
+    pricePerCredit: 0.01,
+  },
+];
+
+// ============================================
 // SPENDING CAP PRESETS
 // ============================================
 
