@@ -33,22 +33,21 @@ const plans = [
   {
     id: "starter",
     name: "Starter",
-    description: "For bloggers and small sites getting started",
+    description: "Perfect for content creators tracking AI visibility",
     monthlyPrice: 29,
     yearlyPrice: 24,
     icon: Zap,
     color: "bg-blue-500/10 text-blue-500",
     features: [
       { text: "1 website", included: true },
+      { text: "20 AIO visibility checks/month", included: true, highlight: true },
+      { text: "4 platform tracking (ChatGPT, Perplexity, Google AI, Bing)", included: true, highlight: true },
       { text: "10 AI articles/month", included: true },
       { text: "100 keywords tracked", included: true },
       { text: "5 SEO audits/month", included: true },
-      { text: "20 AIO analyses/month", included: true },
       { text: "WordPress & Webflow", included: true },
-      { text: "Email support", included: true },
+      { text: "Real-time AI citations", included: false },
       { text: "Team members", included: false },
-      { text: "Google Search Console", included: false },
-      { text: "API access", included: false },
     ],
     cta: "Start Free Trial",
     highlight: false,
@@ -56,21 +55,21 @@ const plans = [
   {
     id: "pro",
     name: "Pro",
-    description: "For growing businesses serious about organic traffic",
+    description: "For teams serious about AI search visibility",
     monthlyPrice: 79,
     yearlyPrice: 66,
     icon: TrendingUp,
     color: "bg-green-500/10 text-green-500",
     features: [
       { text: "5 websites", included: true },
+      { text: "100 AIO visibility checks/month", included: true, highlight: true },
+      { text: "Real-time AI citation tracking", included: true, highlight: true },
       { text: "50 AI articles/month", included: true },
       { text: "500 keywords tracked", included: true },
       { text: "20 SEO audits/month", included: true },
-      { text: "100 AIO analyses/month", included: true },
       { text: "All CMS integrations", included: true },
-      { text: "Priority support", included: true },
       { text: "5 team members", included: true },
-      { text: "Google Search Console", included: true },
+      { text: "Priority support", included: true },
       { text: "API access", included: true },
     ],
     cta: "Start Free Trial",
@@ -79,21 +78,21 @@ const plans = [
   {
     id: "pro_plus",
     name: "Pro+",
-    description: "For agencies and enterprises at scale",
+    description: "For agencies dominating AI search for clients",
     monthlyPrice: 199,
     yearlyPrice: 166,
     icon: Building2,
     color: "bg-purple-500/10 text-purple-500",
     features: [
       { text: "20 websites", included: true },
+      { text: "500 AIO visibility checks/month", included: true, highlight: true },
+      { text: "Citation alerts & monitoring", included: true, highlight: true },
+      { text: "White-label AI visibility reports", included: true, highlight: true },
       { text: "200 AI articles/month", included: true },
       { text: "2,000 keywords tracked", included: true },
       { text: "Unlimited audits", included: true },
-      { text: "500 AIO analyses/month", included: true },
-      { text: "White-label reports", included: true },
       { text: "Dedicated support + SLA", included: true },
       { text: "Unlimited team members", included: true },
-      { text: "Premium AI (Claude Opus)", included: true },
       { text: "Custom integrations", included: true },
     ],
     cta: "Start Free Trial",
@@ -168,13 +167,14 @@ export default function PricingPage() {
             The first SEO tool with AI visibility tracking
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Simple pricing for{" "}
-            <span className="bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
-              modern SEO
-            </span>
+            Track Your{" "}
+            <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+              AI Visibility
+            </span>{" "}
+            <span className="text-muted-foreground">& SEO</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Rank in Google AND AI search. All plans include a 14-day free trial.
+            See if ChatGPT, Perplexity, and Google AI cite your content. Plus complete SEO tools.
           </p>
 
           {/* Billing Toggle */}

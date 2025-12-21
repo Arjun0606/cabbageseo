@@ -48,6 +48,17 @@ const mainNavItems = [
     icon: Globe,
     description: "Manage your websites",
   },
+];
+
+// AIO items - THE MAIN DIFFERENTIATOR
+const aioNavItems = [
+  {
+    name: "AI Visibility",
+    href: "/aio",
+    icon: Brain,
+    description: "Track AI platform citations",
+    badge: "⭐",
+  },
   {
     name: "Autopilot",
     href: "/autopilot",
@@ -68,13 +79,7 @@ const seoNavItems = [
     name: "Content",
     href: "/content",
     icon: FileText,
-    description: "AI-powered content",
-  },
-  {
-    name: "Internal Links",
-    href: "/links",
-    icon: Link2,
-    description: "Link optimization",
+    description: "AI-optimized content",
   },
   {
     name: "Technical Audit",
@@ -83,20 +88,16 @@ const seoNavItems = [
     description: "Site health checks",
   },
   {
+    name: "Internal Links",
+    href: "/links",
+    icon: Link2,
+    description: "Link optimization",
+  },
+  {
     name: "Analytics",
     href: "/analytics",
     icon: BarChart3,
     description: "Performance tracking",
-  },
-];
-
-const aioNavItems = [
-  {
-    name: "AI Visibility",
-    href: "/aio",
-    icon: Brain,
-    description: "AI search optimization",
-    badge: "NEW",
   },
 ];
 
@@ -247,8 +248,8 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 space-y-6 overflow-y-auto p-3">
           <NavSection title="Overview" items={mainNavItems} />
+          <NavSection title="AI Visibility" items={aioNavItems} />
           <NavSection title="SEO Tools" items={seoNavItems} />
-          <NavSection title="AI Search" items={aioNavItems} />
           <NavSection title="More" items={toolsNavItems} />
         </nav>
 

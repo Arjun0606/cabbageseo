@@ -36,8 +36,7 @@ const platformConfig: Record<AIOPlatform, { color: string; bgColor: string }> = 
   google_aio: { color: "text-blue-500", bgColor: "bg-blue-500/10" },
   chatgpt: { color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
   perplexity: { color: "text-violet-500", bgColor: "bg-violet-500/10" },
-  claude: { color: "text-orange-500", bgColor: "bg-orange-500/10" },
-  gemini: { color: "text-cyan-500", bgColor: "bg-cyan-500/10" },
+  bing_copilot: { color: "text-cyan-500", bgColor: "bg-cyan-500/10" },
 };
 
 function ScoreRing({ score, size = 120, label }: { score: number | null; size?: number; label?: string }) {
@@ -686,29 +685,16 @@ export default function AIODashboardPage() {
               </ul>
             </div>
 
-            {/* Claude */}
-            <div className={cn("p-4 rounded-lg border", platformConfig.claude.bgColor)}>
-              <h4 className={cn("font-semibold flex items-center gap-2 mb-2", platformConfig.claude.color)}>
-                {PLATFORM_LABELS.claude}
+            {/* Bing Copilot */}
+            <div className={cn("p-4 rounded-lg border", platformConfig.bing_copilot.bgColor)}>
+              <h4 className={cn("font-semibold flex items-center gap-2 mb-2", platformConfig.bing_copilot.color)}>
+                {PLATFORM_LABELS.bing_copilot}
               </h4>
               <ul className="text-sm space-y-1 text-muted-foreground">
-                <li>• Semantic clarity</li>
-                <li>• Define terms before use</li>
-                <li>• Logical structure</li>
-                <li>• Clear entity relationships</li>
-              </ul>
-            </div>
-
-            {/* Gemini */}
-            <div className={cn("p-4 rounded-lg border", platformConfig.gemini.bgColor)}>
-              <h4 className={cn("font-semibold flex items-center gap-2 mb-2", platformConfig.gemini.color)}>
-                {PLATFORM_LABELS.gemini}
-              </h4>
-              <ul className="text-sm space-y-1 text-muted-foreground">
-                <li>• Similar to Google AI Overviews</li>
-                <li>• Multimodal (images, video)</li>
-                <li>• YouTube integration</li>
-                <li>• Schema.org markup</li>
+                <li>• Structured data markup</li>
+                <li>• Clear entity definitions</li>
+                <li>• Schema.org support</li>
+                <li>• Microsoft ecosystem integration</li>
               </ul>
             </div>
 

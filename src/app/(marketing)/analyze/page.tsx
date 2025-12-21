@@ -385,20 +385,24 @@ export default function FreeScoringPage() {
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-3xl text-center">
           <Badge className="mb-4" variant="secondary">
-            <Sparkles className="w-3 h-3 mr-1" />
-            Free SEO + AI Visibility Analysis
+            <Bot className="w-3 h-3 mr-1" />
+            Free AI Visibility + SEO Analysis
           </Badge>
           
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Is Your Site Visible to{" "}
+            Is{" "}
+            <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+              ChatGPT
+            </span>{" "}
+            Citing{" "}
             <span className="bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
-              AI Search?
+              Your Content?
             </span>
           </h1>
           
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Get your SEO score plus AI visibility score for ChatGPT, Perplexity, Claude, and Google AI. 
-            See exactly what to fix with detailed explanations.
+            See if ChatGPT, Perplexity, Google AI, and Bing Copilot are citing your content. 
+            Plus complete SEO analysis with actionable fixes.
           </p>
 
           <form onSubmit={handleAnalyze} className="flex gap-2 max-w-xl mx-auto">

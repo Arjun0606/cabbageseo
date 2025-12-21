@@ -368,10 +368,10 @@ export default function OnboardingPage() {
                 <Sparkles className="w-12 h-12 text-primary" />
               </div>
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-                Let&apos;s analyze your site
+                Let&apos;s check your AI visibility
               </h1>
               <p className="text-xl text-muted-foreground max-w-md mx-auto">
-                Paste your URL and get a complete SEO strategy in under 2 minutes
+                See if ChatGPT and AI search cite your content, plus a complete SEO audit
               </p>
             </div>
           </div>
@@ -408,19 +408,19 @@ export default function OnboardingPage() {
           {/* Features */}
           <div className="grid grid-cols-3 gap-4 pt-8">
             <div className="text-center p-4">
+              <Sparkles className="w-8 h-8 mx-auto mb-2 text-purple-500" />
+              <p className="text-sm font-medium">AI Visibility</p>
+              <p className="text-xs text-muted-foreground">ChatGPT, Perplexity, Google AI</p>
+            </div>
+            <div className="text-center p-4">
               <Search className="w-8 h-8 mx-auto mb-2 text-primary" />
-              <p className="text-sm font-medium">Keyword Discovery</p>
-              <p className="text-xs text-muted-foreground">Find untapped opportunities</p>
+              <p className="text-sm font-medium">SEO Analysis</p>
+              <p className="text-xs text-muted-foreground">100+ ranking factors</p>
             </div>
             <div className="text-center p-4">
-              <FileText className="w-8 h-8 mx-auto mb-2 text-primary" />
-              <p className="text-sm font-medium">Content Ideas</p>
-              <p className="text-xs text-muted-foreground">AI-generated topics</p>
-            </div>
-            <div className="text-center p-4">
-              <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-primary" />
-              <p className="text-sm font-medium">Issue Detection</p>
-              <p className="text-xs text-muted-foreground">Find & fix problems</p>
+              <Zap className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
+              <p className="text-sm font-medium">Quick Wins</p>
+              <p className="text-xs text-muted-foreground">Actionable improvements</p>
             </div>
           </div>
         </div>

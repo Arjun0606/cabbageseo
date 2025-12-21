@@ -135,38 +135,38 @@ function EmptyDashboard() {
       
       <h1 className="text-3xl font-bold mb-4">Welcome to CabbageSEO!</h1>
       <p className="text-muted-foreground max-w-md mb-8">
-        Let&apos;s get started by analyzing your first website. Our AI will scan your site
-        and create a complete SEO strategy in minutes.
+        Let&apos;s see if AI platforms are citing your content.
+        Check visibility across ChatGPT, Perplexity, Google AI, and Bing Copilot — plus a full SEO audit.
       </p>
       
       <div className="flex gap-4">
         <Button size="lg" className="gap-2" onClick={() => router.push("/onboarding")}>
           <Plus className="w-5 h-5" />
-          Add Your First Site
+          Check Your AI Visibility
         </Button>
       </div>
       
       <div className="grid grid-cols-3 gap-8 mt-16 max-w-2xl">
         <div className="text-center">
+          <div className="p-3 bg-purple-500/10 rounded-xl inline-block mb-3">
+            <Sparkles className="w-6 h-6 text-purple-500" />
+          </div>
+          <p className="text-sm font-medium">AI Visibility</p>
+          <p className="text-xs text-muted-foreground">Track AI citations</p>
+        </div>
+        <div className="text-center">
           <div className="p-3 bg-primary/10 rounded-xl inline-block mb-3">
             <Search className="w-6 h-6 text-primary" />
           </div>
-          <p className="text-sm font-medium">Keyword Research</p>
-          <p className="text-xs text-muted-foreground">AI-powered opportunities</p>
+          <p className="text-sm font-medium">SEO Analysis</p>
+          <p className="text-xs text-muted-foreground">Complete audits</p>
         </div>
         <div className="text-center">
-          <div className="p-3 bg-primary/10 rounded-xl inline-block mb-3">
-            <FileText className="w-6 h-6 text-primary" />
+          <div className="p-3 bg-blue-500/10 rounded-xl inline-block mb-3">
+            <FileText className="w-6 h-6 text-blue-500" />
           </div>
-          <p className="text-sm font-medium">Content Creation</p>
-          <p className="text-xs text-muted-foreground">SEO-optimized articles</p>
-        </div>
-        <div className="text-center">
-          <div className="p-3 bg-primary/10 rounded-xl inline-block mb-3">
-            <TrendingUp className="w-6 h-6 text-primary" />
-          </div>
-          <p className="text-sm font-medium">Rank Tracking</p>
-          <p className="text-xs text-muted-foreground">Monitor progress</p>
+          <p className="text-sm font-medium">AI Content</p>
+          <p className="text-xs text-muted-foreground">Optimized for AI search</p>
         </div>
       </div>
     </div>

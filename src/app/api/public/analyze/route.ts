@@ -888,6 +888,11 @@ export async function POST(request: NextRequest) {
       perplexity: number;
       chatGPT: number;
       bingCopilot: number;
+    } = {
+      googleAIO: 0,
+      perplexity: 0,
+      chatGPT: 0,
+      bingCopilot: 0,
     };
     let platformScoresAreReal = false;
     let realVisibilityData: {

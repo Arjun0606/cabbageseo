@@ -5,8 +5,7 @@
  * - Google AI Overviews
  * - ChatGPT / SearchGPT
  * - Perplexity AI
- * - Claude-based search
- * - Google Gemini
+ * - Bing Copilot
  */
 
 // Types
@@ -18,13 +17,11 @@ export {
   GoogleAIOAnalyzer,
   ChatGPTAnalyzer,
   PerplexityAnalyzer,
-  ClaudeAnalyzer,
-  GeminiAnalyzer,
+  BingCopilotAnalyzer,
   googleAIOAnalyzer,
   chatgptAnalyzer,
   perplexityAnalyzer,
-  claudeAnalyzer,
-  geminiAnalyzer,
+  bingCopilotAnalyzer,
   platformAnalyzers,
 } from "./platforms";
 
@@ -57,4 +54,3 @@ export {
   type CitationResult,
   type VisibilityCheckOptions,
 } from "./visibility-checker";
-

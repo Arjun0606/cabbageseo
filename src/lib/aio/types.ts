@@ -11,32 +11,28 @@ export type AIOPlatform =
   | "google_aio"    // Google AI Overviews
   | "chatgpt"       // ChatGPT / SearchGPT
   | "perplexity"    // Perplexity AI
-  | "claude"        // Claude-based search
-  | "gemini";       // Google Gemini
+  | "bing_copilot"; // Bing Copilot
 
 export const AIO_PLATFORMS: AIOPlatform[] = [
   "google_aio",
   "chatgpt", 
   "perplexity",
-  "claude",
-  "gemini",
+  "bing_copilot",
 ];
 
 export const PLATFORM_LABELS: Record<AIOPlatform, string> = {
   google_aio: "Google AI Overviews",
   chatgpt: "ChatGPT",
   perplexity: "Perplexity",
-  claude: "Claude",
-  gemini: "Gemini",
+  bing_copilot: "Bing Copilot",
 };
 
 // Platform weights for combined score (must sum to 1.0)
 export const PLATFORM_WEIGHTS: Record<AIOPlatform, number> = {
-  google_aio: 0.30,   // 30% - Most important (Google still dominates)
-  chatgpt: 0.25,      // 25% - Growing fast
-  perplexity: 0.25,   // 25% - Major player in AI search
-  claude: 0.10,       // 10% - Smaller but growing
-  gemini: 0.10,       // 10% - Tied to Google ecosystem
+  google_aio: 0.35,   // 35% - Most important (Google still dominates search)
+  chatgpt: 0.30,      // 30% - Largest AI user base (200M+ weekly)
+  perplexity: 0.20,   // 20% - Growing fast in AI search
+  bing_copilot: 0.15, // 15% - Microsoft ecosystem
 };
 
 // ============================================
