@@ -10,27 +10,25 @@ interface LogoProps {
 }
 
 const sizes = {
-  sm: { img: 20, text: "text-sm" },
-  md: { img: 28, text: "text-lg" },
-  lg: { img: 36, text: "text-2xl" },
-  xl: { img: 48, text: "text-3xl" },
+  sm: { height: 24, text: "text-sm" },
+  md: { height: 32, text: "text-lg" },
+  lg: { height: 40, text: "text-xl" },
+  xl: { height: 48, text: "text-2xl" },
 };
 
 export function Logo({ size = "md", className, showText = true }: LogoProps) {
-  const { img, text } = sizes[size];
+  const { height, text } = sizes[size];
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <Image
-        src="/logo.png"
+      <img
+        src="/cabbageseo_logo.png"
         alt="CabbageSEO"
-        width={img}
-        height={img}
-        className="rounded-lg"
+        style={{ height: `${height}px`, width: 'auto' }}
       />
       {showText && (
         <span className={cn("font-bold tracking-tight", text)}>
-          Cabbage<span className="text-emerald-500">SEO</span>
+          CabbageSEO
         </span>
       )}
     </div>
@@ -38,15 +36,14 @@ export function Logo({ size = "md", className, showText = true }: LogoProps) {
 }
 
 export function LogoIcon({ size = "md", className }: Omit<LogoProps, "showText">) {
-  const { img } = sizes[size];
+  const { height } = sizes[size];
 
   return (
-    <Image
-      src="/logo.png"
+    <img
+      src="/cabbageseo_logo.png"
       alt="CabbageSEO"
-      width={img}
-      height={img}
-      className={cn("rounded-lg", className)}
+      style={{ height: `${height}px`, width: 'auto' }}
+      className={cn("", className)}
     />
   );
 }

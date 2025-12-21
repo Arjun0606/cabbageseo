@@ -142,9 +142,9 @@ export default function PricingPage() {
             <img 
               src="/cabbageseo_logo.png" 
               alt="CabbageSEO" 
-              className="w-8 h-8 rounded-lg"
+              className="h-10 w-auto"
             />
-            <span className="font-semibold text-lg">CabbageSEO</span>
+            <span className="font-bold text-xl tracking-tight">CabbageSEO</span>
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/analyze">

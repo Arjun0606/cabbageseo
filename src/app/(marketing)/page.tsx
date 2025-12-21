@@ -39,13 +39,13 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-sm border-b border-zinc-800/50">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center gap-2.5">
+            <Link href="/" className="flex items-center gap-2">
               <img 
                 src="/cabbageseo_logo.png" 
                 alt="CabbageSEO" 
-                className="w-8 h-8 rounded-lg"
+                className="h-10 w-auto"
               />
-              <span className="font-semibold text-lg">CabbageSEO</span>
+              <span className="font-bold text-xl tracking-tight">CabbageSEO</span>
             </Link>
             
             <div className="hidden md:flex items-center gap-8">
@@ -349,13 +349,13 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-zinc-800">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <img 
               src="/cabbageseo_logo.png" 
               alt="CabbageSEO" 
-              className="w-6 h-6 rounded"
+              className="h-8 w-auto"
             />
-            <span className="text-sm text-zinc-500">CabbageSEO</span>
+            <span className="text-sm font-medium text-zinc-400">CabbageSEO</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-zinc-500">
             <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>

@@ -64,9 +64,9 @@ export function Sidebar() {
         "flex items-center h-16 px-4 border-b border-slate-800",
         collapsed ? "justify-center" : "gap-3"
       )}>
-        <Image src="/logo.png" alt="CabbageSEO" width={36} height={36} className="rounded-lg shrink-0" />
+        <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-9 w-auto shrink-0" />
         {!collapsed && (
-          <span className="font-bold text-white text-lg">CabbageSEO</span>
+          <span className="font-bold text-white text-lg tracking-tight">CabbageSEO</span>
         )}
       </div>
 

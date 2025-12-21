@@ -86,7 +86,7 @@ export function SEOScoreCard({
       {/* Header */}
       <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Image src="/logo.png" alt="CabbageSEO" width={32} height={32} className="rounded-lg" />
+          <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-8 w-auto" />
           <div>
             <p className="text-white font-semibold">CabbageSEO Score</p>
             <p className="text-xs text-slate-400">{domain}</p>

@@ -60,12 +60,12 @@ function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onCollapse: ()
       <div className="h-16 flex items-center justify-between px-4 border-b">
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="CabbageSEO" width={32} height={32} className="rounded-lg" />
+            <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-9 w-auto" />
             <span className="font-bold text-lg">CabbageSEO</span>
           </Link>
         )}
         {collapsed && (
-          <Image src="/logo.png" alt="CabbageSEO" width={32} height={32} className="rounded-lg mx-auto" />
+          <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-9 w-auto mx-auto" />
         )}
       </div>
 
@@ -230,7 +230,7 @@ function MobileNav({
       <aside className="fixed left-0 top-0 z-50 w-64 h-screen bg-background lg:hidden">
         <div className="h-16 flex items-center justify-between px-4 border-b">
           <Link href="/dashboard" className="flex items-center gap-2" onClick={onClose}>
-            <Image src="/logo.png" alt="CabbageSEO" width={32} height={32} className="rounded-lg" />
+            <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-9 w-auto" />
             <span className="font-bold text-lg">CabbageSEO</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={onClose}>

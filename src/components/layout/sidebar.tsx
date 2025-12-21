@@ -238,11 +238,10 @@ export function Sidebar({ className }: SidebarProps) {
           )}
         >
           <Link href="/dashboard" className="flex items-center gap-2">
-            <Image
-              src="/logo.png"
+            <img
+              src="/cabbageseo_logo.png"
               alt="CabbageSEO"
-              width={36}
-              height={36}
+              className="h-9 w-auto"
               className="rounded-lg"
             />
             {!collapsed && (

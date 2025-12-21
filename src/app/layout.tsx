@@ -63,9 +63,9 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon-16x16.png",
-    apple: "/apple-touch-icon.png",
+    icon: "/cabbageseo_logo.png",
+    shortcut: "/cabbageseo_logo.png",
+    apple: "/cabbageseo_logo.png",
   },
   manifest: "/site.webmanifest",
 };

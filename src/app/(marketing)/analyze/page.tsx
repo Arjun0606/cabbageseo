@@ -367,8 +367,8 @@ export default function FreeScoringPage() {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="CabbageSEO" width={32} height={32} />
-            <span className="font-bold text-lg">CabbageSEO</span>
+            <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-10 w-auto" />
+            <span className="font-bold text-xl tracking-tight">CabbageSEO</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/login">

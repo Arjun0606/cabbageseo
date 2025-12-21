@@ -113,7 +113,7 @@ export default function SignupPage() {
             <img 
               src="/cabbageseo_logo.png" 
               alt="CabbageSEO" 
-              className="w-10 h-10 rounded-lg"
+              className="h-12 w-auto"
             />
             <span className="text-2xl font-bold text-white">CabbageSEO</span>
           </Link>

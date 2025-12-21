@@ -76,7 +76,7 @@ export function PageLoading({ message = "Loading..." }: PageLoadingProps) {
         <div className="relative">
           <div className="h-16 w-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <Image src="/logo.png" alt="Loading" width={32} height={32} className="rounded-lg" />
+            <img src="/cabbageseo_logo.png" alt="Loading" className="h-8 w-auto" />
           </div>
         </div>
         <p className="text-sm font-medium text-muted-foreground">{message}</p>
