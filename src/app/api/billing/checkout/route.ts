@@ -13,7 +13,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { dodo } from "@/lib/billing/dodo-client";
-import { PLANS } from "@/lib/billing/plans";
+import { PLANS, type PlanId } from "@/lib/billing/plans";
 
 // Dodo Product IDs (configured in Dodo Dashboard)
 const PRODUCT_IDS: Record<string, Record<string, string>> = {
@@ -49,12 +49,14 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { planId, interval = "monthly" } = body;
+    const { planId, interval = "monthly" } = body as { planId: string; interval?: string };
 
     // Validate plan
-    if (!PLANS[planId]) {
+    const validPlanIds: PlanId[] = ["starter", "pro", "pro_plus"];
+    if (!validPlanIds.includes(planId as PlanId) || !PLANS[planId as PlanId]) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
+    const typedPlanId = planId as PlanId;
 
     if (interval !== "monthly" && interval !== "yearly") {
       return NextResponse.json({ error: "Invalid interval" }, { status: 400 });
