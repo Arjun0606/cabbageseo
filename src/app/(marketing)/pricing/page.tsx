@@ -49,7 +49,7 @@ const plans = [
       { text: "Real-time AI citations", included: false },
       { text: "Team members", included: false },
     ],
-    cta: "Start Free Trial",
+    cta: "Get Started",
     highlight: false,
   },
   {
@@ -72,7 +72,7 @@ const plans = [
       { text: "Priority support", included: true },
       { text: "API access", included: true },
     ],
-    cta: "Start Free Trial",
+    cta: "Get Started",
     highlight: true,
   },
   {
@@ -95,7 +95,7 @@ const plans = [
       { text: "Unlimited team members", included: true },
       { text: "Custom integrations", included: true },
     ],
-    cta: "Start Free Trial",
+    cta: "Get Started",
     highlight: false,
   },
 ];
@@ -110,8 +110,8 @@ const faqs = [
     answer: "Ahrefs and Semrush are great for traditional SEO. But they don't track AI visibility. CabbageSEO is the first tool that shows your visibility across ChatGPT, Perplexity, Google AI Overviews, and Bing Copilot - plus all the SEO basics you need.",
   },
   {
-    question: "Do you offer a free trial?",
-    answer: "Yes! All plans come with a 14-day free trial. No credit card required to start. You'll have full access to all features during the trial.",
+    question: "Can I try before I buy?",
+    answer: "Yes! Our URL analyzer is completely free - no signup required. Paste any URL and get your SEO + AI visibility score instantly. This helps you see the value before subscribing.",
   },
   {
     question: "What happens if I exceed my plan limits?",
@@ -140,9 +140,11 @@ export default function PricingPage() {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">🥬</span>
-            </div>
+            <img 
+              src="/cabbageseo_logo.png" 
+              alt="CabbageSEO" 
+              className="w-8 h-8 rounded-lg"
+            />
             <span className="font-bold text-xl">CabbageSEO</span>
           </Link>
           <div className="flex items-center gap-4">
@@ -284,16 +286,79 @@ export default function PricingPage() {
           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 text-muted-foreground">
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-green-500" />
-              <span>14-day free trial</span>
+              <span>Free URL analyzer</span>
             </div>
             <div className="flex items-center gap-2">
               <Check className="w-5 h-5 text-green-500" />
-              <span>No credit card required</span>
+              <span>Pay-as-you-go overages</span>
             </div>
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-green-500" />
               <span>Cancel anytime</span>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Overages Section */}
+      <section className="py-16 bg-muted/10">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="text-center mb-10">
+            <Badge variant="outline" className="mb-4">Flexible Usage</Badge>
+            <h2 className="text-3xl font-bold mb-4">Need more? Pay as you go.</h2>
+            <p className="text-muted-foreground">
+              Exceeded your plan limits? No problem. Enable overages with a spending cap you control.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card className="border-border/50">
+              <CardContent className="p-6">
+                <h3 className="font-semibold mb-4">Overage Pricing</h3>
+                <ul className="space-y-3 text-sm">
+                  <li className="flex justify-between">
+                    <span className="text-muted-foreground">Extra AI articles</span>
+                    <span className="font-medium">$3.00 each</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="text-muted-foreground">Extra keywords (100)</span>
+                    <span className="font-medium">$5.00</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="text-muted-foreground">Extra audits</span>
+                    <span className="font-medium">$1.00 each</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="text-muted-foreground">Extra AIO checks</span>
+                    <span className="font-medium">$0.50 each</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-border/50">
+              <CardContent className="p-6">
+                <h3 className="font-semibold mb-4">You&apos;re in control</h3>
+                <ul className="space-y-3 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                    <span>Set a monthly spending cap (e.g., $50, $100, $200)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                    <span>Get notified at 50%, 75%, 90% of cap</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                    <span>Overages billed at end of billing cycle</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                    <span>Disable anytime - never surprised</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>

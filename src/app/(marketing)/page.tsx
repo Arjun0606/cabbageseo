@@ -67,7 +67,7 @@ function FeatureCard({
       <CardContent className="p-6 relative">
         <div className="flex items-start justify-between mb-4">
           <div className={`inline-flex p-3 rounded-xl ${color}`}>
-            <Icon className="w-6 h-6" />
+          <Icon className="w-6 h-6" />
           </div>
           {badge && (
             <Badge variant="secondary" className="text-xs">
@@ -158,9 +158,11 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
-                <span className="text-white font-bold">🥬</span>
-              </div>
+              <img 
+                src="/cabbageseo_logo.png" 
+                alt="CabbageSEO" 
+                className="w-8 h-8 rounded-lg"
+              />
               <span className="font-bold text-xl">CabbageSEO</span>
             </Link>
             <div className="hidden md:flex items-center gap-8">
@@ -191,11 +193,10 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        {/* Background Effects */}
+        {/* Subtle Background - not too "AI-looking" */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-green-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-purple-500/10 to-green-500/10 rounded-full blur-3xl" />
+          <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-emerald-950/20 via-transparent to-transparent" />
+          <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-5xl mx-auto text-center">
@@ -292,7 +293,7 @@ export default function LandingPage() {
                   <div className="bg-background border rounded-lg p-4 text-center">
                     <p className="text-3xl font-bold text-orange-500">12</p>
                     <p className="text-xs text-muted-foreground">Issues Found</p>
-                  </div>
+                    </div>
                 </div>
                 <div className="grid grid-cols-4 gap-2 p-4 bg-muted/30 rounded-lg">
                   <div className="text-center">
@@ -464,7 +465,7 @@ export default function LandingPage() {
               <p className="text-muted-foreground text-sm">
                 Get specific recommendations to improve both SEO and AIO. One-click fixes available.
               </p>
-            </div>
+                </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mx-auto mb-4">
                 <TrendingUp className="w-8 h-8" />
@@ -517,9 +518,11 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
-                <span className="text-white font-bold">🥬</span>
-              </div>
+              <img 
+                src="/cabbageseo_logo.png" 
+                alt="CabbageSEO" 
+                className="w-8 h-8 rounded-lg"
+              />
               <span className="font-bold text-xl">CabbageSEO</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">

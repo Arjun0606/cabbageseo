@@ -110,9 +110,11 @@ export default function SignupPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
-              <span className="text-white text-xl">🥬</span>
-            </div>
+            <img 
+              src="/cabbageseo_logo.png" 
+              alt="CabbageSEO" 
+              className="w-10 h-10 rounded-lg"
+            />
             <span className="text-2xl font-bold text-white">CabbageSEO</span>
           </Link>
           <p className="mt-2 text-zinc-400">Track your visibility in AI search</p>
