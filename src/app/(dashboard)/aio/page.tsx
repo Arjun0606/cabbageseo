@@ -447,7 +447,7 @@ export default function AIODashboardPage() {
             AI Visibility
           </h1>
           <p className="text-muted-foreground mt-1">
-            Optimize for AI search platforms: Google AI Overviews, ChatGPT, Perplexity, Claude, Gemini
+            Optimize for AI search platforms: Google AI Overviews, ChatGPT, Perplexity, Bing Copilot
           </p>
         </div>
         <div className="flex items-center gap-3">

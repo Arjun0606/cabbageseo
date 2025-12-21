@@ -325,9 +325,10 @@ export async function GET(request: NextRequest) {
 
     if (siteId) {
       // Get site-wide AIO stats
+      // Note: Database may have legacy claude/gemini columns, but we only use supported platforms now
       const { data: pagesRaw } = await supabase
         .from("pages")
-        .select("aio_score, aio_google_score, aio_chatgpt_score, aio_perplexity_score, aio_claude_score, aio_gemini_score")
+        .select("aio_score, aio_google_score, aio_chatgpt_score, aio_perplexity_score")
         .eq("site_id", siteId)
         .not("aio_score", "is", null);
 
@@ -336,8 +337,6 @@ export async function GET(request: NextRequest) {
         aio_google_score: number | null;
         aio_chatgpt_score: number | null;
         aio_perplexity_score: number | null;
-        aio_claude_score: number | null;
-        aio_gemini_score: number | null;
       };
       const pages = (pagesRaw || []) as AIOPageScore[];
 
@@ -357,8 +356,7 @@ export async function GET(request: NextRequest) {
         google_aio: Math.round(pages.reduce((s, p) => s + (p.aio_google_score || 0), 0) / pages.length),
         chatgpt: Math.round(pages.reduce((s, p) => s + (p.aio_chatgpt_score || 0), 0) / pages.length),
         perplexity: Math.round(pages.reduce((s, p) => s + (p.aio_perplexity_score || 0), 0) / pages.length),
-        claude: Math.round(pages.reduce((s, p) => s + (p.aio_claude_score || 0), 0) / pages.length),
-        gemini: Math.round(pages.reduce((s, p) => s + (p.aio_gemini_score || 0), 0) / pages.length),
+        bing_copilot: 0, // Will be populated when we add bing_copilot column to DB
       };
 
       return NextResponse.json({

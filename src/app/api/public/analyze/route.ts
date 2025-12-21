@@ -855,13 +855,29 @@ export async function POST(request: NextRequest) {
 
     const page = crawlResult.pages[0];
 
-    // Map page data for analysis functions (convert null to undefined for images.alt)
+    // Map page data for analysis functions
+    // - Convert images.alt from null to undefined
+    // - Convert links from LinkData[] to { internal: string[], external: string[] }
     const pageForAnalysis = {
-      ...page,
+      url: page.url,
+      title: page.title,
+      metaDescription: page.metaDescription,
+      h1: page.h1,
+      h2: page.h2,
+      wordCount: page.wordCount,
+      loadTimeMs: page.loadTimeMs,
+      htmlSize: page.htmlSize,
+      schemaMarkup: page.schemaMarkup,
+      rawHtml: page.rawHtml,
+      textContent: page.textContent,
       images: page.images?.map(img => ({
-        ...img,
+        src: img.src,
         alt: img.alt ?? undefined,
       })),
+      links: page.links ? {
+        internal: page.links.filter(l => l.isInternal).map(l => l.href),
+        external: page.links.filter(l => !l.isInternal).map(l => l.href),
+      } : undefined,
     };
 
     // Analyze SEO
