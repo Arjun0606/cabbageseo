@@ -242,7 +242,6 @@ export function Sidebar({ className }: SidebarProps) {
               src="/cabbageseo_logo.png"
               alt="CabbageSEO"
               className="h-9 w-auto"
-              className="rounded-lg"
             />
             {!collapsed && (
               <span className="text-lg font-bold tracking-tight">
