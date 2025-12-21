@@ -56,6 +56,8 @@ export async function updateSession(request: NextRequest) {
     "/reset-password",
     "/terms",
     "/privacy",
+    "/pricing",
+    "/analyze",
   ];
   
   // Define public API route prefixes (these handle their own auth)
