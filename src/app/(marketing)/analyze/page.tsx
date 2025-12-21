@@ -19,16 +19,40 @@ import {
   Link2,
   BarChart3,
   RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  Lightbulb,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 // ============================================
 // TYPES
 // ============================================
+
+interface ScoreItem {
+  name: string;
+  score: number;
+  maxScore: number;
+  status: "pass" | "warning" | "fail";
+  reason: string;
+  howToFix?: string;
+}
 
 interface AnalysisResult {
   url: string;
@@ -45,10 +69,16 @@ interface AnalysisResult {
       performanceScore: number;
       accessibilityScore: number;
     };
+    details: {
+      technical: ScoreItem[];
+      content: ScoreItem[];
+      meta: ScoreItem[];
+      performance: ScoreItem[];
+      accessibility: ScoreItem[];
+    };
     issueCount: {
       critical: number;
       warning: number;
-      info: number;
     };
     recommendations: string[];
   };
@@ -60,6 +90,13 @@ interface AnalysisResult {
       schemaScore: number;
       contentQualityScore: number;
       quotabilityScore: number;
+    };
+    details: {
+      structure: ScoreItem[];
+      authority: ScoreItem[];
+      schema: ScoreItem[];
+      contentQuality: ScoreItem[];
+      quotability: ScoreItem[];
     };
     factors: {
       hasDirectAnswers: boolean;
@@ -76,6 +113,11 @@ interface AnalysisResult {
       chatGPT: number;
       bingCopilot: number;
     };
+    platformScoresAreReal: boolean; // true = real visibility check, false = estimate
+    realVisibilityData: {
+      citations: Array<{ platform: string; query: string; url?: string }>;
+      checkedAt: string;
+    } | null;
     recommendations: string[];
   };
   pageInfo: {
@@ -87,7 +129,6 @@ interface AnalysisResult {
   cta: {
     message: string;
     signupUrl: string;
-    features: string[];
   };
 }
 
@@ -154,19 +195,103 @@ function ScoreRing({
 }
 
 // ============================================
-// FACTOR CHECK COMPONENT
+// SCORE ITEM ROW
+// ============================================
+
+function ScoreItemRow({ item }: { item: ScoreItem }) {
+  const statusIcon = {
+    pass: <CheckCircle2 className="w-4 h-4 text-green-500" />,
+    warning: <AlertTriangle className="w-4 h-4 text-yellow-500" />,
+    fail: <XCircle className="w-4 h-4 text-red-500" />,
+  };
+
+  return (
+    <div className="py-2 border-b border-muted/50 last:border-0">
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          {statusIcon[item.status]}
+          <span className="text-sm font-medium">{item.name}</span>
+        </div>
+        <span className={`text-sm font-bold ${
+          item.status === "pass" ? "text-green-500" : 
+          item.status === "warning" ? "text-yellow-500" : "text-red-500"
+        }`}>
+          {item.score}/{item.maxScore}
+        </span>
+      </div>
+      <p className="text-xs text-muted-foreground ml-6">{item.reason}</p>
+      {item.howToFix && item.status !== "pass" && (
+        <div className="ml-6 mt-1 flex items-start gap-1">
+          <Lightbulb className="w-3 h-3 text-yellow-500 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-yellow-600 dark:text-yellow-400">{item.howToFix}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// CATEGORY BREAKDOWN
+// ============================================
+
+function CategoryBreakdown({ 
+  title, 
+  score, 
+  maxScore, 
+  items,
+  defaultOpen = false,
+}: { 
+  title: string; 
+  score: number; 
+  maxScore: number;
+  items: ScoreItem[];
+  defaultOpen?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const percentage = (score / maxScore) * 100;
+  const statusColor = percentage >= 80 ? "text-green-500" : percentage >= 50 ? "text-yellow-500" : "text-red-500";
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="border rounded-lg">
+      <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-medium">{title}</span>
+            <span className={`font-bold ${statusColor}`}>{score}/{maxScore}</span>
+          </div>
+          <Progress value={percentage} className="h-2" />
+        </div>
+        <div className="ml-3">
+          {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="px-4 pb-4">
+        <div className="pt-2 border-t">
+          {items.map((item, idx) => (
+            <ScoreItemRow key={idx} item={item} />
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+// ============================================
+// FACTOR CHECK
 // ============================================
 
 function FactorCheck({ 
   label, 
   checked, 
-  impact = "medium" 
+  impact = "medium",
+  tooltip,
 }: { 
   label: string; 
   checked: boolean; 
   impact?: "high" | "medium" | "low";
+  tooltip?: string;
 }) {
-  return (
+  const content = (
     <div className="flex items-center gap-2 py-1">
       {checked ? (
         <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
@@ -179,8 +304,22 @@ function FactorCheck({
       {impact === "high" && !checked && (
         <Badge variant="destructive" className="text-[10px] px-1 py-0">High Impact</Badge>
       )}
+      {tooltip && <Info className="w-3 h-3 text-muted-foreground" />}
     </div>
   );
+
+  if (tooltip) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>{content}</TooltipTrigger>
+          <TooltipContent><p className="max-w-xs text-xs">{tooltip}</p></TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return content;
 }
 
 // ============================================
@@ -242,12 +381,12 @@ export default function FreeScoringPage() {
         </div>
       </header>
 
-      {/* Hero / Form Section */}
+      {/* Hero / Form */}
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-3xl text-center">
           <Badge className="mb-4" variant="secondary">
             <Sparkles className="w-3 h-3 mr-1" />
-            Free SEO + AIO Analysis
+            Free SEO + AI Visibility Analysis
           </Badge>
           
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -258,8 +397,8 @@ export default function FreeScoringPage() {
           </h1>
           
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Get your SEO score plus AI visibility score for ChatGPT, Perplexity, and Google AI Overviews. 
-            No signup required.
+            Get your SEO score plus AI visibility score for ChatGPT, Perplexity, Claude, and Google AI. 
+            See exactly what to fix with detailed explanations.
           </p>
 
           <form onSubmit={handleAnalyze} className="flex gap-2 max-w-xl mx-auto">
@@ -298,10 +437,24 @@ export default function FreeScoringPage() {
         </div>
       </section>
 
-      {/* Results Section */}
+      {/* Results */}
       {result && (
         <section className="pb-20 px-4">
           <div className="container mx-auto max-w-6xl">
+            {/* Analyze Another */}
+            <div className="mb-6 flex justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setResult(null);
+                  setUrl("");
+                }}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Analyze Another
+              </Button>
+            </div>
+
             {/* Score Summary */}
             <Card className="mb-8 overflow-hidden">
               <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 p-6 border-b">
@@ -333,41 +486,182 @@ export default function FreeScoringPage() {
               </CardContent>
             </Card>
 
+            {/* Platform Scores */}
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="w-5 h-5 text-purple-500" />
+                  AI Platform Visibility
+                  {result.aio.platformScoresAreReal ? (
+                    <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Real Data
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
+                      <AlertTriangle className="w-3 h-3 mr-1" />
+                      Estimated
+                    </Badge>
+                  )}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="w-4 h-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        {result.aio.platformScoresAreReal ? (
+                          <p className="text-xs">
+                            <strong className="text-green-500">✓ Real visibility data!</strong> We queried these AI 
+                            platforms directly and checked if they cite your content.
+                          </p>
+                        ) : (
+                          <p className="text-xs">
+                            These are <strong>estimated scores</strong> based on content factors that research 
+                            suggests help with AI citations. Configure API keys for real visibility checking.
+                          </p>
+                        )}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {result.aio.platformScoresAreReal ? (
+                  <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <p className="text-xs text-green-600 font-medium flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Real visibility check performed at {result.aio.realVisibilityData?.checkedAt 
+                        ? new Date(result.aio.realVisibilityData.checkedAt).toLocaleString() 
+                        : "recently"}
+                    </p>
+                    {result.aio.realVisibilityData?.citations && result.aio.realVisibilityData.citations.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-xs text-green-700 font-medium mb-1">
+                          Found {result.aio.realVisibilityData.citations.length} citation(s):
+                        </p>
+                        <ul className="text-xs text-green-600 space-y-1">
+                          {result.aio.realVisibilityData.citations.slice(0, 3).map((c, i) => (
+                            <li key={i} className="flex items-start gap-1">
+                              <span>•</span>
+                              <span><strong>{c.platform}</strong>: "{c.query}"</span>
+                            </li>
+                          ))}
+                          {result.aio.realVisibilityData.citations.length > 3 && (
+                            <li className="text-green-500">
+                              +{result.aio.realVisibilityData.citations.length - 3} more
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                    {(!result.aio.realVisibilityData?.citations || result.aio.realVisibilityData.citations.length === 0) && (
+                      <p className="mt-1 text-xs text-yellow-600">
+                        No citations found for tested queries. Try optimizing your content for AI visibility.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground mb-4 -mt-2">
+                    Estimated visibility based on content factors. Sign up for real platform monitoring.
+                  </p>
+                )}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { name: "Google AI", score: result.aio.platformScores.googleAIO, icon: "🔍", desc: "AI Overviews" },
+                    { name: "Perplexity", score: result.aio.platformScores.perplexity, icon: "🔮", desc: "AI Search" },
+                    { name: "ChatGPT", score: result.aio.platformScores.chatGPT, icon: "🤖", desc: "SearchGPT" },
+                    { name: "Bing Copilot", score: result.aio.platformScores.bingCopilot, icon: "🪟", desc: "Microsoft AI" },
+                  ].map((platform) => (
+                    <div 
+                      key={platform.name}
+                      className={`p-4 rounded-lg border text-center ${
+                        result.aio.platformScoresAreReal 
+                          ? "bg-background border-border" 
+                          : "bg-muted/30"
+                      }`}
+                    >
+                      <span className="text-2xl">{platform.icon}</span>
+                      <p className="text-sm font-medium mt-1">{platform.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{platform.desc}</p>
+                      <p className={`text-2xl font-bold mt-1 ${
+                        platform.score >= 70 ? "text-green-500" :
+                        platform.score >= 50 ? "text-yellow-500" :
+                        platform.score > 0 ? "text-orange-500" :
+                        "text-red-500"
+                      }`}>
+                        {result.aio.platformScoresAreReal ? (
+                          platform.score > 0 ? `${platform.score}%` : "—"
+                        ) : (
+                          platform.score
+                        )}
+                      </p>
+                      {result.aio.platformScoresAreReal && (
+                        <p className="text-[9px] text-muted-foreground mt-1">
+                          {platform.score > 0 ? "cited" : "not found"}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Detailed Breakdown */}
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               {/* SEO Breakdown */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-blue-500" />
-                    SEO Breakdown
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {[
-                    { label: "Technical", score: result.seo.breakdown.technicalScore, max: 20 },
-                    { label: "Content", score: result.seo.breakdown.contentScore, max: 20 },
-                    { label: "Meta Tags", score: result.seo.breakdown.metaScore, max: 20 },
-                    { label: "Performance", score: result.seo.breakdown.performanceScore, max: 20 },
-                    { label: "Accessibility", score: result.seo.breakdown.accessibilityScore, max: 20 },
-                  ].map((item) => (
-                    <div key={item.label} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>{item.label}</span>
-                        <span className="font-medium">{item.score}/{item.max}</span>
-                      </div>
-                      <Progress 
-                        value={(item.score / item.max) * 100} 
-                        className="h-2"
-                      />
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-blue-500" />
+                      SEO Breakdown
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      <Badge variant="destructive">{result.seo.issueCount.critical} Issues</Badge>
+                      <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-600">
+                        {result.seo.issueCount.warning} Warnings
+                      </Badge>
                     </div>
-                  ))}
-                  
-                  <div className="flex gap-3 pt-4 border-t">
-                    <Badge variant="destructive">{result.seo.issueCount.critical} Critical</Badge>
-                    <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-600">{result.seo.issueCount.warning} Warnings</Badge>
-                    <Badge variant="outline">{result.seo.issueCount.info} Info</Badge>
                   </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {result.seo.details && (
+                    <>
+                      <CategoryBreakdown 
+                        title="Technical" 
+                        score={result.seo.breakdown.technicalScore} 
+                        maxScore={20}
+                        items={result.seo.details.technical}
+                        defaultOpen={result.seo.breakdown.technicalScore < 15}
+                      />
+                      <CategoryBreakdown 
+                        title="Content" 
+                        score={result.seo.breakdown.contentScore} 
+                        maxScore={20}
+                        items={result.seo.details.content}
+                        defaultOpen={result.seo.breakdown.contentScore < 15}
+                      />
+                      <CategoryBreakdown 
+                        title="Meta Tags" 
+                        score={result.seo.breakdown.metaScore} 
+                        maxScore={20}
+                        items={result.seo.details.meta}
+                      />
+                      <CategoryBreakdown 
+                        title="Performance" 
+                        score={result.seo.breakdown.performanceScore} 
+                        maxScore={20}
+                        items={result.seo.details.performance}
+                      />
+                      <CategoryBreakdown 
+                        title="Accessibility" 
+                        score={result.seo.breakdown.accessibilityScore} 
+                        maxScore={20}
+                        items={result.seo.details.accessibility}
+                        defaultOpen={result.seo.breakdown.accessibilityScore < 15}
+                      />
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
@@ -379,62 +673,48 @@ export default function FreeScoringPage() {
                     AI Visibility Breakdown
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {[
-                    { label: "Content Structure", score: result.aio.breakdown.structureScore, max: 20 },
-                    { label: "Authority Signals", score: result.aio.breakdown.authorityScore, max: 20 },
-                    { label: "Schema Markup", score: result.aio.breakdown.schemaScore, max: 20 },
-                    { label: "Content Quality", score: result.aio.breakdown.contentQualityScore, max: 20 },
-                    { label: "Quotability", score: result.aio.breakdown.quotabilityScore, max: 20 },
-                  ].map((item) => (
-                    <div key={item.label} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>{item.label}</span>
-                        <span className="font-medium">{item.score}/{item.max}</span>
-                      </div>
-                      <Progress 
-                        value={(item.score / item.max) * 100} 
-                        className="h-2"
+                <CardContent className="space-y-3">
+                  {result.aio.details && (
+                    <>
+                      <CategoryBreakdown 
+                        title="Content Structure" 
+                        score={result.aio.breakdown.structureScore} 
+                        maxScore={20}
+                        items={result.aio.details.structure}
+                        defaultOpen={result.aio.breakdown.structureScore < 12}
                       />
-                    </div>
-                  ))}
+                      <CategoryBreakdown 
+                        title="Authority Signals" 
+                        score={result.aio.breakdown.authorityScore} 
+                        maxScore={20}
+                        items={result.aio.details.authority}
+                      />
+                      <CategoryBreakdown 
+                        title="Schema Markup" 
+                        score={result.aio.breakdown.schemaScore} 
+                        maxScore={20}
+                        items={result.aio.details.schema}
+                        defaultOpen={result.aio.breakdown.schemaScore < 10}
+                      />
+                      <CategoryBreakdown 
+                        title="Content Quality" 
+                        score={result.aio.breakdown.contentQualityScore} 
+                        maxScore={20}
+                        items={result.aio.details.contentQuality}
+                      />
+                      <CategoryBreakdown 
+                        title="Quotability" 
+                        score={result.aio.breakdown.quotabilityScore} 
+                        maxScore={20}
+                        items={result.aio.details.quotability}
+                      />
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
 
-            {/* Platform Scores */}
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>AI Platform Visibility</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[
-                    { name: "Google AI Overviews", score: result.aio.platformScores.googleAIO, icon: "🔍" },
-                    { name: "Perplexity", score: result.aio.platformScores.perplexity, icon: "🔮" },
-                    { name: "ChatGPT", score: result.aio.platformScores.chatGPT, icon: "🤖" },
-                    { name: "Bing Copilot", score: result.aio.platformScores.bingCopilot, icon: "🪟" },
-                  ].map((platform) => (
-                    <div 
-                      key={platform.name}
-                      className="p-4 rounded-lg border bg-muted/30 text-center"
-                    >
-                      <span className="text-2xl">{platform.icon}</span>
-                      <p className="text-sm text-muted-foreground mt-1">{platform.name}</p>
-                      <p className={`text-2xl font-bold mt-1 ${
-                        platform.score >= 70 ? "text-green-500" :
-                        platform.score >= 50 ? "text-yellow-500" :
-                        "text-red-500"
-                      }`}>
-                        {platform.score}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* AIO Factors Checklist */}
+            {/* AI Factors Checklist */}
             <Card className="mb-8">
               <CardHeader>
                 <CardTitle>AI Optimization Factors</CardTitle>
@@ -446,21 +726,25 @@ export default function FreeScoringPage() {
                       label="Direct, factual answers" 
                       checked={result.aio.factors.hasDirectAnswers}
                       impact="high"
+                      tooltip="Start content with 'X is...' or 'X refers to...' definitions"
                     />
                     <FactorCheck 
                       label="FAQ section" 
                       checked={result.aio.factors.hasFAQSection}
                       impact="high"
+                      tooltip="Add a Frequently Asked Questions section"
                     />
                     <FactorCheck 
                       label="Schema markup" 
                       checked={result.aio.factors.hasSchema}
                       impact="high"
+                      tooltip="Add JSON-LD structured data (FAQ, Article, HowTo)"
                     />
                     <FactorCheck 
                       label="Author information" 
                       checked={result.aio.factors.hasAuthorInfo}
                       impact="medium"
+                      tooltip="Include author name and credentials"
                     />
                   </div>
                   <div>
@@ -468,29 +752,32 @@ export default function FreeScoringPage() {
                       label="Citations & sources" 
                       checked={result.aio.factors.hasCitations}
                       impact="medium"
+                      tooltip="Reference authoritative sources with 'According to...'"
                     />
                     <FactorCheck 
                       label="Key takeaways section" 
                       checked={result.aio.factors.hasKeyTakeaways}
                       impact="medium"
+                      tooltip="Add a 'Key Takeaways' or 'Summary' section"
                     />
                     <FactorCheck 
-                      label={`Sentence length (avg: ${result.aio.factors.avgSentenceLength} words)`}
+                      label={`Avg sentence: ${result.aio.factors.avgSentenceLength} words`}
                       checked={result.aio.factors.avgSentenceLength < 25}
                       impact="low"
+                      tooltip="Keep sentences under 20-25 words for better AI extraction"
                     />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Recommendations */}
+            {/* Top Recommendations */}
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <TrendingUp className="w-4 h-4" />
-                    SEO Recommendations
+                    Top SEO Fixes
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -498,7 +785,7 @@ export default function FreeScoringPage() {
                     {result.seo.recommendations.length > 0 ? (
                       result.seo.recommendations.map((rec, i) => (
                         <li key={i} className="flex gap-2 text-sm">
-                          <span className="text-muted-foreground">{i + 1}.</span>
+                          <span className="text-green-500 font-bold">{i + 1}.</span>
                           <span>{rec}</span>
                         </li>
                       ))
@@ -516,7 +803,7 @@ export default function FreeScoringPage() {
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Bot className="w-4 h-4" />
-                    AI Visibility Recommendations
+                    Top AI Visibility Fixes
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -524,14 +811,14 @@ export default function FreeScoringPage() {
                     {result.aio.recommendations.length > 0 ? (
                       result.aio.recommendations.map((rec, i) => (
                         <li key={i} className="flex gap-2 text-sm">
-                          <span className="text-muted-foreground">{i + 1}.</span>
+                          <span className="text-purple-500 font-bold">{i + 1}.</span>
                           <span>{rec}</span>
                         </li>
                       ))
                     ) : (
                       <li className="text-green-600 flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4" />
-                        Excellent! Your content is well-optimized for AI.
+                        Excellent! Your content is AI-optimized.
                       </li>
                     )}
                   </ul>
@@ -539,13 +826,13 @@ export default function FreeScoringPage() {
               </Card>
             </div>
 
-            {/* CTA Section */}
+            {/* CTA */}
             <Card className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20">
               <CardContent className="p-8 text-center">
                 <h3 className="text-2xl font-bold mb-2">{result.cta.message}</h3>
                 <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
                   This was just your homepage. Sign up to analyze your entire site, 
-                  track rankings, generate optimized content, and let CabbageSEO run on autopilot.
+                  get auto-fixes, and let CabbageSEO run on autopilot.
                 </p>
                 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-2xl mx-auto mb-8">
@@ -567,32 +854,19 @@ export default function FreeScoringPage() {
                   ))}
                 </div>
 
-                <div className="flex gap-4 justify-center">
-                  <Link href="/signup">
-                    <Button size="lg">
-                      Get Full Access
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
-                  <Button 
-                    variant="outline" 
-                    size="lg"
-                    onClick={() => {
-                      setResult(null);
-                      setUrl("");
-                    }}
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Analyze Another
+                <Link href="/signup">
+                  <Button size="lg">
+                    Get Full Access
+                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
-                </div>
+                </Link>
               </CardContent>
             </Card>
           </div>
         </section>
       )}
 
-      {/* Features Section (shown when no result) */}
+      {/* Features (no result) */}
       {!result && !loading && (
         <section className="py-16 px-4 border-t">
           <div className="container mx-auto max-w-4xl">
@@ -638,10 +912,9 @@ export default function FreeScoringPage() {
       {/* Footer */}
       <footer className="border-t py-8 px-4">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} CabbageSEO. The Search Optimization OS.</p>
+          <p>© {new Date().getFullYear()} CabbageSEO. The AI-Native SEO OS.</p>
         </div>
       </footer>
     </div>
   );
 }
-

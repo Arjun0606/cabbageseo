@@ -48,3 +48,13 @@ export {
   type AIOIssueCategory,
 } from "./aio-audit";
 
+// Real AI Visibility Checker
+export {
+  AIVisibilityChecker,
+  visibilityChecker,
+  type VisibilityCheckResult,
+  type PlatformVisibilityResult,
+  type CitationResult,
+  type VisibilityCheckOptions,
+} from "./visibility-checker";
+

@@ -2,27 +2,52 @@
  * Billing Module - Centralized Exports
  */
 
-// Plans & Pricing
+// ============================================
+// PLANS & PRICING
+// ============================================
+
 export { 
   PLANS, 
-  CREDIT_PACKAGES,
-  INTERNAL_COSTS,
   OVERAGE_PRICES,
+  SPENDING_CAP_PRESETS,
+  RATE_LIMITS,
+  DODO_PRODUCTS,
+  DODO_METERS,
+  INTERNAL_COSTS,
   getPlan, 
+  getPlans,
   getPlanLimits,
+  getPlanFeatures,
+  getProductId,
+  getPlanFromProductId,
+  formatPrice,
+  formatPriceCents,
   calculateYearlySavings,
   calculateYearlySavingsPercent,
   isWithinLimit,
   getOverageAmount,
   calculateOverageCost,
+  getInternalCost,
+  getMargin,
+  checkUsage,
+  canUpgrade,
+  canDowngrade,
+  getPlanUpgrades,
 } from "./plans";
 
 export type {
+  PlanId,
+  BillingInterval,
   Plan,
   PlanLimits,
+  PlanFeatures,
+  UsageCheckResult,
 } from "./plans";
 
-// Usage Tracking
+// ============================================
+// USAGE TRACKING
+// ============================================
+
 export { 
   UsageTracker,
   createUsageTracker,
@@ -34,11 +59,77 @@ export type {
   CreditBalance,
 } from "./usage-tracker";
 
-// Payments
+// ============================================
+// USAGE-BASED BILLING
+// ============================================
+
+export {
+  recordUsageAndBill,
+  checkUsageAllowed,
+  getUsageSummary,
+} from "./usage-billing";
+
+export type {
+  OverageResourceType,
+  UsageEvent,
+  UsageBillingResult,
+  UsageSummary,
+} from "./usage-billing";
+
+// ============================================
+// OVERAGE MANAGEMENT
+// ============================================
+
+export {
+  checkOverage,
+  recordOverage,
+  getOverageSettings,
+  updateOverageSettings,
+  enableOverages,
+  disableOverages,
+  increaseSpendingCap,
+  resetOverageSpend,
+  getOverageSummary,
+  calculateOverageCost as calculateOveragePricing,
+  DEFAULT_OVERAGE_SETTINGS,
+} from "./overage-manager";
+
+export type {
+  OverageSettings,
+  OverageCheckResult,
+  OverageResource,
+} from "./overage-manager";
+
+// ============================================
+// DODO PAYMENTS
+// ============================================
+
+export { 
+  getDodo,
+  getProductIdForPlan,
+  USAGE_METERS,
+  trackUsage,
+  createCheckoutUrl,
+  getBillingPortalUrl,
+  DodoPaymentsClient,
+} from "./dodo";
+
+export type {
+  DodoCustomer,
+  DodoSubscription,
+  DodoCheckoutSession,
+} from "./dodo";
+
+export { dodo } from "./dodo-client";
+
+// ============================================
+// PAYMENTS (LEGACY)
+// ============================================
+
 export { 
   payments,
   verifyWebhookSignature,
-  formatPrice,
+  formatPrice as formatPriceOld,
   getPlanFromSubscription,
 } from "./payments";
 

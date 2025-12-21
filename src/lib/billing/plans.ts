@@ -1,9 +1,9 @@
 /**
  * CabbageSEO Pricing Plans
  * 
- * Philosophy:
+ * Pricing Philosophy:
  * - Simple, predictable pricing
- * - Usage-based overages via prepaid credits
+ * - Usage-based overages via spending caps (NOT prepaid credits)
  * - 85-90%+ margin on all overages
  * - Hard limits prevent runaway costs
  * 
@@ -19,6 +19,9 @@
 // PLAN DEFINITIONS
 // ============================================
 
+export type PlanId = "starter" | "pro" | "pro_plus";
+export type BillingInterval = "monthly" | "yearly";
+
 export interface PlanLimits {
   sites: number;
   pagesPerSite: number;
@@ -30,22 +33,42 @@ export interface PlanLimits {
   aiCreditsPerMonth: number;  // ~1 credit = 1 Claude Haiku call
 }
 
+export interface PlanFeatures {
+  internalLinking: boolean;
+  contentScoring: boolean;
+  autoSchema: boolean;
+  scheduledPublishing: boolean;
+  autopilotEligible: boolean;
+  gscIntegration: boolean;
+  webflowIntegration: boolean;
+  wordpressIntegration: boolean;
+  shopifyIntegration: boolean;
+  apiAccess: boolean;
+  priorityQueue: boolean;
+  bulkOperations: boolean;
+  whiteLabel: boolean;
+  premiumAI: boolean;  // Claude Opus access
+  customIntegrations: boolean;
+  sla: boolean;
+}
+
 export interface Plan {
-  id: "starter" | "pro" | "pro_plus";
+  id: PlanId;
   name: string;
   description: string;
-  monthlyPrice: number;
-  yearlyPrice: number;  // Per month when billed yearly
+  monthlyPrice: number;      // In dollars
+  yearlyPrice: number;       // Per month when billed yearly
   limits: PlanLimits;
-  features: string[];
+  features: PlanFeatures;
+  featureList: string[];     // Marketing feature list
   popular?: boolean;
 }
 
-export const PLANS: Record<string, Plan> = {
+export const PLANS: Record<PlanId, Plan> = {
   starter: {
     id: "starter",
     name: "Starter",
-    description: "Perfect for small sites and bloggers",
+    description: "Perfect for small sites and bloggers getting started with SEO",
     monthlyPrice: 29,
     yearlyPrice: 24,  // 17% off (~$60 savings/year)
     limits: {
@@ -58,7 +81,25 @@ export const PLANS: Record<string, Plan> = {
       teamMembers: 1,
       aiCreditsPerMonth: 1000,
     },
-    features: [
+    features: {
+      internalLinking: false,
+      contentScoring: false,
+      autoSchema: false,
+      scheduledPublishing: false,
+      autopilotEligible: false,
+      gscIntegration: false,
+      webflowIntegration: true,
+      wordpressIntegration: true,
+      shopifyIntegration: false,
+      apiAccess: false,
+      priorityQueue: false,
+      bulkOperations: false,
+      whiteLabel: false,
+      premiumAI: false,
+      customIntegrations: false,
+      sla: false,
+    },
+    featureList: [
       "1 website",
       "10 AI articles/month",
       "100 keywords tracked",
@@ -72,7 +113,7 @@ export const PLANS: Record<string, Plan> = {
   pro: {
     id: "pro",
     name: "Pro",
-    description: "For growing businesses and consultants",
+    description: "For growing businesses and consultants serious about organic traffic",
     monthlyPrice: 79,
     yearlyPrice: 66,  // 16% off (~$156 savings/year)
     popular: true,
@@ -86,7 +127,25 @@ export const PLANS: Record<string, Plan> = {
       teamMembers: 5,
       aiCreditsPerMonth: 5000,
     },
-    features: [
+    features: {
+      internalLinking: true,
+      contentScoring: true,
+      autoSchema: true,
+      scheduledPublishing: true,
+      autopilotEligible: true,
+      gscIntegration: true,
+      webflowIntegration: true,
+      wordpressIntegration: true,
+      shopifyIntegration: true,
+      apiAccess: true,
+      priorityQueue: false,
+      bulkOperations: false,
+      whiteLabel: false,
+      premiumAI: false,
+      customIntegrations: false,
+      sla: false,
+    },
+    featureList: [
       "5 websites",
       "50 AI articles/month",
       "500 keywords tracked",
@@ -95,6 +154,7 @@ export const PLANS: Record<string, Plan> = {
       "Advanced content optimization",
       "All CMS integrations",
       "Team collaboration (5 seats)",
+      "Google Search Console integration",
       "Priority support",
       "API access",
     ],
@@ -102,7 +162,7 @@ export const PLANS: Record<string, Plan> = {
   pro_plus: {
     id: "pro_plus",
     name: "Pro+",
-    description: "For agencies and large sites",
+    description: "For agencies and large sites needing maximum output",
     monthlyPrice: 199,
     yearlyPrice: 166,  // 17% off (~$396 savings/year)
     limits: {
@@ -115,13 +175,31 @@ export const PLANS: Record<string, Plan> = {
       teamMembers: 20,
       aiCreditsPerMonth: 20000,
     },
-    features: [
+    features: {
+      internalLinking: true,
+      contentScoring: true,
+      autoSchema: true,
+      scheduledPublishing: true,
+      autopilotEligible: true,
+      gscIntegration: true,
+      webflowIntegration: true,
+      wordpressIntegration: true,
+      shopifyIntegration: true,
+      apiAccess: true,
+      priorityQueue: true,
+      bulkOperations: true,
+      whiteLabel: true,
+      premiumAI: true,
+      customIntegrations: true,
+      sla: true,
+    },
+    featureList: [
       "20 websites",
       "200 AI articles/month",
       "2,000 keywords tracked",
       "Unlimited audits*",
       "500 AIO analyses/month",
-      "Premium content (Claude Opus)",
+      "Premium AI content (Claude Opus)",
       "White-label reports",
       "All CMS integrations",
       "Unlimited team members",
@@ -156,7 +234,7 @@ export const INTERNAL_COSTS = {
 };
 
 // ============================================
-// OVERAGE PRICING (Prepaid Credits) - 85-90% margin
+// OVERAGE PRICING (85-90% margin target)
 // ============================================
 
 export const OVERAGE_PRICES = {
@@ -212,42 +290,15 @@ export const OVERAGE_PRICES = {
 };
 
 // ============================================
-// CREDIT PACKAGES (Prepaid wallet)
+// SPENDING CAP PRESETS
 // ============================================
 
-export const CREDIT_PACKAGES = [
-  { 
-    id: "credits_10",
-    credits: 1000, 
-    price: 1000,        // $10.00
-    bonus: 0, 
-    perCreditCents: 1.0,
-    savings: "0%",
-  },
-  { 
-    id: "credits_45",
-    credits: 5000, 
-    price: 4500,        // $45.00
-    bonus: 500,         // 10% bonus
-    perCreditCents: 0.82,
-    savings: "18%",
-  },
-  { 
-    id: "credits_80",
-    credits: 10000, 
-    price: 8000,        // $80.00
-    bonus: 2000,        // 20% bonus
-    perCreditCents: 0.67,
-    savings: "33%",
-  },
-  { 
-    id: "credits_350",
-    credits: 50000, 
-    price: 35000,       // $350.00
-    bonus: 15000,       // 30% bonus
-    perCreditCents: 0.54,
-    savings: "46%",
-  },
+export const SPENDING_CAP_PRESETS = [
+  { value: 1000, label: "$10", description: "Just testing overages" },
+  { value: 5000, label: "$50", description: "Light overflow" },
+  { value: 10000, label: "$100", description: "Standard buffer" },
+  { value: 25000, label: "$250", description: "Heavy usage month" },
+  { value: 50000, label: "$500", description: "Agency client work" },
 ];
 
 // ============================================
@@ -273,19 +324,68 @@ export const RATE_LIMITS = {
 };
 
 // ============================================
+// DODO PRODUCT IDS (set in env)
+// ============================================
+
+export const DODO_PRODUCTS = {
+  starter: {
+    monthly: process.env.DODO_STARTER_MONTHLY_ID || "prod_starter_monthly",
+    yearly: process.env.DODO_STARTER_YEARLY_ID || "prod_starter_yearly",
+  },
+  pro: {
+    monthly: process.env.DODO_PRO_MONTHLY_ID || "prod_pro_monthly",
+    yearly: process.env.DODO_PRO_YEARLY_ID || "prod_pro_yearly",
+  },
+  pro_plus: {
+    monthly: process.env.DODO_PRO_PLUS_MONTHLY_ID || "prod_pro_plus_monthly",
+    yearly: process.env.DODO_PRO_PLUS_YEARLY_ID || "prod_pro_plus_yearly",
+  },
+};
+
+// Usage meters for Dodo usage-based billing
+export const DODO_METERS = {
+  overageSpend: process.env.DODO_METER_OVERAGE || "meter_overage_spend",
+};
+
+// ============================================
 // HELPERS
 // ============================================
 
-export function getPlan(planId: string): Plan {
-  return PLANS[planId] || PLANS.starter;
+export function getPlan(planId: PlanId | string): Plan {
+  return PLANS[planId as PlanId] || PLANS.starter;
 }
 
 export function getPlans(): Plan[] {
   return Object.values(PLANS);
 }
 
-export function getPlanLimits(planId: string): PlanLimits {
+export function getPlanLimits(planId: PlanId | string): PlanLimits {
   return getPlan(planId).limits;
+}
+
+export function getPlanFeatures(planId: PlanId | string): PlanFeatures {
+  return getPlan(planId).features;
+}
+
+export function getProductId(planId: PlanId, interval: BillingInterval): string {
+  return DODO_PRODUCTS[planId]?.[interval] || DODO_PRODUCTS.starter.monthly;
+}
+
+export function getPlanFromProductId(productId: string): PlanId {
+  for (const [planId, products] of Object.entries(DODO_PRODUCTS)) {
+    if (products.monthly === productId || products.yearly === productId) {
+      return planId as PlanId;
+    }
+  }
+  return "starter";
+}
+
+export function formatPrice(dollars: number): string {
+  return `$${dollars}`;
+}
+
+export function formatPriceCents(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
 }
 
 export function calculateYearlySavings(plan: Plan): number {
@@ -299,7 +399,7 @@ export function calculateYearlySavingsPercent(plan: Plan): number {
 }
 
 export function isWithinLimit(
-  planId: string,
+  planId: PlanId | string,
   resource: keyof PlanLimits,
   currentUsage: number
 ): boolean {
@@ -308,7 +408,7 @@ export function isWithinLimit(
 }
 
 export function getOverageAmount(
-  planId: string,
+  planId: PlanId | string,
   resource: keyof PlanLimits,
   currentUsage: number
 ): number {
@@ -371,10 +471,11 @@ export interface UsageCheckResult {
   reason?: string;
   overageRequired?: number;
   overageResource?: keyof typeof OVERAGE_PRICES;
+  overageCostCents?: number;
 }
 
 export function checkUsage(
-  planId: string,
+  planId: PlanId | string,
   resource: keyof PlanLimits,
   currentUsage: number,
   requestedAmount: number = 1
@@ -407,10 +508,34 @@ export function checkUsage(
     };
   }
   
+  const overageCostCents = calculateOverageCost(overageResource, overage);
+  
   return {
     allowed: false,
-    reason: `${resource} limit reached. You can purchase additional ${overageResource} to continue.`,
+    reason: `${resource} limit reached. You can continue with overage billing.`,
     overageRequired: overage,
     overageResource,
+    overageCostCents,
   };
+}
+
+// ============================================
+// PLAN COMPARISON
+// ============================================
+
+export function canUpgrade(currentPlan: PlanId, targetPlan: PlanId): boolean {
+  const order: PlanId[] = ["starter", "pro", "pro_plus"];
+  return order.indexOf(targetPlan) > order.indexOf(currentPlan);
+}
+
+export function canDowngrade(currentPlan: PlanId, targetPlan: PlanId): boolean {
+  const order: PlanId[] = ["starter", "pro", "pro_plus"];
+  return order.indexOf(targetPlan) < order.indexOf(currentPlan);
+}
+
+export function getPlanUpgrades(currentPlan: PlanId): Plan[] {
+  const plans = getPlans();
+  const order: PlanId[] = ["starter", "pro", "pro_plus"];
+  const currentIndex = order.indexOf(currentPlan);
+  return plans.filter((_, i) => i > currentIndex);
 }
