@@ -135,9 +135,9 @@ export default function PricingPage() {
   const [isYearly, setIsYearly] = useState(true);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
       {/* Header */}
-      <header className="border-b">
+      <header className="border-b border-zinc-800/50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <img 
@@ -145,17 +145,17 @@ export default function PricingPage() {
               alt="CabbageSEO" 
               className="w-8 h-8 rounded-lg"
             />
-            <span className="font-bold text-xl">CabbageSEO</span>
+            <span className="font-semibold text-lg">CabbageSEO</span>
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/analyze">
-              <Button variant="ghost">Free Tool</Button>
+              <Button variant="ghost" className="text-zinc-400 hover:text-white">Free Tool</Button>
             </Link>
             <Link href="/login">
-              <Button variant="ghost">Login</Button>
+              <Button variant="ghost" className="text-zinc-400 hover:text-white">Login</Button>
             </Link>
             <Link href="/signup">
-              <Button>Get Started</Button>
+              <Button className="bg-emerald-600 hover:bg-emerald-500 text-white">Get Started</Button>
             </Link>
           </div>
         </div>
@@ -164,38 +164,33 @@ export default function PricingPage() {
       {/* Hero */}
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
-          <Badge variant="outline" className="mb-4">
-            <Bot className="w-3 h-3 mr-1" />
-            The first SEO tool with AI visibility tracking
-          </Badge>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-6">
+            Simple, transparent pricing
+          </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Track Your{" "}
-            <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-              AI Visibility
-            </span>{" "}
-            <span className="text-muted-foreground">& SEO</span>
+            Track Your <span className="text-emerald-400">AI Visibility</span>
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+          <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
             See if ChatGPT, Perplexity, and Google AI cite your content. Plus complete SEO tools.
           </p>
 
           {/* Billing Toggle */}
           <div className="flex items-center justify-center gap-3 mb-12">
-            <span className={`text-sm ${!isYearly ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+            <span className={`text-sm ${!isYearly ? "text-white font-medium" : "text-zinc-500"}`}>
               Monthly
             </span>
             <Switch
               checked={isYearly}
               onCheckedChange={setIsYearly}
-              className="data-[state=checked]:bg-green-500"
+              className="data-[state=checked]:bg-emerald-500"
             />
-            <span className={`text-sm ${isYearly ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+            <span className={`text-sm ${isYearly ? "text-white font-medium" : "text-zinc-500"}`}>
               Yearly
             </span>
             {isYearly && (
-              <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
+              <span className="px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium">
                 Save 17%
-              </Badge>
+              </span>
             )}
           </div>
         </div>
@@ -211,69 +206,71 @@ export default function PricingPage() {
               const yearlySavings = (plan.monthlyPrice - plan.yearlyPrice) * 12;
 
               return (
-                <Card
+                <div
                   key={plan.id}
-                  className={`relative overflow-hidden ${
+                  className={`relative rounded-2xl p-6 ${
                     plan.highlight
-                      ? "border-green-500 shadow-lg shadow-green-500/10"
-                      : "border-border"
+                      ? "bg-zinc-900 border-2 border-emerald-500/50"
+                      : "bg-zinc-900/50 border border-zinc-800"
                   }`}
                 >
                   {plan.highlight && (
-                    <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-center text-sm py-1 font-medium">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-white text-xs font-medium rounded-full">
                       Most Popular
                     </div>
                   )}
-                  <CardHeader className={plan.highlight ? "pt-10" : ""}>
-                    <div className={`inline-flex p-2 rounded-lg ${plan.color} w-fit mb-3`}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-xl font-bold">{plan.name}</h3>
-                    <p className="text-sm text-muted-foreground">{plan.description}</p>
-                    <div className="mt-4">
-                      <span className="text-4xl font-bold">${price}</span>
-                      <span className="text-muted-foreground">/month</span>
-                      {isYearly && (
-                        <p className="text-sm text-green-600 mt-1">
-                          Save ${yearlySavings}/year
-                        </p>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <Link href="/signup">
-                      <Button
-                        className={`w-full mb-6 ${
-                          plan.highlight
-                            ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                            : ""
-                        }`}
-                        variant={plan.highlight ? "default" : "outline"}
-                      >
-                        {plan.cta}
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </Link>
-                    <ul className="space-y-3">
-                      {plan.features.map((feature, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          {feature.included ? (
-                            <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                          ) : (
-                            <X className="w-4 h-4 text-muted-foreground/40 mt-0.5 shrink-0" />
-                          )}
-                          <span
-                            className={
-                              feature.included ? "" : "text-muted-foreground/60"
-                            }
-                          >
-                            {feature.text}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
+                  
+                  <div className={`inline-flex p-2 rounded-lg mb-4 ${
+                    plan.id === "starter" ? "bg-blue-500/10" :
+                    plan.id === "pro" ? "bg-emerald-500/10" : "bg-purple-500/10"
+                  }`}>
+                    <Icon className={`w-5 h-5 ${
+                      plan.id === "starter" ? "text-blue-400" :
+                      plan.id === "pro" ? "text-emerald-400" : "text-purple-400"
+                    }`} />
+                  </div>
+                  
+                  <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
+                  <p className="text-sm text-zinc-500 mb-4">{plan.description}</p>
+                  
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold text-white">${price}</span>
+                    <span className="text-zinc-500">/month</span>
+                    {isYearly && (
+                      <p className="text-sm text-emerald-400 mt-1">
+                        Save ${yearlySavings}/year
+                      </p>
+                    )}
+                  </div>
+                  
+                  <Link href="/signup">
+                    <Button
+                      className={`w-full mb-6 ${
+                        plan.highlight
+                          ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                          : "bg-zinc-800 hover:bg-zinc-700 text-white border-0"
+                      }`}
+                    >
+                      {plan.cta}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                  
+                  <ul className="space-y-3">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm">
+                        {feature.included ? (
+                          <Check className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                        ) : (
+                          <X className="w-4 h-4 text-zinc-700 mt-0.5 shrink-0" />
+                        )}
+                        <span className={feature.included ? "text-zinc-300" : "text-zinc-600"}>
+                          {feature.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               );
             })}
           </div>
@@ -281,19 +278,19 @@ export default function PricingPage() {
       </section>
 
       {/* Trust Signals */}
-      <section className="py-12 border-y bg-muted/30">
+      <section className="py-12 border-y border-zinc-800/50 bg-zinc-900/30">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 text-muted-foreground">
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 text-zinc-400 text-sm">
             <div className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-green-500" />
+              <Shield className="w-4 h-4 text-emerald-400" />
               <span>Free URL analyzer</span>
             </div>
             <div className="flex items-center gap-2">
-              <Check className="w-5 h-5 text-green-500" />
+              <Check className="w-4 h-4 text-emerald-400" />
               <span>Pay-as-you-go overages</span>
             </div>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-green-500" />
+              <Sparkles className="w-4 h-4 text-emerald-400" />
               <span>Cancel anytime</span>
             </div>
           </div>
@@ -301,74 +298,74 @@ export default function PricingPage() {
       </section>
 
       {/* Overages Section */}
-      <section className="py-16 bg-muted/10">
-        <div className="container mx-auto px-4 max-w-4xl">
+      <section className="py-16">
+        <div className="container mx-auto px-4 max-w-3xl">
           <div className="text-center mb-10">
-            <Badge variant="outline" className="mb-4">Flexible Usage</Badge>
-            <h2 className="text-3xl font-bold mb-4">Need more? Pay as you go.</h2>
-            <p className="text-muted-foreground">
-              Exceeded your plan limits? No problem. Enable overages with a spending cap you control.
+            <span className="inline-flex items-center px-3 py-1 rounded-full bg-zinc-800 text-zinc-400 text-sm mb-4">
+              Flexible Usage
+            </span>
+            <h2 className="text-3xl font-bold text-white mb-4">Need more? Set a spending cap.</h2>
+            <p className="text-zinc-400">
+              When you exceed your plan limits, we&apos;ll keep you running. You set the cap, we handle the rest.
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card className="border-border/50">
-              <CardContent className="p-6">
-                <h3 className="font-semibold mb-4">Overage Pricing</h3>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex justify-between">
-                    <span className="text-muted-foreground">Extra AI articles</span>
-                    <span className="font-medium">$3.00 each</span>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+            <div className="grid md:grid-cols-2 gap-8">
+              <div>
+                <h3 className="font-semibold text-white mb-4">How it works</h3>
+                <ul className="space-y-3 text-sm text-zinc-400">
+                  <li className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold shrink-0">1</span>
+                    <span>Set your monthly spending cap ($25, $50, $100, or custom)</span>
                   </li>
-                  <li className="flex justify-between">
-                    <span className="text-muted-foreground">Extra keywords (100)</span>
-                    <span className="font-medium">$5.00</span>
+                  <li className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold shrink-0">2</span>
+                    <span>Use features beyond your plan limits as needed</span>
                   </li>
-                  <li className="flex justify-between">
-                    <span className="text-muted-foreground">Extra audits</span>
-                    <span className="font-medium">$1.00 each</span>
+                  <li className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold shrink-0">3</span>
+                    <span>Get notified at 50%, 75%, 90% of your cap</span>
                   </li>
-                  <li className="flex justify-between">
-                    <span className="text-muted-foreground">Extra AIO checks</span>
-                    <span className="font-medium">$0.50 each</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-border/50">
-              <CardContent className="p-6">
-                <h3 className="font-semibold mb-4">You&apos;re in control</h3>
-                <ul className="space-y-3 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                    <span>Set a monthly spending cap (e.g., $50, $100, $200)</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                    <span>Get notified at 50%, 75%, 90% of cap</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <li className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold shrink-0">4</span>
                     <span>Overages billed at end of billing cycle</span>
                   </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                    <span>Disable anytime - never surprised</span>
+                </ul>
+              </div>
+              
+              <div className="bg-zinc-800/50 rounded-xl p-6">
+                <h3 className="font-semibold text-white mb-4">You&apos;re always in control</h3>
+                <ul className="space-y-2 text-sm text-zinc-400">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Never charged beyond your cap</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Change or disable anytime</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Clear usage dashboard</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>No surprises, no hidden fees</span>
                   </li>
                 </ul>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Comparison Section */}
-      <section className="py-16 md:py-24">
+      <section className="py-16 md:py-24 border-t border-zinc-800/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Why CabbageSEO?</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold text-white mb-4">Why CabbageSEO?</h2>
+            <p className="text-zinc-400 max-w-2xl mx-auto">
               The only SEO tool that optimizes for both traditional search AND AI search
             </p>
           </div>
@@ -376,9 +373,9 @@ export default function PricingPage() {
           <div className="max-w-3xl mx-auto">
             <div className="grid grid-cols-4 gap-4 mb-4 text-sm font-medium text-center">
               <div></div>
-              <div className="text-muted-foreground">Ahrefs/Semrush</div>
-              <div className="text-muted-foreground">Surfer</div>
-              <div className="text-green-600">CabbageSEO</div>
+              <div className="text-zinc-500">Ahrefs/Semrush</div>
+              <div className="text-zinc-500">Surfer</div>
+              <div className="text-emerald-400">CabbageSEO</div>
             </div>
             {[
               { feature: "Keyword Research", ahrefs: true, surfer: false, cabbage: true },
@@ -393,41 +390,41 @@ export default function PricingPage() {
               <div
                 key={i}
                 className={`grid grid-cols-4 gap-4 py-3 px-4 rounded-lg text-sm ${
-                  i % 2 === 0 ? "bg-muted/30" : ""
+                  i % 2 === 0 ? "bg-zinc-900/50" : ""
                 }`}
               >
-                <div className="font-medium">{row.feature}</div>
+                <div className="font-medium text-zinc-300">{row.feature}</div>
                 <div className="text-center">
                   {typeof row.ahrefs === "boolean" ? (
                     row.ahrefs ? (
-                      <Check className="w-4 h-4 text-muted-foreground mx-auto" />
+                      <Check className="w-4 h-4 text-zinc-500 mx-auto" />
                     ) : (
-                      <X className="w-4 h-4 text-muted-foreground/40 mx-auto" />
+                      <X className="w-4 h-4 text-zinc-700 mx-auto" />
                     )
                   ) : (
-                    <span className="text-muted-foreground">{row.ahrefs}</span>
+                    <span className="text-zinc-500">{row.ahrefs}</span>
                   )}
                 </div>
                 <div className="text-center">
                   {typeof row.surfer === "boolean" ? (
                     row.surfer ? (
-                      <Check className="w-4 h-4 text-muted-foreground mx-auto" />
+                      <Check className="w-4 h-4 text-zinc-500 mx-auto" />
                     ) : (
-                      <X className="w-4 h-4 text-muted-foreground/40 mx-auto" />
+                      <X className="w-4 h-4 text-zinc-700 mx-auto" />
                     )
                   ) : (
-                    <span className="text-muted-foreground">{row.surfer}</span>
+                    <span className="text-zinc-500">{row.surfer}</span>
                   )}
                 </div>
                 <div className="text-center">
                   {typeof row.cabbage === "boolean" ? (
                     row.cabbage ? (
-                      <Check className="w-4 h-4 text-green-500 mx-auto" />
+                      <Check className="w-4 h-4 text-emerald-400 mx-auto" />
                     ) : (
-                      <X className="w-4 h-4 text-muted-foreground/40 mx-auto" />
+                      <X className="w-4 h-4 text-zinc-700 mx-auto" />
                     )
                   ) : (
-                    <span className="text-green-600 font-medium">{row.cabbage}</span>
+                    <span className="text-emerald-400 font-medium">{row.cabbage}</span>
                   )}
                 </div>
               </div>
@@ -437,19 +434,19 @@ export default function PricingPage() {
       </section>
 
       {/* FAQs */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 bg-zinc-900/30 border-y border-zinc-800/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">Frequently Asked Questions</h2>
           </div>
           <div className="max-w-2xl mx-auto">
             <Accordion type="single" collapsible className="w-full">
               {faqs.map((faq, i) => (
-                <AccordionItem key={i} value={`faq-${i}`}>
-                  <AccordionTrigger className="text-left">
+                <AccordionItem key={i} value={`faq-${i}`} className="border-zinc-800">
+                  <AccordionTrigger className="text-left text-zinc-100 hover:text-white">
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground">
+                  <AccordionContent className="text-zinc-400">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
@@ -462,22 +459,22 @@ export default function PricingPage() {
       {/* Final CTA */}
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Ready to rank in AI search?
           </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Start your free trial today. No credit card required.
+          <p className="text-xl text-zinc-400 mb-8 max-w-2xl mx-auto">
+            Try our free URL analyzer, then upgrade when you&apos;re ready.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup">
-              <Button size="lg" className="bg-gradient-to-r from-green-500 to-emerald-600">
-                Start Free Trial
+              <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                Get Started
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </Link>
             <Link href="/analyze">
-              <Button size="lg" variant="outline">
-                Try Free Tool First
+              <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+                Try Free Tool
               </Button>
             </Link>
           </div>
@@ -485,12 +482,12 @@ export default function PricingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2024 CabbageSEO. All rights reserved.</p>
+      <footer className="border-t border-zinc-800 py-8">
+        <div className="container mx-auto px-4 text-center text-sm text-zinc-500">
+          <p>© 2025 CabbageSEO. All rights reserved.</p>
           <div className="flex justify-center gap-4 mt-2">
-            <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
-            <Link href="/terms" className="hover:text-foreground">Terms</Link>
+            <Link href="/privacy" className="hover:text-white">Privacy</Link>
+            <Link href="/terms" className="hover:text-white">Terms</Link>
           </div>
         </div>
       </footer>
