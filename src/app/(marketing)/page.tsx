@@ -14,9 +14,12 @@ import {
   Globe,
   Check,
   ChevronRight,
+  Zap,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ExitIntentPopup } from "@/components/marketing/exit-intent-popup";
 
 // ============================================
 // LANDING PAGE - Clean, Professional, AIO-First
@@ -125,6 +128,28 @@ export default function LandingPage() {
           <p className="text-sm text-zinc-500">
             Free instant analysis • No signup required
           </p>
+
+          {/* Social proof */}
+          <div className="mt-12 flex flex-col items-center">
+            <div className="flex -space-x-2 mb-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div 
+                  key={i}
+                  className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 border-2 border-zinc-950 flex items-center justify-center text-xs font-bold text-zinc-950"
+                >
+                  {String.fromCharCode(64 + i)}
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-1 mb-1">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              ))}
+            </div>
+            <p className="text-sm text-zinc-400">
+              Trusted by <span className="text-white font-medium">500+</span> SEO professionals
+            </p>
+          </div>
         </div>
       </section>
 
@@ -365,6 +390,9 @@ export default function LandingPage() {
           <p className="text-sm text-zinc-600">© 2025 CabbageSEO</p>
         </div>
       </footer>
+
+      {/* Exit Intent Popup */}
+      <ExitIntentPopup />
     </div>
   );
 }

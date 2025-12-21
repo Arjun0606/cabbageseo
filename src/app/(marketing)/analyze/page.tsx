@@ -24,6 +24,14 @@ import {
   ChevronUp,
   Info,
   Lightbulb,
+  Mail,
+  Lock,
+  Share2,
+  Twitter,
+  Linkedin,
+  Copy,
+  Check,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +49,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { ExitIntentPopup } from "@/components/marketing/exit-intent-popup";
 
 // ============================================
 // TYPES
@@ -334,6 +343,23 @@ function FreeScoringPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [hasAutoAnalyzed, setHasAutoAnalyzed] = useState(false);
+  
+  // Email capture state
+  const [showEmailGate, setShowEmailGate] = useState(true);
+  const [email, setEmail] = useState("");
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Check if email was previously submitted (localStorage)
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("cabbageseo_email");
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setEmailSubmitted(true);
+      setShowEmailGate(false);
+    }
+  }, []);
 
   // Auto-analyze if URL is provided in query params
   useEffect(() => {
@@ -377,6 +403,58 @@ function FreeScoringPageContent() {
     e.preventDefault();
     runAnalysis(url);
   };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !email.includes("@")) return;
+    
+    setEmailLoading(true);
+    
+    try {
+      // Store in localStorage for return visits
+      localStorage.setItem("cabbageseo_email", email);
+      
+      // Send to backend for email list
+      await fetch("/api/leads", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, url, source: "free_analyzer" }) 
+      });
+      
+      setEmailSubmitted(true);
+      setShowEmailGate(false);
+    } catch (err) {
+      console.error("Failed to save email:", err);
+      // Still unlock the content even if save fails
+      setEmailSubmitted(true);
+      setShowEmailGate(false);
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleShare = async (platform: "twitter" | "linkedin" | "copy") => {
+    const shareUrl = `${window.location.origin}/analyze?url=${encodeURIComponent(url)}`;
+    const shareText = `Just analyzed my site with @CabbageSEO:\n\n🎯 SEO Score: ${result?.seoScore}/100\n🤖 AI Visibility: ${result?.aioScore}/100\n\nIs ChatGPT citing YOUR content? Check free:`;
+    
+    switch (platform) {
+      case "twitter":
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, "_blank");
+        break;
+      case "linkedin":
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, "_blank");
+        break;
+      case "copy":
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        break;
+    }
+  };
+
+  // Calculate issue count for CTA
+  const totalIssues = result ? (result.seo.issueCount.critical + result.seo.issueCount.warning + 
+    (result.aio.recommendations?.length || 0)) : 0;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -467,8 +545,28 @@ function FreeScoringPageContent() {
       {result && (
         <section className="pb-20 px-4">
           <div className="container mx-auto max-w-6xl">
-            {/* Analyze Another */}
-            <div className="mb-6 flex justify-end">
+            {/* Header with actions */}
+            <div className="mb-6 flex justify-between items-center">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleShare("twitter")}
+                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                >
+                  <Twitter className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleShare("copy")}
+                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                >
+                  {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                  {copied ? "Copied!" : "Copy Link"}
+                </Button>
+              </div>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -482,7 +580,7 @@ function FreeScoringPageContent() {
               </Button>
             </div>
 
-            {/* Score Summary */}
+            {/* Score Summary - Always visible */}
             <Card className="mb-8 overflow-hidden bg-zinc-900 border-zinc-800">
               <div className="bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 p-6 border-b border-zinc-800">
                 <div className="flex items-center gap-3 mb-2">
@@ -510,8 +608,93 @@ function FreeScoringPageContent() {
                     sublabel="Overall Visibility"
                   />
                 </div>
+
+                {/* Urgency message based on scores */}
+                {result.aioScore < 60 && (
+                  <div className="mt-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-red-400">
+                          ⚠️ Your competitors might be getting cited by AI — you're not.
+                        </p>
+                        <p className="text-sm text-red-400/80 mt-1">
+                          With an AIO score of {result.aioScore}/100, ChatGPT and Perplexity are likely 
+                          citing other sites instead of yours.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
+
+            {/* EMAIL GATE - Show if not submitted */}
+            {showEmailGate && !emailSubmitted && (
+              <Card className="mb-8 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-emerald-500/30">
+                <CardContent className="p-8">
+                  <div className="text-center max-w-lg mx-auto">
+                    <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                      <Lock className="w-8 h-8 text-emerald-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-2">
+                      Unlock Your Full Analysis
+                    </h3>
+                    <p className="text-zinc-400 mb-2">
+                      We found <span className="text-red-400 font-bold">{totalIssues} issues</span> affecting your visibility.
+                    </p>
+                    <p className="text-sm text-zinc-500 mb-6">
+                      Enter your email to see the detailed breakdown and get personalized fixes.
+                    </p>
+                    
+                    <form onSubmit={handleEmailSubmit} className="flex gap-2 max-w-md mx-auto">
+                      <div className="relative flex-1">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                        <Input
+                          type="email"
+                          placeholder="Enter your email..."
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="pl-10 h-12 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500"
+                          required
+                        />
+                      </div>
+                      <Button 
+                        type="submit" 
+                        size="lg"
+                        disabled={emailLoading || !email.includes("@")}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white h-12"
+                      >
+                        {emailLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            Unlock Report
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                    
+                    <p className="text-xs text-zinc-500 mt-4">
+                      🔒 No spam. Unsubscribe anytime. We respect your inbox.
+                    </p>
+
+                    <Button
+                      variant="link"
+                      onClick={() => setShowEmailGate(false)}
+                      className="text-zinc-500 hover:text-zinc-400 mt-4"
+                    >
+                      Skip for now
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Full Results - Only show after email or skip */}
+            {(!showEmailGate || emailSubmitted) && (
+              <>
 
             {/* Platform Scores */}
             <Card className="mb-8 bg-zinc-900 border-zinc-800">
@@ -853,42 +1036,76 @@ function FreeScoringPageContent() {
               </Card>
             </div>
 
-            {/* CTA */}
-            <Card className="bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 border-emerald-500/20">
-              <CardContent className="p-8 text-center">
-                <h3 className="text-2xl font-bold mb-2 text-white">{result.cta.message}</h3>
-                <p className="text-zinc-400 mb-6 max-w-xl mx-auto">
-                  This was just your homepage. Sign up to analyze your entire site, 
-                  get auto-fixes, and let CabbageSEO run on autopilot.
-                </p>
-                
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-2xl mx-auto mb-8">
-                  {[
-                    { icon: FileText, label: "Full site audit" },
-                    { icon: Search, label: "Keyword tracking" },
-                    { icon: Sparkles, label: "AI content generation" },
-                    { icon: Zap, label: "Auto-fix issues" },
-                    { icon: Link2, label: "CMS publishing" },
-                    { icon: BarChart3, label: "Rank monitoring" },
-                  ].map(({ icon: Icon, label }) => (
-                    <div 
-                      key={label}
-                      className="flex items-center gap-2 text-sm bg-zinc-800/50 rounded-lg p-2 text-zinc-300"
-                    >
-                      <Icon className="w-4 h-4 text-emerald-400" />
-                      <span>{label}</span>
-                    </div>
-                  ))}
+            {/* CTA - Strong conversion block */}
+            <Card className="bg-gradient-to-br from-emerald-600/20 via-emerald-500/10 to-zinc-900 border-emerald-500/30 overflow-hidden">
+              <CardContent className="p-8 relative">
+                {/* Urgency banner */}
+                <div className="absolute top-0 left-0 right-0 bg-red-500/90 text-white text-center py-2 px-4">
+                  <p className="text-sm font-medium">
+                    🔥 {totalIssues} issues found — Fix them automatically with CabbageSEO
+                  </p>
                 </div>
 
-                <Link href="/signup">
-                  <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                    Get Full Access
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </Link>
+                <div className="text-center pt-8">
+                  <h3 className="text-3xl font-bold mb-3 text-white">
+                    Ready to Dominate AI Search?
+                  </h3>
+                  <p className="text-lg text-zinc-400 mb-2 max-w-xl mx-auto">
+                    While you're reading this, your competitors are getting cited by ChatGPT.
+                  </p>
+                  <p className="text-zinc-500 mb-8 max-w-xl mx-auto">
+                    CabbageSEO automatically fixes these {totalIssues} issues and keeps your content 
+                    AI-optimized. Set it and forget it.
+                  </p>
+                  
+                  {/* Value Props */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto mb-8">
+                    {[
+                      { icon: Zap, label: "Auto-fix all issues", highlight: true },
+                      { icon: Bot, label: "Monitor AI citations" },
+                      { icon: FileText, label: "AI content generation" },
+                      { icon: TrendingUp, label: "Track rankings" },
+                      { icon: Link2, label: "Publish to WordPress" },
+                      { icon: Sparkles, label: "Daily optimization" },
+                    ].map(({ icon: Icon, label, highlight }) => (
+                      <div 
+                        key={label}
+                        className={`flex items-center gap-3 text-sm rounded-lg p-3 ${
+                          highlight 
+                            ? "bg-emerald-500/20 border border-emerald-500/30 text-emerald-300" 
+                            : "bg-zinc-800/50 text-zinc-300"
+                        }`}
+                      >
+                        <Icon className={`w-5 h-5 ${highlight ? "text-emerald-400" : "text-zinc-500"}`} />
+                        <span className={highlight ? "font-medium" : ""}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CTA Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Link href="/signup">
+                      <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white text-lg px-8 h-14">
+                        Fix These {totalIssues} Issues Now
+                        <ArrowRight className="w-5 h-5 ml-2" />
+                      </Button>
+                    </Link>
+                    <Link href="/pricing">
+                      <Button size="lg" variant="outline" className="border-zinc-600 text-zinc-300 hover:bg-zinc-800 h-14">
+                        View Pricing
+                      </Button>
+                    </Link>
+                  </div>
+
+                  {/* Trust signals */}
+                  <p className="text-xs text-zinc-500 mt-6">
+                    ✓ No credit card required &nbsp;•&nbsp; ✓ Cancel anytime &nbsp;•&nbsp; ✓ 14-day free trial
+                  </p>
+                </div>
               </CardContent>
             </Card>
+            </>
+            )}
           </div>
         </section>
       )}
@@ -942,6 +1159,9 @@ function FreeScoringPageContent() {
           <p>© {new Date().getFullYear()} CabbageSEO. The AI-Native SEO OS.</p>
         </div>
       </footer>
+
+      {/* Exit Intent Popup */}
+      <ExitIntentPopup />
     </div>
   );
 }
