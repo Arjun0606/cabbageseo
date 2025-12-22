@@ -25,13 +25,13 @@ NODE_ENV=development
 DODO_PAYMENTS_API_KEY=sk_live_...
 DODO_WEBHOOK_SECRET=whsec_...
 
-# Product IDs (create these in Dodo Dashboard)
-DODO_STARTER_MONTHLY_ID=prod_starter_monthly
-DODO_STARTER_YEARLY_ID=prod_starter_yearly
-DODO_PRO_MONTHLY_ID=prod_pro_monthly
-DODO_PRO_YEARLY_ID=prod_pro_yearly
-DODO_PRO_PLUS_MONTHLY_ID=prod_pro_plus_monthly
-DODO_PRO_PLUS_YEARLY_ID=prod_pro_plus_yearly
+# Product IDs (from Dodo Dashboard)
+DODO_STARTER_MONTHLY_ID=pdt_0NUbpXQ1QJLfhZ3G1RNEA
+DODO_STARTER_YEARLY_ID=pdt_0NUbq9soPHPc4QjNb4SaQ
+DODO_PRO_MONTHLY_ID=pdt_0NUbqNN7Phmb0Hj5Fgzao
+DODO_PRO_YEARLY_ID=pdt_0NUbqYQ4gBInUzxpfVOtf
+DODO_PRO_PLUS_MONTHLY_ID=pdt_0NUbqieBO42AkNqF5wI4z
+DODO_PRO_PLUS_YEARLY_ID=pdt_0NUbqtphjX6X4yNJ1YA39
 
 # Usage meter for overage billing
 DODO_METER_OVERAGE=meter_overage_spend
