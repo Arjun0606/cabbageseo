@@ -24,8 +24,8 @@ export default function SettingsLayout({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold tracking-tight text-white">Settings</h1>
+        <p className="text-zinc-400">
           Manage your account and preferences
         </p>
       </div>
@@ -47,8 +47,8 @@ export default function SettingsLayout({
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
                     isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-emerald-600 text-white"
+                      : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
                   )}
                 >
                   <Icon className="w-4 h-4" />

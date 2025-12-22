@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { createClient } from "@/lib/supabase/client";
 import {
   Search,
   Loader2,
@@ -350,6 +351,22 @@ function FreeScoringPageContent() {
   const [emailSubmitted, setEmailSubmitted] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient();
+      if (supabase) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setIsLoggedIn(true);
+          setShowEmailGate(false);
+        }
+      }
+    };
+    checkAuth();
+  }, []);
 
   // Check if email was previously submitted (localStorage)
   useEffect(() => {
@@ -629,75 +646,79 @@ function FreeScoringPageContent() {
               </CardContent>
             </Card>
 
-            {/* SIGNUP GATE - Always show until signed up */}
-            <Card className="mb-8 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-emerald-500/30">
-              <CardContent className="p-8">
-                <div className="text-center max-w-lg mx-auto">
-                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-                    <Lock className="w-8 h-8 text-emerald-400" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">
-                    See What&apos;s Hurting Your Rankings
-                  </h3>
-                  <p className="text-zinc-400 mb-2">
-                    We found <span className="text-red-400 font-bold">{totalIssues} issues</span> affecting your visibility.
-                  </p>
-                  <p className="text-sm text-zinc-500 mb-6">
-                    Sign up free to see the full breakdown, detailed recommendations, and AI-powered fixes.
-                  </p>
-                  
-                  <Link href={`/signup?redirect=${encodeURIComponent(`/analyze?url=${encodeURIComponent(result.url)}`)}`}>
-                    <Button 
-                      size="lg"
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white h-12 px-8"
-                    >
-                      Sign Up Free to Unlock
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
-                  
-                  <p className="text-xs text-zinc-500 mt-4">
-                    ✓ Free account · ✓ Full breakdown · ✓ AI recommendations
-                  </p>
-
-                  {/* Optional email capture for those not ready to sign up */}
-                  <div className="mt-6 pt-6 border-t border-zinc-700">
-                    <p className="text-sm text-zinc-500 mb-3">
-                      Not ready? Get a summary sent to your email:
+            {/* SIGNUP GATE - Show only for non-logged-in users */}
+            {!isLoggedIn && (
+              <Card className="mb-8 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-emerald-500/30">
+                <CardContent className="p-8">
+                  <div className="text-center max-w-lg mx-auto">
+                    <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                      <Lock className="w-8 h-8 text-emerald-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-2">
+                      See What&apos;s Hurting Your Rankings
+                    </h3>
+                    <p className="text-zinc-400 mb-2">
+                      We found <span className="text-red-400 font-bold">{totalIssues} issues</span> affecting your visibility.
                     </p>
-                    <form onSubmit={handleEmailSubmit} className="flex gap-2 max-w-md mx-auto">
-                      <div className="relative flex-1">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                        <Input
-                          type="email"
-                          placeholder="Your email..."
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10 h-10 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 text-sm"
-                          required
-                        />
-                      </div>
+                    <p className="text-sm text-zinc-500 mb-6">
+                      Sign up free to see the full breakdown, detailed recommendations, and AI-powered fixes.
+                    </p>
+                    
+                    <Link href={`/signup?redirect=${encodeURIComponent(`/analyze?url=${encodeURIComponent(result.url)}`)}`}>
                       <Button 
-                        type="submit" 
-                        variant="outline"
-                        disabled={emailLoading || !email.includes("@")}
-                        className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 h-10"
+                        size="lg"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white h-12 px-8"
                       >
-                        {emailLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Summary"}
+                        Sign Up Free to Unlock
+                        <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
-                    </form>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                    </Link>
+                    
+                    <p className="text-xs text-zinc-500 mt-4">
+                      ✓ Free account · ✓ Full breakdown · ✓ AI recommendations
+                    </p>
 
-            {/* Preview of what they'll get - blurred/locked */}
-            <div className="relative">
-              {/* Blur overlay */}
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-950/90 to-zinc-950 z-10 pointer-events-none" />
+                    {/* Optional email capture for those not ready to sign up */}
+                    <div className="mt-6 pt-6 border-t border-zinc-700">
+                      <p className="text-sm text-zinc-500 mb-3">
+                        Not ready? Get a summary sent to your email:
+                      </p>
+                      <form onSubmit={handleEmailSubmit} className="flex gap-2 max-w-md mx-auto">
+                        <div className="relative flex-1">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                          <Input
+                            type="email"
+                            placeholder="Your email..."
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="pl-10 h-10 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 text-sm"
+                            required
+                          />
+                        </div>
+                        <Button 
+                          type="submit" 
+                          variant="outline"
+                          disabled={emailLoading || !email.includes("@")}
+                          className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 h-10"
+                        >
+                          {emailLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Summary"}
+                        </Button>
+                      </form>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Preview of what they'll get - blurred/locked for non-logged-in users */}
+            <div className={!isLoggedIn ? "relative" : ""}>
+              {/* Blur overlay - only show for non-logged-in users */}
+              {!isLoggedIn && (
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-950/90 to-zinc-950 z-10 pointer-events-none" />
+              )}
               
-              {/* Teaser content (visible but blurred) */}
-              <div className="opacity-40 blur-[2px] select-none pointer-events-none">
+              {/* Full content - blurred for non-logged-in, visible for logged-in */}
+              <div className={!isLoggedIn ? "opacity-40 blur-[2px] select-none pointer-events-none" : ""}>
 
             {/* Platform Scores */}
             <Card className="mb-8 bg-zinc-900 border-zinc-800">
