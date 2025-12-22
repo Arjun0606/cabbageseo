@@ -18,6 +18,8 @@ import {
   Sparkles,
   RefreshCw,
   ArrowUpRight,
+  Link2,
+  Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +35,9 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/content", label: "Content", icon: FileText, primary: true },
   { href: "/keywords", label: "Keywords", icon: Target },
+  { href: "/aio", label: "AI Visibility", icon: Brain },
   { href: "/audit", label: "Audit", icon: AlertTriangle },
+  { href: "/links", label: "Internal Links", icon: Link2 },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/autopilot", label: "Autopilot", icon: Bot },
 ];

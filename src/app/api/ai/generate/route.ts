@@ -8,6 +8,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { contentPipeline, RateLimitError } from "@/lib/ai";
+import { createClient } from "@/lib/supabase/server";
+import { requireSubscription } from "@/lib/api/require-subscription";
 
 export const maxDuration = 60; // Allow up to 60s for content generation
 
@@ -49,6 +51,17 @@ interface GenerateRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check subscription - AI generation requires paid plan
+    const supabase = await createClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+    }
+    
+    const subscription = await requireSubscription(supabase);
+    if (!subscription.authorized) {
+      return subscription.error!;
+    }
+
     // Check if AI is configured
     if (!contentPipeline.isReady()) {
       return NextResponse.json(

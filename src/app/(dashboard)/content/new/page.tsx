@@ -229,7 +229,12 @@ function NewContentPageContent() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate ideas");
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 402 && errorData.code === "SUBSCRIPTION_REQUIRED") {
+          router.push("/pricing");
+          return;
+        }
+        throw new Error(errorData.error || "Failed to generate ideas");
       }
 
       const data = await response.json();
@@ -324,7 +329,12 @@ function NewContentPageContent() {
       setGenerationSteps(prev => prev.map((s, i) => i === 1 ? { ...s, status: "loading" } : s));
 
       if (!response.ok) {
-        throw new Error("Failed to generate content");
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 402 && errorData.code === "SUBSCRIPTION_REQUIRED") {
+          router.push("/pricing");
+          return;
+        }
+        throw new Error(errorData.error || "Failed to generate content");
       }
 
       const data = await response.json();

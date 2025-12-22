@@ -30,7 +30,16 @@ export async function GET() {
 
     const profile = profileData as { organization_id: string } | null;
     if (!profile?.organization_id) {
-      return NextResponse.json({ error: "No organization found" }, { status: 400 });
+      // Return free plan defaults for users without an organization
+      return NextResponse.json({ 
+        success: true,
+        data: {
+          plan: { id: "free", name: "Free", status: "inactive", billingInterval: null, currentPeriodStart: null, currentPeriodEnd: null },
+          usage: { articles: 0, keywords: 0, audits: 0, aioAnalyses: 0, aiCredits: 0 },
+          limits: { articles: 0, keywords: 0, audits: 0, aioAnalyses: 0, aiCredits: 0 },
+          percentages: { articles: 0, keywords: 0, audits: 0, aioAnalyses: 0, aiCredits: 0 },
+        }
+      });
     }
 
     const orgId = profile.organization_id;
@@ -51,7 +60,16 @@ export async function GET() {
     } | null;
     
     if (!org) {
-      return NextResponse.json({ error: "Organization not found" }, { status: 400 });
+      // Return free plan defaults for organizations that don't exist
+      return NextResponse.json({ 
+        success: true,
+        data: {
+          plan: { id: "free", name: "Free", status: "inactive", billingInterval: null, currentPeriodStart: null, currentPeriodEnd: null },
+          usage: { articles: 0, keywords: 0, audits: 0, aioAnalyses: 0, aiCredits: 0 },
+          limits: { articles: 0, keywords: 0, audits: 0, aioAnalyses: 0, aiCredits: 0 },
+          percentages: { articles: 0, keywords: 0, audits: 0, aioAnalyses: 0, aiCredits: 0 },
+        }
+      });
     }
 
     // Get current period

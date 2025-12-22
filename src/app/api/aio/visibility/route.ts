@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { visibilityChecker } from "@/lib/aio/visibility-checker";
+import { requireSubscription } from "@/lib/api/require-subscription";
 
 interface RequestBody {
   url: string;
@@ -24,7 +25,7 @@ interface RequestBody {
 
 export async function POST(req: NextRequest) {
   try {
-    // Auth check - this endpoint costs money, require login
+    // Auth check - this endpoint costs money, require paid subscription
     const supabase = await createClient();
     if (!supabase) {
       return NextResponse.json(
@@ -32,13 +33,11 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-    const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
-      return NextResponse.json(
-        { error: "Authentication required for AI visibility checks" },
-        { status: 401 }
-      );
+    // AI visibility checks require paid subscription
+    const subscription = await requireSubscription(supabase);
+    if (!subscription.authorized) {
+      return subscription.error!;
     }
 
     const body = await req.json() as RequestBody;
