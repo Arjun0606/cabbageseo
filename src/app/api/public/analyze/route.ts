@@ -11,14 +11,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SiteCrawler } from "@/lib/crawler/site-crawler";
 
-// Rate limiting - DISABLED for launch (re-enable after 1 week if needed)
-// const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-// const RATE_LIMIT = 20;
-// const RATE_WINDOW = 60 * 60 * 1000; // 1 hour
+// Rate limiting - Protects against abuse and API cost overruns
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 10; // 10 analyses per hour per IP
+const RATE_WINDOW = 60 * 60 * 1000; // 1 hour
 
-function checkRateLimit(_ip: string): { allowed: boolean; remaining: number } {
-  // Rate limiting disabled for launch - unlimited free analyses
-  return { allowed: true, remaining: 999 };
+function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+
+  // Clean up old entries periodically
+  if (rateLimitMap.size > 10000) {
+    for (const [key, value] of rateLimitMap.entries()) {
+      if (value.resetAt < now) rateLimitMap.delete(key);
+    }
+  }
+
+  if (!record || record.resetAt < now) {
+    // New window
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW });
+    return { allowed: true, remaining: RATE_LIMIT - 1 };
+  }
+
+  if (record.count >= RATE_LIMIT) {
+    return { allowed: false, remaining: 0 };
+  }
+
+  record.count++;
+  return { allowed: true, remaining: RATE_LIMIT - record.count };
 }
 
 // ============================================
