@@ -124,7 +124,7 @@ function TaskCard({
   const Icon = typeConfig.icon;
 
   return (
-    <Card className={`transition-all ${task.status === "running" ? "ring-2 ring-primary/50" : ""}`}>
+    <Card className={`transition-all bg-zinc-900 border-zinc-800 ${task.status === "running" ? "ring-2 ring-emerald-500/50" : ""}`}>
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className={`p-2 rounded-lg ${typeConfig.color}`}>
@@ -132,15 +132,15 @@ function TaskCard({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2 mb-1">
-              <h4 className="font-medium truncate">{task.title}</h4>
+              <h4 className="font-medium truncate text-white">{task.title}</h4>
               <StatusBadge status={task.status} />
             </div>
-            <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
+            <p className="text-sm text-zinc-400 mb-2">{task.description}</p>
 
             {task.status === "running" && (
               <div className="space-y-1">
                 <Progress value={task.progress} className="h-2" />
-                <div className="flex justify-between text-xs text-muted-foreground">
+                <div className="flex justify-between text-xs text-zinc-500">
                   <span>{task.progress}% complete</span>
                   {task.startedAt && <span>Started {new Date(task.startedAt).toLocaleTimeString()}</span>}
                 </div>
@@ -189,16 +189,16 @@ function AutopilotLoading() {
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-4">
         {[...Array(4)].map((_, i) => (
-          <Card key={i}>
+          <Card key={i} className="bg-zinc-900 border-zinc-800">
             <CardContent className="p-4">
-              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full bg-zinc-800" />
             </CardContent>
           </Card>
         ))}
       </div>
       <div className="space-y-3">
         {[...Array(3)].map((_, i) => (
-          <Skeleton key={i} className="h-24 w-full" />
+          <Skeleton key={i} className="h-24 w-full bg-zinc-800" />
         ))}
       </div>
     </div>
@@ -211,16 +211,16 @@ function AutopilotLoading() {
 
 function EmptyState() {
   return (
-    <Card className="p-8 text-center">
-      <div className="inline-flex items-center justify-center p-4 bg-muted rounded-full mb-4">
-        <Bot className="w-8 h-8 text-muted-foreground" />
+    <Card className="p-8 text-center bg-zinc-900 border-zinc-800">
+      <div className="inline-flex items-center justify-center p-4 bg-zinc-800 rounded-full mb-4">
+        <Bot className="w-8 h-8 text-zinc-400" />
       </div>
-      <h3 className="text-lg font-semibold mb-2">No tasks in queue</h3>
-      <p className="text-muted-foreground mb-4">
+      <h3 className="text-lg font-semibold mb-2 text-white">No tasks in queue</h3>
+      <p className="text-zinc-400 mb-4">
         Add a task above or use the command palette (⌘K) to start automating your SEO
       </p>
       <Link href="/onboarding">
-        <Button variant="outline">
+        <Button variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white">
           <Sparkles className="w-4 h-4 mr-2" />
           Analyze a Site
         </Button>
@@ -325,13 +325,13 @@ function AutopilotContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Bot className="w-8 h-8 text-primary" />
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3 text-white">
+            <div className="p-2 bg-emerald-500/10 rounded-lg">
+              <Bot className="w-8 h-8 text-emerald-500" />
             </div>
             SEO Autopilot
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-zinc-400 mt-1">
             AI-powered automation for your SEO tasks
           </p>
         </div>
@@ -354,13 +354,13 @@ function AutopilotContent() {
 
       {/* Error State */}
       {error && (
-        <Card className="p-6 border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900">
+        <Card className="p-6 border-red-500/30 bg-red-500/10">
           <div className="flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-500" />
+            <AlertCircle className="w-5 h-5 text-red-400" />
             <div>
-              <p className="font-medium text-red-700 dark:text-red-400">Failed to load tasks</p>
+              <p className="font-medium text-red-400">Failed to load tasks</p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto">
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto border-zinc-700 text-zinc-300 hover:bg-zinc-800">
               Retry
             </Button>
           </div>
@@ -375,54 +375,54 @@ function AutopilotContent() {
         <>
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <Card>
+        <Card className="bg-zinc-900 border-zinc-800">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-blue-500/10">
                 <Loader2 className={`w-5 h-5 text-blue-500 ${isRunning ? "animate-spin" : ""}`} />
               </div>
               <div>
-                    <p className="text-2xl font-bold">{stats.running}</p>
-                <p className="text-xs text-muted-foreground">Running</p>
+                <p className="text-2xl font-bold text-white">{stats.running}</p>
+                <p className="text-xs text-zinc-400">Running</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-zinc-900 border-zinc-800">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gray-500/10">
-                <Clock className="w-5 h-5 text-gray-500" />
+              <div className="p-2 rounded-lg bg-zinc-700/50">
+                <Clock className="w-5 h-5 text-zinc-400" />
               </div>
               <div>
-                    <p className="text-2xl font-bold">{stats.pending}</p>
-                    <p className="text-xs text-muted-foreground">Pending</p>
+                <p className="text-2xl font-bold text-white">{stats.pending}</p>
+                <p className="text-xs text-zinc-400">Pending</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-zinc-900 border-zinc-800">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              <div className="p-2 rounded-lg bg-emerald-500/10">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
               </div>
               <div>
-                    <p className="text-2xl font-bold">{stats.completed}</p>
-                <p className="text-xs text-muted-foreground">Completed</p>
+                <p className="text-2xl font-bold text-white">{stats.completed}</p>
+                <p className="text-xs text-zinc-400">Completed</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-zinc-900 border-zinc-800">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Brain className="w-5 h-5 text-primary" />
+              <div className="p-2 rounded-lg bg-emerald-500/10">
+                <Brain className="w-5 h-5 text-emerald-500" />
               </div>
               <div>
-                    <p className="text-2xl font-bold">{isRunning ? "Active" : "Idle"}</p>
-                <p className="text-xs text-muted-foreground">Status</p>
+                <p className="text-2xl font-bold text-white">{isRunning ? "Active" : "Idle"}</p>
+                <p className="text-xs text-zinc-400">Status</p>
               </div>
             </div>
           </CardContent>
@@ -433,13 +433,13 @@ function AutopilotContent() {
         {/* Task Queue */}
         <div className="lg:col-span-2 space-y-4">
           {/* New Task Input */}
-          <Card>
+          <Card className="bg-zinc-900 border-zinc-800">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Sparkles className="w-5 h-5 text-emerald-500" />
                 Add New Task
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-zinc-400">
                 Describe what you want the AI to do
               </CardDescription>
             </CardHeader>
@@ -449,19 +449,20 @@ function AutopilotContent() {
                   value={newTaskPrompt}
                   onChange={(e) => setNewTaskPrompt(e.target.value)}
                   placeholder="e.g., Generate an article about 'best SEO practices for e-commerce sites'"
-                  className="min-h-[80px]"
+                  className="min-h-[80px] bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:ring-emerald-500/20"
                 />
               </div>
               <div className="flex justify-end mt-3">
-                    <Button
-                      onClick={addTask}
-                      disabled={!newTaskPrompt.trim() || createMutation.isPending}
-                    >
-                      {createMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                  <Plus className="w-4 h-4 mr-2" />
-                      )}
+                <Button
+                  onClick={addTask}
+                  disabled={!newTaskPrompt.trim() || createMutation.isPending}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                >
+                  {createMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4 mr-2" />
+                  )}
                   Add to Queue
                 </Button>
               </div>
@@ -470,17 +471,18 @@ function AutopilotContent() {
 
           {/* Task List */}
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Task Queue</h2>
-                {stats.completed > 0 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={handleClearCompleted}
-                    disabled={clearCompletedMutation.isPending}
-                  >
-                    {clearCompletedMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : null}
+            <h2 className="text-lg font-semibold text-white">Task Queue</h2>
+            {stats.completed > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleClearCompleted}
+                disabled={clearCompletedMutation.isPending}
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+              >
+                {clearCompletedMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : null}
                 Clear Completed
               </Button>
             )}
@@ -510,18 +512,18 @@ function AutopilotContent() {
 
         {/* Settings Sidebar */}
         <div className="space-y-4">
-          <Card>
+          <Card className="bg-zinc-900 border-zinc-800">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="w-5 h-5" />
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Settings className="w-5 h-5 text-zinc-400" />
                 Autopilot Settings
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="auto-publish">Auto-Publish</Label>
-                  <p className="text-xs text-muted-foreground">
+                  <Label htmlFor="auto-publish" className="text-zinc-200">Auto-Publish</Label>
+                  <p className="text-xs text-zinc-500">
                     Publish content automatically
                   </p>
                 </div>
@@ -536,8 +538,8 @@ function AutopilotContent() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="notify">Notifications</Label>
-                  <p className="text-xs text-muted-foreground">
+                  <Label htmlFor="notify" className="text-zinc-200">Notifications</Label>
+                  <p className="text-xs text-zinc-500">
                     Notify when tasks complete
                   </p>
                 </div>
@@ -552,8 +554,8 @@ function AutopilotContent() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="pause-error">Pause on Error</Label>
-                  <p className="text-xs text-muted-foreground">
+                  <Label htmlFor="pause-error" className="text-zinc-200">Pause on Error</Label>
+                  <p className="text-xs text-zinc-500">
                     Stop queue if task fails
                   </p>
                 </div>
@@ -567,21 +569,21 @@ function AutopilotContent() {
               </div>
 
               <div>
-                <Label htmlFor="concurrent">Concurrent Tasks</Label>
+                <Label htmlFor="concurrent" className="text-zinc-200">Concurrent Tasks</Label>
                 <Select
                   value={settings.maxConcurrent.toString()}
                   onValueChange={(v) =>
                     setSettings((s) => ({ ...s, maxConcurrent: parseInt(v) }))
                   }
                 >
-                      <SelectTrigger className="mt-2">
+                  <SelectTrigger className="mt-2 bg-zinc-800 border-zinc-700 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 task at a time</SelectItem>
-                    <SelectItem value="2">2 tasks at a time</SelectItem>
-                    <SelectItem value="3">3 tasks at a time</SelectItem>
-                    <SelectItem value="5">5 tasks at a time</SelectItem>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectItem value="1" className="text-zinc-200 focus:bg-zinc-700 focus:text-white">1 task at a time</SelectItem>
+                    <SelectItem value="2" className="text-zinc-200 focus:bg-zinc-700 focus:text-white">2 tasks at a time</SelectItem>
+                    <SelectItem value="3" className="text-zinc-200 focus:bg-zinc-700 focus:text-white">3 tasks at a time</SelectItem>
+                    <SelectItem value="5" className="text-zinc-200 focus:bg-zinc-700 focus:text-white">5 tasks at a time</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -589,65 +591,65 @@ function AutopilotContent() {
           </Card>
 
           {/* Quick Actions */}
-          <Card>
+          <Card className="bg-zinc-900 border-zinc-800">
             <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-yellow-500" />
-                    Quick Actions
-                  </CardTitle>
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Zap className="w-5 h-5 text-yellow-500" />
+                Quick Actions
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <Button
                 variant="outline"
-                className="w-full justify-start"
+                className="w-full justify-start border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white"
                 onClick={() =>
-                      createMutation.mutate({
-                        type: "audit",
-                        description: "Run a full technical SEO audit",
-                      })
+                  createMutation.mutate({
+                    type: "audit",
+                    description: "Run a full technical SEO audit",
+                  })
                 }
               >
-                    <AlertTriangle className="w-4 h-4 mr-2 text-yellow-500" />
-                    Run Technical Audit
+                <AlertTriangle className="w-4 h-4 mr-2 text-yellow-500" />
+                Run Technical Audit
               </Button>
               <Button
                 variant="outline"
-                className="w-full justify-start"
+                className="w-full justify-start border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white"
                 onClick={() =>
-                      createMutation.mutate({
-                        type: "keywords",
-                        description: "Research new keyword opportunities",
-                      })
+                  createMutation.mutate({
+                    type: "keywords",
+                    description: "Research new keyword opportunities",
+                  })
                 }
               >
-                    <Search className="w-4 h-4 mr-2 text-purple-500" />
+                <Search className="w-4 h-4 mr-2 text-purple-500" />
                 Research Keywords
               </Button>
               <Button
                 variant="outline"
-                className="w-full justify-start"
+                className="w-full justify-start border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white"
                 onClick={() =>
-                      createMutation.mutate({
-                        type: "content",
-                        description: "Generate a new SEO article",
-                      })
+                  createMutation.mutate({
+                    type: "content",
+                    description: "Generate a new SEO article",
+                  })
                 }
               >
-                    <FileText className="w-4 h-4 mr-2 text-blue-500" />
-                    Generate Content
+                <FileText className="w-4 h-4 mr-2 text-blue-500" />
+                Generate Content
               </Button>
               <Button
                 variant="outline"
-                className="w-full justify-start"
+                className="w-full justify-start border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white"
                 onClick={() =>
-                      createMutation.mutate({
-                        type: "analyze",
-                        description: "Analyze site performance and rankings",
-                      })
+                  createMutation.mutate({
+                    type: "analyze",
+                    description: "Analyze site performance and rankings",
+                  })
                 }
               >
-                    <Target className="w-4 h-4 mr-2 text-pink-500" />
-                    Analyze Performance
+                <Target className="w-4 h-4 mr-2 text-pink-500" />
+                Analyze Performance
               </Button>
             </CardContent>
           </Card>

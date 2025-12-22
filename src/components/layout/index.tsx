@@ -52,16 +52,16 @@ function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onCollapse: ()
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-background border-r transition-all duration-300",
+        "fixed left-0 top-0 z-40 h-screen bg-zinc-900 border-r border-zinc-800 transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-4 border-b">
+      <div className="h-16 flex items-center justify-between px-4 border-b border-zinc-800">
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center gap-2">
             <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-9 w-auto" />
-            <span className="font-bold text-lg">CabbageSEO</span>
+            <span className="font-bold text-lg text-white">CabbageSEO</span>
           </Link>
         )}
         {collapsed && (
@@ -83,8 +83,8 @@ function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onCollapse: ()
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative group",
                   isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-emerald-600 text-white"
+                    : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
                 )}
               >
                 <Icon className="w-5 h-5 flex-shrink-0" />
@@ -111,7 +111,7 @@ function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onCollapse: ()
         </div>
 
         {/* Bottom Nav */}
-        <div className="border-t pt-3 space-y-1">
+        <div className="border-t border-zinc-800 pt-3 space-y-1">
           {bottomNavItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
@@ -123,8 +123,8 @@ function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onCollapse: ()
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group relative",
                   isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-emerald-600 text-white"
+                    : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
                 )}
               >
                 <Icon className="w-5 h-5 flex-shrink-0" />
@@ -141,7 +141,7 @@ function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onCollapse: ()
           {/* Collapse Button */}
           <button
             onClick={onCollapse}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors w-full"
           >
             <ChevronLeft
               className={cn(
@@ -173,7 +173,7 @@ function Header({
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 z-30 h-16 bg-background/95 backdrop-blur border-b flex items-center justify-between px-4 transition-all duration-300",
+        "fixed top-0 right-0 z-30 h-16 bg-zinc-950/95 backdrop-blur border-b border-zinc-800 flex items-center justify-between px-4 transition-all duration-300",
         sidebarCollapsed ? "left-16" : "left-64"
       )}
     >
@@ -227,11 +227,11 @@ function MobileNav({
         className="fixed inset-0 bg-black/50 z-40 lg:hidden"
         onClick={onClose}
       />
-      <aside className="fixed left-0 top-0 z-50 w-64 h-screen bg-background lg:hidden">
-        <div className="h-16 flex items-center justify-between px-4 border-b">
+      <aside className="fixed left-0 top-0 z-50 w-64 h-screen bg-zinc-900 lg:hidden">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-zinc-800">
           <Link href="/dashboard" className="flex items-center gap-2" onClick={onClose}>
             <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-9 w-auto" />
-            <span className="font-bold text-lg">CabbageSEO</span>
+            <span className="font-bold text-lg text-white">CabbageSEO</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="w-5 h-5" />
@@ -251,8 +251,8 @@ function MobileNav({
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
                   isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-emerald-600 text-white"
+                    : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
                 )}
               >
                 <Icon className="w-5 h-5" />
@@ -276,7 +276,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { open: commandOpen, setOpen: setCommandOpen } = useCommandPalette();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 dark">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <Sidebar
