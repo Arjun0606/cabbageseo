@@ -28,11 +28,12 @@ export const PLATFORM_LABELS: Record<AIOPlatform, string> = {
 };
 
 // Platform weights for combined score (must sum to 1.0)
+// Note: Bing Copilot is excluded from UI but kept for type compatibility
 export const PLATFORM_WEIGHTS: Record<AIOPlatform, number> = {
-  google_aio: 0.35,   // 35% - Most important (Google still dominates search)
-  chatgpt: 0.30,      // 30% - Largest AI user base (200M+ weekly)
-  perplexity: 0.20,   // 20% - Growing fast in AI search
-  bing_copilot: 0.15, // 15% - Microsoft ecosystem
+  google_aio: 0.40,   // 40% - Most important (Google still dominates search)
+  chatgpt: 0.35,      // 35% - Largest AI user base (200M+ weekly)
+  perplexity: 0.25,   // 25% - Growing fast in AI search
+  bing_copilot: 0.00, // 0% - Not currently tracked (API not available)
 };
 
 // ============================================

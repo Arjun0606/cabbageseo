@@ -41,7 +41,7 @@ const plans = [
     features: [
       { text: "1 website", included: true },
       { text: "20 AIO visibility checks/month", included: true, highlight: true },
-      { text: "4 AI platforms (ChatGPT, Perplexity, Google AI, Bing)", included: true, highlight: true },
+      { text: "3 AI platforms (ChatGPT, Perplexity, Google AI)", included: true, highlight: true },
       { text: "10 AI articles/month", included: true },
       { text: "100 keywords tracked", included: true },
       { text: "5 SEO audits/month", included: true },
@@ -102,7 +102,7 @@ const faqs = [
   },
   {
     question: "How is this different from Ahrefs or Semrush?",
-    answer: "Ahrefs and Semrush are great for traditional SEO. But they don't track AI visibility. CabbageSEO is the first tool that shows your visibility across ChatGPT, Perplexity, Google AI Overviews, and Bing Copilot - plus all the SEO basics you need.",
+    answer: "Ahrefs and Semrush are great for traditional SEO. But they don't track AI visibility. CabbageSEO is the first tool that shows your visibility across ChatGPT, Perplexity, and Google AI Overviews - plus all the SEO basics you need.",
   },
   {
     question: "Can I try before I buy?",

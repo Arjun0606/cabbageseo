@@ -685,19 +685,6 @@ export default function AIODashboardPage() {
               </ul>
             </div>
 
-            {/* Bing Copilot */}
-            <div className={cn("p-4 rounded-lg border", platformConfig.bing_copilot.bgColor)}>
-              <h4 className={cn("font-semibold flex items-center gap-2 mb-2", platformConfig.bing_copilot.color)}>
-                {PLATFORM_LABELS.bing_copilot}
-              </h4>
-              <ul className="text-sm space-y-1 text-muted-foreground">
-                <li>• Structured data markup</li>
-                <li>• Clear entity definitions</li>
-                <li>• Schema.org support</li>
-                <li>• Microsoft ecosystem integration</li>
-              </ul>
-            </div>
-
             {/* Tips */}
             <div className="p-4 rounded-lg border bg-primary/5">
               <h4 className="font-semibold flex items-center gap-2 mb-2 text-primary">

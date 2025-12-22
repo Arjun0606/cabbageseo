@@ -239,6 +239,7 @@ function AutopilotContent() {
   const queryClient = useQueryClient();
 
   const [newTaskPrompt, setNewTaskPrompt] = useState(initialTask || "");
+  const [needsUpgrade, setNeedsUpgrade] = useState(false);
   const [settings, setSettings] = useState({
     autoPublish: false,
     notifyOnComplete: true,
@@ -251,11 +252,18 @@ function AutopilotContent() {
     queryKey: ["autopilot-tasks"],
     queryFn: async () => {
       const response = await fetch("/api/autopilot/tasks");
+      if (response.status === 402) {
+        // Subscription required - not an error, just needs upgrade
+        setNeedsUpgrade(true);
+        return { tasks: [], stats: { running: 0, pending: 0, completed: 0, failed: 0 } };
+      }
       if (!response.ok) throw new Error("Failed to fetch tasks");
       const json = await response.json();
+      setNeedsUpgrade(false);
       return json.data;
     },
-    refetchInterval: 5000, // Poll every 5 seconds for running tasks
+    refetchInterval: needsUpgrade ? false : 5000, // Only poll if subscribed
+    retry: needsUpgrade ? false : 3,
   });
 
   // Create task mutation
@@ -352,8 +360,30 @@ function AutopilotContent() {
         </div>
       </div>
 
+      {/* Upgrade Required State */}
+      {needsUpgrade && (
+        <Card className="p-6 border-emerald-500/30 bg-emerald-500/10">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-full bg-emerald-500/20">
+              <Sparkles className="w-6 h-6 text-emerald-400" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-emerald-400 mb-1">Upgrade to Access Autopilot</p>
+              <p className="text-sm text-zinc-400">
+                Automate your SEO tasks with AI-powered autopilot. Available on all paid plans.
+              </p>
+            </div>
+            <Link href="/pricing">
+              <Button className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                View Plans
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      )}
+
       {/* Error State */}
-      {error && (
+      {error && !needsUpgrade && (
         <Card className="p-6 border-red-500/30 bg-red-500/10">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-red-400" />
@@ -368,10 +398,10 @@ function AutopilotContent() {
       )}
 
       {/* Loading */}
-      {isLoading && <AutopilotLoading />}
+      {isLoading && !needsUpgrade && <AutopilotLoading />}
 
       {/* Main Content */}
-      {!isLoading && (
+      {!isLoading && !needsUpgrade && (
         <>
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">

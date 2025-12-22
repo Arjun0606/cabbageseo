@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExitIntentPopup } from "@/components/marketing/exit-intent-popup";
+import { createClient } from "@/lib/supabase/client";
 
 // ============================================
 // LANDING PAGE - Labor Replacement Focus
@@ -32,6 +33,21 @@ export default function LandingPage() {
   const router = useRouter();
   const [url, setUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient();
+      if (supabase) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setIsLoggedIn(true);
+        }
+      }
+    };
+    checkAuth();
+  }, []);
 
   const handleAnalyze = () => {
     if (!url) return;
@@ -64,17 +80,28 @@ export default function LandingPage() {
             </div>
             
             <div className="flex items-center gap-3">
-              <Link href="/login">
-                <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">
-                  Log in
-              </Button>
-              </Link>
-                <Link href="/signup">
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                  Start Free
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </Button>
+              {isLoggedIn ? (
+                <Link href="/dashboard">
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                    Go to Dashboard
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Button>
                 </Link>
+              ) : (
+                <>
+                  <Link href="/login">
+                    <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">
+                      Log in
+                    </Button>
+                  </Link>
+                  <Link href="/signup">
+                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                      Start Free
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -313,7 +340,6 @@ export default function LandingPage() {
               { name: "Google AI Overviews", icon: "🔍", desc: "60% of searches" },
               { name: "ChatGPT", icon: "🤖", desc: "200M+ users" },
               { name: "Perplexity", icon: "💡", desc: "Fastest growing" },
-              { name: "Bing Copilot", icon: "🔷", desc: "Built into Windows" },
             ].map((platform, i) => (
               <div key={i} className="p-6 bg-zinc-900 border border-zinc-800 rounded-xl text-center hover:border-blue-500/30 transition-colors">
                 <span className="text-3xl mb-3 block">{platform.icon}</span>

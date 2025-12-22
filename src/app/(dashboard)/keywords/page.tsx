@@ -232,6 +232,7 @@ function EmptyState() {
 export default function KeywordsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
+  const [needsUpgrade, setNeedsUpgrade] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch keywords data
@@ -239,10 +240,16 @@ export default function KeywordsPage() {
     queryKey: ["keywords"],
     queryFn: async () => {
       const response = await fetch("/api/keywords");
+      if (response.status === 402) {
+        setNeedsUpgrade(true);
+        return { keywords: [], clusters: [], stats: { total: 0, top10: 0, quickWins: 0, clusterCount: 0 } };
+      }
       if (!response.ok) throw new Error("Failed to fetch keywords");
       const json = await response.json();
+      setNeedsUpgrade(false);
       return json.data;
     },
+    retry: false,
   });
 
   // Research mutation
@@ -321,17 +328,40 @@ export default function KeywordsPage() {
       </div>
 
       {/* Error State */}
-      {error && (
-        <Card className="p-6 border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900">
+      {/* Upgrade Required */}
+      {needsUpgrade && (
+        <Card className="p-6 border-emerald-500/30 bg-emerald-500/10">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-full bg-emerald-500/20">
+              <Sparkles className="w-6 h-6 text-emerald-400" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-emerald-400 mb-1">Upgrade to Access Keyword Research</p>
+              <p className="text-sm text-zinc-400">
+                Research, track, and cluster keywords with AI. Available on all paid plans.
+              </p>
+            </div>
+            <Link href="/pricing">
+              <Button className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                View Plans
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      )}
+
+      {/* Error State */}
+      {error && !needsUpgrade && (
+        <Card className="p-6 border-red-500/30 bg-red-500/10">
           <div className="flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-500" />
+            <AlertCircle className="w-5 h-5 text-red-400" />
             <div>
-              <p className="font-medium text-red-700 dark:text-red-400">Failed to load keywords</p>
-              <p className="text-sm text-red-600 dark:text-red-300">
+              <p className="font-medium text-red-400">Failed to load keywords</p>
+              <p className="text-sm text-zinc-400">
                 {error instanceof Error ? error.message : "Please try again"}
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto">
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto border-zinc-700 text-zinc-300 hover:bg-zinc-800">
               Retry
             </Button>
           </div>

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { User } from "@supabase/supabase-js";
 import {
   Search,
   Loader2,
@@ -483,12 +484,20 @@ function FreeScoringPageContent() {
             <span className="font-bold text-xl tracking-tight text-white">CabbageSEO</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">Log in</Button>
-            </Link>
-            <Link href="/signup">
-              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">Get Started Free</Button>
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/dashboard">
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">Go to Dashboard</Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">Log in</Button>
+                </Link>
+                <Link href="/signup">
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">Get Started Free</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -513,7 +522,7 @@ function FreeScoringPageContent() {
           </h1>
           
           <p className="text-lg text-zinc-400 mb-8 max-w-2xl mx-auto">
-            See if ChatGPT, Perplexity, Google AI, and Bing Copilot are citing your content. 
+            See if ChatGPT, Perplexity, and Google AI are citing your content. 
             Plus complete SEO analysis with actionable fixes.
           </p>
 
@@ -799,12 +808,11 @@ function FreeScoringPageContent() {
                     Estimated visibility based on content factors. Sign up for real platform monitoring.
                   </p>
                 )}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   {[
                     { name: "Google AI", score: result.aio.platformScores.googleAIO, icon: "🔍", desc: "AI Overviews" },
                     { name: "Perplexity", score: result.aio.platformScores.perplexity, icon: "🔮", desc: "AI Search" },
                     { name: "ChatGPT", score: result.aio.platformScores.chatGPT, icon: "🤖", desc: "SearchGPT" },
-                    { name: "Bing Copilot", score: result.aio.platformScores.bingCopilot, icon: "🪟", desc: "Microsoft AI" },
                   ].map((platform) => (
                     <div 
                       key={platform.name}
@@ -1108,7 +1116,7 @@ function FreeScoringPageContent() {
 
                   {/* CTA Buttons */}
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Link href="/signup">
+                    <Link href="/pricing">
                       <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white text-lg px-8 h-14">
                         Fix These {totalIssues} Issues Now
                         <ArrowRight className="w-5 h-5 ml-2" />
@@ -1116,7 +1124,7 @@ function FreeScoringPageContent() {
                     </Link>
                     <Link href="/pricing">
                       <Button size="lg" variant="outline" className="border-zinc-600 text-zinc-300 hover:bg-zinc-800 h-14">
-                        View Pricing
+                        View All Plans
                       </Button>
                     </Link>
                   </div>
