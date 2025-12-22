@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { dataForSEO } from "@/lib/integrations/dataforseo/client";
 import { contentPipeline } from "@/lib/ai";
+import { requireSubscription } from "@/lib/api/require-subscription";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -12,11 +13,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Authenticate user
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Check subscription - content generation requires paid plan
+  const authCheck = await requireSubscription(supabase);
+  if (!authCheck.authorized) {
+    return authCheck.error;
   }
+  const organizationId = authCheck.organizationId!;
 
   try {
     const body = await request.json();
@@ -35,21 +37,6 @@ export async function POST(request: NextRequest) {
     if (!keyword) {
       return NextResponse.json(
         { error: "Keyword is required" },
-        { status: 400 }
-      );
-    }
-
-    // Get user's organization
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const organizationId = (userData as { organization_id?: string } | null)?.organization_id;
-    if (!organizationId) {
-      return NextResponse.json(
-        { error: "Organization not found" },
         { status: 400 }
       );
     }

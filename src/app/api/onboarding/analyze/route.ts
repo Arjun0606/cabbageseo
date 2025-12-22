@@ -143,31 +143,67 @@ export async function POST(request: NextRequest) {
 
     let organizationId = (userData as { organization_id?: string } | null)?.organization_id;
 
+    // If user doesn't exist or no organization, create them
+    if (!userData) {
+      // User doesn't exist in users table yet - create user first
+      const { error: userError } = await supabase
+        .from("users")
+        .insert({
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name || user.email?.split("@")[0],
+          avatar_url: user.user_metadata?.avatar_url,
+        } as never);
+
+      if (userError) {
+        console.error("Failed to create user:", userError);
+        // Continue anyway - might be RLS issue, user might already exist
+      }
+    }
+
     // If no organization, create one
     if (!organizationId) {
       const { data: newOrg, error: orgError } = await supabase
         .from("organizations")
         .insert({
           name: `${user.email?.split("@")[0]}'s Organization`,
-          slug: `org-${Date.now()}`,
+          slug: `org-${user.id.slice(0, 8)}-${Date.now()}`,
           owner_id: user.id,
-          plan: "starter",
+          plan: "free",  // Start on free plan
+          subscription_status: "trialing",
         } as never)
         .select("id")
         .single();
 
       if (orgError || !newOrg) {
         console.error("Failed to create organization:", orgError);
-        return NextResponse.json({ error: "Failed to setup account" }, { status: 500 });
+        // Try to get existing org (might have been created by trigger)
+        const { data: existingOrg } = await supabase
+          .from("organizations")
+          .select("id")
+          .eq("owner_id", user.id)
+          .single();
+        
+        if (existingOrg) {
+          organizationId = (existingOrg as { id: string }).id;
+        } else {
+          return NextResponse.json({ 
+            error: "Failed to setup account. Please try refreshing the page.",
+            details: orgError?.message 
+          }, { status: 500 });
+        }
+      } else {
+        organizationId = (newOrg as { id: string }).id;
       }
-
-      organizationId = (newOrg as { id: string }).id;
 
       // Update user with organization
       await supabase
         .from("users")
-        .update({ organization_id: organizationId } as never)
-        .eq("id", user.id);
+        .upsert({ 
+          id: user.id,
+          organization_id: organizationId,
+          email: user.email,
+        } as never);
     }
 
     // Check if site already exists

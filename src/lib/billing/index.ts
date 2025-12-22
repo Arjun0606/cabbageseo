@@ -139,3 +139,21 @@ export type {
   PaymentIntent,
   Invoice,
 } from "./payments";
+
+// ============================================
+// SUBSCRIPTION CHECKS
+// ============================================
+
+export {
+  isPaidPlan,
+  isActiveSubscription,
+  getSubscriptionInfo,
+  requiresPayment,
+  PAID_FEATURES,
+  FREE_FEATURES,
+} from "./subscription-check";
+
+export type {
+  SubscriptionStatus,
+  SubscriptionInfo,
+} from "./subscription-check";

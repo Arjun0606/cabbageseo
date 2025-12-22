@@ -2,10 +2,13 @@
  * Keywords API
  * 
  * CRUD operations for keywords and clusters
+ * 
+ * REQUIRES: Paid subscription
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { requireSubscription } from "@/lib/api/require-subscription";
 
 interface KeywordRow {
   id: string;
@@ -32,9 +35,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Keywords require paid subscription
+  const authCheck = await requireSubscription(supabase);
+  if (!authCheck.authorized) {
+    return authCheck.error;
   }
 
   try {
