@@ -9,7 +9,6 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { createAuditEngine, createAutoFixEngine, CrawlResult, AuditResult } from "@/lib/crawler";
 import { protectAPI, validateRequestBody, addSecurityHeaders } from "@/lib/security/api-protection";
 import { requireSubscription } from "@/lib/api/require-subscription";
-import { canPerformOperation, recordUsage } from "@/lib/api/with-overage";
 
 export async function POST(request: NextRequest) {
   // Protect endpoint
@@ -24,12 +23,9 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceClient();
     const subscription = await requireSubscription(supabase);
     
-    if (!subscription.authorized || !subscription.userId) {
+    if (!subscription.authorized) {
       return subscription.error!;
     }
-
-    const userId = subscription.userId;
-    const organizationId = subscription.organizationId!;
 
     // Parse and validate request body
     const body = await request.json();
@@ -53,18 +49,9 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "Crawl result is required" }, { status: 400 });
         }
 
-        // Check usage limits before audit
-        const usageCheck = await canPerformOperation(supabase, userId, "audits", 1);
-        if (!usageCheck.allowed) {
-          return usageCheck.error;
-        }
-
         // Run technical audit
         const auditEngine = createAuditEngine();
         result = auditEngine.audit(crawlResult);
-
-        // Record usage
-        await recordUsage(supabase, organizationId, "audits", 1, "Technical SEO audit");
         break;
       }
 

@@ -8,7 +8,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getPlan, getPlanLimits } from "@/lib/billing/plans";
-import { getOverageSummary } from "@/lib/billing/overage-manager";
 
 export async function GET() {
   const supabase = await createClient();
@@ -110,31 +109,20 @@ export async function GET() {
         : 0,
     };
 
-    // Get overage summary
-    const overages = await getOverageSummary(orgId);
-
     return NextResponse.json({
       success: true,
       data: {
-      plan: {
-        id: plan.id,
-        name: plan.name,
-        status: org.subscription_status || "active",
+        plan: {
+          id: plan.id,
+          name: plan.name,
+          status: org.subscription_status || "active",
           billingInterval: org.billing_interval || "monthly",
-        currentPeriodStart: org.current_period_start,
-        currentPeriodEnd: org.current_period_end,
-      },
+          currentPeriodStart: org.current_period_start,
+          currentPeriodEnd: org.current_period_end,
+        },
         usage: currentUsage,
         limits: currentLimits,
         percentages,
-      overages: {
-        enabled: overages.enabled,
-        spendingCapDollars: overages.spendingCapDollars,
-        currentSpendDollars: overages.currentSpendDollars,
-        remainingDollars: overages.remainingDollars,
-        percentUsed: overages.percentUsed,
-        autoIncrease: overages.autoIncrease,
-        },
       },
     });
   } catch (error) {

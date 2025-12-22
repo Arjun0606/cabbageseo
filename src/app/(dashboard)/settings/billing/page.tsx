@@ -5,7 +5,6 @@ import {
   CreditCard,
   Check,
   Zap,
-  Sparkles,
   Clock,
   Download,
   AlertCircle,
@@ -14,9 +13,6 @@ import {
   TrendingUp,
   Package,
   Loader2,
-  Shield,
-  DollarSign,
-  Settings,
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,22 +27,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ============================================
 // TYPES
 // ============================================
-
-interface OverageSettings {
-  enabled: boolean;
-  spendingCapDollars: number;
-  currentSpendDollars: number;
-  remainingDollars: number;
-  percentUsed: number;
-  autoIncrease: boolean;
-}
 
 interface UsageData {
   plan: {
@@ -78,7 +63,6 @@ interface UsageData {
     aioAnalyses: number;
     aiCredits: number;
   };
-  overages?: OverageSettings;
 }
 
 interface Plan {
@@ -154,25 +138,6 @@ const availablePlans: Plan[] = [
   },
 ];
 
-// Overage pricing from PRICING_STRATEGY.md
-const OVERAGE_PRICING = [
-  { resource: "Extra Article", price: "$3.00", unit: "per article", margin: "93%" },
-  { resource: "Extra Keywords", price: "$5.00", unit: "per 100 keywords", margin: "97%" },
-  { resource: "Extra Audit", price: "$1.00", unit: "per audit", margin: "90%" },
-  { resource: "AIO Analysis", price: "$0.50", unit: "per analysis", margin: "84%" },
-  { resource: "AI Credits", price: "$2.00", unit: "per 1,000 credits", margin: "95%" },
-  { resource: "SERP Analysis", price: "$0.25", unit: "per analysis", margin: "92%" },
-  { resource: "Backlink Check", price: "$0.50", unit: "per domain", margin: "88%" },
-];
-
-// Spending cap presets
-const SPENDING_CAP_PRESETS = [
-  { value: 10, label: "$10", description: "Testing" },
-  { value: 50, label: "$50", description: "Light overflow" },
-  { value: 100, label: "$100", description: "Standard" },
-  { value: 250, label: "$250", description: "Heavy usage" },
-  { value: 500, label: "$500", description: "Agency" },
-];
 
 // ============================================
 // PLAN CARD
@@ -264,8 +229,6 @@ export default function BillingPage() {
   const [data, setData] = useState<UsageData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [upgrading, setUpgrading] = useState<string | null>(null);
-  const [spendingCap, setSpendingCap] = useState("100");
-  const [savingOverages, setSavingOverages] = useState(false);
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
 
   useEffect(() => {
@@ -275,9 +238,6 @@ export default function BillingPage() {
         if (!res.ok) throw new Error("Failed to fetch usage data");
         const json = await res.json();
         setData(json.data || json);
-        if (json.data?.overages?.spendingCapDollars || json.overages?.spendingCapDollars) {
-          setSpendingCap(String(json.data?.overages?.spendingCapDollars || json.overages?.spendingCapDollars));
-        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load billing data");
       } finally {
@@ -317,110 +277,6 @@ export default function BillingPage() {
       setError("Failed to start checkout");
     } finally {
       setUpgrading(null);
-    }
-  };
-
-  const handleToggleOverages = async (enabled: boolean) => {
-    setSavingOverages(true);
-    try {
-      if (enabled) {
-        const res = await fetch("/api/billing/overages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            spendingCapDollars: Number(spendingCap) || 100,
-            autoIncrease: false 
-          }),
-        });
-        const json = await res.json();
-        if (json.success && data) {
-          setData({
-            ...data,
-            overages: {
-              enabled: true,
-              spendingCapDollars: Number(spendingCap),
-              currentSpendDollars: 0,
-              remainingDollars: Number(spendingCap),
-              percentUsed: 0,
-              autoIncrease: false,
-            },
-          });
-        }
-      } else {
-        await fetch("/api/billing/overages", { method: "DELETE" });
-        if (data) {
-          setData({
-            ...data,
-            overages: { ...data.overages!, enabled: false },
-          });
-        }
-      }
-    } catch {
-      setError("Failed to update overage settings");
-    } finally {
-      setSavingOverages(false);
-    }
-  };
-
-  const handleSetCap = async () => {
-    const newCap = Number(spendingCap);
-    if (isNaN(newCap) || newCap < 10) {
-      setError("Minimum spending cap is $10");
-      return;
-    }
-    
-    setSavingOverages(true);
-    try {
-      const res = await fetch("/api/billing/overages", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "set_cap", amount: newCap }),
-      });
-      const json = await res.json();
-      if (json.success && data) {
-        setData({
-          ...data,
-          overages: {
-            ...data.overages!,
-            spendingCapDollars: newCap,
-            remainingDollars: newCap - (data.overages?.currentSpendDollars || 0),
-          },
-        });
-      }
-    } catch {
-      setError("Failed to update spending cap");
-    } finally {
-      setSavingOverages(false);
-    }
-  };
-
-  const handleToggleAutoIncrease = async () => {
-    if (!data?.overages) return;
-    
-    setSavingOverages(true);
-    try {
-      const res = await fetch("/api/billing/overages", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          action: "toggle_auto_increase",
-          autoIncrease: !data.overages.autoIncrease 
-        }),
-      });
-      const json = await res.json();
-      if (json.success) {
-        setData({
-          ...data,
-          overages: {
-            ...data.overages,
-            autoIncrease: !data.overages.autoIncrease,
-          },
-        });
-      }
-    } catch {
-      setError("Failed to update auto-increase setting");
-    } finally {
-      setSavingOverages(false);
     }
   };
 
@@ -598,17 +454,17 @@ export default function BillingPage() {
                       <span className="text-xs text-muted-foreground">
                         Overage: {metric.overage}
                       </span>
-                      <span
+                    <span
                         className={`text-sm tabular-nums ${
-                          isOverLimit
+                        isOverLimit
                             ? "text-red-500 font-medium"
-                            : isNearLimit
-                            ? "text-yellow-500"
-                            : "text-muted-foreground"
-                        }`}
-                      >
+                          : isNearLimit
+                          ? "text-yellow-500"
+                          : "text-muted-foreground"
+                      }`}
+                    >
                         {metric.used.toLocaleString()} / {metric.limit.toLocaleString()}
-                      </span>
+                    </span>
                     </div>
                   </div>
                   <Progress
@@ -624,142 +480,6 @@ export default function BillingPage() {
                 </div>
               );
             })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Overage / Pay-as-you-go */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            Pay-as-You-Go Overages
-          </CardTitle>
-          <CardDescription>
-            Continue using CabbageSEO when you hit plan limits. Set a spending cap to stay in control.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {/* Toggle */}
-            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-              <div>
-                <p className="font-medium">Enable pay-as-you-go</p>
-                <p className="text-sm text-muted-foreground">
-                  {data.overages?.enabled 
-                    ? "You'll be charged for usage above plan limits" 
-                    : "You'll be blocked when you reach plan limits"}
-                </p>
-              </div>
-              <Switch
-                checked={data.overages?.enabled ?? false}
-                onCheckedChange={handleToggleOverages}
-                disabled={savingOverages}
-              />
-            </div>
-
-            {/* Spending Cap */}
-            {data.overages?.enabled && (
-              <>
-                {/* Current spend */}
-                <div className="space-y-3 p-4 border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Spending This Period</span>
-                    <span className="text-lg font-bold">
-                      ${data.overages.currentSpendDollars.toFixed(2)} / ${data.overages.spendingCapDollars.toFixed(2)}
-                    </span>
-                  </div>
-                  <Progress 
-                    value={data.overages.percentUsed} 
-                    className={`h-3 ${
-                      data.overages.percentUsed >= 100 
-                        ? "[&>div]:bg-red-500" 
-                        : data.overages.percentUsed >= 80 
-                        ? "[&>div]:bg-yellow-500" 
-                        : "[&>div]:bg-green-500"
-                    }`}
-                  />
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>${data.overages.remainingDollars.toFixed(2)} remaining</span>
-                    <span>{data.overages.percentUsed}% used</span>
-                  </div>
-                </div>
-
-                {/* Set cap */}
-                <div className="space-y-3">
-                  <label className="text-sm font-medium">Spending Cap</label>
-                  <div className="flex flex-wrap gap-2">
-                    {SPENDING_CAP_PRESETS.map((preset) => (
-                      <Button
-                        key={preset.value}
-                        variant={Number(spendingCap) === preset.value ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSpendingCap(String(preset.value))}
-                      >
-                        {preset.label}
-                      </Button>
-                    ))}
-                  </div>
-                  <div className="flex gap-3 items-end">
-                    <div className="flex-1">
-                      <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          type="number"
-                          min="10"
-                          step="10"
-                          value={spendingCap}
-                          onChange={(e) => setSpendingCap(e.target.value)}
-                          className="pl-8"
-                          placeholder="Custom amount"
-                        />
-                      </div>
-                    </div>
-                    <Button onClick={handleSetCap} disabled={savingOverages}>
-                      {savingOverages ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        "Update Cap"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Auto-increase toggle */}
-                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                  <div>
-                    <p className="font-medium">Auto-increase cap</p>
-                    <p className="text-sm text-muted-foreground">
-                      Automatically add $50 when cap is reached
-                    </p>
-                  </div>
-                  <Switch
-                    checked={data.overages.autoIncrease}
-                    onCheckedChange={handleToggleAutoIncrease}
-                    disabled={savingOverages}
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Pricing table */}
-            <div className="border-t pt-4">
-              <p className="text-sm font-medium mb-3 flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                Overage Pricing (90% markup from our costs)
-              </p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {OVERAGE_PRICING.map((item) => (
-                  <div 
-                    key={item.resource}
-                    className="flex items-center justify-between p-2 text-sm bg-muted/30 rounded"
-                  >
-                    <span>{item.resource}</span>
-                    <span className="font-medium">{item.price} <span className="text-muted-foreground font-normal">{item.unit}</span></span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>

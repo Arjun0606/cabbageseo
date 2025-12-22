@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { dataForSEO } from "@/lib/integrations/dataforseo/client";
 import { contentPipeline } from "@/lib/ai";
 import { requireSubscription } from "@/lib/api/require-subscription";
-import { canPerformOperation, recordUsage } from "@/lib/api/with-overage";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -16,17 +15,10 @@ export async function POST(request: NextRequest) {
 
   // Check subscription - content generation requires paid plan
   const authCheck = await requireSubscription(supabase);
-  if (!authCheck.authorized || !authCheck.userId) {
+  if (!authCheck.authorized) {
     return authCheck.error;
   }
   const organizationId = authCheck.organizationId!;
-  const userId = authCheck.userId;
-
-  // Check usage limits and overage allowance
-  const usageCheck = await canPerformOperation(supabase, userId, "articles", 1);
-  if (!usageCheck.allowed) {
-    return usageCheck.error;
-  }
 
   try {
     const body = await request.json();
@@ -128,16 +120,7 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    // Step 5: Record usage (this handles both plan limits and overages)
-    await recordUsage(
-      supabase, 
-      organizationId, 
-      "articles", 
-      1, 
-      `Generated article: ${content.title}`
-    );
-
-    // Step 6: Optionally save to database
+    // Step 5: Optionally save to database
     if (siteId) {
       try {
         await supabase

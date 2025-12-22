@@ -9,7 +9,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createAIOAnalyzer } from "@/lib/aio";
 import type { AIOAnalysisInput } from "@/lib/aio/types";
 import { requireSubscription } from "@/lib/api/require-subscription";
-import { canPerformOperation, recordUsage } from "@/lib/api/with-overage";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,18 +21,11 @@ export async function POST(request: NextRequest) {
     // Check subscription - AIO analysis is a paid feature
     const subscription = await requireSubscription(supabase);
     
-    if (!subscription.authorized || !subscription.userId) {
+    if (!subscription.authorized) {
       return subscription.error!;
     }
 
     const organizationId = subscription.organizationId!;
-    const userId = subscription.userId;
-
-    // Check usage limits before analysis
-    const usageCheck = await canPerformOperation(supabase, userId, "aioAnalyses", 1);
-    if (!usageCheck.allowed) {
-      return usageCheck.error;
-    }
 
     const body = await request.json();
     const { 
@@ -241,9 +233,6 @@ export async function POST(request: NextRequest) {
         } as never)
         .eq("id", contentId);
     }
-
-    // Record usage (handles both plan limits and overages)
-    await recordUsage(supabase, organizationId, "aioAnalyses", 1, "AIO visibility analysis");
 
     return NextResponse.json({
       success: true,

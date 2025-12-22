@@ -110,7 +110,7 @@ const faqs = [
   },
   {
     question: "What happens if I exceed my plan limits?",
-    answer: "You can either upgrade to a higher plan, or enable pay-as-you-go overages with a spending cap you control. Overages are billed at the end of your billing cycle. You'll never be charged without your consent.",
+    answer: "You'll see a prompt to upgrade to a higher plan with more capacity. Upgrades are instant and you can continue where you left off. We never block your work unexpectedly.",
   },
   {
     question: "Can I cancel anytime?",
@@ -286,74 +286,11 @@ export default function PricingPage() {
             </div>
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-emerald-400" />
-              <span>Pay-as-you-go overages</span>
+              <span>Instant plan upgrades</span>
             </div>
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-emerald-400" />
               <span>Cancel anytime</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Overages Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <div className="text-center mb-10">
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-zinc-800 text-zinc-400 text-sm mb-4">
-              Flexible Usage
-            </span>
-            <h2 className="text-3xl font-bold text-white mb-4">Need more? Set a spending cap.</h2>
-            <p className="text-zinc-400">
-              When you exceed your plan limits, we&apos;ll keep you running. You set the cap, we handle the rest.
-            </p>
-          </div>
-          
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
-            <div className="grid md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="font-semibold text-white mb-4">How it works</h3>
-                <ul className="space-y-3 text-sm text-zinc-400">
-                  <li className="flex items-start gap-3">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold shrink-0">1</span>
-                    <span>Set your monthly spending cap ($25, $50, $100, or custom)</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold shrink-0">2</span>
-                    <span>Use features beyond your plan limits as needed</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold shrink-0">3</span>
-                    <span>Get notified at 50%, 75%, 90% of your cap</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold shrink-0">4</span>
-                    <span>Overages billed at end of billing cycle</span>
-                  </li>
-                </ul>
-              </div>
-              
-              <div className="bg-zinc-800/50 rounded-xl p-6">
-                <h3 className="font-semibold text-white mb-4">You&apos;re always in control</h3>
-                <ul className="space-y-2 text-sm text-zinc-400">
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Never charged beyond your cap</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Change or disable anytime</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Clear usage dashboard</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>No surprises, no hidden fees</span>
-                  </li>
-                </ul>
-              </div>
             </div>
           </div>
         </div>
