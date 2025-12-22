@@ -639,22 +639,37 @@ export default function OnboardingPage() {
         </Card>
       )}
 
-      {/* CTA */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-        <Button size="lg" className="gap-2 px-8" onClick={() => router.push("/dashboard")}>
-          <Rocket className="w-5 h-5" />
-          Go to Dashboard
-        </Button>
-        <Button 
-          size="lg" 
-          variant="outline" 
-          className="gap-2"
-          onClick={() => router.push(`/sites/${analysis?.siteId}`)}
-        >
-          View Site Details
-          <ArrowRight className="w-5 h-5" />
-        </Button>
-      </div>
+      {/* CTA - Push to the Money Path */}
+      <Card className="p-8 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20">
+        <div className="text-center space-y-4">
+          <div className="inline-flex items-center justify-center p-3 bg-emerald-500/20 rounded-xl">
+            <Sparkles className="w-8 h-8 text-emerald-400" />
+          </div>
+          <h3 className="text-2xl font-bold">Ready to rank higher?</h3>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            Generate your first SEO article in 5 minutes. Our AI creates content that ranks in Google AND gets cited by ChatGPT.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <Button 
+              size="lg" 
+              className="gap-2 px-8 bg-emerald-600 hover:bg-emerald-500" 
+              onClick={() => router.push("/content/new")}
+            >
+              <Sparkles className="w-5 h-5" />
+              Generate Your First Article
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => router.push("/dashboard")}
+            >
+              Go to Dashboard
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }

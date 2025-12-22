@@ -181,23 +181,44 @@ function KeywordsLoading() {
 
 function EmptyState() {
   return (
-    <Card className="p-12">
-      <div className="text-center max-w-md mx-auto">
-        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
-          <Target className="w-8 h-8 text-primary" />
+    <Card className="p-12 bg-gradient-to-br from-blue-500/5 to-transparent border-blue-500/20">
+      <div className="text-center max-w-lg mx-auto">
+        <div className="relative mb-8">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-24 h-24 bg-blue-500/20 rounded-full blur-2xl animate-pulse" />
+          </div>
+          <div className="relative w-16 h-16 mx-auto rounded-full bg-blue-500/10 flex items-center justify-center">
+            <Target className="w-8 h-8 text-blue-400" />
+          </div>
         </div>
-        <h3 className="text-xl font-semibold mb-2">No Keywords Yet</h3>
-        <p className="text-muted-foreground mb-6">
-          Start by researching keywords for your site or add them manually.
-          Keywords help you track what you&apos;re ranking for.
+        <h3 className="text-2xl font-bold mb-3">Find Keywords Your Competitors Miss</h3>
+        <p className="text-muted-foreground mb-8">
+          AI-powered keyword research finds low-competition opportunities with high traffic potential. 
+          Enter a topic and get keyword clusters in seconds.
         </p>
+        
         <div className="flex gap-3 justify-center">
           <Link href="/onboarding">
-            <Button>
-              <Sparkles className="w-4 h-4 mr-2" />
+            <Button size="lg" className="bg-blue-600 hover:bg-blue-500 gap-2 px-8">
+              <Target className="w-5 h-5" />
               Research Keywords
             </Button>
           </Link>
+        </div>
+
+        <div className="mt-8 pt-8 border-t grid grid-cols-3 gap-6 text-center">
+          <div>
+            <p className="text-2xl font-bold text-blue-400">2 min</p>
+            <p className="text-xs text-muted-foreground">Research time</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-blue-400">50+</p>
+            <p className="text-xs text-muted-foreground">Keywords per topic</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-blue-400">Auto</p>
+            <p className="text-xs text-muted-foreground">Topic clustering</p>
+          </div>
         </div>
       </div>
     </Card>

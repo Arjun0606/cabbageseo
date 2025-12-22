@@ -6,21 +6,26 @@ import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Search,
-  Eye,
-  Brain,
+  Zap,
+  Clock,
+  DollarSign,
   FileText,
-  Target,
-  BarChart3,
-  Globe,
+  RefreshCw,
+  Sparkles,
   Check,
   ChevronRight,
+  Play,
+  Target,
+  TrendingUp,
+  Bot,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExitIntentPopup } from "@/components/marketing/exit-intent-popup";
 
 // ============================================
-// LANDING PAGE - Clean, Professional, AIO-First
+// LANDING PAGE - Labor Replacement Focus
+// "Be the Cursor of SEO"
 // ============================================
 
 export default function LandingPage() {
@@ -51,7 +56,7 @@ export default function LandingPage() {
             
             <div className="hidden md:flex items-center gap-8">
               <Link href="/analyze" className="text-sm text-zinc-400 hover:text-white transition-colors">
-                Free Tool
+                Free Analysis
               </Link>
               <Link href="/pricing" className="text-sm text-zinc-400 hover:text-white transition-colors">
                 Pricing
@@ -62,47 +67,52 @@ export default function LandingPage() {
               <Link href="/login">
                 <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">
                   Log in
-                </Button>
+              </Button>
               </Link>
-              <Link href="/signup">
+                <Link href="/signup">
                 <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                  Get Started
+                  Start Free
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
-              </Link>
+                </Link>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="pt-32 pb-24 px-6">
+      {/* Hero - Labor Replacement Focus */}
+      <section className="pt-32 pb-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Badge */}
+          {/* Value Prop Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-8">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            The first SEO tool with AI visibility tracking
-          </div>
+            <Clock className="w-4 h-4" />
+            Replace 10+ hours of SEO work every week
+        </div>
 
-          {/* Headline */}
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-[1.1]">
-            Rank in Google.
+          {/* Main Headline - Labor Replacement */}
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.05]">
+            Do SEO <span className="text-emerald-400">10× faster.</span>
             <br />
-            <span className="text-emerald-400">Get cited by AI.</span>
+            <span className="text-zinc-500">Without the agency.</span>
           </h1>
 
-          {/* Subheadline */}
-          <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            ChatGPT, Perplexity, and Google AI Overviews are answering questions 
-            with your competitors&apos; content. CabbageSEO helps you get in there.
+          {/* Value-focused Subheadline */}
+          <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-4 leading-relaxed">
+            Research keywords. Generate articles. Optimize for AI search. 
+            Publish everywhere. One tool, one workflow.
+          </p>
+          
+          {/* ROI Statement */}
+          <p className="text-lg text-zinc-500 mb-10">
+            <span className="text-emerald-400 font-semibold">$79/mo</span> vs <span className="line-through text-zinc-600">$3,000/mo agency</span>
           </p>
 
-          {/* URL Input */}
+          {/* URL Input - Gateway to Value */}
           <div className="max-w-xl mx-auto mb-4">
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-                <Input
+              <Input
                   type="url"
                   placeholder="Enter your website URL"
                   value={url}
@@ -117,247 +127,310 @@ export default function LandingPage() {
                 disabled={isAnalyzing}
                 className="h-14 px-8 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium"
               >
-                {isAnalyzing ? "Analyzing..." : "Analyze"}
+                {isAnalyzing ? "Analyzing..." : "Analyze Free"}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </div>
-          
+
           <p className="text-sm text-zinc-500">
-            Free instant analysis • No signup required
+            See what&apos;s hurting your rankings in 30 seconds
           </p>
         </div>
       </section>
 
-      {/* Score Preview */}
-      <section className="pb-24 px-6">
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-zinc-700" />
-                  <div className="w-3 h-3 rounded-full bg-zinc-700" />
-                  <div className="w-3 h-3 rounded-full bg-zinc-700" />
-                </div>
-                <span className="text-sm text-zinc-500">example.com</span>
-              </div>
-              <span className="text-xs text-emerald-400 font-medium">✓ Real data</span>
+      {/* Speed/Value Proof */}
+      <section className="pb-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-3 gap-4 md:gap-8">
+            <div className="text-center p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
+              <p className="text-3xl md:text-4xl font-bold text-emerald-400 mb-2">30s</p>
+              <p className="text-sm text-zinc-500">Full site analysis</p>
             </div>
-            
-            <div className="p-8">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-                <div className="text-center">
-                  <p className="text-4xl font-bold text-emerald-400 mb-1">78</p>
-                  <p className="text-sm text-zinc-500">SEO Score</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-4xl font-bold text-purple-400 mb-1">64</p>
-                  <p className="text-sm text-zinc-500">AIO Score</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-4xl font-bold text-blue-400 mb-1">3/4</p>
-                  <p className="text-sm text-zinc-500">AI Platforms</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-4xl font-bold text-amber-400 mb-1">12</p>
-                  <p className="text-sm text-zinc-500">Issues</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-center gap-6 text-sm">
-                <span className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span className="text-zinc-400">Google AI</span>
-                </span>
-                <span className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span className="text-zinc-400">ChatGPT</span>
-                </span>
-                <span className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span className="text-zinc-400">Bing Copilot</span>
-                </span>
-              </div>
+            <div className="text-center p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
+              <p className="text-3xl md:text-4xl font-bold text-emerald-400 mb-2">5m</p>
+              <p className="text-sm text-zinc-500">Article generated</p>
+            </div>
+            <div className="text-center p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
+              <p className="text-3xl md:text-4xl font-bold text-emerald-400 mb-2">1-click</p>
+              <p className="text-sm text-zinc-500">Publish to CMS</p>
             </div>
           </div>
-        </div>
+                </div>
       </section>
 
-      {/* Problem Section */}
-      <section className="py-24 px-6 bg-zinc-900/50 border-y border-zinc-800/50">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            AI is eating Google&apos;s traffic.
-          </h2>
-          <p className="text-lg text-zinc-400 mb-12 max-w-2xl mx-auto">
-            40% of Google searches now show AI Overviews. ChatGPT has 200M+ weekly users. 
-            Traditional SEO tools don&apos;t track any of this.
-          </p>
-          
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-xl">
-              <p className="text-4xl font-bold text-red-400 mb-2">40%</p>
-              <p className="text-sm text-zinc-500">of Google searches show AI Overviews</p>
-            </div>
-            <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-xl">
-              <p className="text-4xl font-bold text-red-400 mb-2">200M+</p>
-              <p className="text-sm text-zinc-500">weekly users asking ChatGPT questions</p>
-            </div>
-            <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-xl">
-              <p className="text-4xl font-bold text-red-400 mb-2">-25%</p>
-              <p className="text-sm text-zinc-500">traffic drop if you&apos;re not in AI results</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-24 px-6">
+      {/* The Money Path - Core Workflow */}
+      <section className="py-24 px-6 bg-zinc-900/30 border-y border-zinc-800/50">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              SEO + AIO. One platform.
+              One workflow. Infinite content.
             </h2>
             <p className="text-zinc-400 max-w-xl mx-auto">
-              Everything you need to rank in traditional search and get cited by AI platforms.
+              From keyword to published article in minutes, not days.
+            </p>
+              </div>
+
+          {/* The Flow */}
+          <div className="grid md:grid-cols-4 gap-6">
+            {[
+              {
+                step: "1",
+                icon: Target,
+                title: "Research",
+                description: "AI finds keywords your competitors miss",
+                time: "2 min",
+              },
+              {
+                step: "2",
+                icon: Sparkles,
+                title: "Generate",
+                description: "Full SEO article with one click",
+                time: "5 min",
+              },
+              {
+                step: "3",
+                icon: Zap,
+                title: "Optimize",
+                description: "AI optimizes for Google + ChatGPT",
+                time: "1 min",
+              },
+              {
+                step: "4",
+                icon: FileText,
+                title: "Publish",
+                description: "Direct to WordPress, Webflow, Shopify",
+                time: "10 sec",
+              },
+            ].map((item, i) => (
+              <div key={i} className="relative">
+                <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-xl h-full">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm font-bold">
+                      {item.step}
+                    </div>
+                    <item.icon className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2 text-white">{item.title}</h3>
+                  <p className="text-sm text-zinc-400 mb-3">{item.description}</p>
+                  <p className="text-xs text-emerald-400 font-medium">{item.time}</p>
+                </div>
+                {i < 3 && (
+                  <div className="hidden md:block absolute top-1/2 -right-3 transform -translate-y-1/2">
+                    <ChevronRight className="w-6 h-6 text-zinc-700" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Total Time */}
+          <div className="mt-12 text-center">
+            <p className="text-zinc-500">
+              Total time: <span className="text-emerald-400 font-bold">~8 minutes</span> vs 
+              <span className="text-zinc-600 line-through ml-2">8 hours manually</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Two Killer Features */}
+      <section className="py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Feature 1: Content Generation */}
+            <div className="p-8 bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-2xl">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-emerald-500/20 rounded-xl">
+                  <Sparkles className="w-6 h-6 text-emerald-400" />
+                </div>
+                <span className="text-xs font-medium text-emerald-400 uppercase tracking-wider">Core Feature</span>
+              </div>
+              <h3 className="text-2xl font-bold mb-4 text-white">
+                Generate SEO articles that actually rank
+              </h3>
+              <p className="text-zinc-400 mb-6 leading-relaxed">
+                AI-powered content that&apos;s optimized for both Google AND AI search engines. 
+                Includes FAQ sections, definitions, and quotable snippets that ChatGPT loves to cite.
+              </p>
+              <ul className="space-y-3">
+                {["SERP-analyzed outlines", "AI-optimized structure", "1-click CMS publishing", "Built-in internal linking"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm text-zinc-300">
+                    <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Feature 2: Content Refresh */}
+            <div className="p-8 bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 rounded-2xl">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-purple-500/20 rounded-xl">
+                  <RefreshCw className="w-6 h-6 text-purple-400" />
+                </div>
+                <span className="text-xs font-medium text-purple-400 uppercase tracking-wider">Hidden Gem</span>
+              </div>
+              <h3 className="text-2xl font-bold mb-4 text-white">
+                Refresh old content. Recover lost traffic.
+              </h3>
+              <p className="text-zinc-400 mb-6 leading-relaxed">
+                The fastest ROI in SEO isn&apos;t new content—it&apos;s fixing what you already have. 
+                AI identifies decay and rewrites sections to match current search intent.
+              </p>
+              <ul className="space-y-3">
+                {["Identify traffic decay", "Update outdated info", "Add missing sections", "Re-optimize for 2025"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm text-zinc-300">
+                    <Check className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Visibility - The Differentiator (but not the hero) */}
+      <section className="py-24 px-6 bg-zinc-900/30 border-y border-zinc-800/50">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium mb-6">
+              <Bot className="w-3 h-3" />
+              Exclusive to CabbageSEO
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              See if AI is citing your content
+            </h2>
+            <p className="text-zinc-400 max-w-xl mx-auto">
+              ChatGPT, Perplexity, and Google AI answer millions of questions daily. 
+              Are they using your content? Now you can check.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              {
-                icon: Eye,
-                title: "AI Visibility Score",
-                description: "See how visible you are to ChatGPT, Perplexity, Google AI, and Bing Copilot.",
-                highlight: true,
-              },
-              {
-                icon: Brain,
-                title: "Real Platform Tracking",
-                description: "We query AI platforms directly. Real citations, not estimates.",
-                highlight: true,
-              },
-              {
-                icon: FileText,
-                title: "AI-Optimized Content",
-                description: "Generate articles with FAQ sections, definitions, and quotable snippets.",
-              },
-              {
-                icon: Target,
-                title: "Technical Audits",
-                description: "Full SEO audits with schema, meta tags, broken links, and more.",
-              },
-              {
-                icon: BarChart3,
-                title: "Keyword Tracking",
-                description: "Monitor rankings, discover opportunities, cluster by topic.",
-              },
-              {
-                icon: Globe,
-                title: "Auto-Publishing",
-                description: "Publish to WordPress, Webflow, or Shopify with one click.",
-              },
-            ].map((feature, i) => (
-              <div 
-                key={i}
-                className={`p-6 rounded-xl border transition-all duration-200 hover:border-zinc-600 ${
-                  feature.highlight 
-                    ? "bg-emerald-500/5 border-emerald-500/20" 
-                    : "bg-zinc-900/50 border-zinc-800"
-                }`}
-              >
-                <div className={`inline-flex p-3 rounded-lg mb-4 ${
-                  feature.highlight ? "bg-emerald-500/10" : "bg-zinc-800"
-                }`}>
-                  <feature.icon className={`w-5 h-5 ${
-                    feature.highlight ? "text-emerald-400" : "text-zinc-400"
-                  }`} />
-                </div>
-                <h3 className="text-lg font-semibold mb-2 text-white">{feature.title}</h3>
-                <p className="text-sm text-zinc-400 leading-relaxed">{feature.description}</p>
+              { name: "Google AI", icon: "🔍" },
+              { name: "ChatGPT", icon: "🤖" },
+              { name: "Perplexity", icon: "💡" },
+              { name: "Bing Copilot", icon: "🔷" },
+            ].map((platform, i) => (
+              <div key={i} className="p-6 bg-zinc-900 border border-zinc-800 rounded-xl text-center">
+                <span className="text-3xl mb-3 block">{platform.icon}</span>
+                <p className="text-sm font-medium text-zinc-300">{platform.name}</p>
+                <p className="text-xs text-zinc-500 mt-1">Tracked</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Comparison */}
-      <section className="py-24 px-6 bg-zinc-900/50 border-y border-zinc-800/50">
+      {/* ROI Comparison */}
+      <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Why teams choose CabbageSEO
+              The math is simple
             </h2>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-800">
-                  <th className="text-left py-4 px-4 text-zinc-500 font-medium"></th>
-                  <th className="text-center py-4 px-4 text-zinc-500 font-medium">Ahrefs</th>
-                  <th className="text-center py-4 px-4 text-zinc-500 font-medium">Semrush</th>
-                  <th className="text-center py-4 px-4 text-emerald-400 font-semibold">CabbageSEO</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800">
-                {[
-                  { feature: "SEO Audits", a: true, s: true, c: true },
-                  { feature: "Keyword Tracking", a: true, s: true, c: true },
-                  { feature: "AI Content Generation", a: false, s: false, c: true },
-                  { feature: "AI Visibility Score", a: false, s: false, c: true },
-                  { feature: "4 AI Platforms Tracked", a: false, s: false, c: true },
-                  { feature: "Publish to CMS", a: false, s: false, c: true },
-                ].map((row, i) => (
-                  <tr key={i}>
-                    <td className="py-4 px-4 text-zinc-300">{row.feature}</td>
-                    <td className="py-4 px-4 text-center">
-                      {row.a ? <Check className="w-4 h-4 text-zinc-500 mx-auto" /> : <span className="text-zinc-700">—</span>}
-                    </td>
-                    <td className="py-4 px-4 text-center">
-                      {row.s ? <Check className="w-4 h-4 text-zinc-500 mx-auto" /> : <span className="text-zinc-700">—</span>}
-                    </td>
-                    <td className="py-4 px-4 text-center">
-                      <Check className="w-4 h-4 text-emerald-400 mx-auto" />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="p-6 bg-red-500/5 border border-red-500/20 rounded-xl">
+              <p className="text-sm text-red-400 font-medium mb-4">SEO Agency</p>
+              <p className="text-3xl font-bold text-white mb-2">$3,000<span className="text-lg text-zinc-500">/mo</span></p>
+              <ul className="text-sm text-zinc-500 space-y-2">
+                <li>• Slow communication</li>
+                <li>• 4-8 articles/month</li>
+                <li>• Generic reports</li>
+              </ul>
+            </div>
+
+            <div className="p-6 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+              <p className="text-sm text-amber-400 font-medium mb-4">Freelancer</p>
+              <p className="text-3xl font-bold text-white mb-2">$1,500<span className="text-lg text-zinc-500">/mo</span></p>
+              <ul className="text-sm text-zinc-500 space-y-2">
+                <li>• Variable quality</li>
+                <li>• Limited capacity</li>
+                <li>• No AI expertise</li>
+              </ul>
+                  </div>
+                  
+            <div className="p-6 bg-emerald-500/10 border-2 border-emerald-500/30 rounded-xl relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full">
+                BEST VALUE
+                      </div>
+              <p className="text-sm text-emerald-400 font-medium mb-4">CabbageSEO Pro</p>
+              <p className="text-3xl font-bold text-white mb-2">$79<span className="text-lg text-zinc-500">/mo</span></p>
+              <ul className="text-sm text-zinc-300 space-y-2">
+                <li>✓ Unlimited research</li>
+                <li>✓ 25 articles/month</li>
+                <li>✓ AI visibility tracking</li>
+              </ul>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
+      {/* Social Proof - Keep it honest */}
+      <section className="py-16 px-6 bg-zinc-900/30 border-y border-zinc-800/50">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {[
+              { value: "10×", label: "Faster content creation" },
+              { value: "4", label: "AI platforms tracked" },
+              { value: "$79", label: "Starting price" },
+              { value: "5min", label: "To first article" },
+            ].map((stat, i) => (
+              <div key={i}>
+                <p className="text-2xl md:text-3xl font-bold text-emerald-400">{stat.value}</p>
+                <p className="text-sm text-zinc-500 mt-1">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA - Action Focused */}
       <section className="py-24 px-6">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ready to track your AI visibility?
-          </h2>
+            Stop paying for SEO you can do yourself
+              </h2>
           <p className="text-zinc-400 mb-8">
-            Analyze any URL for free. See your SEO and AI scores instantly.
+            Start with a free analysis. Generate your first article in 5 minutes.
           </p>
-          <Link href="/analyze">
-            <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white h-14 px-8 rounded-xl">
-              Try the free analyzer
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </Link>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/analyze">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto h-14 px-8 rounded-xl border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+                Free analysis
+              </Button>
+            </Link>
+                  <Link href="/signup">
+              <Button size="lg" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white h-14 px-8 rounded-xl">
+                Start creating content
+                <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+                  </Link>
+          </div>
+          
+          <p className="text-sm text-zinc-600 mt-6">
+            No credit card required • Cancel anytime
+          </p>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-zinc-800">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
             <img 
               src="/cabbageseo_logo.png" 
               alt="CabbageSEO" 
               className="h-8 w-auto"
             />
             <span className="text-sm font-medium text-zinc-400">CabbageSEO</span>
-          </div>
+            </div>
           <div className="flex items-center gap-6 text-sm text-zinc-500">
             <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>

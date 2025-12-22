@@ -159,14 +159,18 @@ export default function PricingPage() {
       {/* Hero */}
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
+          {/* ROI Message */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-6">
-            Simple, transparent pricing
+            Replace your $3,000/mo agency
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Track Your <span className="text-emerald-400">AI Visibility</span>
+            Do SEO <span className="text-emerald-400">10× faster.</span>
           </h1>
-          <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
-            See if ChatGPT, Perplexity, and Google AI cite your content. Plus complete SEO tools.
+          <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-4">
+            Generate articles, optimize for AI search, publish everywhere. One tool, one price.
+          </p>
+          <p className="text-lg text-zinc-500 mb-8">
+            Save <span className="text-emerald-400 font-semibold">$2,900/month</span> vs hiring an agency.
           </p>
 
           {/* Billing Toggle */}

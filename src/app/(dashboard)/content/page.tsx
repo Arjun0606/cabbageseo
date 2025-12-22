@@ -196,22 +196,43 @@ function ContentLoading() {
 
 function EmptyState() {
   return (
-    <Card className="p-12">
-      <div className="text-center max-w-md mx-auto">
-        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
-          <FileText className="w-8 h-8 text-primary" />
+    <Card className="p-12 bg-gradient-to-br from-emerald-500/5 to-transparent border-emerald-500/20">
+      <div className="text-center max-w-lg mx-auto">
+        <div className="relative mb-8">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-24 h-24 bg-emerald-500/20 rounded-full blur-2xl animate-pulse" />
+          </div>
+          <div className="relative w-16 h-16 mx-auto rounded-full bg-emerald-500/10 flex items-center justify-center">
+            <Sparkles className="w-8 h-8 text-emerald-400" />
+          </div>
         </div>
-        <h3 className="text-xl font-semibold mb-2">No Content Yet</h3>
-        <p className="text-muted-foreground mb-6">
-          Start creating SEO-optimized articles with AI. Just provide a topic
-          and let the system do the rest.
+        <h3 className="text-2xl font-bold mb-3">Generate Your First Article in 5 Minutes</h3>
+        <p className="text-muted-foreground mb-8">
+          Pick a keyword, and our AI will create a full SEO-optimized article with 
+          headings, FAQs, and internal links. Ready to publish.
         </p>
+        
         <Link href="/content/new">
-          <Button>
-            <Sparkles className="w-4 h-4 mr-2" />
-            Create Your First Article
+          <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 gap-2 px-8">
+            <Sparkles className="w-5 h-5" />
+            Generate Article
           </Button>
         </Link>
+
+        <div className="mt-8 pt-8 border-t grid grid-cols-3 gap-6 text-center">
+          <div>
+            <p className="text-2xl font-bold text-emerald-400">5 min</p>
+            <p className="text-xs text-muted-foreground">Generation time</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-emerald-400">SEO+AIO</p>
+            <p className="text-xs text-muted-foreground">Optimized for both</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-emerald-400">1-click</p>
+            <p className="text-xs text-muted-foreground">Publish to CMS</p>
+          </div>
+        </div>
       </div>
     </Card>
   );
