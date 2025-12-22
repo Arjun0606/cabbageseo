@@ -17,7 +17,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServiceClient();
+    // Cast to any to bypass strict typing - leads table may not be in generated types yet
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = createServiceClient() as any;
 
     // Try to save the lead
     const { error } = await supabase
@@ -47,10 +49,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   // Admin endpoint to get leads count (protected)
   try {
-    const supabase = createServiceClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = createServiceClient() as any;
     
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
