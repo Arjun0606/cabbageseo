@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -24,6 +24,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { createClient } from "@/lib/supabase/client";
 
 // ============================================
 // PRICING DATA
@@ -128,6 +129,21 @@ const faqs = [
 
 export default function PricingPage() {
   const [isYearly, setIsYearly] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient();
+      if (supabase) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setIsLoggedIn(true);
+        }
+      }
+    };
+    checkAuth();
+  }, []);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -146,12 +162,20 @@ export default function PricingPage() {
             <Link href="/analyze">
               <Button variant="ghost" className="text-zinc-400 hover:text-white">Free Tool</Button>
             </Link>
-            <Link href="/login">
-              <Button variant="ghost" className="text-zinc-400 hover:text-white">Login</Button>
-            </Link>
-            <Link href="/signup">
-              <Button className="bg-emerald-600 hover:bg-emerald-500 text-white">Get Started</Button>
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/dashboard">
+                <Button className="bg-emerald-600 hover:bg-emerald-500 text-white">Go to Dashboard</Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" className="text-zinc-400 hover:text-white">Login</Button>
+                </Link>
+                <Link href="/signup">
+                  <Button className="bg-emerald-600 hover:bg-emerald-500 text-white">Get Started</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -432,12 +456,21 @@ export default function PricingPage() {
             Try our free URL analyzer, then upgrade when you&apos;re ready.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup">
-              <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                Get Started
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/settings/billing">
+                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                  Upgrade Now
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/signup">
+                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                  Get Started
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            )}
             <Link href="/analyze">
               <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
                 Try Free Tool

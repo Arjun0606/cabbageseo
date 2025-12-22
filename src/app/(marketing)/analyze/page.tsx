@@ -353,8 +353,9 @@ function FreeScoringPageContent() {
   const [emailLoading, setEmailLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [hasPaidPlan, setHasPaidPlan] = useState(false);
 
-  // Check if user is logged in
+  // Check if user is logged in and has a paid plan
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = createClient();
@@ -363,6 +364,29 @@ function FreeScoringPageContent() {
         if (user) {
           setIsLoggedIn(true);
           setShowEmailGate(false);
+          
+          // Check if user has a paid subscription
+          const { data: userData } = await supabase
+            .from("users")
+            .select("organization_id")
+            .eq("id", user.id)
+            .single();
+          
+          const orgId = (userData as { organization_id?: string } | null)?.organization_id;
+          if (orgId) {
+            const { data: orgData } = await supabase
+              .from("organizations")
+              .select("plan, subscription_status")
+              .eq("id", orgId)
+              .single();
+            
+            const org = orgData as { plan?: string; subscription_status?: string } | null;
+            // Check if they have an active paid plan
+            const isPaid = org?.plan && 
+              org.plan !== "free" && 
+              ["active", "trialing"].includes(org?.subscription_status || "");
+            setHasPaidPlan(!!isPaid);
+          }
         }
       }
     };
@@ -485,9 +509,15 @@ function FreeScoringPageContent() {
           </Link>
           <div className="flex items-center gap-3">
             {isLoggedIn ? (
-              <Link href="/dashboard">
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">Go to Dashboard</Button>
-              </Link>
+              hasPaidPlan ? (
+                <Link href="/dashboard">
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">Go to Dashboard</Button>
+                </Link>
+              ) : (
+                <Link href="/pricing">
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">Upgrade to Access</Button>
+                </Link>
+              )
             ) : (
               <>
                 <Link href="/login">
