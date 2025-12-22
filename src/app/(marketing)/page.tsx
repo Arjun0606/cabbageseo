@@ -131,7 +131,7 @@ export default function LandingPage() {
           
           {/* ROI Statement */}
           <p className="text-lg text-zinc-500 mb-10">
-            <span className="text-emerald-400 font-semibold">$79/mo</span> vs <span className="line-through text-zinc-600">$3,000/mo agency</span> · No SEO expertise needed
+            <span className="text-emerald-400 font-semibold">$29/mo</span> vs <span className="line-through text-zinc-600">$3,000/mo agency</span> · No SEO expertise needed
           </p>
 
           {/* URL Input - Gateway to Value */}
@@ -335,16 +335,16 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto mb-8">
             {[
               { name: "Google AI Overviews", icon: "🔍", desc: "60% of searches" },
               { name: "ChatGPT", icon: "🤖", desc: "200M+ users" },
               { name: "Perplexity", icon: "💡", desc: "Fastest growing" },
             ].map((platform, i) => (
-              <div key={i} className="p-6 bg-zinc-900 border border-zinc-800 rounded-xl text-center hover:border-blue-500/30 transition-colors">
-                <span className="text-3xl mb-3 block">{platform.icon}</span>
-                <p className="text-sm font-medium text-zinc-300">{platform.name}</p>
-                <p className="text-xs text-blue-400 mt-1">{platform.desc}</p>
+              <div key={i} className="p-8 bg-zinc-900 border border-zinc-800 rounded-xl text-center hover:border-blue-500/30 transition-colors">
+                <span className="text-4xl mb-4 block">{platform.icon}</span>
+                <p className="text-base font-medium text-zinc-200">{platform.name}</p>
+                <p className="text-sm text-blue-400 mt-2">{platform.desc}</p>
               </div>
             ))}
           </div>
@@ -391,8 +391,8 @@ export default function LandingPage() {
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full">
                 BEST VALUE
                       </div>
-              <p className="text-sm text-emerald-400 font-medium mb-4">CabbageSEO Pro</p>
-              <p className="text-3xl font-bold text-white mb-2">$79<span className="text-lg text-zinc-500">/mo</span></p>
+              <p className="text-sm text-emerald-400 font-medium mb-4">CabbageSEO Starter</p>
+              <p className="text-3xl font-bold text-white mb-2">$29<span className="text-lg text-zinc-500">/mo</span></p>
               <ul className="text-sm text-zinc-300 space-y-2">
                 <li>✓ Unlimited research</li>
                 <li>✓ 25 articles/month</li>
@@ -409,8 +409,8 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
               { value: "10×", label: "Faster content creation" },
-              { value: "4", label: "AI platforms tracked" },
-              { value: "$79", label: "Starting price" },
+              { value: "3", label: "AI platforms tracked" },
+              { value: "$29", label: "Starting price" },
               { value: "5min", label: "To first article" },
             ].map((stat, i) => (
               <div key={i}>
