@@ -68,10 +68,14 @@ export default function SignupPage() {
       return;
     }
 
+    // Get the redirect from URL params or default to onboarding
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectPath = urlParams.get("redirect") || "/onboarding";
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=/onboarding`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectPath)}`,
         queryParams: {
           access_type: "offline",
           prompt: "consent",
