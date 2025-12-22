@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { createAuditEngine, createAutoFixEngine, CrawlResult, AuditResult } from "@/lib/crawler";
 import { protectAPI, validateRequestBody, addSecurityHeaders } from "@/lib/security/api-protection";
+import { requireSubscription } from "@/lib/api/require-subscription";
 
 export async function POST(request: NextRequest) {
   // Protect endpoint
@@ -18,12 +19,12 @@ export async function POST(request: NextRequest) {
   if (blocked) return blocked;
 
   try {
-    // Authenticate user
+    // Authenticate user and check subscription
     const supabase = createServiceClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const subscription = await requireSubscription(supabase);
     
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!subscription.authorized) {
+      return subscription.error!;
     }
 
     // Parse and validate request body

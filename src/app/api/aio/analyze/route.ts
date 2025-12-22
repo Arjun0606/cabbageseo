@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAIOAnalyzer } from "@/lib/aio";
 import type { AIOAnalysisInput } from "@/lib/aio/types";
+import { requireSubscription } from "@/lib/api/require-subscription";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,22 +18,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Check subscription - AIO analysis is a paid feature
+    const subscription = await requireSubscription(supabase);
+    
+    if (!subscription.authorized) {
+      return subscription.error!;
     }
 
-    // Get user's organization
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const organizationId = (userData as { organization_id?: string } | null)?.organization_id;
-    if (!organizationId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 400 });
-    }
+    const organizationId = subscription.organizationId!;
 
     const body = await request.json();
     const { 

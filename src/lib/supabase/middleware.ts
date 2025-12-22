@@ -65,6 +65,7 @@ export async function updateSession(request: NextRequest) {
     "/api/webhooks",
     "/api/auth",
     "/api/public",  // Public free tools (no auth required)
+    "/api/leads",   // Lead capture for visitors
   ];
   
   const isPublicRoute = publicRoutes.some(

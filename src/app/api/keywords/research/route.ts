@@ -1,9 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { requireSubscription } from "@/lib/api/require-subscription";
 import { dataForSEO } from "@/lib/integrations/dataforseo/client";
 import { ai } from "@/lib/integrations/openai/client";
 
 export async function POST(request: NextRequest) {
   try {
+    // Authentication and subscription check
+    const supabase = await createClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const subscription = await requireSubscription(supabase);
+    if (!subscription.authorized) {
+      return subscription.error!;
+    }
+
     const body = await request.json();
     const { seedKeywords, domain, location = "United States" } = body;
 

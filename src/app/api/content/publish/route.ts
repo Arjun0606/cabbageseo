@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { requireSubscription } from "@/lib/api/require-subscription";
 import { createWordPressClient } from "@/lib/integrations/wordpress/client";
 
 export async function POST(request: NextRequest) {
   try {
+    // Authentication and subscription check
+    const supabase = await createClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+    }
+
+    const subscription = await requireSubscription(supabase);
+    if (!subscription.authorized) {
+      return subscription.error!;
+    }
+
     const body = await request.json();
     const {
       // siteId, // TODO: Use for tracking
