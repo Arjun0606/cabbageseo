@@ -37,9 +37,11 @@ export async function GET(request: NextRequest) {
 
   // Autopilot requires paid subscription
   const authCheck = await requireSubscription(supabase);
-  if (!authCheck.authorized) {
+  if (!authCheck.authorized || !authCheck.userId) {
     return authCheck.error;
   }
+
+  const userId = authCheck.userId;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -51,7 +53,7 @@ export async function GET(request: NextRequest) {
     const { data: userData } = await supabase
       .from("users")
       .select("organization_id")
-      .eq("id", authCheck.userId)
+      .eq("id", userId)
       .single();
 
     const orgId = (userData as { organization_id?: string } | null)?.organization_id;
