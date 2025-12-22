@@ -54,22 +54,18 @@ interface IntegrationsData {
 
 // ============================================
 // AVAILABLE INTEGRATIONS
+// Only user-specific integrations that require their credentials
+// Platform-level APIs (DataForSEO, OpenAI, etc.) are handled by us - no user setup needed
 // ============================================
 
 const availableIntegrations: Omit<Integration, "status" | "lastSync">[] = [
-  // CMS
+  // CMS - User needs to connect their own sites
   { id: "wordpress", type: "wordpress", name: "WordPress", description: "Publish content directly to your WordPress site", icon: "🔵", category: "cms" },
   { id: "webflow", type: "webflow", name: "Webflow", description: "Publish to your Webflow CMS collections", icon: "🔷", category: "cms" },
   { id: "shopify", type: "shopify", name: "Shopify", description: "Manage your Shopify blog content", icon: "🛒", category: "cms" },
-  // Analytics
-  { id: "gsc", type: "gsc", name: "Google Search Console", description: "Track rankings, clicks, and impressions", icon: "🔍", category: "analytics" },
-  { id: "ga4", type: "ga4", name: "Google Analytics 4", description: "Track traffic and user behavior", icon: "📊", category: "analytics" },
-  // SEO Tools
-  { id: "dataforseo", type: "dataforseo", name: "DataForSEO", description: "SERP data and keyword metrics", icon: "📡", category: "seo" },
-  { id: "ahrefs", type: "ahrefs", name: "Ahrefs", description: "Access backlink data and keyword metrics", icon: "🔗", category: "seo" },
-  // AI
-  { id: "openai", type: "openai", name: "OpenAI", description: "GPT models for content generation", icon: "🤖", category: "ai" },
-  { id: "anthropic", type: "anthropic", name: "Anthropic Claude", description: "Claude models for content generation", icon: "🧠", category: "ai" },
+  // Analytics - User needs to connect their Google account
+  { id: "gsc", type: "gsc", name: "Google Search Console", description: "Track your rankings, clicks, and impressions", icon: "🔍", category: "analytics" },
+  { id: "ga4", type: "ga4", name: "Google Analytics 4", description: "Track your traffic and user behavior", icon: "📊", category: "analytics" },
 ];
 
 // ============================================
@@ -269,31 +265,12 @@ function IntegrationCard({
                         </Button>
                       </div>
                     )}
-                    {(integration.type === "dataforseo" || integration.type === "ahrefs") && (
-                      <div className="space-y-2">
-                        <Label>API Key</Label>
-                        <Input
-                          type="password"
-                          placeholder="Your API key"
-                          value={credentials.apiKey || ""}
-                          onChange={(e) => setCredentials({ ...credentials, apiKey: e.target.value })}
-                        />
-                      </div>
-                    )}
-                    {(integration.type === "openai" || integration.type === "anthropic") && (
-                      <div className="p-4 bg-green-500/10 rounded-lg text-center">
-                        <CheckCircle2 className="w-8 h-8 mx-auto text-green-500 mb-2" />
-                        <p className="text-sm">
-                          {integration.name} is configured via environment variables
-                        </p>
-                      </div>
-                    )}
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setShowDialog(false)}>
                       Cancel
                     </Button>
-                    {!["gsc", "ga4", "openai", "anthropic"].includes(integration.type) && (
+                    {!["gsc", "ga4"].includes(integration.type) && (
                       <Button onClick={handleConnect} disabled={isConnecting}>
                         {isConnecting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                         Connect
@@ -439,11 +416,9 @@ export default function IntegrationsPage() {
             <TabsTrigger value="all">All ({allIntegrations.length})</TabsTrigger>
             <TabsTrigger value="cms">CMS ({getByCategory("cms").length})</TabsTrigger>
             <TabsTrigger value="analytics">Analytics ({getByCategory("analytics").length})</TabsTrigger>
-            <TabsTrigger value="seo">SEO Tools ({getByCategory("seo").length})</TabsTrigger>
-            <TabsTrigger value="ai">AI ({getByCategory("ai").length})</TabsTrigger>
           </TabsList>
 
-          {["all", "cms", "analytics", "seo", "ai"].map((tab) => (
+          {["all", "cms", "analytics"].map((tab) => (
             <TabsContent key={tab} value={tab} className="space-y-3">
               {(tab === "all" ? allIntegrations : getByCategory(tab as IntegrationCategory)).map(
                 (integration) => (

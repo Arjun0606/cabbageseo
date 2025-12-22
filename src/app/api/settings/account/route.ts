@@ -41,17 +41,71 @@ export async function GET() {
 
   try {
     // Get user profile
-    const { data: userData, error: userError } = await supabase
+    let { data: userData, error: userError } = await supabase
       .from("users")
       .select("*")
       .eq("id", user.id)
       .single();
 
-    if (userError) throw userError;
+    // If user doesn't exist, create them
+    if (userError || !userData) {
+      console.log("[Account API] Creating missing user profile for:", user.email);
+      
+      // First, check if they have an org or create one
+      let orgId: string | null = null;
+      
+      const { data: existingOrg } = await supabase
+        .from("organizations")
+        .select("id")
+        .eq("owner_id", user.id)
+        .single();
+      
+      if (existingOrg) {
+        orgId = (existingOrg as { id: string }).id;
+      } else {
+        // Create org
+        const { data: newOrg, error: orgError } = await supabase
+          .from("organizations")
+          .insert({
+            name: `${user.email?.split("@")[0] || "My"}'s Organization`,
+            slug: `org-${user.id.slice(0, 8)}-${Date.now()}`,
+            owner_id: user.id,
+            plan: "free",
+            subscription_status: "trialing",
+          } as never)
+          .select("id")
+          .single();
+        
+        if (!orgError && newOrg) {
+          orgId = (newOrg as { id: string }).id;
+        }
+      }
+      
+      if (orgId) {
+        // Create user
+        const { data: newUser, error: createError } = await supabase
+          .from("users")
+          .upsert({
+            id: user.id,
+            organization_id: orgId,
+            email: user.email!,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+            avatar_url: user.user_metadata?.avatar_url || null,
+            role: "owner",
+            email_verified: true,
+          } as never)
+          .select()
+          .single();
+        
+        if (!createError && newUser) {
+          userData = newUser;
+        }
+      }
+    }
 
     const profile = userData as UserRow | null;
     if (!profile) {
-      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+      return NextResponse.json({ error: "Failed to load or create user profile" }, { status: 500 });
     }
 
     // Get organization
