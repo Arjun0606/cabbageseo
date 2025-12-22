@@ -80,31 +80,31 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero - Labor Replacement Focus */}
+      {/* Hero - SaaS Founders & Tech Startups */}
       <section className="pt-32 pb-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Value Prop Badge */}
+          {/* Target Audience Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-8">
-            <Clock className="w-4 h-4" />
-            Replace 10+ hours of SEO work every week
+            <Bot className="w-4 h-4" />
+            Built for founders who ship fast
         </div>
 
-          {/* Main Headline - Labor Replacement */}
+          {/* Main Headline - AIO + Speed */}
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.05]">
-            Do SEO <span className="text-emerald-400">10× faster.</span>
+            Rank in Google <span className="text-emerald-400">and AI.</span>
             <br />
-            <span className="text-zinc-500">Without the agency.</span>
+            <span className="text-zinc-500">In minutes, not months.</span>
           </h1>
 
-          {/* Value-focused Subheadline */}
+          {/* SaaS-focused Subheadline */}
           <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-4 leading-relaxed">
-            Research keywords. Generate articles. Optimize for AI search. 
-            Publish everywhere. One tool, one workflow.
+            The SEO tool for SaaS, startups, and indie makers. Generate AI-optimized content 
+            that ranks in Google AND gets cited by ChatGPT.
           </p>
           
           {/* ROI Statement */}
           <p className="text-lg text-zinc-500 mb-10">
-            <span className="text-emerald-400 font-semibold">$79/mo</span> vs <span className="line-through text-zinc-600">$3,000/mo agency</span>
+            <span className="text-emerald-400 font-semibold">$79/mo</span> vs <span className="line-through text-zinc-600">$3,000/mo agency</span> · No SEO expertise needed
           </p>
 
           {/* URL Input - Gateway to Value */}
@@ -291,36 +291,42 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* AI Visibility - The Differentiator (but not the hero) */}
-      <section className="py-24 px-6 bg-zinc-900/30 border-y border-zinc-800/50">
+      {/* AIO - The Core Differentiator */}
+      <section className="py-24 px-6 bg-gradient-to-b from-blue-500/5 to-transparent border-y border-zinc-800/50">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium mb-6">
               <Bot className="w-3 h-3" />
-              Exclusive to CabbageSEO
+              The Future of SEO
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              See if AI is citing your content
+              Your SaaS needs to show up in AI answers
             </h2>
             <p className="text-zinc-400 max-w-xl mx-auto">
-              ChatGPT, Perplexity, and Google AI answer millions of questions daily. 
-              Are they using your content? Now you can check.
+              When developers ask ChatGPT for &quot;best auth library&quot; or founders ask for &quot;best analytics tool&quot; — 
+              is YOUR product being recommended? Track and optimize your AI visibility.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
-              { name: "Google AI", icon: "🔍" },
-              { name: "ChatGPT", icon: "🤖" },
-              { name: "Perplexity", icon: "💡" },
-              { name: "Bing Copilot", icon: "🔷" },
+              { name: "Google AI Overviews", icon: "🔍", desc: "60% of searches" },
+              { name: "ChatGPT", icon: "🤖", desc: "200M+ users" },
+              { name: "Perplexity", icon: "💡", desc: "Fastest growing" },
+              { name: "Bing Copilot", icon: "🔷", desc: "Built into Windows" },
             ].map((platform, i) => (
-              <div key={i} className="p-6 bg-zinc-900 border border-zinc-800 rounded-xl text-center">
+              <div key={i} className="p-6 bg-zinc-900 border border-zinc-800 rounded-xl text-center hover:border-blue-500/30 transition-colors">
                 <span className="text-3xl mb-3 block">{platform.icon}</span>
                 <p className="text-sm font-medium text-zinc-300">{platform.name}</p>
-                <p className="text-xs text-zinc-500 mt-1">Tracked</p>
+                <p className="text-xs text-blue-400 mt-1">{platform.desc}</p>
               </div>
             ))}
+          </div>
+
+          <div className="text-center">
+            <p className="text-sm text-zinc-500 italic">
+              &quot;The next generation of SEO isn&apos;t just Google—it&apos;s every AI that answers questions.&quot;
+            </p>
           </div>
         </div>
       </section>
