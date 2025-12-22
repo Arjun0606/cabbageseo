@@ -629,72 +629,75 @@ function FreeScoringPageContent() {
               </CardContent>
             </Card>
 
-            {/* EMAIL GATE - Show if not submitted */}
-            {showEmailGate && !emailSubmitted && (
-              <Card className="mb-8 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-emerald-500/30">
-                <CardContent className="p-8">
-                  <div className="text-center max-w-lg mx-auto">
-                    <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-                      <Lock className="w-8 h-8 text-emerald-400" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-white mb-2">
-                      Unlock Your Full Analysis
-                    </h3>
-                    <p className="text-zinc-400 mb-2">
-                      We found <span className="text-red-400 font-bold">{totalIssues} issues</span> affecting your visibility.
+            {/* SIGNUP GATE - Always show until signed up */}
+            <Card className="mb-8 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-emerald-500/30">
+              <CardContent className="p-8">
+                <div className="text-center max-w-lg mx-auto">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                    <Lock className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    See What&apos;s Hurting Your Rankings
+                  </h3>
+                  <p className="text-zinc-400 mb-2">
+                    We found <span className="text-red-400 font-bold">{totalIssues} issues</span> affecting your visibility.
+                  </p>
+                  <p className="text-sm text-zinc-500 mb-6">
+                    Sign up free to see the full breakdown, detailed recommendations, and AI-powered fixes.
+                  </p>
+                  
+                  <Link href={`/signup?redirect=${encodeURIComponent(`/analyze?url=${encodeURIComponent(result.url)}`)}`}>
+                    <Button 
+                      size="lg"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white h-12 px-8"
+                    >
+                      Sign Up Free to Unlock
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                  
+                  <p className="text-xs text-zinc-500 mt-4">
+                    ✓ Free account · ✓ Full breakdown · ✓ AI recommendations
+                  </p>
+
+                  {/* Optional email capture for those not ready to sign up */}
+                  <div className="mt-6 pt-6 border-t border-zinc-700">
+                    <p className="text-sm text-zinc-500 mb-3">
+                      Not ready? Get a summary sent to your email:
                     </p>
-                    <p className="text-sm text-zinc-500 mb-6">
-                      Enter your email to see the detailed breakdown and get personalized fixes.
-                    </p>
-                    
                     <form onSubmit={handleEmailSubmit} className="flex gap-2 max-w-md mx-auto">
                       <div className="relative flex-1">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                         <Input
                           type="email"
-                          placeholder="Enter your email..."
+                          placeholder="Your email..."
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10 h-12 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500"
+                          className="pl-10 h-10 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 text-sm"
                           required
                         />
                       </div>
                       <Button 
                         type="submit" 
-                        size="lg"
+                        variant="outline"
                         disabled={emailLoading || !email.includes("@")}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white h-12"
+                        className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 h-10"
                       >
-                        {emailLoading ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <>
-                            Unlock Report
-                            <ArrowRight className="w-4 h-4 ml-2" />
-                          </>
-                        )}
+                        {emailLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Summary"}
                       </Button>
                     </form>
-                    
-                    <p className="text-xs text-zinc-500 mt-4">
-                      🔒 No spam. Unsubscribe anytime. We respect your inbox.
-                    </p>
-
-                    <Button
-                      variant="link"
-                      onClick={() => setShowEmailGate(false)}
-                      className="text-zinc-500 hover:text-zinc-400 mt-4"
-                    >
-                      Skip for now
-                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                </div>
+              </CardContent>
+            </Card>
 
-            {/* Full Results - Only show after email or skip */}
-            {(!showEmailGate || emailSubmitted) && (
-              <>
+            {/* Preview of what they'll get - blurred/locked */}
+            <div className="relative">
+              {/* Blur overlay */}
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-950/90 to-zinc-950 z-10 pointer-events-none" />
+              
+              {/* Teaser content (visible but blurred) */}
+              <div className="opacity-40 blur-[2px] select-none pointer-events-none">
 
             {/* Platform Scores */}
             <Card className="mb-8 bg-zinc-900 border-zinc-800">
@@ -1104,8 +1107,9 @@ function FreeScoringPageContent() {
                 </div>
               </CardContent>
             </Card>
-            </>
-            )}
+              </div>
+              {/* End blur wrapper */}
+            </div>
           </div>
         </section>
       )}
