@@ -2,10 +2,10 @@
  * Dodo Payments Webhook Handler
  * 
  * Handles all webhook events from Dodo Payments:
- * - subscription.created / subscription.updated / subscription.canceled
- * - payment.succeeded / payment.failed
- * - invoice.paid / invoice.payment_failed
- * - customer.created / customer.updated
+ * - subscription.active / subscription.updated / subscription.cancelled
+ * - subscription.expired / subscription.failed / subscription.on_hold
+ * - subscription.plan_changed / subscription.renewed
+ * - payment.succeeded / payment.failed / payment.cancelled / payment.processing
  * 
  * Dodo Docs: https://docs.dodopayments.com/webhooks
  */
@@ -102,86 +102,63 @@ export async function POST(request: NextRequest) {
   try {
     switch (event.type) {
       // ============================================
-      // SUBSCRIPTION EVENTS
+      // SUBSCRIPTION EVENTS (Dodo naming convention)
       // ============================================
       
-      case "subscription.created":
-      case "subscription.activated": {
+      case "subscription.active": {
+        // New subscription activated or renewed
         const subscription = event.data.object as unknown as SubscriptionData;
         await handleSubscriptionCreated(supabase, subscription);
         break;
       }
 
-      case "subscription.updated": {
+      case "subscription.updated":
+      case "subscription.plan_changed": {
         const subscription = event.data.object as unknown as SubscriptionData;
         await handleSubscriptionUpdated(supabase, subscription);
         break;
       }
 
-      case "subscription.canceled":
-      case "subscription.cancelled": {
+      case "subscription.cancelled":
+      case "subscription.expired": {
         const subscription = event.data.object as unknown as SubscriptionData;
         await handleSubscriptionCanceled(supabase, subscription);
         break;
       }
 
-      case "subscription.paused": {
+      case "subscription.on_hold":
+      case "subscription.failed": {
         const subscription = event.data.object as unknown as SubscriptionData;
         await handleSubscriptionPaused(supabase, subscription);
         break;
       }
 
-      case "subscription.resumed": {
+      case "subscription.renewed": {
         const subscription = event.data.object as unknown as SubscriptionData;
         await handleSubscriptionResumed(supabase, subscription);
         break;
       }
 
       // ============================================
-      // PAYMENT EVENTS
+      // PAYMENT EVENTS (Dodo naming convention)
       // ============================================
 
-      case "payment.succeeded":
-      case "payment.completed": {
+      case "payment.succeeded": {
         const payment = event.data.object as unknown as PaymentData;
         await handlePaymentSucceeded(supabase, payment);
         break;
       }
 
-      case "payment.failed": {
+      case "payment.failed":
+      case "payment.cancelled": {
         const payment = event.data.object as unknown as PaymentData;
         await handlePaymentFailed(supabase, payment);
         break;
       }
 
-      // ============================================
-      // INVOICE EVENTS
-      // ============================================
-
-      case "invoice.paid": {
-        const invoice = event.data.object as unknown as PaymentData;
-        await handleInvoicePaid(supabase, invoice);
-        break;
-      }
-
-      case "invoice.payment_failed": {
-        const invoice = event.data.object as unknown as PaymentData;
-        await handleInvoicePaymentFailed(supabase, invoice);
-        break;
-      }
-
-      // ============================================
-      // CHECKOUT EVENTS
-      // ============================================
-
-      case "checkout.completed": {
-        const checkout = event.data.object as unknown as {
-          id: string;
-          customer_id: string;
-          subscription_id?: string;
-          metadata?: Record<string, string>;
-        };
-        await handleCheckoutCompleted(supabase, checkout);
+      case "payment.processing": {
+        // Payment is being processed - log but don't update status yet
+        console.log(`[Dodo Webhook] Payment processing: ${(event.data.object as { id: string }).id}`);
         break;
       }
 
@@ -438,126 +415,6 @@ async function handlePaymentFailed(
   console.log(`[Dodo Webhook] Payment failed for org ${(org as { id: string }).id}`);
 }
 
-async function handleInvoicePaid(
-  supabase: any,
-  invoice: PaymentData
-) {
-  // Record invoice
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("id")
-    .eq("stripe_customer_id", invoice.customer_id)
-    .single();
-
-  if (!org) return;
-
-  const orgId = (org as { id: string }).id;
-
-  await supabase.from("invoices").insert({
-    organization_id: orgId,
-    dodo_invoice_id: invoice.id,
-    amount_cents: invoice.amount,
-    currency: invoice.currency || "usd",
-    status: "paid",
-    paid_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-  });
-
-  // Mark overage charges as billed
-  await supabase.rpc("mark_overages_billed", { org_id: orgId });
-
-  // Reset current overage spend for new period
-  const { data: orgData } = await supabase
-    .from("organizations")
-    .select("overage_settings")
-    .eq("id", orgId)
-    .single();
-
-  type OverageSettings = {
-    enabled: boolean;
-    spendingCapCents: number;
-    currentSpendCents: number;
-    autoIncreaseEnabled: boolean;
-    autoIncreaseAmountCents: number;
-    notifyAt: number[];
-    lastNotifiedAt: string | null;
-  };
-
-  const settings = (orgData as { overage_settings?: OverageSettings } | null)?.overage_settings;
-  if (settings) {
-    await supabase
-      .from("organizations")
-      .update({
-        overage_settings: {
-          ...settings,
-          currentSpendCents: 0,
-          lastNotifiedAt: null,
-        },
-      })
-      .eq("id", orgId);
-  }
-
-  console.log(`[Dodo Webhook] Invoice paid for org ${orgId}`);
-}
-
-async function handleInvoicePaymentFailed(
-  supabase: any,
-  invoice: PaymentData
-) {
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("id")
-    .eq("stripe_customer_id", invoice.customer_id)
-    .single();
-
-  if (!org) return;
-
-  await supabase
-    .from("organizations")
-    .update({
-      subscription_status: "past_due",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", (org as { id: string }).id);
-
-  await createNotification(supabase, (org as { id: string }).id, {
-    type: "error",
-    category: "billing",
-    title: "Invoice Payment Failed",
-    message: "We couldn't process your invoice payment. Please update your payment method to avoid service interruption.",
-  });
-
-  console.log(`[Dodo Webhook] Invoice payment failed for org ${(org as { id: string }).id}`);
-}
-
-async function handleCheckoutCompleted(
-  supabase: any,
-  checkout: { id: string; customer_id: string; subscription_id?: string; metadata?: Record<string, string> }
-) {
-  const orgId = checkout.metadata?.organization_id;
-  const planId = checkout.metadata?.plan_id;
-  const interval = checkout.metadata?.interval;
-
-  if (!orgId || !planId) {
-    console.log("[Dodo Webhook] Checkout completed but missing org/plan metadata");
-    return;
-  }
-
-  // Update organization with new subscription
-  await supabase
-    .from("organizations")
-    .update({
-      stripe_customer_id: checkout.customer_id,
-      stripe_subscription_id: checkout.subscription_id,
-      plan: planId,
-      billing_interval: interval || "monthly",
-      subscription_status: "active",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", orgId);
-
-  console.log(`[Dodo Webhook] Checkout completed for org ${orgId}: ${planId}`);
-}
 
 // ============================================
 // HELPERS
