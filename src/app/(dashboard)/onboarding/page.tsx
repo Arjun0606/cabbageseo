@@ -639,7 +639,7 @@ export default function OnboardingPage() {
         </Card>
       )}
 
-      {/* CTA - Push to the Money Path */}
+      {/* CTA - Push to Subscribe */}
       <Card className="p-8 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20">
         <div className="text-center space-y-4">
           <div className="inline-flex items-center justify-center p-3 bg-emerald-500/20 rounded-xl">
@@ -647,27 +647,30 @@ export default function OnboardingPage() {
           </div>
           <h3 className="text-2xl font-bold">Ready to rank higher?</h3>
           <p className="text-muted-foreground max-w-md mx-auto">
-            Generate your first SEO article in 5 minutes. Our AI creates content that ranks in Google AND gets cited by ChatGPT.
+            Choose a plan to unlock AI content generation, keyword tracking, and full SEO optimization tools.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Button 
               size="lg" 
               className="gap-2 px-8 bg-emerald-600 hover:bg-emerald-500" 
-              onClick={() => router.push("/content/new")}
+              onClick={() => router.push("/pricing")}
             >
               <Sparkles className="w-5 h-5" />
-              Generate Your First Article
+              Choose Your Plan
             </Button>
             <Button 
               size="lg" 
               variant="outline" 
               className="gap-2"
-              onClick={() => router.push("/dashboard")}
+              onClick={() => router.push("/analyze")}
             >
-              Go to Dashboard
+              Try Free Analyzer
               <ArrowRight className="w-5 h-5" />
             </Button>
           </div>
+          <p className="text-sm text-zinc-500 pt-2">
+            Starting at <span className="text-emerald-400 font-semibold">$29/month</span> · Cancel anytime
+          </p>
         </div>
       </Card>
     </div>

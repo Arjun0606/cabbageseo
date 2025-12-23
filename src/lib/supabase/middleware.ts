@@ -63,6 +63,7 @@ export async function updateSession(request: NextRequest) {
   // Define public API route prefixes (these handle their own auth)
   const publicApiPrefixes = [
     "/api/webhooks",
+    "/api/billing/webhooks",  // Dodo payment webhooks
     "/api/auth",
     "/api/public",  // Public free tools (no auth required)
     "/api/leads",   // Lead capture for visitors

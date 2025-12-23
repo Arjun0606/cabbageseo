@@ -1,10 +1,14 @@
 import { AppLayout } from "@/components/layout";
+import { SubscriptionGate } from "@/components/paywall/subscription-gate";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <AppLayout>{children}</AppLayout>;
+  return (
+    <SubscriptionGate>
+      <AppLayout>{children}</AppLayout>
+    </SubscriptionGate>
+  );
 }
-
