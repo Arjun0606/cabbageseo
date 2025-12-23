@@ -8,6 +8,12 @@ import { NextResponse } from "next/server";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getSubscriptionInfo, type PlanId } from "@/lib/billing";
 
+// ============================================
+// 🔓 TESTING MODE - SUBSCRIPTION CHECK DISABLED
+// Set to false to enable subscription checks for production
+// ============================================
+const TESTING_MODE = true;
+
 export interface SubscriptionCheckResult {
   authorized: boolean;
   organizationId?: string;
@@ -28,6 +34,33 @@ export async function requireSubscription(
   }
 ): Promise<SubscriptionCheckResult> {
   const { allowTrial = true, minPlan = "starter" } = options || {};
+
+  // In testing mode, get user info but always authorize
+  if (TESTING_MODE) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return {
+        authorized: false,
+        error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      };
+    }
+    
+    // Get org ID for context
+    const { data: userData } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+    
+    const organizationId = (userData as { organization_id?: string } | null)?.organization_id;
+    
+    return {
+      authorized: true,
+      organizationId: organizationId || undefined,
+      userId: user.id,
+      plan: "pro", // Pretend they're on pro in testing
+    };
+  }
 
   // Get current user
   const { data: { user } } = await supabase.auth.getUser();

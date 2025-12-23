@@ -24,12 +24,18 @@ const FEATURES = [
 ];
 
 export function SubscriptionGate({ children }: { children: React.ReactNode }) {
+  // ============================================
+  // 🔓 TESTING MODE - PAYWALL DISABLED
+  // Set to false to enable paywall for production
+  // ============================================
+  const TESTING_MODE = true;
+
   const router = useRouter();
   const pathname = usePathname();
   const [status, setStatus] = useState<SubscriptionStatus>({
-    hasSubscription: false,
-    plan: null,
-    loading: true,
+    hasSubscription: TESTING_MODE, // Auto-grant access in testing mode
+    plan: TESTING_MODE ? "testing" : null,
+    loading: !TESTING_MODE, // Skip loading in testing mode
   });
 
   // Routes that should bypass the paywall (onboarding, settings for billing)
@@ -41,6 +47,9 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const shouldBypass = bypassRoutes.some(route => pathname?.startsWith(route));
 
   useEffect(() => {
+    // Skip subscription check in testing mode
+    if (TESTING_MODE) return;
+
     async function checkSubscription() {
       try {
         const res = await fetch("/api/billing/usage");
