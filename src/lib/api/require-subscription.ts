@@ -9,10 +9,9 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { getSubscriptionInfo, type PlanId } from "@/lib/billing";
 
 // ============================================
-// 🔓 TESTING MODE - SUBSCRIPTION CHECK DISABLED
-// Set to false to enable subscription checks for production
+// 🔒 PRODUCTION MODE - SUBSCRIPTION CHECKS ENABLED
 // ============================================
-const TESTING_MODE = true;
+const TESTING_MODE = false;
 
 export interface SubscriptionCheckResult {
   authorized: boolean;
