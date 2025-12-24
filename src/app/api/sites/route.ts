@@ -147,29 +147,41 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  let orgId: string | null = null;
 
-  try {
-    const body = await request.json();
-    const { domain, name, url } = body;
-
-    if (!domain) {
-      return NextResponse.json({ error: "Domain is required" }, { status: 400 });
+  if (TESTING_MODE) {
+    // Get first org for testing
+    const { data: testOrg } = await supabase
+      .from("organizations")
+      .select("id")
+      .limit(1)
+      .single();
+    orgId = (testOrg as { id: string } | null)?.id || null;
+  } else {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user's organization
     const { data: userData } = await supabase
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
       .single();
 
-    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 400 });
+    orgId = (userData as { organization_id?: string } | null)?.organization_id || null;
+  }
+
+  if (!orgId) {
+    return NextResponse.json({ error: "No organization found" }, { status: 400 });
+  }
+
+  try {
+    const body = await request.json();
+    const { domain, name } = body;
+
+    if (!domain) {
+      return NextResponse.json({ error: "Domain is required" }, { status: 400 });
     }
 
     // Create site
