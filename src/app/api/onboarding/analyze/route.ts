@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { createCrawler, createAuditEngine } from "@/lib/crawler";
 import { dataForSEO } from "@/lib/integrations/dataforseo/client";
 import { claude } from "@/lib/ai/claude-client";
@@ -115,6 +115,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Use service client for database writes (bypasses RLS)
+  const serviceClient = createServiceClient();
+
   try {
     const body = await request.json();
     const { url: rawUrl } = body;
@@ -134,8 +137,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid URL format" }, { status: 400 });
     }
 
-    // Get user's organization
-    const { data: userData } = await supabase
+    // Get user's organization (use service client to bypass RLS)
+    const { data: userData } = await serviceClient
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
@@ -146,7 +149,7 @@ export async function POST(request: NextRequest) {
     // If user doesn't exist or no organization, create them
     if (!userData) {
       // User doesn't exist in users table yet - create user first
-      const { error: userError } = await supabase
+      const { error: userError } = await serviceClient
         .from("users")
         .insert({
           id: user.id,
@@ -157,13 +160,13 @@ export async function POST(request: NextRequest) {
 
       if (userError) {
         console.error("Failed to create user:", userError);
-        // Continue anyway - might be RLS issue, user might already exist
+        // Continue anyway - might already exist
       }
     }
 
     // If no organization, create one
     if (!organizationId) {
-      const { data: newOrg, error: orgError } = await supabase
+      const { data: newOrg, error: orgError } = await serviceClient
         .from("organizations")
         .insert({
           name: `${user.email?.split("@")[0]}'s Organization`,
@@ -178,7 +181,7 @@ export async function POST(request: NextRequest) {
       if (orgError || !newOrg) {
         console.error("Failed to create organization:", orgError);
         // Try to get existing org (might have been created by trigger)
-        const { data: existingOrg } = await supabase
+        const { data: existingOrg } = await serviceClient
           .from("organizations")
           .select("id")
           .eq("owner_id", user.id)
@@ -197,7 +200,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Update user with organization
-      await supabase
+      await serviceClient
         .from("users")
         .upsert({ 
           id: user.id,
@@ -207,7 +210,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if site already exists
-    const { data: existingSite } = await supabase
+    const { data: existingSite } = await serviceClient
       .from("sites")
       .select("id")
       .eq("organization_id", organizationId)
@@ -220,7 +223,7 @@ export async function POST(request: NextRequest) {
       siteId = (existingSite as { id: string }).id;
     } else {
       // Create new site
-      const { data: newSite, error: siteError } = await supabase
+      const { data: newSite, error: siteError } = await serviceClient
         .from("sites")
         .insert({
           organization_id: organizationId,

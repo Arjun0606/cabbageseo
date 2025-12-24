@@ -9,7 +9,7 @@
  * 4. Redirect to appropriate page
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -41,9 +41,12 @@ export async function GET(request: NextRequest) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
+        // Use service client for database writes (bypasses RLS)
+        const serviceClient = createServiceClient();
+        
         if (user) {
           // Check if user has a profile
-          const { data: profile, error: profileError } = await supabase
+          const { data: profile, error: profileError } = await serviceClient
             .from("users")
             .select("organization_id")
             .eq("id", user.id)
@@ -56,7 +59,7 @@ export async function GET(request: NextRequest) {
             // Create organization first
             const orgSlug = `org-${user.id.slice(0, 8)}-${Date.now()}`;
             
-            const { data: newOrg, error: orgError } = await supabase
+            const { data: newOrg, error: orgError } = await serviceClient
               .from("organizations")
               .insert({
                 name: user.user_metadata?.full_name 
@@ -73,7 +76,7 @@ export async function GET(request: NextRequest) {
             if (orgError) {
               console.error("[Auth Callback] Org creation error:", orgError);
               // Try to find existing org by owner_id
-              const { data: existingOrg } = await supabase
+              const { data: existingOrg } = await serviceClient
                 .from("organizations")
                 .select("id")
                 .eq("owner_id", user.id)
@@ -83,7 +86,7 @@ export async function GET(request: NextRequest) {
                 const orgId = (existingOrg as { id: string }).id;
                 
                 // Create user profile linked to existing org
-                await supabase
+                await serviceClient
                   .from("users")
                   .upsert({
                     id: user.id,
@@ -102,7 +105,7 @@ export async function GET(request: NextRequest) {
               const orgId = (newOrg as { id: string }).id;
               
               // Create user profile
-              const { error: userError } = await supabase
+              const { error: userError } = await serviceClient
                 .from("users")
                 .insert({
                   id: user.id,
@@ -126,7 +129,7 @@ export async function GET(request: NextRequest) {
             const orgId = (profile as { organization_id: string }).organization_id;
             
             if (orgId) {
-              const { data: sites } = await supabase
+              const { data: sites } = await serviceClient
                 .from("sites")
                 .select("id")
                 .eq("organization_id", orgId)

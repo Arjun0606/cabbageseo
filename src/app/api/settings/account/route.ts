@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 
 interface UserRow {
   id: string;
@@ -39,9 +39,12 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Use service client for database operations (bypasses RLS)
+  const serviceClient = createServiceClient();
+
   try {
     // Get user profile
-    let { data: userData, error: userError } = await supabase
+    let { data: userData, error: userError } = await serviceClient
       .from("users")
       .select("*")
       .eq("id", user.id)
@@ -54,7 +57,7 @@ export async function GET() {
       // First, check if they have an org or create one
       let orgId: string | null = null;
       
-      const { data: existingOrg } = await supabase
+      const { data: existingOrg } = await serviceClient
         .from("organizations")
         .select("id")
         .eq("owner_id", user.id)
@@ -64,7 +67,7 @@ export async function GET() {
         orgId = (existingOrg as { id: string }).id;
       } else {
         // Create org
-        const { data: newOrg, error: orgError } = await supabase
+        const { data: newOrg, error: orgError } = await serviceClient
           .from("organizations")
           .insert({
             name: `${user.email?.split("@")[0] || "My"}'s Organization`,
@@ -161,12 +164,15 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Use service client for database operations (bypasses RLS)
+  const serviceClient = createServiceClient();
+
   try {
     const body = await request.json();
     const { name, timezone, website, organizationName } = body;
 
     // Get user's organization
-    const { data: userData } = await supabase
+    const { data: userData } = await serviceClient
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
@@ -239,9 +245,12 @@ export async function DELETE() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Use service client for database operations (bypasses RLS)
+  const serviceClient = createServiceClient();
+
   try {
     // Get user's organization and role
-    const { data: userData } = await supabase
+    const { data: userData } = await serviceClient
       .from("users")
       .select("organization_id, role")
       .eq("id", user.id)
@@ -263,27 +272,27 @@ export async function DELETE() {
 
       if (siteIds.length > 0) {
         // Delete all site-related data
-        await supabase.from("aio_analyses").delete().in("site_id", siteIds);
-        await supabase.from("entities").delete().in("site_id", siteIds);
-        await supabase.from("ai_citations").delete().in("site_id", siteIds);
-        await supabase.from("content").delete().in("site_id", siteIds);
-        await supabase.from("keywords").delete().in("site_id", siteIds);
-        await supabase.from("issues").delete().in("site_id", siteIds);
-        await supabase.from("pages").delete().in("site_id", siteIds);
-        await supabase.from("audits").delete().in("site_id", siteIds);
-        await supabase.from("sites").delete().eq("organization_id", orgId);
+        await serviceClient.from("aio_analyses").delete().in("site_id", siteIds);
+        await serviceClient.from("entities").delete().in("site_id", siteIds);
+        await serviceClient.from("ai_citations").delete().in("site_id", siteIds);
+        await serviceClient.from("content").delete().in("site_id", siteIds);
+        await serviceClient.from("keywords").delete().in("site_id", siteIds);
+        await serviceClient.from("issues").delete().in("site_id", siteIds);
+        await serviceClient.from("pages").delete().in("site_id", siteIds);
+        await serviceClient.from("audits").delete().in("site_id", siteIds);
+        await serviceClient.from("sites").delete().eq("organization_id", orgId);
       }
 
       // Delete organization-level data
-      await supabase.from("integrations").delete().eq("organization_id", orgId);
-      await supabase.from("tasks").delete().eq("organization_id", orgId);
-      await supabase.from("usage").delete().eq("organization_id", orgId);
-      await supabase.from("credit_balance").delete().eq("organization_id", orgId);
-      await supabase.from("users").delete().eq("organization_id", orgId);
-      await supabase.from("organizations").delete().eq("id", orgId);
+      await serviceClient.from("integrations").delete().eq("organization_id", orgId);
+      await serviceClient.from("tasks").delete().eq("organization_id", orgId);
+      await serviceClient.from("usage").delete().eq("organization_id", orgId);
+      await serviceClient.from("credit_balance").delete().eq("organization_id", orgId);
+      await serviceClient.from("users").delete().eq("organization_id", orgId);
+      await serviceClient.from("organizations").delete().eq("id", orgId);
     } else if (orgId) {
       // Just delete the user record (not the owner)
-      await supabase.from("users").delete().eq("id", user.id);
+      await serviceClient.from("users").delete().eq("id", user.id);
     }
 
     // Sign out the user
