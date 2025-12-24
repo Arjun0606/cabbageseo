@@ -114,17 +114,28 @@ export async function POST(request: NextRequest) {
     // Get organization
     const { data: orgData } = await serviceClient
       .from("organizations")
-      .select("id, name, stripe_customer_id, plan")
+      .select("id, name, stripe_customer_id, plan, subscription_status, stripe_subscription_id")
       .eq("id", organizationId)
       .single();
 
-    const org = orgData as { id: string; name: string; stripe_customer_id?: string; plan?: string } | null;
+    const org = orgData as { 
+      id: string; 
+      name: string; 
+      stripe_customer_id?: string; 
+      plan?: string;
+      subscription_status?: string;
+      stripe_subscription_id?: string;
+    } | null;
+    
     if (!org) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
-    // Check if already on this plan
-    if (org.plan === planId) {
+    // Only block if they have an ACTIVE paid subscription on the same plan
+    const hasActiveSubscription = org.stripe_subscription_id && 
+      org.subscription_status === "active";
+    
+    if (hasActiveSubscription && org.plan === planId) {
       return NextResponse.json({ error: "Already on this plan" }, { status: 400 });
     }
 
