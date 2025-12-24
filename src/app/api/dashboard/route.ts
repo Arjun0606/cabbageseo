@@ -51,6 +51,12 @@ interface DashboardData {
   }>;
 }
 
+// ============================================
+// 🔓 TESTING MODE - AUTH BYPASS
+// Set to false before production launch
+// ============================================
+const TESTING_MODE = true;
+
 export async function GET() {
   const supabase = await createClient();
   
@@ -61,13 +67,26 @@ export async function GET() {
     );
   }
 
-  // Check auth
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  let userId: string | null = null;
+  let orgId: string | null = null;
 
-  try {
+  // Check auth - skip in testing mode
+  if (TESTING_MODE) {
+    // In testing mode, try to get a test user's data
+    const { data: testOrg } = await supabase
+      .from("organizations")
+      .select("id")
+      .limit(1)
+      .single();
+    
+    orgId = (testOrg as { id: string } | null)?.id || null;
+  } else {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    userId = user.id;
+
     // Get user's organization
     const { data: userData } = await supabase
       .from("users")
@@ -75,8 +94,10 @@ export async function GET() {
       .eq("id", user.id)
       .single();
 
-    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
+    orgId = (userData as { organization_id?: string } | null)?.organization_id || null;
+  }
 
+  try {
     if (!orgId) {
       // No org = empty dashboard
       const emptyData: DashboardData = {

@@ -9,27 +9,44 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getPlan, getPlanLimits } from "@/lib/billing/plans";
 
+// ============================================
+// 🔓 TESTING MODE - AUTH BYPASS
+// ============================================
+const TESTING_MODE = true;
+
 export async function GET() {
   const supabase = await createClient();
   if (!supabase) {
     return NextResponse.json({ error: "Not configured" }, { status: 500 });
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  let orgId: string | null = null;
 
-  try {
-    // Get user's organization
+  if (TESTING_MODE) {
+    // Get first org for testing
+    const { data: testOrg } = await supabase
+      .from("organizations")
+      .select("id")
+      .limit(1)
+      .single();
+    orgId = (testOrg as { id: string } | null)?.id || null;
+  } else {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { data: profileData } = await supabase
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
       .single();
 
-    const profile = profileData as { organization_id: string } | null;
-    if (!profile?.organization_id) {
+    orgId = (profileData as { organization_id: string } | null)?.organization_id || null;
+  }
+
+  try {
+    if (!orgId) {
       // Return free plan defaults for users without an organization
       return NextResponse.json({ 
         success: true,
@@ -41,8 +58,6 @@ export async function GET() {
         }
       });
     }
-
-    const orgId = profile.organization_id;
 
     // Get organization
     const { data: orgData } = await supabase

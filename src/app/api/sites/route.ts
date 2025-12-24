@@ -22,6 +22,11 @@ interface SiteRow {
   updated_at: string;
 }
 
+// ============================================
+// 🔓 TESTING MODE - AUTH BYPASS
+// ============================================
+const TESTING_MODE = true;
+
 // GET - List sites
 export async function GET() {
   const supabase = await createClient();
@@ -30,23 +35,36 @@ export async function GET() {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  let orgId: string | null = null;
 
-  try {
-    // Get user's organization
+  if (TESTING_MODE) {
+    // Get first org for testing
+    const { data: testOrg } = await supabase
+      .from("organizations")
+      .select("id")
+      .limit(1)
+      .single();
+    orgId = (testOrg as { id: string } | null)?.id || null;
+  } else {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { data: userData } = await supabase
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
       .single();
 
-    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
-    if (!orgId) {
-      return NextResponse.json({ success: true, data: { sites: [], stats: { total: 0 } } });
-    }
+    orgId = (userData as { organization_id?: string } | null)?.organization_id || null;
+  }
+
+  if (!orgId) {
+    return NextResponse.json({ success: true, data: { sites: [], stats: { total: 0 } } });
+  }
+
+  try {
 
     // Get sites
     const { data: sites, error } = await supabase
