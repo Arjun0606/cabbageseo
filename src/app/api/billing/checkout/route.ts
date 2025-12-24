@@ -79,14 +79,13 @@ export async function POST(request: NextRequest) {
     if (!profile || !organizationId) {
       console.log("[Checkout] Creating user and org for:", user.email);
       
-      // Create organization first
+      // Create organization first (plan defaults to 'starter' in DB)
       const { data: newOrg, error: orgError } = await serviceClient
         .from("organizations")
         .insert({
           name: `${user.email?.split("@")[0] || "My"}'s Organization`,
           slug: `org-${user.id.slice(0, 8)}-${Date.now()}`,
           owner_id: user.id,
-          plan: "free",
           subscription_status: "trialing",
         } as never)
         .select("id")

@@ -172,7 +172,6 @@ export async function POST(request: NextRequest) {
           name: `${user.email?.split("@")[0]}'s Organization`,
           slug: `org-${user.id.slice(0, 8)}-${Date.now()}`,
           owner_id: user.id,
-          plan: "free",  // Start on free plan
           subscription_status: "trialing",
         } as never)
         .select("id")

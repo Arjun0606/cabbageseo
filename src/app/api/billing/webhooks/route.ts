@@ -199,22 +199,21 @@ export async function POST(request: NextRequest) {
       case "subscription.expired": {
         if (!organizationId) break; // Type guard
         
-        // Downgrade to free plan
+        // Mark subscription as cancelled (keep current plan until period ends)
         const { error } = await supabase
           .from("organizations")
           .update({
-            plan: "free",
-            subscription_status: "cancelled",
+            subscription_status: "canceled",
             current_period_end: new Date().toISOString(),
           } as never)
           .eq("id", organizationId);
 
         if (error) {
-          console.error("[Webhook] Failed to downgrade org:", error);
+          console.error("[Webhook] Failed to update org:", error);
           throw error;
         }
 
-        console.log(`[Webhook] Downgraded org ${organizationId} to free`);
+        console.log(`[Webhook] Cancelled subscription for org ${organizationId}`);
         break;
       }
 
