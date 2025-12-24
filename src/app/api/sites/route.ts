@@ -50,7 +50,7 @@ export async function GET() {
       // No org exists, create one
       const { data: newOrg, error: createError } = await supabase
         .from("organizations")
-        .insert({ name: "Test Organization", plan: "starter" })
+        .insert({ name: "Test Organization", slug: "test-org-" + Date.now(), plan: "starter" })
         .select("id")
         .single();
       
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
       // No org exists, create one
       const { data: newOrg, error: createError } = await supabase
         .from("organizations")
-        .insert({ name: "Test Organization", plan: "starter" })
+        .insert({ name: "Test Organization", slug: "test-org-" + Date.now(), plan: "starter" })
         .select("id")
         .single();
       
