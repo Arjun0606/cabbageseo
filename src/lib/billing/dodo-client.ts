@@ -199,15 +199,14 @@ export class DodoPaymentsClient {
 
   /**
    * Create a customer portal session for managing subscriptions
+   * Note: Dodo's portal doesn't support return_url - it's a standalone portal
    */
   async createCustomerPortalSession(params: {
     customerId: string;
-    returnUrl: string;
   }) {
     const result = await this.getClient().customers.customerPortal.create(
       params.customerId,
       {
-        return_url: params.returnUrl,
         send_email: false,
       }
     );

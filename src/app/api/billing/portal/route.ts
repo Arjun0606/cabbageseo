@@ -50,16 +50,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No billing account found" }, { status: 400 });
     }
 
-    // Get return URL
-    const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "";
-    const returnUrl = `${origin}/settings/billing`;
-
     // Create portal session using official SDK
+    // Note: Dodo's customer portal doesn't support return_url - it's a standalone portal
     const dodo = getDodo();
     const portalSession = await dodo.customers.customerPortal.create(
       org.stripe_customer_id,
       {
-        return_url: returnUrl,
         send_email: false,
       }
     );
