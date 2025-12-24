@@ -85,7 +85,6 @@ export async function POST(request: NextRequest) {
         .insert({
           name: `${user.email?.split("@")[0] || "My"}'s Organization`,
           slug: `org-${user.id.slice(0, 8)}-${Date.now()}`,
-          owner_id: user.id,
           subscription_status: "trialing",
         } as never)
         .select("id")

@@ -66,7 +66,6 @@ export async function GET(request: NextRequest) {
                   ? `${user.user_metadata.full_name}'s Organization`
                   : `${user.email?.split("@")[0] || "My"}'s Organization`,
                 slug: orgSlug,
-                owner_id: user.id,
                 subscription_status: "trialing",
               } as never)
               .select("id")
@@ -74,33 +73,12 @@ export async function GET(request: NextRequest) {
 
             if (orgError) {
               console.error("[Auth Callback] Org creation error:", orgError);
-              // Try to find existing org by owner_id
-              const { data: existingOrg } = await serviceClient
-                .from("organizations")
-                .select("id")
-                .eq("owner_id", user.id)
-                .single();
-              
-              if (existingOrg) {
-                const orgId = (existingOrg as { id: string }).id;
-                
-                // Create user profile linked to existing org
-                await serviceClient
-                  .from("users")
-                  .upsert({
-                    id: user.id,
-                    organization_id: orgId,
-                    email: user.email!,
-                    full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-                    avatar_url: user.user_metadata?.avatar_url || null,
-                    role: "owner",
-                    email_verified: true,
-                  } as never);
-                
-                // Redirect to onboarding
-                return NextResponse.redirect(`${redirectBase}/onboarding`);
-              }
-            } else if (newOrg) {
+              // If org creation failed, redirect to onboarding anyway
+              // The onboarding flow will create org if needed
+              return NextResponse.redirect(`${redirectBase}/onboarding`);
+            }
+            
+            if (newOrg) {
               const orgId = (newOrg as { id: string }).id;
               
               // Create user profile

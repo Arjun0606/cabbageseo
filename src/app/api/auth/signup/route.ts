@@ -75,8 +75,6 @@ export async function POST(request: NextRequest) {
         .insert({
           name: `${fullName || email.split("@")[0]}'s Organization`,
           slug: `${orgSlug}-${Date.now()}`,
-          owner_id: authData.user.id,
-          plan: "starter",
         });
 
       if (orgError) {
