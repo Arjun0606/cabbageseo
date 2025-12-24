@@ -21,9 +21,10 @@ NODE_ENV=development
 # ============================================
 # DODO PAYMENTS
 # https://docs.dodopayments.com
+# Uses official SDK: npm install dodopayments
 # ============================================
 DODO_PAYMENTS_API_KEY=sk_live_...
-DODO_WEBHOOK_SECRET=whsec_...
+DODO_PAYMENTS_WEBHOOK_KEY=whsec_...  # Also supports DODO_WEBHOOK_SECRET
 
 # Product IDs (from Dodo Dashboard)
 DODO_STARTER_MONTHLY_ID=pdt_0NUbpXQ1QJLfhZ3G1RNEA
@@ -105,20 +106,23 @@ This meter tracks overage spending in real-time. When users exceed plan limits w
 
 Set up a webhook in Dodo Dashboard pointing to:
 ```
-https://your-domain.com/api/webhooks/dodo
+https://your-domain.com/api/billing/webhooks
 ```
 
 Events to subscribe to:
-- `subscription.created`
-- `subscription.updated`
-- `subscription.canceled`
+- `subscription.active`
+- `subscription.renewed`
+- `subscription.plan_changed`
+- `subscription.on_hold`
+- `subscription.cancelled`
+- `subscription.failed`
+- `subscription.expired`
 - `payment.succeeded`
 - `payment.failed`
-- `invoice.paid`
-- `invoice.payment_failed`
-- `checkout.completed`
+- `payment.processing`
+- `payment.cancelled`
 
-Copy the webhook secret and add to `DODO_WEBHOOK_SECRET`.
+Copy the webhook secret and add to `DODO_PAYMENTS_WEBHOOK_KEY`.
 
 ## Pricing Structure
 

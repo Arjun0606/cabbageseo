@@ -1,35 +1,53 @@
 /**
  * Checkout API - Create checkout sessions for subscriptions
  * 
- * Uses Dodo Payments to create checkout sessions for plan upgrades
+ * Uses Dodo Payments official SDK to create checkout sessions for plan upgrades
+ * https://docs.dodopayments.com/
  * 
  * POST /api/billing/checkout
  * {
- *   "planId": "pro" | "pro_plus",
+ *   "planId": "starter" | "pro" | "pro_plus",
  *   "interval": "monthly" | "yearly"
  * }
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { dodo } from "@/lib/billing/dodo-client";
+import { DodoPayments } from "dodopayments";
 import { PLANS, type PlanId } from "@/lib/billing/plans";
 
 // Dodo Product IDs (configured in Dodo Dashboard)
+// These are the product IDs you create in your Dodo Payments dashboard
 const PRODUCT_IDS: Record<string, Record<string, string>> = {
   starter: {
-    monthly: process.env.DODO_STARTER_MONTHLY_ID || "prod_starter_monthly",
-    yearly: process.env.DODO_STARTER_YEARLY_ID || "prod_starter_yearly",
+    monthly: process.env.DODO_STARTER_MONTHLY_ID || "",
+    yearly: process.env.DODO_STARTER_YEARLY_ID || "",
   },
   pro: {
-    monthly: process.env.DODO_PRO_MONTHLY_ID || "prod_pro_monthly",
-    yearly: process.env.DODO_PRO_YEARLY_ID || "prod_pro_yearly",
+    monthly: process.env.DODO_PRO_MONTHLY_ID || "",
+    yearly: process.env.DODO_PRO_YEARLY_ID || "",
   },
   pro_plus: {
-    monthly: process.env.DODO_PRO_PLUS_MONTHLY_ID || "prod_pro_plus_monthly",
-    yearly: process.env.DODO_PRO_PLUS_YEARLY_ID || "prod_pro_plus_yearly",
+    monthly: process.env.DODO_PRO_PLUS_MONTHLY_ID || "",
+    yearly: process.env.DODO_PRO_PLUS_YEARLY_ID || "",
   },
 };
+
+// Initialize Dodo client - it reads DODO_PAYMENTS_API_KEY from env
+function getDodoClient() {
+  const apiKey = process.env.DODO_PAYMENTS_API_KEY;
+  if (!apiKey) {
+    throw new Error("DODO_PAYMENTS_API_KEY is not configured");
+  }
+  
+  // Use test_mode for development, live_mode for production
+  const isProduction = process.env.NODE_ENV === "production";
+  
+  return new DodoPayments({
+    bearerToken: apiKey,
+    environment: isProduction ? "live_mode" : "test_mode",
+  });
+}
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -38,7 +56,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  if (!dodo.isConfigured()) {
+  // Check if Dodo is configured
+  if (!process.env.DODO_PAYMENTS_API_KEY) {
+    console.error("[Checkout] DODO_PAYMENTS_API_KEY is not configured");
     return NextResponse.json({ error: "Payments not configured" }, { status: 503 });
   }
 
@@ -139,64 +159,78 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Already on this plan" }, { status: 400 });
     }
 
-    // Get or create Dodo customer
-    let customerId = org.stripe_customer_id;
-    
-    if (!customerId) {
-      // Create customer in Dodo
-      const customer = await dodo.createCustomer({
-        email: profile.email || user.email || "",
-        name: profile.name || org.name,
-        metadata: {
-          organization_id: org.id,
-        },
-      });
-      
-      customerId = customer.id;
-
-      // Save customer ID
-      await serviceClient
-        .from("organizations")
-        .update({ stripe_customer_id: customerId } as never)
-        .eq("id", org.id);
-    }
-
     // Get product ID for the plan
     const productId = PRODUCT_IDS[planId]?.[interval];
     if (!productId) {
-      return NextResponse.json({ error: "Product not configured" }, { status: 500 });
+      console.error(`[Checkout] No product ID configured for ${planId}_${interval}`);
+      return NextResponse.json({ 
+        error: `Product not configured. Please set DODO_${planId.toUpperCase()}_${interval.toUpperCase()}_ID environment variable.` 
+      }, { status: 500 });
     }
 
     // Get URLs
     const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "";
-    const successUrl = `${origin}/settings/billing?success=true&plan=${planId}`;
-    const cancelUrl = `${origin}/settings/billing?canceled=true`;
+    const returnUrl = `${origin}/settings/billing?session_id={CHECKOUT_SESSION_ID}`;
 
-    // Create checkout session
-    const session = await dodo.createCheckoutSession({
-      customer_id: customerId,
-      product_id: productId,
-      success_url: successUrl,
-      cancel_url: cancelUrl,
+    // Initialize Dodo client
+    const dodo = getDodoClient();
+
+    // Create checkout session using official SDK
+    // Dodo uses product_cart for the checkout
+    const session = await dodo.checkoutSessions.create({
+      product_cart: [
+        {
+          product_id: productId,
+          quantity: 1,
+        },
+      ],
+      // Customer info - Dodo will create or find customer by email
+      customer: {
+        email: profile?.email || user.email || "",
+        name: profile?.name || org.name,
+      },
+      // Return URL after payment (success or failure)
+      return_url: returnUrl,
+      // Metadata to identify the organization after payment
       metadata: {
         organization_id: org.id,
         plan_id: planId,
         interval,
+        user_id: user.id,
+      },
+      // Dark theme to match the app
+      customization: {
+        theme: "dark",
       },
     });
+
+    console.log("[Checkout] Created session:", session.session_id);
 
     return NextResponse.json({
       success: true,
       data: {
-        checkoutUrl: session.url,
-        sessionId: session.id,
+        checkoutUrl: session.checkout_url,
+        sessionId: session.session_id,
       },
     });
 
   } catch (error) {
     console.error("[Checkout API] Error:", error);
+    
+    // Provide more specific error messages
+    let errorMessage = "Failed to create checkout";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      // Check for common issues
+      if (errorMessage.includes("DODO_PAYMENTS_API_KEY")) {
+        errorMessage = "Payments API key not configured";
+      } else if (errorMessage.includes("product")) {
+        errorMessage = "Product not found in Dodo dashboard. Please create the product first.";
+      }
+    }
+    
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create checkout" },
+      { error: errorMessage },
       { status: 500 }
     );
   }

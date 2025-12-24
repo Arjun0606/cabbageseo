@@ -2,83 +2,31 @@
  * Dodo Payments Webhook Handler
  * 
  * Handles subscription events from Dodo Payments
+ * Uses the official dodopayments SDK for webhook verification
  * 
  * POST /api/billing/webhooks
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import crypto from "crypto";
+import { DodoPayments } from "dodopayments";
 
-// Note: In Next.js App Router, we get the raw body via request.text()
-// No config needed - body parsing is handled automatically
-
-// Webhook event types from Dodo
-type DodoEventType =
-  | "subscription.active"
-  | "subscription.on_hold"
-  | "subscription.paused"
-  | "subscription.renewed"
-  | "subscription.plan_changed"
-  | "subscription.cancelled"
-  | "subscription.failed"
-  | "subscription.expired"
-  | "payment.succeeded"
-  | "payment.failed"
-  | "payment.refunded";
-
-interface DodoWebhookEvent {
-  type: DodoEventType;
-  data: {
-    payload: {
-      subscription_id?: string;
-      customer_id?: string;
-      product_id?: string;
-      status?: string;
-      next_billing_date?: string;
-      current_period_start?: string;
-      current_period_end?: string;
-      metadata?: Record<string, string>;
-      payment_id?: string;
-      amount?: number;
-      currency?: string;
-    };
-    business_id: string;
-    created_at: string;
-  };
-}
-
-// Verify webhook signature
-function verifySignature(payload: string, signature: string, secret: string): boolean {
-  if (!secret) return true; // Skip verification if no secret (dev mode)
+// Initialize Dodo client for webhook unwrapping
+function getDodoClient() {
+  const apiKey = process.env.DODO_PAYMENTS_API_KEY;
+  const webhookKey = process.env.DODO_PAYMENTS_WEBHOOK_KEY || process.env.DODO_WEBHOOK_SECRET;
   
-  const expectedSignature = crypto
-    .createHmac("sha256", secret)
-    .update(payload)
-    .digest("hex");
-  
-  return crypto.timingSafeEqual(
-    Buffer.from(signature || ""),
-    Buffer.from(expectedSignature)
-  );
-}
-
-// Map Dodo subscription status to our internal status
-function mapStatus(dodoStatus: string | undefined): string {
-  switch (dodoStatus) {
-    case "active":
-      return "active";
-    case "on_hold":
-    case "paused":
-      return "paused";
-    case "cancelled":
-    case "expired":
-      return "cancelled";
-    case "failed":
-      return "past_due";
-    default:
-      return "active";
+  if (!apiKey) {
+    throw new Error("DODO_PAYMENTS_API_KEY is not configured");
   }
+
+  const isProduction = process.env.NODE_ENV === "production";
+  
+  return new DodoPayments({
+    bearerToken: apiKey,
+    webhookKey: webhookKey || null,
+    environment: isProduction ? "live_mode" : "test_mode",
+  });
 }
 
 // Get plan ID from product ID
@@ -117,40 +65,56 @@ export async function POST(request: NextRequest) {
   try {
     // Get raw body for signature verification
     const rawBody = await request.text();
-    const signature = request.headers.get("x-dodo-signature") || "";
-    const webhookSecret = process.env.DODO_WEBHOOK_SECRET || "";
-
-    // Verify signature (skip in dev if no secret)
-    if (webhookSecret && !verifySignature(rawBody, signature, webhookSecret)) {
-      console.error("[Webhook] Invalid signature");
-      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-    }
-
-    const event: DodoWebhookEvent = JSON.parse(rawBody);
-    const { type, data } = event;
-    const payload = data.payload;
-
-    console.log(`[Webhook] Received event: ${type}`, payload.subscription_id);
-
-    // Get organization from metadata
-    const organizationId = payload.metadata?.organization_id;
     
-    // For subscription events, organization_id is required
-    if (type.startsWith("subscription.") && !organizationId) {
-      console.error("[Webhook] No organization_id in metadata");
-      return NextResponse.json({ error: "Missing organization_id" }, { status: 400 });
+    // Get all headers as a record for webhook verification
+    const headers: Record<string, string> = {};
+    request.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
+
+    const dodo = getDodoClient();
+    
+    // Use SDK's unwrap method for verification if webhook key is configured
+    // Otherwise use unsafeUnwrap for development
+    let event;
+    const webhookKey = process.env.DODO_PAYMENTS_WEBHOOK_KEY || process.env.DODO_WEBHOOK_SECRET;
+    
+    if (webhookKey) {
+      try {
+        event = dodo.webhooks.unwrap(rawBody, { headers });
+      } catch (error) {
+        console.error("[Webhook] Signature verification failed:", error);
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+      }
+    } else {
+      // Development mode - skip verification
+      console.warn("[Webhook] No webhook key configured, skipping verification");
+      event = dodo.webhooks.unsafeUnwrap(rawBody);
     }
 
-    // Handle subscription events
+    const { type, data, business_id, timestamp } = event;
+    
+    console.log(`[Webhook] Received event: ${type}`, { business_id, timestamp });
+
+    // Handle different event types
     switch (type) {
       case "subscription.active":
       case "subscription.renewed":
       case "subscription.plan_changed": {
-        if (!organizationId) break; // Type guard
+        // These events have subscription data
+        if (data.payload_type !== "Subscription") break;
         
-        // Update organization with new subscription info
-        const plan = getPlanFromProductId(payload.product_id);
-        const interval = getIntervalFromProductId(payload.product_id);
+        const subscriptionData = data;
+        const metadata = subscriptionData.metadata;
+        const organizationId = metadata?.organization_id;
+        
+        if (!organizationId) {
+          console.error("[Webhook] No organization_id in metadata");
+          return NextResponse.json({ error: "Missing organization_id" }, { status: 400 });
+        }
+        
+        const plan = getPlanFromProductId(subscriptionData.product_id);
+        const interval = getIntervalFromProductId(subscriptionData.product_id);
         
         const { error } = await supabase
           .from("organizations")
@@ -158,9 +122,10 @@ export async function POST(request: NextRequest) {
             plan,
             billing_interval: interval,
             subscription_status: "active",
-            stripe_subscription_id: payload.subscription_id, // Using stripe field for dodo ID
-            current_period_start: payload.current_period_start,
-            current_period_end: payload.current_period_end,
+            stripe_subscription_id: subscriptionData.subscription_id,
+            current_period_start: subscriptionData.previous_billing_date,
+            current_period_end: subscriptionData.next_billing_date,
+            stripe_customer_id: subscriptionData.customer.customer_id,
           } as never)
           .eq("id", organizationId);
 
@@ -174,15 +139,20 @@ export async function POST(request: NextRequest) {
       }
 
       case "subscription.on_hold":
-      case "subscription.paused":
       case "subscription.failed": {
-        if (!organizationId) break; // Type guard
+        if (data.payload_type !== "Subscription") break;
         
-        // Update subscription status
+        const subscriptionData = data;
+        const organizationId = subscriptionData.metadata?.organization_id;
+        
+        if (!organizationId) break;
+        
+        const status = type === "subscription.on_hold" ? "paused" : "past_due";
+        
         const { error } = await supabase
           .from("organizations")
           .update({
-            subscription_status: mapStatus(payload.status),
+            subscription_status: status,
           } as never)
           .eq("id", organizationId);
 
@@ -191,15 +161,19 @@ export async function POST(request: NextRequest) {
           throw error;
         }
 
-        console.log(`[Webhook] Updated org ${organizationId} status to ${payload.status}`);
+        console.log(`[Webhook] Updated org ${organizationId} status to ${status}`);
         break;
       }
 
       case "subscription.cancelled":
       case "subscription.expired": {
-        if (!organizationId) break; // Type guard
+        if (data.payload_type !== "Subscription") break;
         
-        // Mark subscription as cancelled (keep current plan until period ends)
+        const subscriptionData = data;
+        const organizationId = subscriptionData.metadata?.organization_id;
+        
+        if (!organizationId) break;
+        
         const { error } = await supabase
           .from("organizations")
           .update({
@@ -218,19 +192,29 @@ export async function POST(request: NextRequest) {
       }
 
       case "payment.succeeded": {
-        // Log successful payment (optional - for analytics)
-        console.log(`[Webhook] Payment succeeded for ${payload.payment_id}`);
+        if (data.payload_type !== "Payment") break;
+        console.log(`[Webhook] Payment succeeded:`, data.payment_id);
         break;
       }
 
       case "payment.failed": {
+        if (data.payload_type !== "Payment") break;
+        console.log(`[Webhook] Payment failed:`, data.payment_id);
         // Could send an email notification here
-        console.log(`[Webhook] Payment failed for ${payload.payment_id}`);
         break;
       }
 
-      case "payment.refunded": {
-        console.log(`[Webhook] Payment refunded for ${payload.payment_id}`);
+      case "payment.processing":
+      case "payment.cancelled": {
+        if (data.payload_type !== "Payment") break;
+        console.log(`[Webhook] Payment ${type}:`, data.payment_id);
+        break;
+      }
+
+      case "refund.succeeded":
+      case "refund.failed": {
+        if (data.payload_type !== "Refund") break;
+        console.log(`[Webhook] Refund ${type}:`, data.refund_id);
         break;
       }
 
@@ -247,4 +231,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { dodo } from "@/lib/billing/dodo-client";
+import { getDodo, isDodoConfigured } from "@/lib/billing/dodo-client";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  if (!dodo.isConfigured()) {
+  if (!isDodoConfigured()) {
     return NextResponse.json({ error: "Payments not configured" }, { status: 503 });
   }
 
@@ -54,14 +54,20 @@ export async function POST(request: NextRequest) {
     const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "";
     const returnUrl = `${origin}/settings/billing`;
 
-    // Create portal session (Dodo provides a customer portal URL)
-    // Note: Dodo's exact API may differ - this is based on common patterns
-    const portalUrl = `https://checkout.dodopayments.com/portal?customer=${org.stripe_customer_id}&return_url=${encodeURIComponent(returnUrl)}`;
+    // Create portal session using official SDK
+    const dodo = getDodo();
+    const portalSession = await dodo.customers.customerPortal.create(
+      org.stripe_customer_id,
+      {
+        return_url: returnUrl,
+        send_email: false,
+      }
+    );
 
     return NextResponse.json({
       success: true,
       data: {
-        portalUrl,
+        portalUrl: portalSession.link,
       },
     });
 

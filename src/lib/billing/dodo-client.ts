@@ -1,142 +1,91 @@
 /**
  * Dodo Payments Client for CabbageSEO
  * 
+ * Uses the official Dodo Payments SDK
+ * https://docs.dodopayments.com/
+ * 
  * Handles:
  * - Subscription management
- * - Usage-based billing
- * - Payment processing
+ * - Customer management
+ * - Checkout sessions
  * - Webhook handling
  * 
  * Dodo is a Merchant of Record (handles taxes, compliance)
- * https://docs.dodopayments.com/
  */
 
+import { DodoPayments } from "dodopayments";
+
 // ============================================
-// TYPES
+// SINGLETON CLIENT
 // ============================================
 
-export interface DodoConfig {
-  apiKey: string;
-  webhookSecret?: string;
-  baseUrl?: string;
+let dodoInstance: DodoPayments | null = null;
+
+/**
+ * Get the Dodo Payments client instance
+ * Reads DODO_PAYMENTS_API_KEY from environment
+ */
+export function getDodo(): DodoPayments {
+  if (!dodoInstance) {
+    const apiKey = process.env.DODO_PAYMENTS_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error("DODO_PAYMENTS_API_KEY is not configured");
+    }
+
+    // Use test_mode for development, live_mode for production
+    const isProduction = process.env.NODE_ENV === "production";
+    
+    dodoInstance = new DodoPayments({
+      bearerToken: apiKey,
+      environment: isProduction ? "live_mode" : "test_mode",
+    });
+  }
+  
+  return dodoInstance;
 }
 
-export interface Customer {
-  id: string;
-  email: string;
-  name?: string;
-  metadata?: Record<string, string>;
-  created_at: string;
-}
-
-export interface Product {
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
-  currency: string;
-  billing_period: "monthly" | "yearly";
-  metadata?: Record<string, string>;
-}
-
-export interface Subscription {
-  id: string;
-  customer_id: string;
-  product_id: string;
-  status: "active" | "canceled" | "past_due" | "trialing" | "paused";
-  current_period_start: string;
-  current_period_end: string;
-  cancel_at_period_end: boolean;
-  created_at: string;
-  metadata?: Record<string, string>;
-}
-
-export interface UsageRecord {
-  subscription_id: string;
-  quantity: number;
-  timestamp: string;
-  action?: string;
-  idempotency_key?: string;
-}
-
-export interface Invoice {
-  id: string;
-  customer_id: string;
-  subscription_id?: string;
-  amount: number;
-  currency: string;
-  status: "draft" | "open" | "paid" | "void" | "uncollectible";
-  created_at: string;
-  paid_at?: string;
-}
-
-export interface PaymentIntent {
-  id: string;
-  amount: number;
-  currency: string;
-  status: "requires_payment" | "processing" | "succeeded" | "failed";
-  client_secret?: string;
-}
-
-export interface CheckoutSession {
-  id: string;
-  url: string;
-  customer_id?: string;
-  subscription_id?: string;
-  status: "open" | "complete" | "expired";
+/**
+ * Check if Dodo is configured
+ */
+export function isDodoConfigured(): boolean {
+  return Boolean(process.env.DODO_PAYMENTS_API_KEY);
 }
 
 // ============================================
-// DODO PAYMENTS CLIENT
+// WRAPPER CLASS (for backwards compatibility)
 // ============================================
 
 export class DodoPaymentsClient {
-  private apiKey: string;
-  private webhookSecret: string;
-  private baseUrl: string;
+  private client: DodoPayments | null = null;
 
-  constructor(config?: Partial<DodoConfig>) {
-    // Accept both DODO_PAYMENTS_API_KEY (Vercel) and DODO_API_KEY (legacy)
-    this.apiKey = config?.apiKey || process.env.DODO_PAYMENTS_API_KEY || process.env.DODO_API_KEY || "";
-    this.webhookSecret = config?.webhookSecret || process.env.DODO_WEBHOOK_SECRET || "";
-    this.baseUrl = config?.baseUrl || "https://api.dodopayments.com/v1";
+  constructor() {
+    // Lazy initialization - only create when methods are called
+  }
 
-    if (!this.apiKey) {
-      console.warn("Dodo Payments not configured - missing DODO_PAYMENTS_API_KEY");
+  private getClient(): DodoPayments {
+    if (!this.client) {
+      const apiKey = process.env.DODO_PAYMENTS_API_KEY || process.env.DODO_API_KEY;
+      
+      if (!apiKey) {
+        throw new Error("DODO_PAYMENTS_API_KEY is not configured");
+      }
+
+      const isProduction = process.env.NODE_ENV === "production";
+      
+      this.client = new DodoPayments({
+        bearerToken: apiKey,
+        environment: isProduction ? "live_mode" : "test_mode",
+      });
     }
+    return this.client;
   }
 
   /**
    * Check if Dodo is configured
    */
   isConfigured(): boolean {
-    return Boolean(this.apiKey);
-  }
-
-  /**
-   * Make authenticated API request
-   */
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers: {
-        "Authorization": `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("Dodo API error:", data);
-      throw new Error(data.message || `Dodo API error: ${response.status}`);
-    }
-
-    return data;
+    return Boolean(process.env.DODO_PAYMENTS_API_KEY || process.env.DODO_API_KEY);
   }
 
   // ============================================
@@ -150,18 +99,18 @@ export class DodoPaymentsClient {
     email: string;
     name?: string;
     metadata?: Record<string, string>;
-  }): Promise<Customer> {
-    return this.request<Customer>("/customers", {
-      method: "POST",
-      body: JSON.stringify(params),
+  }) {
+    return this.getClient().customers.create({
+      email: params.email,
+      name: params.name,
     });
   }
 
   /**
    * Get customer by ID
    */
-  async getCustomer(customerId: string): Promise<Customer> {
-    return this.request<Customer>(`/customers/${customerId}`);
+  async getCustomer(customerId: string) {
+    return this.getClient().customers.retrieve(customerId);
   }
 
   /**
@@ -169,26 +118,9 @@ export class DodoPaymentsClient {
    */
   async updateCustomer(
     customerId: string,
-    params: { name?: string; metadata?: Record<string, string> }
-  ): Promise<Customer> {
-    return this.request<Customer>(`/customers/${customerId}`, {
-      method: "PATCH",
-      body: JSON.stringify(params),
-    });
-  }
-
-  /**
-   * Find customer by email
-   */
-  async findCustomerByEmail(email: string): Promise<Customer | null> {
-    try {
-      const response = await this.request<{ data: Customer[] }>(
-        `/customers?email=${encodeURIComponent(email)}`
-      );
-      return response.data[0] || null;
-    } catch {
-      return null;
-    }
+    params: { name?: string }
+  ) {
+    return this.getClient().customers.update(customerId, params);
   }
 
   // ============================================
@@ -196,64 +128,18 @@ export class DodoPaymentsClient {
   // ============================================
 
   /**
-   * Create a subscription
-   */
-  async createSubscription(params: {
-    customer_id: string;
-    product_id: string;
-    metadata?: Record<string, string>;
-  }): Promise<Subscription> {
-    return this.request<Subscription>("/subscriptions", {
-      method: "POST",
-      body: JSON.stringify(params),
-    });
-  }
-
-  /**
    * Get subscription
    */
-  async getSubscription(subscriptionId: string): Promise<Subscription> {
-    return this.request<Subscription>(`/subscriptions/${subscriptionId}`);
-  }
-
-  /**
-   * List customer subscriptions
-   */
-  async listSubscriptions(customerId: string): Promise<Subscription[]> {
-    const response = await this.request<{ data: Subscription[] }>(
-      `/subscriptions?customer_id=${customerId}`
-    );
-    return response.data;
+  async getSubscription(subscriptionId: string) {
+    return this.getClient().subscriptions.retrieve(subscriptionId);
   }
 
   /**
    * Cancel subscription
    */
-  async cancelSubscription(
-    subscriptionId: string,
-    immediately: boolean = false
-  ): Promise<Subscription> {
-    return this.request<Subscription>(`/subscriptions/${subscriptionId}/cancel`, {
-      method: "POST",
-      body: JSON.stringify({ immediately }),
-    });
-  }
-
-  /**
-   * Pause subscription
-   */
-  async pauseSubscription(subscriptionId: string): Promise<Subscription> {
-    return this.request<Subscription>(`/subscriptions/${subscriptionId}/pause`, {
-      method: "POST",
-    });
-  }
-
-  /**
-   * Resume subscription
-   */
-  async resumeSubscription(subscriptionId: string): Promise<Subscription> {
-    return this.request<Subscription>(`/subscriptions/${subscriptionId}/resume`, {
-      method: "POST",
+  async cancelSubscription(subscriptionId: string) {
+    return this.getClient().subscriptions.update(subscriptionId, {
+      cancel_at_next_billing_date: true,
     });
   }
 
@@ -262,44 +148,13 @@ export class DodoPaymentsClient {
    */
   async updateSubscription(
     subscriptionId: string,
-    params: { product_id: string }
-  ): Promise<Subscription> {
-    return this.request<Subscription>(`/subscriptions/${subscriptionId}`, {
-      method: "PATCH",
-      body: JSON.stringify(params),
+    params: { product_id: string; quantity?: number }
+  ) {
+    return this.getClient().subscriptions.changePlan(subscriptionId, {
+      product_id: params.product_id,
+      quantity: params.quantity || 1,
+      proration_billing_mode: "prorated_immediately",
     });
-  }
-
-  // ============================================
-  // USAGE-BASED BILLING
-  // ============================================
-
-  /**
-   * Report usage for a subscription
-   */
-  async reportUsage(params: UsageRecord): Promise<{ success: boolean }> {
-    return this.request<{ success: boolean }>("/usage", {
-      method: "POST",
-      body: JSON.stringify({
-        subscription_id: params.subscription_id,
-        quantity: params.quantity,
-        timestamp: params.timestamp || new Date().toISOString(),
-        action: params.action,
-        idempotency_key: params.idempotency_key,
-      }),
-    });
-  }
-
-  /**
-   * Get usage for a subscription in the current period
-   */
-  async getUsage(subscriptionId: string): Promise<{
-    total: number;
-    records: UsageRecord[];
-  }> {
-    return this.request<{ total: number; records: UsageRecord[] }>(
-      `/usage?subscription_id=${subscriptionId}`
-    );
   }
 
   // ============================================
@@ -316,120 +171,49 @@ export class DodoPaymentsClient {
     success_url: string;
     cancel_url: string;
     metadata?: Record<string, string>;
-  }): Promise<CheckoutSession> {
-    return this.request<CheckoutSession>("/checkout/sessions", {
-      method: "POST",
-      body: JSON.stringify(params),
+  }) {
+    const result = await this.getClient().checkoutSessions.create({
+      product_cart: [
+        {
+          product_id: params.product_id,
+          quantity: 1,
+        },
+      ],
+      customer: params.customer_email ? {
+        email: params.customer_email,
+      } : undefined,
+      return_url: params.success_url,
+      metadata: params.metadata,
     });
-  }
 
-  /**
-   * Get checkout session
-   */
-  async getCheckoutSession(sessionId: string): Promise<CheckoutSession> {
-    return this.request<CheckoutSession>(`/checkout/sessions/${sessionId}`);
-  }
-
-  // ============================================
-  // INVOICES
-  // ============================================
-
-  /**
-   * List customer invoices
-   */
-  async listInvoices(customerId: string): Promise<Invoice[]> {
-    const response = await this.request<{ data: Invoice[] }>(
-      `/invoices?customer_id=${customerId}`
-    );
-    return response.data;
-  }
-
-  /**
-   * Get invoice
-   */
-  async getInvoice(invoiceId: string): Promise<Invoice> {
-    return this.request<Invoice>(`/invoices/${invoiceId}`);
+    return {
+      id: result.session_id,
+      url: result.checkout_url || "",
+      status: "open" as const,
+    };
   }
 
   // ============================================
-  // ONE-TIME PAYMENTS (for on-demand credits)
+  // CUSTOMER PORTAL
   // ============================================
 
   /**
-   * Create a payment intent for one-time charges
+   * Create a customer portal session for managing subscriptions
    */
-  async createPaymentIntent(params: {
-    amount: number;
-    currency?: string;
-    customer_id: string;
-    description?: string;
-    metadata?: Record<string, string>;
-  }): Promise<PaymentIntent> {
-    return this.request<PaymentIntent>("/payment_intents", {
-      method: "POST",
-      body: JSON.stringify({
-        ...params,
-        currency: params.currency || "usd",
-      }),
-    });
-  }
-
-  /**
-   * Confirm a payment intent
-   */
-  async confirmPaymentIntent(
-    paymentIntentId: string,
-    params?: { payment_method?: string }
-  ): Promise<PaymentIntent> {
-    return this.request<PaymentIntent>(
-      `/payment_intents/${paymentIntentId}/confirm`,
+  async createCustomerPortalSession(params: {
+    customerId: string;
+    returnUrl: string;
+  }) {
+    const result = await this.getClient().customers.customerPortal.create(
+      params.customerId,
       {
-        method: "POST",
-        body: JSON.stringify(params || {}),
+        return_url: params.returnUrl,
+        send_email: false,
       }
     );
-  }
-
-  // ============================================
-  // WEBHOOKS
-  // ============================================
-
-  /**
-   * Verify webhook signature
-   */
-  verifyWebhookSignature(
-    payload: string,
-    signature: string
-  ): boolean {
-    if (!this.webhookSecret) {
-      console.warn("Webhook secret not configured");
-      return false;
-    }
-
-    const crypto = require("crypto");
-    const expectedSignature = crypto
-      .createHmac("sha256", this.webhookSecret)
-      .update(payload)
-      .digest("hex");
-
-    try {
-      return crypto.timingSafeEqual(
-        Buffer.from(signature),
-        Buffer.from(expectedSignature)
-      );
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Parse webhook event
-   */
-  parseWebhookEvent(payload: string): {
-    type: string;
-    data: Record<string, unknown>;
-  } {
-    return JSON.parse(payload);
+    return {
+      url: result.link,
+    };
   }
 }
 
@@ -439,3 +223,8 @@ export class DodoPaymentsClient {
 
 export const dodo = new DodoPaymentsClient();
 
+// ============================================
+// RE-EXPORTS
+// ============================================
+
+export { DodoPayments };
