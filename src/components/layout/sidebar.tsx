@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -24,6 +24,7 @@ import {
   Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import {
   Tooltip,
   TooltipContent,
@@ -144,9 +145,48 @@ interface SidebarProps {
   className?: string;
 }
 
+// Usage stats type
+interface UsageStats {
+  articles: { used: number; limit: number };
+  keywords: { used: number; limit: number };
+  audits: { used: number; limit: number };
+}
+
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [usage, setUsage] = useState<UsageStats | null>(null);
+
+  // Fetch usage stats
+  useEffect(() => {
+    async function fetchUsage() {
+      try {
+        const res = await fetch("/api/billing/usage");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.data) {
+            setUsage({
+              articles: { 
+                used: data.data.usage?.articles || 0, 
+                limit: data.data.limits?.articles || 10 
+              },
+              keywords: { 
+                used: data.data.usage?.keywords || 0, 
+                limit: data.data.limits?.keywords || 100 
+              },
+              audits: { 
+                used: data.data.usage?.audits || 0, 
+                limit: data.data.limits?.audits || 5 
+              },
+            });
+          }
+        }
+      } catch {
+        // Silently fail - usage display is non-critical
+      }
+    }
+    fetchUsage();
+  }, [pathname]); // Refetch when navigating
 
   const NavItem = ({ item }: { item: NavItemType }) => {
     const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -251,6 +291,29 @@ export function Sidebar({ className }: SidebarProps) {
           </Link>
         </div>
 
+        {/* Generate Article CTA */}
+        <div className={cn("p-3 border-b", collapsed && "px-2")}>
+          <Link href="/content/new">
+            {collapsed ? (
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <Button size="icon" className="w-full bg-primary hover:bg-primary/90">
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  Generate Article
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Button className="w-full gap-2 bg-primary hover:bg-primary/90">
+                <Sparkles className="h-4 w-4" />
+                Generate Article
+              </Button>
+            )}
+          </Link>
+        </div>
+
         {/* Navigation */}
         <nav className="flex-1 space-y-6 overflow-y-auto p-3">
           <NavSection title="Overview" items={mainNavItems} />
@@ -260,7 +323,28 @@ export function Sidebar({ className }: SidebarProps) {
         </nav>
 
         {/* Bottom Section */}
-        <div className="border-t p-3">
+        <div className="border-t p-3 space-y-3">
+          {/* Usage Stats */}
+          {!collapsed && usage && (
+            <div className="space-y-2 px-2 pb-2">
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Usage
+              </div>
+              <div className="space-y-2">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Articles</span>
+                    <span className="font-medium">{usage.articles.used}/{usage.articles.limit}</span>
+                  </div>
+                  <Progress 
+                    value={Math.min(100, (usage.articles.used / usage.articles.limit) * 100)} 
+                    className="h-1.5"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Settings */}
           <NavItem
             item={{

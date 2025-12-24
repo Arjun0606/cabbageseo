@@ -11,9 +11,13 @@ interface SiteRow {
   id: string;
   domain: string;
   name: string;
-  url: string;
-  status: string;
+  is_active: boolean;
+  autopilot_enabled: boolean;
   settings: Record<string, unknown> | null;
+  seo_score: number | null;
+  gsc_connected: boolean;
+  cms_connected: boolean;
+  cms_type: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -77,31 +81,20 @@ export async function GET() {
           .eq("site_id", site.id)
           .eq("is_resolved", false);
 
-        // Get integrations
-        const { data: integrations } = await supabase
-          .from("integrations")
-          .select("type, status")
-          .or(`site_id.eq.${site.id},site_id.is.null`)
-          .eq("organization_id", orgId);
-
-        const integrationsData = (integrations || []) as { type: string; status: string }[];
-        const hasGSC = integrationsData.some(i => i.type === "gsc" && i.status === "connected");
-        const hasCMS = integrationsData.some(i => ["wordpress", "webflow", "shopify"].includes(i.type) && i.status === "connected");
-        const cmsType = integrationsData.find(i => ["wordpress", "webflow", "shopify"].includes(i.type) && i.status === "connected")?.type;
-
         return {
           id: site.id,
           domain: site.domain,
           name: site.name,
-          url: site.url,
-          status: site.status,
+          url: `https://${site.domain}`,
+          status: site.is_active ? "active" : "inactive",
+          seoScore: site.seo_score || 0,
           keywords: keywordCount || 0,
           content: contentCount || 0,
           issues: issueCount || 0,
-          gscConnected: hasGSC,
-          cmsConnected: hasCMS,
-          cmsType: cmsType || null,
-          autopilotEnabled: (site.settings as { autopilot?: boolean } | null)?.autopilot || false,
+          gscConnected: site.gsc_connected || false,
+          cmsConnected: site.cms_connected || false,
+          cmsType: site.cms_type || null,
+          autopilotEnabled: site.autopilot_enabled || false,
           createdAt: site.created_at,
         };
       })
@@ -162,14 +155,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Create site
+    const cleanDomain = domain.replace(/^https?:\/\//, "").replace(/\/$/, "");
     const { data: newSite, error } = await supabase
       .from("sites")
       .insert({
         organization_id: orgId,
-        domain: domain.replace(/^https?:\/\//, "").replace(/\/$/, ""),
-        name: name || domain,
-        url: url || `https://${domain}`,
-        status: "active",
+        domain: cleanDomain,
+        name: name || cleanDomain,
+        is_active: true,
       } as never)
       .select()
       .single();
