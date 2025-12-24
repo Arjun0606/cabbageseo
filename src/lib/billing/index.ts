@@ -106,18 +106,17 @@ export type {
 
 export { 
   getDodo,
+  isDodoConfigured,
   getProductIdForPlan,
-  USAGE_METERS,
-  trackUsage,
   createCheckoutUrl,
   getBillingPortalUrl,
-  DodoPaymentsClient,
-} from "./dodo";
-
-export type {
-  DodoCustomer,
-  DodoSubscription,
-  DodoCheckoutSession,
+  createCustomer,
+  getCustomer,
+  getSubscription,
+  cancelSubscription,
+  resumeSubscription,
+  changeSubscriptionPlan,
+  DodoPayments,
 } from "./dodo";
 
 export { dodo } from "./dodo-client";

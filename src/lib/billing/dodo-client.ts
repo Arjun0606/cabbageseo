@@ -63,7 +63,7 @@ export class DodoPaymentsClient {
     // Lazy initialization - only create when methods are called
   }
 
-  private getClient(): DodoPayments {
+  getClient(): DodoPayments {
     if (!this.client) {
       const apiKey = process.env.DODO_PAYMENTS_API_KEY || process.env.DODO_API_KEY;
       
@@ -102,7 +102,8 @@ export class DodoPaymentsClient {
   }) {
     return this.getClient().customers.create({
       email: params.email,
-      name: params.name,
+      name: params.name || params.email.split('@')[0], // Default to email username if no name
+      metadata: params.metadata,
     });
   }
 

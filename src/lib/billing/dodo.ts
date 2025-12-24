@@ -116,14 +116,11 @@ export async function createCheckoutUrl(params: {
 
 /**
  * Get customer portal URL
+ * Note: Dodo's portal doesn't support return_url - it's a standalone portal
  */
-export async function getCustomerPortalUrl(
-  customerId: string,
-  returnUrl: string
-): Promise<string> {
+export async function getBillingPortalUrl(customerId: string): Promise<string> {
   const dodo = getDodo();
   const session = await dodo.customers.customerPortal.create(customerId, {
-    return_url: returnUrl,
     send_email: false,
   });
   return session.link;
@@ -193,7 +190,7 @@ export async function createCustomer(params: {
   const dodo = getDodo();
   return dodo.customers.create({
     email: params.email,
-    name: params.name,
+    name: params.name || params.email.split('@')[0], // Default to email username if no name
   });
 }
 

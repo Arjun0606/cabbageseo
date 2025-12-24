@@ -244,22 +244,29 @@ export async function recordOverage(
   // Report usage to Dodo for real-time billing
   if (dodo.isConfigured()) {
     try {
-      // Get org's subscription ID
-      const { data: orgSub } = await supabase
+      // Get org's customer ID
+      const { data: orgData } = await supabase
         .from("organizations")
-        .select("stripe_subscription_id")
+        .select("stripe_customer_id")
         .eq("id", organizationId)
         .single();
       
-      const subscriptionId = (orgSub as { stripe_subscription_id?: string } | null)?.stripe_subscription_id;
+      const customerId = (orgData as { stripe_customer_id?: string } | null)?.stripe_customer_id;
       
-      if (subscriptionId) {
-        await dodo.reportUsage({
-          subscription_id: subscriptionId,
-          quantity: costCents, // Report in cents
-          timestamp: new Date().toISOString(),
-          action: resource.type,
-          idempotency_key: `${organizationId}-${resource.type}-${Date.now()}`,
+      if (customerId) {
+        const client = dodo.getClient();
+        await client.usageEvents.ingest({
+          events: [{
+            customer_id: customerId,
+            event_id: `${organizationId}-${resource.type}-${Date.now()}`,
+            event_name: `overage_${resource.type}`,
+            timestamp: new Date().toISOString(),
+            metadata: {
+              amount: resource.amount,
+              cost_cents: costCents,
+              description: resource.description || `${resource.amount} ${resource.type}`,
+            },
+          }],
         });
       }
     } catch (e) {
