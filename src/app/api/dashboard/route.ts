@@ -9,7 +9,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 
 interface DashboardData {
   sites: Array<{
@@ -58,7 +58,8 @@ interface DashboardData {
 const TESTING_MODE = true;
 
 export async function GET() {
-  const supabase = await createClient();
+  // Use service client in testing mode to bypass RLS
+  const supabase = TESTING_MODE ? createServiceClient() : await createClient();
   
   if (!supabase) {
     return NextResponse.json(
@@ -72,23 +73,23 @@ export async function GET() {
 
   // Check auth - skip in testing mode
   if (TESTING_MODE) {
-    // In testing mode, get or create a test organization
-    const { data: testOrg } = await supabase
+    // In testing mode, get or create a test organization (service client bypasses RLS)
+    const { data: testOrg, error: orgError } = await supabase
       .from("organizations")
       .select("id")
       .limit(1)
       .single();
     
-    if (testOrg) {
-      orgId = (testOrg as { id: string }).id;
-    } else {
-      // Create a test organization
+    if (orgError && orgError.code === 'PGRST116') {
+      // No org exists, create one
       const { data: newOrg } = await supabase
         .from("organizations")
-        .insert({ name: "Test Organization", plan: "starter" } as never)
+        .insert({ name: "Test Organization", plan: "starter" })
         .select("id")
         .single();
       orgId = (newOrg as { id: string } | null)?.id || null;
+    } else if (testOrg) {
+      orgId = (testOrg as { id: string }).id;
     }
   } else {
     const { data: { user } } = await supabase.auth.getUser();

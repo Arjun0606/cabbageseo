@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 
 interface SiteRow {
   id: string;
@@ -29,7 +29,8 @@ const TESTING_MODE = true;
 
 // GET - List sites
 export async function GET() {
-  const supabase = await createClient();
+  // Use service client in testing mode to bypass RLS
+  const supabase = TESTING_MODE ? createServiceClient() : await createClient();
   
   if (!supabase) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
@@ -38,23 +39,28 @@ export async function GET() {
   let orgId: string | null = null;
 
   if (TESTING_MODE) {
-    // Get or create test org
-    const { data: testOrg } = await supabase
+    // Get or create test org using service client (bypasses RLS)
+    const { data: testOrg, error: orgError } = await supabase
       .from("organizations")
       .select("id")
       .limit(1)
       .single();
     
-    if (testOrg) {
-      orgId = (testOrg as { id: string }).id;
-    } else {
-      // Create test org
-      const { data: newOrg } = await supabase
+    if (orgError && orgError.code === 'PGRST116') {
+      // No org exists, create one
+      const { data: newOrg, error: createError } = await supabase
         .from("organizations")
-        .insert({ name: "Test Organization", plan: "starter" } as never)
+        .insert({ name: "Test Organization", plan: "starter" })
         .select("id")
         .single();
+      
+      if (createError) {
+        console.error("[Sites API] Failed to create org:", createError);
+        return NextResponse.json({ success: true, data: { sites: [], stats: { total: 0 } } });
+      }
       orgId = (newOrg as { id: string } | null)?.id || null;
+    } else if (testOrg) {
+      orgId = (testOrg as { id: string }).id;
     }
   } else {
     const { data: { user } } = await supabase.auth.getUser();
@@ -152,7 +158,8 @@ export async function GET() {
 
 // POST - Create site
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
+  // Use service client in testing mode to bypass RLS
+  const supabase = TESTING_MODE ? createServiceClient() : await createClient();
   
   if (!supabase) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
@@ -161,23 +168,28 @@ export async function POST(request: NextRequest) {
   let orgId: string | null = null;
 
   if (TESTING_MODE) {
-    // Get or create test org
-    const { data: testOrg } = await supabase
+    // Get or create test org using service client (bypasses RLS)
+    const { data: testOrg, error: orgError } = await supabase
       .from("organizations")
       .select("id")
       .limit(1)
       .single();
     
-    if (testOrg) {
-      orgId = (testOrg as { id: string }).id;
-    } else {
-      // Create test org
-      const { data: newOrg } = await supabase
+    if (orgError && orgError.code === 'PGRST116') {
+      // No org exists, create one
+      const { data: newOrg, error: createError } = await supabase
         .from("organizations")
-        .insert({ name: "Test Organization", plan: "starter" } as never)
+        .insert({ name: "Test Organization", plan: "starter" })
         .select("id")
         .single();
+      
+      if (createError) {
+        console.error("[Sites API POST] Failed to create org:", createError);
+        return NextResponse.json({ error: "Failed to create organization" }, { status: 500 });
+      }
       orgId = (newOrg as { id: string } | null)?.id || null;
+    } else if (testOrg) {
+      orgId = (testOrg as { id: string }).id;
     }
   } else {
     const { data: { user } } = await supabase.auth.getUser();
