@@ -6,10 +6,21 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// ============================================
+// 🔓 TESTING MODE - AUTH BYPASS
+// Set to false before production launch
+// ============================================
+const TESTING_MODE = true;
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
+
+  // TESTING: Skip all auth checks for dashboard testing
+  if (TESTING_MODE) {
+    return supabaseResponse;
+  }
 
   // Skip auth if Supabase not configured
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
