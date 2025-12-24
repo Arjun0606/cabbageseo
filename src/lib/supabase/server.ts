@@ -52,12 +52,13 @@ export async function createClient(): Promise<SupabaseClient<Database> | null> {
  * Create a Supabase client with service role (admin) privileges
  * USE WITH CAUTION - bypasses RLS
  */
-export function createServiceClient(): SupabaseClient<Database> {
+export function createServiceClient(): SupabaseClient<Database> | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   
   if (!url || !serviceKey) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured. Database admin operations are unavailable.");
+    console.warn("SUPABASE_SERVICE_ROLE_KEY is not configured. Database admin operations are unavailable.");
+    return null;
   }
   
   return createServerClient<Database>(
