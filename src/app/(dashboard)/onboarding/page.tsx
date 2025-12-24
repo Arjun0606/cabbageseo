@@ -42,6 +42,8 @@ interface SiteAnalysis {
   siteId: string;
   domain: string;
   seoScore: number;
+  aioScore: number;        // NEW: AI Optimization score
+  combinedScore: number;   // NEW: Combined visibility score
   pagesAnalyzed: number;
   issues: {
     critical: number;
@@ -65,6 +67,8 @@ interface SiteAnalysis {
     impact: "high" | "medium" | "low";
     count?: number;
   }>;
+  topSeoFixes?: string[];
+  topAioFixes?: string[];
 }
 
 // ============================================
@@ -111,7 +115,17 @@ function StepIndicator({ step }: { step: AnalysisStep }) {
 // SEO SCORE DISPLAY
 // ============================================
 
-function SEOScoreDisplay({ score, animate = false }: { score: number; animate?: boolean }) {
+function SEOScoreDisplay({ 
+  score, 
+  animate = false,
+  size = "large",
+  color,
+}: { 
+  score: number; 
+  animate?: boolean;
+  size?: "small" | "medium" | "large";
+  color?: "default" | "purple" | "emerald";
+}) {
   const [displayScore, setDisplayScore] = useState(0);
   
   useEffect(() => {
@@ -130,7 +144,17 @@ function SEOScoreDisplay({ score, animate = false }: { score: number; animate?: 
     }
   }, [score, animate]);
 
+  // Size configurations
+  const sizes = {
+    small: { container: "w-20 h-20", radius: 35, strokeWidth: 6, textSize: "text-2xl", subSize: "text-xs", cx: 40, cy: 40 },
+    medium: { container: "w-28 h-28", radius: 50, strokeWidth: 8, textSize: "text-3xl", subSize: "text-sm", cx: 56, cy: 56 },
+    large: { container: "w-40 h-40", radius: 70, strokeWidth: 12, textSize: "text-5xl", subSize: "text-lg", cx: 80, cy: 80 },
+  };
+  const sizeConfig = sizes[size];
+
   const getColor = (s: number) => {
+    if (color === "purple") return "text-purple-500";
+    if (color === "emerald") return "text-emerald-500";
     if (s >= 80) return "text-green-500";
     if (s >= 60) return "text-yellow-500";
     if (s >= 40) return "text-orange-500";
@@ -147,6 +171,8 @@ function SEOScoreDisplay({ score, animate = false }: { score: number; animate?: 
   };
 
   const getBgColor = (s: number) => {
+    if (color === "purple") return "stroke-purple-500";
+    if (color === "emerald") return "stroke-emerald-500";
     if (s >= 80) return "stroke-green-500";
     if (s >= 60) return "stroke-yellow-500";
     if (s >= 40) return "stroke-orange-500";
@@ -155,36 +181,40 @@ function SEOScoreDisplay({ score, animate = false }: { score: number; animate?: 
 
   return (
     <div className="relative flex flex-col items-center">
-      <div className="relative w-40 h-40">
-        <svg className="w-full h-full transform -rotate-90">
+      <div className={`relative ${sizeConfig.container}`}>
+        <svg className="w-full h-full transform -rotate-90" viewBox={`0 0 ${sizeConfig.cx * 2} ${sizeConfig.cy * 2}`}>
           <circle
-            cx="80"
-            cy="80"
-            r="70"
+            cx={sizeConfig.cx}
+            cy={sizeConfig.cy}
+            r={sizeConfig.radius}
             fill="none"
-            strokeWidth="12"
+            strokeWidth={sizeConfig.strokeWidth}
             className="stroke-muted/20"
           />
           <circle
-            cx="80"
-            cy="80"
-            r="70"
+            cx={sizeConfig.cx}
+            cy={sizeConfig.cy}
+            r={sizeConfig.radius}
             fill="none"
-            strokeWidth="12"
+            strokeWidth={sizeConfig.strokeWidth}
             strokeLinecap="round"
-            strokeDasharray={2 * Math.PI * 70}
-            strokeDashoffset={2 * Math.PI * 70 * (1 - displayScore / 100)}
+            strokeDasharray={2 * Math.PI * sizeConfig.radius}
+            strokeDashoffset={2 * Math.PI * sizeConfig.radius * (1 - displayScore / 100)}
             className={`${getBgColor(displayScore)} transition-all duration-500`}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={`text-5xl font-bold ${getColor(displayScore)}`}>{displayScore}</span>
-          <span className="text-lg font-semibold text-muted-foreground">/ 100</span>
+          <span className={`${sizeConfig.textSize} font-bold ${getColor(displayScore)}`}>{displayScore}</span>
+          {size !== "small" && (
+            <span className={`${sizeConfig.subSize} font-semibold text-muted-foreground`}>/ 100</span>
+          )}
         </div>
       </div>
-      <Badge className={`mt-4 ${getColor(score)}`} variant="secondary">
-        Grade: {getGrade(score)}
-      </Badge>
+      {size === "large" && (
+        <Badge className={`mt-4 ${getColor(score)}`} variant="secondary">
+          Grade: {getGrade(score)}
+        </Badge>
+      )}
     </div>
   );
 }
@@ -511,30 +541,50 @@ export default function OnboardingPage() {
         </p>
       </div>
 
-      {/* Score and Issues */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-6 text-center">Your SEO Score</h3>
-          <SEOScoreDisplay score={analysis?.seoScore || 0} animate />
-          <div className="mt-6 grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold text-red-500">{analysis?.issues.critical}</p>
-              <p className="text-xs text-muted-foreground">Critical</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-yellow-500">{analysis?.issues.warnings}</p>
-              <p className="text-xs text-muted-foreground">Warnings</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-green-500">{analysis?.issues.passed}</p>
-              <p className="text-xs text-muted-foreground">Passed</p>
-            </div>
+      {/* Score Display - All 3 scores prominently shown */}
+      <Card className="p-6 mb-6">
+        <div className="grid grid-cols-3 gap-8 justify-items-center">
+          <div className="text-center">
+            <SEOScoreDisplay score={analysis?.seoScore || 0} animate size="medium" />
+            <h3 className="text-sm font-medium mt-2">SEO Score</h3>
+            <p className="text-xs text-muted-foreground">Search Optimization</p>
           </div>
-          <p className="text-center text-sm text-muted-foreground mt-4">
-            Analyzed {analysis?.pagesAnalyzed} pages
-          </p>
-        </Card>
+          <div className="text-center">
+            <SEOScoreDisplay score={analysis?.aioScore || 0} animate size="medium" color="purple" />
+            <h3 className="text-sm font-medium mt-2">AIO Score</h3>
+            <p className="text-xs text-muted-foreground">AI Visibility</p>
+          </div>
+          <div className="text-center">
+            <SEOScoreDisplay score={analysis?.combinedScore || 0} animate size="medium" color="emerald" />
+            <h3 className="text-sm font-medium mt-2">Combined</h3>
+            <p className="text-xs text-muted-foreground">Overall Visibility</p>
+          </div>
+        </div>
+        
+        {/* Issues summary */}
+        <div className="mt-6 pt-4 border-t flex items-center justify-center gap-8 text-center">
+          <div>
+            <p className="text-xl font-bold text-red-500">{analysis?.issues.critical}</p>
+            <p className="text-xs text-muted-foreground">Critical</p>
+          </div>
+          <div>
+            <p className="text-xl font-bold text-yellow-500">{analysis?.issues.warnings}</p>
+            <p className="text-xs text-muted-foreground">Warnings</p>
+          </div>
+          <div>
+            <p className="text-xl font-bold text-green-500">{analysis?.issues.passed}</p>
+            <p className="text-xs text-muted-foreground">Passed</p>
+          </div>
+          <div className="text-muted-foreground">|</div>
+          <div>
+            <p className="text-xl font-bold text-primary">{analysis?.pagesAnalyzed}</p>
+            <p className="text-xs text-muted-foreground">Pages Analyzed</p>
+          </div>
+        </div>
+      </Card>
 
+      {/* Quick Wins and Top Fixes */}
+      <div className="grid md:grid-cols-2 gap-6">
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Quick Wins</h3>
           {analysis?.quickWins && analysis.quickWins.length > 0 ? (
@@ -558,6 +608,28 @@ export default function OnboardingPage() {
             </div>
           ) : (
             <p className="text-muted-foreground text-sm">No immediate issues found. Great job!</p>
+          )}
+        </Card>
+
+        {/* Top AIO Fixes */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-purple-500" />
+            Top AI Visibility Fixes
+          </h3>
+          {analysis?.topAioFixes && analysis.topAioFixes.length > 0 ? (
+            <div className="space-y-3">
+              {analysis.topAioFixes.slice(0, 5).map((fix, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-purple-500/5">
+                  <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-500 flex items-center justify-center text-sm font-medium">
+                    {i + 1}
+                  </div>
+                  <p className="text-sm">{fix}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-sm">Your site is well optimized for AI visibility!</p>
           )}
         </Card>
       </div>

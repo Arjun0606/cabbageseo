@@ -1,27 +1,29 @@
 /**
  * Onboarding Analysis API
  * 
- * One-shot analysis for new users:
+ * One-shot analysis for new users using UNIFIED analyzer:
  * 1. Validate & normalize URL
- * 2. Discover sitemap
- * 3. Quick crawl (limited pages for speed)
- * 4. Technical audit
- * 5. Keyword discovery
- * 6. Generate quick wins
- * 7. Save site to database
+ * 2. Quick crawl (limited pages for speed)
+ * 3. Unified SEO + AIO analysis (consistent with marketing analyzer)
+ * 4. Keyword discovery
+ * 5. Generate quick wins
+ * 6. Save site to database
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { createCrawler, createAuditEngine } from "@/lib/crawler";
+import { createCrawler } from "@/lib/crawler";
+import { analyzeMultiplePages, analyzePageUnified, type PageInput } from "@/lib/analyzer";
 import { dataForSEO } from "@/lib/integrations/dataforseo/client";
 import { claude } from "@/lib/ai/claude-client";
 
-// Types
-interface AnalysisResult {
+// Types - Now includes AIO score!
+interface OnboardingResult {
   siteId: string;
   domain: string;
   seoScore: number;
+  aioScore: number;      // NEW: AIO score
+  combinedScore: number; // NEW: Combined score
   pagesAnalyzed: number;
   issues: {
     critical: number;
@@ -45,6 +47,9 @@ interface AnalysisResult {
     impact: "high" | "medium" | "low";
     count?: number;
   }>;
+  // NEW: Top recommendations
+  topSeoFixes: string[];
+  topAioFixes: string[];
 }
 
 // Helper: Extract domain from URL
@@ -60,38 +65,14 @@ function extractDomain(url: string): string {
 // Helper: Normalize URL
 function normalizeUrl(input: string): string {
   let url = input.trim().toLowerCase();
-  
-  // Remove trailing slashes
   url = url.replace(/\/+$/, "");
-  
-  // Add protocol if missing
   if (!url.startsWith("http://") && !url.startsWith("https://")) {
     url = "https://" + url;
   }
-  
   return url;
 }
 
-// Helper: Calculate SEO score from audit
-// Note: Audit engine uses "critical", "warning", "info" severities
-function calculateSeoScore(issues: { severity: string }[]): number {
-  const critical = issues.filter(i => i.severity === "critical").length;
-  const warning = issues.filter(i => i.severity === "warning").length;
-  const info = issues.filter(i => i.severity === "info").length;
-  
-  // Start at 100 and deduct points
-  let score = 100;
-  score -= critical * 15;  // Critical issues are severe
-  score -= warning * 5;    // Warnings are moderate
-  score -= info * 1;       // Info issues are minor
-  
-  return Math.max(0, Math.min(100, score));
-}
-
 // Helper: Classify opportunity
-// High: good volume-to-difficulty ratio AND low difficulty
-// Medium: decent ratio AND reasonable difficulty (both conditions must be true)
-// Low: everything else
 function classifyOpportunity(volume: number, difficulty: number): "high" | "medium" | "low" {
   const ratio = volume / (difficulty + 1);
   if (ratio > 200 && difficulty < 40) return "high";
@@ -148,7 +129,6 @@ export async function POST(request: NextRequest) {
 
     // If user doesn't exist or no organization, create them
     if (!userData) {
-      // User doesn't exist in users table yet - create user first
       const { error: userError } = await serviceClient
         .from("users")
         .insert({
@@ -160,7 +140,6 @@ export async function POST(request: NextRequest) {
 
       if (userError) {
         console.error("Failed to create user:", userError);
-        // Continue anyway - might already exist
       }
     }
 
@@ -178,7 +157,6 @@ export async function POST(request: NextRequest) {
 
       if (orgError || !newOrg) {
         console.error("Failed to create organization:", orgError);
-        // Try to get existing org (might have been created by trigger)
         const { data: existingOrg } = await serviceClient
           .from("organizations")
           .select("id")
@@ -220,7 +198,7 @@ export async function POST(request: NextRequest) {
     if (existingSite) {
       siteId = (existingSite as { id: string }).id;
     } else {
-      // Create new site (only use columns that exist in the schema)
+      // Create new site
       const { data: newSite, error: siteError } = await serviceClient
         .from("sites")
         .insert({
@@ -240,47 +218,69 @@ export async function POST(request: NextRequest) {
     }
 
     // ========================================
-    // STEP 1: Quick crawl (limited for speed)
+    // STEP 1: Quick crawl with raw content for AIO analysis
     // ========================================
-    // Note: We could use sitemap for faster crawling, but for onboarding
-    // we want a quick representative sample, so we just crawl directly
     const crawler = createCrawler({
-      maxPages: 30,      // Quick scan for onboarding
+      maxPages: 20,      // Quick scan for onboarding
       maxDepth: 2,
       delayMs: 300,
       respectRobotsTxt: true,
       followExternalLinks: false,
+      includeRawContent: true, // IMPORTANT: Need raw HTML/text for AIO analysis
     });
 
     const crawlResult = await crawler.crawl(url);
     const pagesAnalyzed = crawlResult.pages?.length || 0;
 
-    // ========================================
-    // STEP 3: Technical audit
-    // ========================================
-    const auditEngine = createAuditEngine();
-    const auditResult = auditEngine.audit(crawlResult);
-
-    const issues = auditResult.issues || [];
-    const criticalCount = issues.filter(i => i.severity === "critical").length;
-    const warningCount = issues.filter(i => i.severity === "warning").length;
-    const infoCount = issues.filter(i => i.severity === "info").length;
-    const passedCount = Math.max(0, (pagesAnalyzed * 5) - criticalCount - warningCount - infoCount); // Estimate
-
-    const seoScore = calculateSeoScore(issues);
+    if (pagesAnalyzed === 0) {
+      return NextResponse.json(
+        { error: "Could not access the website. Please check the URL." },
+        { status: 400 }
+      );
+    }
 
     // ========================================
-    // STEP 4: Keyword discovery
+    // STEP 2: UNIFIED SEO + AIO Analysis
     // ========================================
-    let keywords: AnalysisResult["keywords"] = [];
+    // Convert crawl pages to PageInput format
+    const pageInputs: PageInput[] = (crawlResult.pages || []).map(page => ({
+      url: page.url,
+      title: page.title,
+      metaDescription: page.metaDescription,
+      h1: page.h1,
+      h2: page.h2,
+      h3: page.h3,
+      wordCount: page.wordCount,
+      loadTimeMs: page.loadTimeMs,
+      htmlSize: page.htmlSize,
+      schemaMarkup: page.schemaMarkup,
+      rawHtml: page.rawHtml,
+      textContent: page.textContent,
+      images: page.images?.map(img => ({
+        src: img.src,
+        alt: img.alt ?? undefined,
+      })),
+      links: page.links,
+    }));
+
+    // Use unified analyzer for consistent scoring
+    const analysisResult = analyzeMultiplePages(pageInputs);
+    
+    // Also analyze the homepage specifically for detailed AIO insights
+    const homepageAnalysis = pageInputs.length > 0 
+      ? analyzePageUnified(pageInputs[0])
+      : null;
+
+    // ========================================
+    // STEP 3: Keyword discovery (unchanged)
+    // ========================================
+    let keywords: OnboardingResult["keywords"] = [];
     
     try {
-      // Extract potential keywords from page content
       const pageTexts = crawlResult.pages?.slice(0, 10).map(p => 
         `${p.title || ""} ${p.metaDescription || ""} ${(p.h1 || []).join(" ")} ${(p.h2 || []).join(" ")}`
       ).join(" ") || "";
 
-      // Use Claude to extract seed keywords
       let seedKeywords: string[] = [];
       try {
         const keywordResponse = await claude.chat([{
@@ -294,11 +294,9 @@ Example output: ["keyword1", "keyword2", "keyword3"]`
 
         seedKeywords = JSON.parse(keywordResponse.content);
       } catch {
-        // Fallback: use domain-based keywords
         seedKeywords = [domain.replace(/\.(com|net|org|io)$/, "")];
       }
 
-      // Get keyword data from DataForSEO
       if (seedKeywords.length > 0) {
         const keywordData = await dataForSEO.getKeywordSuggestions(
           seedKeywords[0],
@@ -315,13 +313,12 @@ Example output: ["keyword1", "keyword2", "keyword3"]`
       }
     } catch (e) {
       console.log("Keyword research failed:", e);
-      // Return empty keywords - not critical for onboarding
     }
 
     // ========================================
-    // STEP 5: Generate content ideas with AI
+    // STEP 4: Generate content ideas (unchanged)
     // ========================================
-    let contentIdeas: AnalysisResult["contentIdeas"] = [];
+    let contentIdeas: OnboardingResult["contentIdeas"] = [];
     
     if (keywords.length > 0) {
       try {
@@ -336,7 +333,6 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
 
         contentIdeas = JSON.parse(ideaResponse.content);
       } catch {
-        // Fallback content ideas
         contentIdeas = keywords.slice(0, 3).map(k => ({
           title: `Complete Guide to ${k.keyword.charAt(0).toUpperCase() + k.keyword.slice(1)}`,
           keyword: k.keyword,
@@ -346,126 +342,124 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
     }
 
     // ========================================
-    // STEP 6: Generate quick wins
+    // STEP 5: Generate quick wins from unified analysis
     // ========================================
-    const quickWins: AnalysisResult["quickWins"] = [];
+    const quickWins: OnboardingResult["quickWins"] = [];
 
-    // Missing meta descriptions
-    const missingMeta = crawlResult.pages?.filter(p => !p.metaDescription).length || 0;
-    if (missingMeta > 0) {
+    // Use unified recommendations
+    if (analysisResult.topSeoFixes.length > 0) {
       quickWins.push({
-        type: "meta",
-        title: `Add missing meta descriptions to ${missingMeta} pages`,
-        impact: missingMeta > 5 ? "high" : "medium",
-        count: missingMeta,
-      });
-    }
-
-    // Missing title tags
-    const missingTitles = crawlResult.pages?.filter(p => !p.title).length || 0;
-    if (missingTitles > 0) {
-      quickWins.push({
-        type: "title",
-        title: `Add missing title tags to ${missingTitles} pages`,
-        impact: "high",
-        count: missingTitles,
-      });
-    }
-
-    // Images without alt text
-    const imagesWithoutAlt = crawlResult.pages?.reduce((sum, p) => 
-      sum + (p.images?.filter(img => !img.alt).length || 0), 0) || 0;
-    if (imagesWithoutAlt > 0) {
-      quickWins.push({
-        type: "images",
-        title: `Add alt text to ${imagesWithoutAlt} images`,
-        impact: imagesWithoutAlt > 10 ? "high" : "medium",
-        count: imagesWithoutAlt,
-      });
-    }
-
-    // Broken links (category is "links")
-    const brokenLinks = issues.filter(i => i.category === "links").length;
-    if (brokenLinks > 0) {
-      quickWins.push({
-        type: "links",
-        title: `Fix ${brokenLinks} link issues`,
-        impact: "high",
-        count: brokenLinks,
-      });
-    }
-
-    // Slow pages
-    const slowPages = crawlResult.pages?.filter(p => (p.loadTimeMs || 0) > 3000).length || 0;
-    if (slowPages > 0) {
-      quickWins.push({
-        type: "speed",
-        title: `Optimize ${slowPages} slow-loading pages`,
-        impact: "medium",
-        count: slowPages,
-      });
-    }
-
-    // If no quick wins found, add generic ones
-    if (quickWins.length === 0) {
-      quickWins.push({
-        type: "content",
-        title: "Create content targeting low-competition keywords",
+        type: "seo",
+        title: analysisResult.topSeoFixes[0],
         impact: "high",
       });
+    }
+
+    if (analysisResult.topAioFixes.length > 0) {
       quickWins.push({
-        type: "links",
-        title: "Build internal links between related pages",
-        impact: "medium",
+        type: "aio",
+        title: analysisResult.topAioFixes[0],
+        impact: "high",
       });
+    }
+
+    // Add specific quick wins based on homepage analysis
+    if (homepageAnalysis) {
+      // AIO-specific quick wins
+      if (!homepageAnalysis.aio.factors.hasSchema) {
+        quickWins.push({
+          type: "schema",
+          title: "Add JSON-LD structured data for AI visibility",
+          impact: "high",
+        });
+      }
+      
+      if (!homepageAnalysis.aio.factors.hasFAQSection) {
+        quickWins.push({
+          type: "faq",
+          title: "Add FAQ section - AI platforms love Q&A format",
+          impact: "high",
+        });
+      }
+      
+      if (!homepageAnalysis.aio.factors.hasDirectAnswers) {
+        quickWins.push({
+          type: "content",
+          title: "Add direct definitions (X is...) for AI citations",
+          impact: "medium",
+        });
+      }
+    }
+
+    // If not enough quick wins, add generic ones
+    if (quickWins.length < 3) {
+      if (analysisResult.issues.critical > 0) {
+        quickWins.push({
+          type: "technical",
+          title: `Fix ${analysisResult.issues.critical} critical SEO issues`,
+          impact: "high",
+          count: analysisResult.issues.critical,
+        });
+      }
+      
+      if (analysisResult.issues.warnings > 0) {
+        quickWins.push({
+          type: "optimization",
+          title: `Address ${analysisResult.issues.warnings} SEO warnings`,
+          impact: "medium",
+          count: analysisResult.issues.warnings,
+        });
+      }
     }
 
     // ========================================
-    // STEP 7: Update site status (use serviceClient to bypass RLS)
+    // STEP 6: Update site with scores (use serviceClient)
     // ========================================
     await serviceClient
       .from("sites")
       .update({
         is_active: true,
-        seo_score: seoScore,
+        seo_score: analysisResult.seoScore,
+        aio_score_avg: analysisResult.aioScore,
         last_crawl_at: new Date().toISOString(),
         last_crawl_pages_count: pagesAnalyzed,
+        aio_last_analyzed: new Date().toISOString(),
       } as never)
       .eq("id", siteId);
 
-    // Save audit result (use serviceClient to bypass RLS)
+    // Save audit result (use serviceClient)
     await serviceClient
       .from("audits")
       .insert({
         site_id: siteId,
         type: "onboarding",
-        overall_score: seoScore,
+        overall_score: analysisResult.combinedScore,
+        technical_score: analysisResult.seoScore,
+        aio_score: analysisResult.aioScore,
         pages_scanned: pagesAnalyzed,
-        issues_found: issues.length,
-        critical_issues: criticalCount,
-        warning_issues: warningCount,
-        info_issues: infoCount,
-        results: auditResult,
+        issues_found: analysisResult.issues.critical + analysisResult.issues.warnings,
+        critical_issues: analysisResult.issues.critical,
+        warning_issues: analysisResult.issues.warnings,
         status: "completed",
         completed_at: new Date().toISOString(),
       } as never);
 
     // ========================================
-    // Return results
+    // Return results with AIO scores!
     // ========================================
-    const result: AnalysisResult = {
+    const result: OnboardingResult = {
       siteId,
       domain,
-      seoScore,
+      seoScore: analysisResult.seoScore,
+      aioScore: analysisResult.aioScore,
+      combinedScore: analysisResult.combinedScore,
       pagesAnalyzed,
-      issues: {
-        critical: criticalCount,
-        warnings: warningCount,
-        passed: passedCount,
-      },
+      issues: analysisResult.issues,
       keywords,
       contentIdeas,
       quickWins,
+      topSeoFixes: analysisResult.topSeoFixes,
+      topAioFixes: analysisResult.topAioFixes,
     };
 
     return NextResponse.json({ success: true, data: result });
@@ -478,4 +472,3 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
     );
   }
 }
-
