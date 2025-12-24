@@ -166,10 +166,13 @@ export async function GET() {
 // POST - Create site
 export async function POST(request: NextRequest) {
   // Use service client in testing mode to bypass RLS
+  console.log("[Sites API POST] TESTING_MODE:", TESTING_MODE);
   const supabase = TESTING_MODE ? createServiceClient() : await createClient();
+  console.log("[Sites API POST] Supabase client created:", !!supabase);
   
   if (!supabase) {
-    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+    console.error("[Sites API POST] Database not configured - service role key might be missing");
+    return NextResponse.json({ error: "Database not configured - check SUPABASE_SERVICE_ROLE_KEY" }, { status: 503 });
   }
 
   let orgId: string | null = null;
