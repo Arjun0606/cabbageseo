@@ -10,12 +10,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import crypto from "crypto";
 
-// Disable body parsing - we need the raw body for signature verification
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// Note: In Next.js App Router, we get the raw body via request.text()
+// No config needed - body parsing is handled automatically
 
 // Webhook event types from Dodo
 type DodoEventType =
@@ -138,7 +134,9 @@ export async function POST(request: NextRequest) {
 
     // Get organization from metadata
     const organizationId = payload.metadata?.organization_id;
-    if (!organizationId && type.startsWith("subscription.")) {
+    
+    // For subscription events, organization_id is required
+    if (type.startsWith("subscription.") && !organizationId) {
       console.error("[Webhook] No organization_id in metadata");
       return NextResponse.json({ error: "Missing organization_id" }, { status: 400 });
     }
@@ -148,6 +146,8 @@ export async function POST(request: NextRequest) {
       case "subscription.active":
       case "subscription.renewed":
       case "subscription.plan_changed": {
+        if (!organizationId) break; // Type guard
+        
         // Update organization with new subscription info
         const plan = getPlanFromProductId(payload.product_id);
         const interval = getIntervalFromProductId(payload.product_id);
@@ -176,6 +176,8 @@ export async function POST(request: NextRequest) {
       case "subscription.on_hold":
       case "subscription.paused":
       case "subscription.failed": {
+        if (!organizationId) break; // Type guard
+        
         // Update subscription status
         const { error } = await supabase
           .from("organizations")
@@ -195,6 +197,8 @@ export async function POST(request: NextRequest) {
 
       case "subscription.cancelled":
       case "subscription.expired": {
+        if (!organizationId) break; // Type guard
+        
         // Downgrade to free plan
         const { error } = await supabase
           .from("organizations")
