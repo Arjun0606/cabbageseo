@@ -220,15 +220,13 @@ export async function POST(request: NextRequest) {
     if (existingSite) {
       siteId = (existingSite as { id: string }).id;
     } else {
-      // Create new site
+      // Create new site (only use columns that exist in the schema)
       const { data: newSite, error: siteError } = await serviceClient
         .from("sites")
         .insert({
           organization_id: organizationId,
           domain,
           name: domain,
-          url,
-          status: "analyzing",
         } as never)
         .select("id")
         .single();
@@ -423,9 +421,9 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
     }
 
     // ========================================
-    // STEP 7: Update site status
+    // STEP 7: Update site status (use serviceClient to bypass RLS)
     // ========================================
-    await supabase
+    await serviceClient
       .from("sites")
       .update({
         is_active: true,
@@ -435,12 +433,14 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
       } as never)
       .eq("id", siteId);
 
-    // Save audit result
-    await supabase
+    // Save audit result (use serviceClient to bypass RLS)
+    await serviceClient
       .from("audits")
-      .upsert({
+      .insert({
         site_id: siteId,
+        type: "onboarding",
         overall_score: seoScore,
+        pages_scanned: pagesAnalyzed,
         issues_found: issues.length,
         critical_issues: criticalCount,
         warning_issues: warningCount,
@@ -448,7 +448,6 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
         results: auditResult,
         status: "completed",
         completed_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
       } as never);
 
     // ========================================
