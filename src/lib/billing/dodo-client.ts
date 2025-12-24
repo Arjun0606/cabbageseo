@@ -96,12 +96,13 @@ export class DodoPaymentsClient {
   private baseUrl: string;
 
   constructor(config?: Partial<DodoConfig>) {
-    this.apiKey = config?.apiKey || process.env.DODO_API_KEY || "";
+    // Accept both DODO_PAYMENTS_API_KEY (Vercel) and DODO_API_KEY (legacy)
+    this.apiKey = config?.apiKey || process.env.DODO_PAYMENTS_API_KEY || process.env.DODO_API_KEY || "";
     this.webhookSecret = config?.webhookSecret || process.env.DODO_WEBHOOK_SECRET || "";
     this.baseUrl = config?.baseUrl || "https://api.dodopayments.com/v1";
 
     if (!this.apiKey) {
-      console.warn("Dodo Payments not configured - missing DODO_API_KEY");
+      console.warn("Dodo Payments not configured - missing DODO_PAYMENTS_API_KEY");
     }
   }
 

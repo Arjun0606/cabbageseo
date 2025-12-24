@@ -130,6 +130,7 @@ const faqs = [
 export default function PricingPage() {
   const [isYearly, setIsYearly] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
   // Check if user is logged in
   useEffect(() => {
@@ -144,6 +145,47 @@ export default function PricingPage() {
     };
     checkAuth();
   }, []);
+
+  // Handle checkout - redirect to Dodo Payments
+  const handleCheckout = async (planId: string) => {
+    if (!isLoggedIn) {
+      // Not logged in - redirect to signup with plan info
+      window.location.href = `/signup?plan=${planId}&interval=${isYearly ? "yearly" : "monthly"}`;
+      return;
+    }
+
+    setLoadingPlan(planId);
+    try {
+      const response = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId,
+          interval: isYearly ? "yearly" : "monthly",
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.error || "Failed to start checkout");
+        setLoadingPlan(null);
+        return;
+      }
+
+      if (result.data?.checkoutUrl) {
+        // Redirect to Dodo Payments checkout
+        window.location.href = result.data.checkoutUrl;
+      } else {
+        alert("Failed to get checkout URL");
+        setLoadingPlan(null);
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Failed to start checkout. Please try again.");
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -266,18 +308,27 @@ export default function PricingPage() {
                     )}
                   </div>
                   
-                  <Link href="/signup">
-                    <Button
-                      className={`w-full mb-6 ${
-                        plan.highlight
-                          ? "bg-emerald-600 hover:bg-emerald-500 text-white"
-                          : "bg-zinc-800 hover:bg-zinc-700 text-white border-0"
-                      }`}
-                    >
-                      {plan.cta}
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
+                  <Button
+                    onClick={() => handleCheckout(plan.id)}
+                    disabled={loadingPlan === plan.id}
+                    className={`w-full mb-6 ${
+                      plan.highlight
+                        ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                        : "bg-zinc-800 hover:bg-zinc-700 text-white border-0"
+                    }`}
+                  >
+                    {loadingPlan === plan.id ? (
+                      <>
+                        <span className="animate-spin mr-2">⏳</span>
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        {plan.cta}
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
                   
                   <ul className="space-y-3">
                     {plan.features.map((feature, i) => (
@@ -456,21 +507,15 @@ export default function PricingPage() {
             Try our free URL analyzer, then upgrade when you&apos;re ready.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {isLoggedIn ? (
-              <Link href="/settings/billing">
-                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                  Upgrade Now
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-            ) : (
-              <Link href="/signup">
-                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                  Get Started
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-            )}
+            <Button 
+              size="lg" 
+              className="bg-emerald-600 hover:bg-emerald-500 text-white"
+              onClick={() => handleCheckout("starter")}
+              disabled={loadingPlan !== null}
+            >
+              {loadingPlan ? "Loading..." : "Get Started — $29/mo"}
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
             <Link href="/analyze">
               <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
                 Try Free Tool

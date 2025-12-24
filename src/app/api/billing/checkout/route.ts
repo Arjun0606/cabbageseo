@@ -11,7 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { dodo } from "@/lib/billing/dodo-client";
 import { PLANS, type PlanId } from "@/lib/billing/plans";
 
@@ -47,6 +47,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Use service client for database operations (bypasses RLS)
+  const serviceClient = createServiceClient();
+
   try {
     const body = await request.json();
     const { planId, interval = "monthly" } = body as { planId: string; interval?: string };
@@ -63,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: userData } = await supabase
+    const { data: userData } = await serviceClient
       .from("users")
       .select("organization_id, email, name")
       .eq("id", user.id)
@@ -75,7 +78,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get organization
-    const { data: orgData } = await supabase
+    const { data: orgData } = await serviceClient
       .from("organizations")
       .select("id, name, stripe_customer_id, plan")
       .eq("id", profile.organization_id)
@@ -107,7 +110,7 @@ export async function POST(request: NextRequest) {
       customerId = customer.id;
 
       // Save customer ID
-      await supabase
+      await serviceClient
         .from("organizations")
         .update({ stripe_customer_id: customerId } as never)
         .eq("id", org.id);
