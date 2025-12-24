@@ -72,14 +72,24 @@ export async function GET() {
 
   // Check auth - skip in testing mode
   if (TESTING_MODE) {
-    // In testing mode, try to get a test user's data
+    // In testing mode, get or create a test organization
     const { data: testOrg } = await supabase
       .from("organizations")
       .select("id")
       .limit(1)
       .single();
     
-    orgId = (testOrg as { id: string } | null)?.id || null;
+    if (testOrg) {
+      orgId = (testOrg as { id: string }).id;
+    } else {
+      // Create a test organization
+      const { data: newOrg } = await supabase
+        .from("organizations")
+        .insert({ name: "Test Organization", plan: "starter" } as never)
+        .select("id")
+        .single();
+      orgId = (newOrg as { id: string } | null)?.id || null;
+    }
   } else {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
