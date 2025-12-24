@@ -66,22 +66,58 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: userData } = await serviceClient
+    let { data: userData } = await serviceClient
       .from("users")
       .select("organization_id, email, name")
       .eq("id", user.id)
       .single();
 
-    const profile = userData as { organization_id?: string; email?: string; name?: string } | null;
-    if (!profile?.organization_id) {
-      return NextResponse.json({ error: "No organization found" }, { status: 400 });
+    let profile = userData as { organization_id?: string; email?: string; name?: string } | null;
+    let organizationId = profile?.organization_id;
+
+    // If user or organization doesn't exist, create them
+    if (!profile || !organizationId) {
+      console.log("[Checkout] Creating user and org for:", user.email);
+      
+      // Create organization first
+      const { data: newOrg, error: orgError } = await serviceClient
+        .from("organizations")
+        .insert({
+          name: `${user.email?.split("@")[0] || "My"}'s Organization`,
+          slug: `org-${user.id.slice(0, 8)}-${Date.now()}`,
+          owner_id: user.id,
+          plan: "free",
+          subscription_status: "trialing",
+        } as never)
+        .select("id")
+        .single();
+
+      if (orgError || !newOrg) {
+        console.error("[Checkout] Failed to create org:", orgError);
+        return NextResponse.json({ error: "Failed to create organization" }, { status: 500 });
+      }
+
+      organizationId = (newOrg as { id: string }).id;
+
+      // Create or update user profile
+      await serviceClient
+        .from("users")
+        .upsert({
+          id: user.id,
+          organization_id: organizationId,
+          email: user.email,
+          name: user.user_metadata?.full_name || user.email?.split("@")[0],
+        } as never);
+
+      // Refresh profile
+      profile = { organization_id: organizationId, email: user.email || undefined, name: user.user_metadata?.full_name };
     }
 
     // Get organization
     const { data: orgData } = await serviceClient
       .from("organizations")
       .select("id, name, stripe_customer_id, plan")
-      .eq("id", profile.organization_id)
+      .eq("id", organizationId)
       .single();
 
     const org = orgData as { id: string; name: string; stripe_customer_id?: string; plan?: string } | null;
