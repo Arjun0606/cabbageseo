@@ -59,13 +59,16 @@ const TESTING_MODE = true;
 
 export async function GET() {
   // Use service client in testing mode to bypass RLS
-  const supabase = TESTING_MODE ? createServiceClient() : await createClient();
+  let supabase;
+  try {
+    supabase = TESTING_MODE ? createServiceClient() : await createClient();
+  } catch (e) {
+    console.error("[Dashboard API] Failed to create client:", e);
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
   
   if (!supabase) {
-    return NextResponse.json(
-      { error: "Database not configured" },
-      { status: 503 }
-    );
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
   let userId: string | null = null;

@@ -30,7 +30,13 @@ const TESTING_MODE = true;
 // GET - List sites
 export async function GET() {
   // Use service client in testing mode to bypass RLS
-  const supabase = TESTING_MODE ? createServiceClient() : await createClient();
+  let supabase;
+  try {
+    supabase = TESTING_MODE ? createServiceClient() : await createClient();
+  } catch (e) {
+    console.error("[Sites API GET] Failed to create client:", e);
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
   
   if (!supabase) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
@@ -168,9 +174,13 @@ export async function GET() {
 // POST - Create site
 export async function POST(request: NextRequest) {
   // Use service client in testing mode to bypass RLS
-  console.log("[Sites API POST] TESTING_MODE:", TESTING_MODE);
-  const supabase = TESTING_MODE ? createServiceClient() : await createClient();
-  console.log("[Sites API POST] Supabase client created:", !!supabase);
+  let supabase;
+  try {
+    supabase = TESTING_MODE ? createServiceClient() : await createClient();
+  } catch (e) {
+    console.error("[Sites API POST] Failed to create client:", e);
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
   
   if (!supabase) {
     console.error("[Sites API POST] Database not configured - service role key might be missing");
