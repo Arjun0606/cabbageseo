@@ -25,7 +25,7 @@ export async function GET() {
       const { data: orgs, error: orgError } = await supabase
         .from("organizations")
         .select("id, name, slug")
-        .limit(5);
+        .limit(5) as { data: { id: string; name: string; slug: string }[] | null; error: { message: string; code: string } | null };
 
       results.orgsQuery = {
         data: orgs,
@@ -43,7 +43,7 @@ export async function GET() {
             plan: "starter",
           } as never)
           .select("id, name, slug")
-          .single();
+          .single() as { data: { id: string; name: string; slug: string } | null; error: { message: string; code: string; details: string } | null };
 
         results.createOrg = {
           data: newOrg,

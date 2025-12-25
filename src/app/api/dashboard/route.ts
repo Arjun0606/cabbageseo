@@ -77,22 +77,21 @@ export async function GET() {
   // Check auth - skip in testing mode
   if (TESTING_MODE) {
     // In testing mode, get or create a test organization (service client bypasses RLS)
-    const { data: testOrg, error: orgError } = await supabase
+    const { data: orgs } = await supabase
       .from("organizations")
       .select("id")
-      .limit(1)
-      .single();
+      .limit(1) as { data: { id: string }[] | null; error: unknown };
     
-    if (orgError && orgError.code === 'PGRST116') {
+    if (orgs && orgs.length > 0) {
+      orgId = orgs[0].id;
+    } else {
       // No org exists, create one
       const { data: newOrg } = await supabase
         .from("organizations")
         .insert({ name: "Test Organization", slug: "test-org-" + Date.now(), plan: "starter" } as never)
         .select("id")
-        .single();
-      orgId = (newOrg as { id: string } | null)?.id || null;
-    } else if (testOrg) {
-      orgId = (testOrg as { id: string }).id;
+        .single() as { data: { id: string } | null; error: unknown };
+      orgId = newOrg?.id || null;
     }
   } else {
     const { data: { user } } = await supabase.auth.getUser();

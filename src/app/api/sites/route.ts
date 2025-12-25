@@ -46,37 +46,27 @@ export async function GET() {
 
   if (TESTING_MODE) {
     // Get or create test org using service client (bypasses RLS)
-    console.log("[Sites API GET] Testing mode - looking for org...");
-    
     // First try to get existing org
     const { data: orgs, error: orgError } = await supabase
       .from("organizations")
       .select("id")
-      .limit(1);
-    
-    console.log("[Sites API GET] Org query result:", { orgs, count: orgs?.length, orgError });
+      .limit(1) as { data: { id: string }[] | null; error: unknown };
     
     if (orgs && orgs.length > 0) {
       orgId = orgs[0].id;
-      console.log("[Sites API GET] Found existing org:", orgId);
     } else {
       // No org exists, create one
-      console.log("[Sites API GET] No org found, creating new test org...");
       const { data: newOrg, error: createError } = await supabase
         .from("organizations")
         .insert({ name: "Test Organization", slug: "test-org-" + Date.now(), plan: "starter" } as never)
         .select("id")
-        .single();
+        .single() as { data: { id: string } | null; error: unknown };
       
-      console.log("[Sites API GET] Create org result:", { newOrg, createError });
-      
-      if (createError) {
-        console.error("[Sites API GET] Failed to create org:", createError);
+      if (createError || !newOrg) {
         return NextResponse.json({ success: true, data: { sites: [], stats: { total: 0 } } });
       }
-      orgId = (newOrg as { id: string } | null)?.id || null;
+      orgId = newOrg.id;
     }
-    console.log("[Sites API GET] Using org:", orgId);
   } else {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -191,37 +181,26 @@ export async function POST(request: NextRequest) {
 
   if (TESTING_MODE) {
     // Get or create test org using service client (bypasses RLS)
-    console.log("[Sites API POST] Testing mode - looking for org...");
-    
-    // First try to get existing org
-    const { data: orgs, error: orgError } = await supabase
+    const { data: orgs } = await supabase
       .from("organizations")
       .select("id")
-      .limit(1);
-    
-    console.log("[Sites API POST] Org query result:", { orgs, count: orgs?.length, orgError });
+      .limit(1) as { data: { id: string }[] | null; error: unknown };
     
     if (orgs && orgs.length > 0) {
       orgId = orgs[0].id;
-      console.log("[Sites API POST] Found existing org:", orgId);
     } else {
       // No org exists, create one
-      console.log("[Sites API POST] No org found, creating new test org...");
       const { data: newOrg, error: createError } = await supabase
         .from("organizations")
         .insert({ name: "Test Organization", slug: "test-org-" + Date.now(), plan: "starter" } as never)
         .select("id")
-        .single();
+        .single() as { data: { id: string } | null; error: { message: string } | null };
       
-      console.log("[Sites API POST] Create org result:", { newOrg, createError });
-      
-      if (createError) {
-        console.error("[Sites API POST] Failed to create org:", createError);
-        return NextResponse.json({ error: "Failed to create organization: " + createError.message }, { status: 500 });
+      if (createError || !newOrg) {
+        return NextResponse.json({ error: "Failed to create organization" }, { status: 500 });
       }
-      orgId = (newOrg as { id: string } | null)?.id || null;
+      orgId = newOrg.id;
     }
-    console.log("[Sites API POST] Using org:", orgId);
   } else {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
