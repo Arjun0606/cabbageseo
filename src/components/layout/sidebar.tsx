@@ -68,13 +68,6 @@ const aioNavItems: NavItemType[] = [
     description: "Track AI platform citations",
     badge: "⭐",
   },
-  {
-    name: "Autopilot",
-    href: "/autopilot",
-    icon: Bot,
-    description: "AI automation",
-    badge: "AI",
-  },
 ];
 
 const seoNavItems: NavItemType[] = [
@@ -82,60 +75,24 @@ const seoNavItems: NavItemType[] = [
     name: "Keywords",
     href: "/keywords",
     icon: Search,
-    description: "Research & clustering",
+    description: "Research & track rankings",
   },
   {
     name: "Content",
     href: "/content",
     icon: FileText,
-    description: "AI-optimized content",
+    description: "AI-generated articles",
   },
   {
-    name: "Technical Audit",
+    name: "SEO Audit",
     href: "/audit",
     icon: Gauge,
-    description: "Site health checks",
-  },
-  {
-    name: "Internal Links",
-    href: "/links",
-    icon: Link2,
-    description: "Link optimization",
-  },
-  {
-    name: "Analytics",
-    href: "/analytics",
-    icon: BarChart3,
-    description: "Performance tracking",
+    description: "Technical health check",
   },
 ];
 
-const toolsNavItems = [
-  {
-    name: "Quick Actions",
-    href: "/quick-actions",
-    icon: Zap,
-    description: "One-click optimizations",
-  },
-  {
-    name: "Content Ideas",
-    href: "/ideas",
-    icon: Sparkles,
-    description: "AI content suggestions",
-  },
-  {
-    name: "Competitors",
-    href: "/competitors",
-    icon: Target,
-    description: "Competitor analysis",
-  },
-  {
-    name: "Learning",
-    href: "/learn",
-    icon: BookOpen,
-    description: "SEO guides",
-  },
-];
+// V2: Additional tools (hidden for now)
+const toolsNavItems: NavItemType[] = [];
 
 // ============================================
 // SIDEBAR COMPONENT

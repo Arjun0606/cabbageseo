@@ -26,11 +26,9 @@ import {
   ExternalLink,
   MoreVertical,
   Trash2,
-  Zap,
   Loader2,
   AlertCircle,
-  CheckCircle2,
-  Link2,
+  Gauge,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -52,13 +50,10 @@ interface Site {
   name: string;
   url: string;
   status: string;
+  seoScore: number;
   keywords: number;
   content: number;
   issues: number;
-  gscConnected: boolean;
-  cmsConnected: boolean;
-  cmsType: string | null;
-  autopilotEnabled: boolean;
   createdAt: string;
 }
 
@@ -66,8 +61,6 @@ interface SitesData {
   sites: Site[];
   stats: {
     total: number;
-    withGSC: number;
-    withCMS: number;
   };
 }
 
@@ -192,40 +185,14 @@ function SiteCard({ site, onDelete }: { site: Site; onDelete: () => void }) {
           </div>
         </div>
 
-        {/* Connection Status */}
-        <div className="flex flex-wrap gap-2">
-          {site.gscConnected ? (
-            <Badge variant="secondary" className="bg-green-500/10 text-green-600">
-              <CheckCircle2 className="w-3 h-3 mr-1" />
-              GSC Connected
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="text-muted-foreground">
-              <Link2 className="w-3 h-3 mr-1" />
-              Connect GSC
-            </Badge>
-          )}
-          {site.cmsConnected ? (
-            <Badge variant="secondary" className="bg-green-500/10 text-green-600">
-              <CheckCircle2 className="w-3 h-3 mr-1" />
-              {site.cmsType?.toUpperCase()}
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="text-muted-foreground">
-              <Link2 className="w-3 h-3 mr-1" />
-              Connect CMS
-            </Badge>
-          )}
-          {site.autopilotEnabled && (
-            <Badge variant="secondary" className="bg-primary/10 text-primary">
-              <Zap className="w-3 h-3 mr-1" />
-              Autopilot
-            </Badge>
-          )}
-        </div>
-
         {/* Quick Actions */}
         <div className="flex gap-2">
+          <Link href={`/audit?site=${site.id}`} className="flex-1">
+            <Button variant="outline" size="sm" className="w-full">
+              <Gauge className="w-4 h-4 mr-2" />
+              Audit
+            </Button>
+          </Link>
           <Link href={`/keywords?site=${site.id}`} className="flex-1">
             <Button variant="outline" size="sm" className="w-full">
               <Target className="w-4 h-4 mr-2" />
@@ -420,24 +387,24 @@ export default function SitesPage() {
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-green-500/10">
-                    <TrendingUp className="w-5 h-5 text-green-500" />
+                    <Target className="w-5 h-5 text-green-500" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{data.stats.withGSC}</p>
-                    <p className="text-xs text-muted-foreground">GSC Connected</p>
+                    <p className="text-2xl font-bold">{data.sites.reduce((sum, s) => sum + s.keywords, 0)}</p>
+                    <p className="text-xs text-muted-foreground">Keywords Tracked</p>
                   </div>
-                    </div>
+                </div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-500/10">
-                    <FileText className="w-5 h-5 text-blue-500" />
+                  <div className="p-2 rounded-lg bg-orange-500/10">
+                    <AlertCircle className="w-5 h-5 text-orange-500" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{data.stats.withCMS}</p>
-                    <p className="text-xs text-muted-foreground">CMS Connected</p>
+                    <p className="text-2xl font-bold">{data.sites.reduce((sum, s) => sum + s.issues, 0)}</p>
+                    <p className="text-xs text-muted-foreground">Issues to Fix</p>
                   </div>
                 </div>
               </CardContent>
