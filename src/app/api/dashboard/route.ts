@@ -87,7 +87,7 @@ export async function GET() {
       // No org exists, create one
       const { data: newOrg } = await supabase
         .from("organizations")
-        .insert({ name: "Test Organization", slug: "test-org-" + Date.now(), plan: "starter" })
+        .insert({ name: "Test Organization", slug: "test-org-" + Date.now(), plan: "starter" } as never)
         .select("id")
         .single();
       orgId = (newOrg as { id: string } | null)?.id || null;

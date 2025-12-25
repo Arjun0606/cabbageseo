@@ -64,7 +64,7 @@ export async function GET() {
       console.log("[Sites API GET] No org found, creating new test org...");
       const { data: newOrg, error: createError } = await supabase
         .from("organizations")
-        .insert({ name: "Test Organization", slug: "test-org-" + Date.now(), plan: "starter" })
+        .insert({ name: "Test Organization", slug: "test-org-" + Date.now(), plan: "starter" } as never)
         .select("id")
         .single();
       
@@ -209,7 +209,7 @@ export async function POST(request: NextRequest) {
       console.log("[Sites API POST] No org found, creating new test org...");
       const { data: newOrg, error: createError } = await supabase
         .from("organizations")
-        .insert({ name: "Test Organization", slug: "test-org-" + Date.now(), plan: "starter" })
+        .insert({ name: "Test Organization", slug: "test-org-" + Date.now(), plan: "starter" } as never)
         .select("id")
         .single();
       
