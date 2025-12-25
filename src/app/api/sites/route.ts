@@ -9,15 +9,19 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 
 interface SiteRow {
   id: string;
+  organization_id: string;
   domain: string;
   name: string;
   is_active: boolean;
   autopilot_enabled: boolean;
   settings: Record<string, unknown> | null;
   seo_score: number | null;
+  aio_score_avg: number | null;
   gsc_connected: boolean;
   cms_connected: boolean;
   cms_type: string | null;
+  last_crawl_at: string | null;
+  last_crawl_pages_count: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -27,9 +31,41 @@ interface SiteRow {
 // ============================================
 const TESTING_MODE = true;
 
-// GET - List sites
-export async function GET() {
-  // Use service client in testing mode to bypass RLS
+async function getOrgId(supabase: ReturnType<typeof createServiceClient>) {
+  if (TESTING_MODE) {
+    const { data: orgs } = await supabase
+      .from("organizations")
+      .select("id")
+      .limit(1) as { data: { id: string }[] | null; error: unknown };
+    
+    if (orgs && orgs.length > 0) {
+      return orgs[0].id;
+    }
+    
+    // Create test org if none exists
+    const { data: newOrg } = await supabase
+      .from("organizations")
+      .insert({ name: "Test Organization", slug: "test-org-" + Date.now(), plan: "starter" } as never)
+      .select("id")
+      .single() as { data: { id: string } | null; error: unknown };
+    
+    return newOrg?.id || null;
+  }
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
+
+  return (userData as { organization_id?: string } | null)?.organization_id || null;
+}
+
+// GET - List sites OR get single site by ID
+export async function GET(request: NextRequest) {
   let supabase;
   try {
     supabase = TESTING_MODE ? createServiceClient() : await createClient();
@@ -42,53 +78,82 @@ export async function GET() {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  let orgId: string | null = null;
-
-  if (TESTING_MODE) {
-    // Get or create test org using service client (bypasses RLS)
-    // First try to get existing org
-    const { data: orgs, error: orgError } = await supabase
-      .from("organizations")
-      .select("id")
-      .limit(1) as { data: { id: string }[] | null; error: unknown };
-    
-    if (orgs && orgs.length > 0) {
-      orgId = orgs[0].id;
-    } else {
-      // No org exists, create one
-      const { data: newOrg, error: createError } = await supabase
-        .from("organizations")
-        .insert({ name: "Test Organization", slug: "test-org-" + Date.now(), plan: "starter" } as never)
-        .select("id")
-        .single() as { data: { id: string } | null; error: unknown };
-      
-      if (createError || !newOrg) {
-        return NextResponse.json({ success: true, data: { sites: [], stats: { total: 0 } } });
-      }
-      orgId = newOrg.id;
-    }
-  } else {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    orgId = (userData as { organization_id?: string } | null)?.organization_id || null;
-  }
-
+  const orgId = await getOrgId(supabase);
   if (!orgId) {
     return NextResponse.json({ success: true, data: { sites: [], stats: { total: 0 } } });
   }
 
-  try {
+  // Check if requesting a single site
+  const { searchParams } = new URL(request.url);
+  const siteId = searchParams.get("id");
 
-    // Get sites
+  try {
+    if (siteId) {
+      // Get single site with full details
+      const { data: site, error } = await supabase
+        .from("sites")
+        .select("*")
+        .eq("id", siteId)
+        .eq("organization_id", orgId)
+        .single() as { data: SiteRow | null; error: { message: string } | null };
+
+      if (error || !site) {
+        return NextResponse.json({ error: "Site not found" }, { status: 404 });
+      }
+
+      // Get related stats
+      const [keywordResult, contentResult, issueResult, auditResult] = await Promise.all([
+        supabase.from("keywords").select("id, keyword, position, previous_position", { count: "exact" }).eq("site_id", siteId).limit(10),
+        supabase.from("content").select("id, title, status, created_at", { count: "exact" }).eq("site_id", siteId).order("created_at", { ascending: false }).limit(5),
+        supabase.from("issues").select("id, severity", { count: "exact" }).eq("site_id", siteId).eq("is_resolved", false),
+        supabase.from("audits").select("score, created_at").eq("site_id", siteId).order("created_at", { ascending: false }).limit(1).single(),
+      ]);
+
+      const keywords = (keywordResult.data || []) as { keyword: string; position: number; previous_position: number }[];
+      const content = (contentResult.data || []) as { id: string; title: string; status: string; created_at: string }[];
+      const issues = (issueResult.data || []) as { severity: string }[];
+      
+      const criticalIssues = issues.filter((i) => i.severity === "critical").length;
+      const warningIssues = issues.filter((i) => i.severity === "warning").length;
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          id: site.id,
+          domain: site.domain,
+          name: site.name,
+          url: `https://${site.domain}`,
+          seoScore: site.seo_score || 0,
+          aioScore: site.aio_score_avg || 0,
+          pagesCount: site.last_crawl_pages_count || 0,
+          keywordsTracked: keywordResult.count || 0,
+          lastCrawlAt: site.last_crawl_at,
+          status: site.is_active ? "active" : "inactive",
+          gscConnected: site.gsc_connected,
+          cmsConnected: site.cms_connected,
+          cmsType: site.cms_type,
+          autopilotEnabled: site.autopilot_enabled,
+          issues: {
+            critical: criticalIssues,
+            warnings: warningIssues,
+            passed: Math.max(0, 50 - criticalIssues - warningIssues), // Estimated passed checks
+          },
+          topKeywords: keywords.slice(0, 5).map(k => ({
+            keyword: k.keyword,
+            position: k.position || 0,
+            change: k.previous_position ? k.previous_position - k.position : 0,
+          })),
+          recentContent: content.map(c => ({
+            id: c.id,
+            title: c.title,
+            status: c.status,
+            createdAt: c.created_at,
+          })),
+        },
+      });
+    }
+
+    // List all sites
     const { data: sites, error } = await supabase
       .from("sites")
       .select("*")
@@ -102,19 +167,16 @@ export async function GET() {
     // Get stats for each site
     const sitesWithStats = await Promise.all(
       siteRows.map(async (site) => {
-        // Get keyword count
         const { count: keywordCount } = await supabase
           .from("keywords")
           .select("id", { count: "exact" })
           .eq("site_id", site.id);
 
-        // Get content count
         const { count: contentCount } = await supabase
           .from("content")
           .select("id", { count: "exact" })
           .eq("site_id", site.id);
 
-        // Get issue count
         const { count: issueCount } = await supabase
           .from("issues")
           .select("id", { count: "exact" })
@@ -161,9 +223,8 @@ export async function GET() {
   }
 }
 
-// POST - Create site
+// POST - Create site (with duplicate check)
 export async function POST(request: NextRequest) {
-  // Use service client in testing mode to bypass RLS
   let supabase;
   try {
     supabase = TESTING_MODE ? createServiceClient() : await createClient();
@@ -173,51 +234,12 @@ export async function POST(request: NextRequest) {
   }
   
   if (!supabase) {
-    console.error("[Sites API POST] Database not configured - service role key might be missing");
-    return NextResponse.json({ error: "Database not configured - check SUPABASE_SERVICE_ROLE_KEY" }, { status: 503 });
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  let orgId: string | null = null;
-
-  if (TESTING_MODE) {
-    // Get or create test org using service client (bypasses RLS)
-    const { data: orgs } = await supabase
-      .from("organizations")
-      .select("id")
-      .limit(1) as { data: { id: string }[] | null; error: unknown };
-    
-    if (orgs && orgs.length > 0) {
-      orgId = orgs[0].id;
-    } else {
-      // No org exists, create one
-      const { data: newOrg, error: createError } = await supabase
-        .from("organizations")
-        .insert({ name: "Test Organization", slug: "test-org-" + Date.now(), plan: "starter" } as never)
-        .select("id")
-        .single() as { data: { id: string } | null; error: { message: string } | null };
-      
-      if (createError || !newOrg) {
-        return NextResponse.json({ error: "Failed to create organization" }, { status: 500 });
-      }
-      orgId = newOrg.id;
-    }
-  } else {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    orgId = (userData as { organization_id?: string } | null)?.organization_id || null;
-  }
-
+  const orgId = await getOrgId(supabase);
   if (!orgId) {
-    return NextResponse.json({ error: "No organization found - please try again" }, { status: 400 });
+    return NextResponse.json({ error: "No organization found" }, { status: 400 });
   }
 
   try {
@@ -228,8 +250,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Domain is required" }, { status: 400 });
     }
 
+    // Clean domain
+    const cleanDomain = domain.replace(/^https?:\/\//, "").replace(/\/$/, "").replace(/^www\./, "");
+
+    // Check for duplicate domain in org
+    const { data: existing } = await supabase
+      .from("sites")
+      .select("id")
+      .eq("organization_id", orgId)
+      .eq("domain", cleanDomain)
+      .limit(1) as { data: { id: string }[] | null };
+
+    if (existing && existing.length > 0) {
+      return NextResponse.json({ 
+        error: "This site already exists in your account",
+        existingSiteId: existing[0].id 
+      }, { status: 409 });
+    }
+
     // Create site
-    const cleanDomain = domain.replace(/^https?:\/\//, "").replace(/\/$/, "");
     const { data: newSite, error } = await supabase
       .from("sites")
       .insert({
@@ -256,14 +295,20 @@ export async function POST(request: NextRequest) {
 
 // DELETE - Delete site
 export async function DELETE(request: NextRequest) {
-  const supabase = await createClient();
+  let supabase;
+  try {
+    supabase = TESTING_MODE ? createServiceClient() : await createClient();
+  } catch (e) {
+    console.error("[Sites API DELETE] Failed to create client:", e);
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
   
   if (!supabase) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  const orgId = await getOrgId(supabase);
+  if (!orgId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -273,18 +318,6 @@ export async function DELETE(request: NextRequest) {
 
     if (!siteId) {
       return NextResponse.json({ error: "Site ID is required" }, { status: 400 });
-    }
-
-    // Get user's organization
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
     // Delete site (cascade will handle related data)
@@ -306,4 +339,3 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
-
