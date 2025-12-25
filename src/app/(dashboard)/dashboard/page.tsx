@@ -510,7 +510,7 @@ export default function DashboardPage() {
               <QuickAction icon={Target} label="Research Keywords" href="/keywords" />
               <QuickAction icon={Search} label="Run SEO Audit" href="/audit" count={data.stats.criticalIssues} />
               <QuickAction icon={Bot} label="Check AI Visibility" href="/aio" />
-              <QuickAction icon={BarChart3} label="View Analytics" href="/analytics" />
+              <QuickAction icon={Sparkles} label="Generate Content" href="/content/new" />
             </CardContent>
           </Card>
         </div>

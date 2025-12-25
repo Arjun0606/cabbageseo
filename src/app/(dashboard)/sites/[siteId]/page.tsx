@@ -384,9 +384,9 @@ export default function SiteDetailsPage() {
               </Link>
             </Button>
             <Button variant="outline" asChild className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
-              <Link href="/links">
-                <Link2 className="w-4 h-4 mr-2" />
-                Internal Links
+              <Link href="/keywords">
+                <Target className="w-4 h-4 mr-2" />
+                Research Keywords
               </Link>
             </Button>
           </div>

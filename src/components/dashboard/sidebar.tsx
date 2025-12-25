@@ -10,11 +10,8 @@ import {
   LayoutDashboard,
   Search,
   FileText,
-  Link2,
-  BarChart3,
   Globe,
   Settings,
-  Zap,
   ChevronLeft,
   ChevronRight,
   HelpCircle,
@@ -22,7 +19,7 @@ import {
   Sparkles,
   Command,
   AlertCircle,
-  TrendingUp,
+  Brain,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -36,11 +33,10 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Keywords", href: "/keywords", icon: Search, badge: "23", badgeType: "success" },
-  { title: "Content", href: "/content", icon: FileText, badge: "4" },
-  { title: "Internal Links", href: "/links", icon: Link2 },
-  { title: "Technical Audit", href: "/audit", icon: AlertCircle, badge: "8", badgeType: "alert" },
-  { title: "Analytics", href: "/analytics", icon: TrendingUp },
+  { title: "Keywords", href: "/keywords", icon: Search },
+  { title: "Content", href: "/content", icon: FileText },
+  { title: "AI Visibility", href: "/aio", icon: Brain },
+  { title: "SEO Audit", href: "/audit", icon: AlertCircle },
 ];
 
 const secondaryNavItems: NavItem[] = [
@@ -70,21 +66,15 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* Autopilot Status */}
+      {/* Quick Action */}
       {!collapsed && (
         <div className="px-3 py-3">
-          <div className="p-3 rounded-xl bg-gradient-to-r from-cabbage-500/10 to-cabbage-600/5 border border-cabbage-500/20">
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Zap className="h-4 w-4 text-cabbage-400" />
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-medium text-white">Autopilot Active</p>
-                <p className="text-[10px] text-slate-400">Last: 2h ago</p>
-              </div>
-            </div>
-          </div>
+          <Link href="/content/new">
+            <Button className="w-full bg-emerald-600 hover:bg-emerald-500 text-white gap-2">
+              <Sparkles className="w-4 h-4" />
+              Generate Article
+            </Button>
+          </Link>
         </div>
       )}
 
