@@ -8,17 +8,13 @@ import {
   Target,
   FileText,
   AlertTriangle,
-  BarChart3,
   Settings,
-  Bot,
   Menu,
   X,
   ChevronLeft,
   Globe,
   Sparkles,
-  RefreshCw,
   ArrowUpRight,
-  Link2,
   Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,10 +32,7 @@ const navItems = [
   { href: "/content", label: "Content", icon: FileText, primary: true },
   { href: "/keywords", label: "Keywords", icon: Target },
   { href: "/aio", label: "AI Visibility", icon: Brain },
-  { href: "/audit", label: "Audit", icon: AlertTriangle },
-  { href: "/links", label: "Internal Links", icon: Link2 },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/autopilot", label: "Autopilot", icon: Bot },
+  { href: "/audit", label: "SEO Audit", icon: AlertTriangle },
 ];
 
 const bottomNavItems = [
