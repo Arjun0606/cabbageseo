@@ -41,7 +41,7 @@ export async function GET() {
             name: "Debug Test Org",
             slug: "debug-test-" + Date.now(),
             plan: "starter",
-          })
+          } as never)
           .select("id, name, slug")
           .single();
 
