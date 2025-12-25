@@ -153,12 +153,6 @@ function SiteCard({ site, onDelete }: { site: Site; onDelete: () => void }) {
                   Settings
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/autopilot?site=${site.id}`}>
-                  <Zap className="w-4 h-4 mr-2" />
-                  Autopilot
-                </Link>
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-red-500" onClick={onDelete}>
                 <Trash2 className="w-4 h-4 mr-2" />
