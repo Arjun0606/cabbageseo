@@ -29,21 +29,44 @@ function getDodoClient() {
   });
 }
 
+// Build product ID to plan mapping dynamically (only include configured products)
+function buildProductMappings(): Record<string, string> {
+  const mappings: Record<string, string> = {};
+  
+  const envMappings = [
+    { envVar: process.env.DODO_STARTER_MONTHLY_ID, plan: "starter" },
+    { envVar: process.env.DODO_STARTER_YEARLY_ID, plan: "starter" },
+    { envVar: process.env.DODO_PRO_MONTHLY_ID, plan: "pro" },
+    { envVar: process.env.DODO_PRO_YEARLY_ID, plan: "pro" },
+    { envVar: process.env.DODO_PRO_PLUS_MONTHLY_ID, plan: "pro_plus" },
+    { envVar: process.env.DODO_PRO_PLUS_YEARLY_ID, plan: "pro_plus" },
+  ];
+  
+  for (const { envVar, plan } of envMappings) {
+    if (envVar) {
+      mappings[envVar] = plan;
+    }
+  }
+  
+  return mappings;
+}
+
 // Get plan ID from product ID
 function getPlanFromProductId(productId: string | undefined): string {
-  if (!productId) return "starter";
+  if (!productId) {
+    console.warn("[Webhook] No product ID provided, defaulting to 'starter'");
+    return "starter";
+  }
   
-  // Check environment variables for product ID mappings
-  const productMappings: Record<string, string> = {
-    [process.env.DODO_STARTER_MONTHLY_ID || ""]: "starter",
-    [process.env.DODO_STARTER_YEARLY_ID || ""]: "starter",
-    [process.env.DODO_PRO_MONTHLY_ID || ""]: "pro",
-    [process.env.DODO_PRO_YEARLY_ID || ""]: "pro",
-    [process.env.DODO_PRO_PLUS_MONTHLY_ID || ""]: "pro_plus",
-    [process.env.DODO_PRO_PLUS_YEARLY_ID || ""]: "pro_plus",
-  };
+  const productMappings = buildProductMappings();
+  const plan = productMappings[productId];
   
-  return productMappings[productId] || "starter";
+  if (!plan) {
+    console.warn(`[Webhook] Unknown product ID: ${productId}, defaulting to 'starter'`);
+    return "starter";
+  }
+  
+  return plan;
 }
 
 // Get billing interval from product ID
@@ -54,7 +77,7 @@ function getIntervalFromProductId(productId: string | undefined): string {
     process.env.DODO_STARTER_YEARLY_ID,
     process.env.DODO_PRO_YEARLY_ID,
     process.env.DODO_PRO_PLUS_YEARLY_ID,
-  ];
+  ].filter(Boolean); // Remove undefined values
   
   return yearlyProducts.includes(productId) ? "yearly" : "monthly";
 }

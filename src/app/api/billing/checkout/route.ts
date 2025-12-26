@@ -18,20 +18,32 @@ import { PLANS, type PlanId } from "@/lib/billing/plans";
 
 // Dodo Product IDs (configured in Dodo Dashboard)
 // These are the product IDs you create in your Dodo Payments dashboard
-const PRODUCT_IDS: Record<string, Record<string, string>> = {
+// All environment variables are optional - missing ones will show clear errors at runtime
+const PRODUCT_IDS: Record<string, Record<string, string | undefined>> = {
   starter: {
-    monthly: process.env.DODO_STARTER_MONTHLY_ID || "",
-    yearly: process.env.DODO_STARTER_YEARLY_ID || "",
+    monthly: process.env.DODO_STARTER_MONTHLY_ID,
+    yearly: process.env.DODO_STARTER_YEARLY_ID,
   },
   pro: {
-    monthly: process.env.DODO_PRO_MONTHLY_ID || "",
-    yearly: process.env.DODO_PRO_YEARLY_ID || "",
+    monthly: process.env.DODO_PRO_MONTHLY_ID,
+    yearly: process.env.DODO_PRO_YEARLY_ID,
   },
   pro_plus: {
-    monthly: process.env.DODO_PRO_PLUS_MONTHLY_ID || "",
-    yearly: process.env.DODO_PRO_PLUS_YEARLY_ID || "",
+    monthly: process.env.DODO_PRO_PLUS_MONTHLY_ID,
+    yearly: process.env.DODO_PRO_PLUS_YEARLY_ID,
   },
 };
+
+// Helper to get product ID with clear error messaging
+function getProductId(planId: string, interval: string): string | null {
+  const productId = PRODUCT_IDS[planId]?.[interval];
+  if (!productId) {
+    const envVarName = `DODO_${planId.toUpperCase()}_${interval.toUpperCase()}_ID`;
+    console.error(`[Checkout] Missing product ID. Set ${envVarName} in your environment variables.`);
+    return null;
+  }
+  return productId;
+}
 
 // Initialize Dodo client - it reads DODO_PAYMENTS_API_KEY from env
 function getDodoClient() {
@@ -159,12 +171,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Already on this plan" }, { status: 400 });
     }
 
-    // Get product ID for the plan
-    const productId = PRODUCT_IDS[planId]?.[interval];
+    // Get product ID for the plan with clear error if missing
+    const productId = getProductId(planId, interval);
     if (!productId) {
-      console.error(`[Checkout] No product ID configured for ${planId}_${interval}`);
+      const envVarName = `DODO_${planId.toUpperCase()}_${interval.toUpperCase()}_ID`;
       return NextResponse.json({ 
-        error: `Product not configured. Please set DODO_${planId.toUpperCase()}_${interval.toUpperCase()}_ID environment variable.` 
+        error: `Product not configured. Please set ${envVarName} environment variable in your deployment settings.` 
       }, { status: 500 });
     }
 
