@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 
 // ============================================
 // TYPES
@@ -35,6 +36,7 @@ const SiteContext = createContext<SiteContextType | undefined>(undefined);
 // ============================================
 
 export function SiteProvider({ children }: { children: ReactNode }) {
+  const searchParams = useSearchParams();
   const [sites, setSites] = useState<Site[]>([]);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,13 +47,21 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     refreshSites();
   }, []);
 
-  // Load selected site from localStorage
+  // Read site from URL query params (priority over localStorage)
   useEffect(() => {
+    const urlSiteId = searchParams.get("site");
+    if (urlSiteId) {
+      setSelectedSiteId(urlSiteId);
+      localStorage.setItem("selectedSiteId", urlSiteId);
+      return;
+    }
+    
+    // Fallback to localStorage if no URL param
     const stored = localStorage.getItem("selectedSiteId");
-    if (stored) {
+    if (stored && !selectedSiteId) {
       setSelectedSiteId(stored);
     }
-  }, []);
+  }, [searchParams, selectedSiteId]);
 
   // Auto-select first site if none selected
   useEffect(() => {
