@@ -10,6 +10,27 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 
 const TESTING_MODE = process.env.TESTING_MODE === "true";
 
+// Type for site with audits
+interface SiteWithAudits {
+  id: string;
+  domain: string;
+  organization_id: string;
+  settings: Record<string, unknown> | null;
+  is_active: boolean;
+  pages_count: number | null;
+  last_crawl_at: string | null;
+  created_at: string;
+  updated_at: string;
+  audits: Array<{
+    id: string;
+    seo_score: number | null;
+    aio_score: number | null;
+    issues_count: number;
+    pages_crawled: number;
+    completed_at: string | null;
+  }>;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ siteId: string }> }
@@ -24,9 +45,13 @@ export async function GET(
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
+  if (!supabase) {
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
+
   try {
     // Get site with latest audit data
-    const { data: site, error } = await supabase
+    const { data, error } = await supabase
       .from("sites")
       .select(`
         id,
@@ -57,15 +82,11 @@ export async function GET(
       throw error;
     }
 
+    // Cast to our type
+    const site = data as unknown as SiteWithAudits;
+
     // Get the latest audit
-    const latestAudit = (site.audits as Array<{
-      id: string;
-      seo_score: number | null;
-      aio_score: number | null;
-      issues_count: number;
-      pages_crawled: number;
-      completed_at: string | null;
-    }>)?.sort((a, b) => 
+    const latestAudit = site.audits?.sort((a, b) => 
       new Date(b.completed_at || 0).getTime() - new Date(a.completed_at || 0).getTime()
     )[0];
 
@@ -73,7 +94,7 @@ export async function GET(
     const response = {
       id: site.id,
       domain: site.domain,
-      name: site.settings?.name || site.domain,
+      name: (site.settings as Record<string, unknown>)?.name || site.domain,
       organizationId: site.organization_id,
       settings: site.settings,
       isActive: site.is_active,
@@ -110,6 +131,10 @@ export async function PATCH(
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
+  if (!supabase) {
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
+
   try {
     const body = await request.json();
     const { name, settings } = body;
@@ -126,8 +151,9 @@ export async function PATCH(
         .eq("id", siteId)
         .single();
 
+      const existingSettings = (existingSite as { settings: Record<string, unknown> } | null)?.settings || {};
       updates.settings = {
-        ...((existingSite?.settings as Record<string, unknown>) || {}),
+        ...existingSettings,
         ...settings,
         ...(name && { name }),
       };
@@ -138,15 +164,16 @@ export async function PATCH(
         .eq("id", siteId)
         .single();
 
+      const existingSettings = (existingSite as { settings: Record<string, unknown> } | null)?.settings || {};
       updates.settings = {
-        ...((existingSite?.settings as Record<string, unknown>) || {}),
+        ...existingSettings,
         name,
       };
     }
 
     const { data, error } = await supabase
       .from("sites")
-      .update(updates)
+      .update(updates as never)
       .eq("id", siteId)
       .select()
       .single();
@@ -174,6 +201,10 @@ export async function DELETE(
     supabase = TESTING_MODE ? createServiceClient() : await createClient();
   } catch (e) {
     console.error("[Sites API] Error creating client:", e);
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
+
+  if (!supabase) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
