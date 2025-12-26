@@ -390,7 +390,7 @@ export default function AuditPage() {
   });
 
   // Check if we have meaningful data (issues exist or we have stats)
-  const hasData = data && (data.issues?.length > 0 || (data.stats?.total ?? 0) > 0);
+  const hasData = data && (data.issues?.length > 0 || (data.stats?.passed ?? 0) > 0 || (data.stats?.critical ?? 0) > 0);
 
   // AUTO-RUN: If we have a site but no meaningful data, automatically start the audit
   useEffect(() => {

@@ -429,7 +429,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       id: `site-${site.id}`,
       title: site.domain,
       description: selectedSite?.id === site.id ? "Currently selected" : "Switch to this site",
-      icon: Globe,
+        icon: Globe,
       category: "sites" as const,
       action: () => {
         selectSite(site.id);
@@ -443,7 +443,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   // Filter commands
   const filteredCommands = React.useMemo(() => {
     if (!search.trim() || showResults) return commands;
-    
+
     const query = search.toLowerCase();
     return commands.filter((cmd) => {
       const titleMatch = cmd.title.toLowerCase().includes(query);
@@ -527,13 +527,13 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         }
         break;
       case "Escape":
-        onOpenChange(false);
+          onOpenChange(false);
         break;
     }
   };
 
   const executeCommand = async (command: CommandItem) => {
-    await command.action();
+      await command.action();
     if (!command.id.includes("analyze")) {
       onOpenChange(false);
     }
@@ -632,14 +632,14 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
         {/* Command List */}
         {!showResults && (
-          <div className="max-h-[400px] overflow-y-auto py-2">
+        <div className="max-h-[400px] overflow-y-auto py-2">
             {flatList.length === 0 && search && (
-              <div className="py-8 text-center text-muted-foreground">
-                <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>No commands found</p>
+            <div className="py-8 text-center text-muted-foreground">
+              <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p>No commands found</p>
                 <p className="text-xs mt-1">Press Enter to search for &ldquo;{search}&rdquo;</p>
-              </div>
-            )}
+            </div>
+          )}
 
             {(Object.entries(groupedCommands) as [CommandCategory, CommandItem[]][]).map(
               ([category, items]) => {
@@ -686,7 +686,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                           {command.shortcut && (
                             <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border text-muted-foreground flex-shrink-0">
                               ⌘{command.shortcut}
-                            </kbd>
+                                </kbd>
                           )}
                           {selectedSite?.id && command.id === `site-${selectedSite.id}` && (
                             <Badge variant="secondary" className="text-xs flex-shrink-0">Current</Badge>
@@ -701,8 +701,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 );
               }
             )}
-          </div>
-        )}
+            </div>
+          )}
 
         {/* Footer */}
         <div className="border-t px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">

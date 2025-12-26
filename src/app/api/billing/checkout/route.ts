@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
     const session = await dodo.checkoutSessions.create({
       product_cart: [
         {
-          product_id: productId,
+      product_id: productId,
           quantity: 1,
         },
       ],
