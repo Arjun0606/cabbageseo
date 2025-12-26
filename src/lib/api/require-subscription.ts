@@ -35,29 +35,38 @@ export async function requireSubscription(
 ): Promise<SubscriptionCheckResult> {
   const { allowTrial = true, minPlan = "starter" } = options || {};
 
-  // In testing mode, get user info but always authorize
+  // In testing mode, bypass auth entirely and use first organization
   if (TESTING_MODE) {
+    // Try to get user if logged in
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return {
-        authorized: false,
-        error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-      };
+    
+    let organizationId: string | undefined;
+    let userId: string | undefined = user?.id;
+    
+    if (user) {
+      // Get org from user
+      const { data: userData } = await supabase
+        .from("users")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
+      organizationId = (userData as { organization_id?: string } | null)?.organization_id;
     }
     
-    // Get org ID for context
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
+    // If no org yet, get first org in database
+    if (!organizationId) {
+      const { data: orgs } = await supabase
+        .from("organizations")
+        .select("id")
+        .limit(1);
+      organizationId = orgs?.[0]?.id;
+    }
     
-    const organizationId = (userData as { organization_id?: string } | null)?.organization_id;
-    
+    // Always authorize in testing mode
     return {
       authorized: true,
-      organizationId: organizationId || undefined,
-      userId: user.id,
+      organizationId,
+      userId: userId || "test-user",
       plan: "pro", // Pretend they're on pro in testing
     };
   }
