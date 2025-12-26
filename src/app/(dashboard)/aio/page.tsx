@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSite } from "@/contexts/site-context";
 import {
   Brain,
   Sparkles,
@@ -305,20 +305,8 @@ function CitationsPanel({ siteId }: { siteId: string | null }) {
 }
 
 export default function AIODashboardPage() {
-  const [selectedSite, setSelectedSite] = useState<string | null>(null);
-
-  // Fetch sites
-  const { data: sitesData } = useQuery({
-    queryKey: ["sites"],
-    queryFn: async () => {
-      const response = await fetch("/api/sites");
-      if (!response.ok) throw new Error("Failed to fetch sites");
-      return response.json();
-    },
-  });
-
-  const sites = sitesData?.sites || [];
-  const activeSiteId = selectedSite || sites[0]?.id;
+  const { selectedSite, sites } = useSite();
+  const activeSiteId = selectedSite?.id;
 
   // Fetch AIO data for the selected site
   const { data: aioData, isLoading, refetch } = useQuery({
@@ -451,19 +439,6 @@ export default function AIODashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {sites.length > 1 && (
-            <select
-              className="px-3 py-2 bg-muted/50 rounded-lg text-sm"
-              value={activeSiteId || ""}
-              onChange={(e) => setSelectedSite(e.target.value)}
-            >
-              {sites.map((site: { id: string; domain: string }) => (
-                <option key={site.id} value={site.id}>
-                  {site.domain}
-                </option>
-              ))}
-            </select>
-          )}
           <Button 
             variant="outline" 
             onClick={() => refetch()}

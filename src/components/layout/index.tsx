@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { CommandPalette, useCommandPalette, CommandTrigger } from "@/components/command-palette";
+import { SiteSwitcher } from "@/components/site-switcher";
 
 // ============================================
 // NAV ITEMS - Prioritize the money path
@@ -277,12 +278,7 @@ function Header({
       </div>
 
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" className="gap-2 text-zinc-400 hover:text-white" asChild>
-          <Link href="/sites">
-            <Globe className="w-4 h-4" />
-            <span className="hidden sm:inline">Sites</span>
-          </Link>
-        </Button>
+        <SiteSwitcher />
         <Link href="/pricing">
           <Button size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-500">
             <Sparkles className="w-4 h-4" />

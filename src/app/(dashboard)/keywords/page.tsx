@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSite } from "@/contexts/site-context";
 import {
   Search,
   TrendingUp,
@@ -234,12 +235,16 @@ export default function KeywordsPage() {
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
   const [needsUpgrade, setNeedsUpgrade] = useState(false);
   const queryClient = useQueryClient();
+  const { selectedSite } = useSite();
 
-  // Fetch keywords data
+  // Fetch keywords data for selected site
   const { data, isLoading, error, refetch } = useQuery<KeywordsData>({
-    queryKey: ["keywords"],
+    queryKey: ["keywords", selectedSite?.id],
     queryFn: async () => {
-      const response = await fetch("/api/keywords");
+      const url = selectedSite?.id 
+        ? `/api/keywords?siteId=${selectedSite.id}`
+        : "/api/keywords";
+      const response = await fetch(url);
       if (response.status === 402) {
         setNeedsUpgrade(true);
         return { keywords: [], clusters: [], stats: { total: 0, top10: 0, quickWins: 0, clusterCount: 0 } };

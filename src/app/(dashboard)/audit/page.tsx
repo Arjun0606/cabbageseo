@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSite } from "@/contexts/site-context";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -230,19 +231,43 @@ function IssueCard({
 // EMPTY STATE
 // ============================================
 
-function EmptyState() {
+function EmptyState({ hasSite, siteDomain, onRunAudit }: { 
+  hasSite: boolean; 
+  siteDomain?: string;
+  onRunAudit?: () => void;
+}) {
+  if (hasSite) {
+    return (
+      <Card className="p-12">
+        <div className="text-center max-w-md mx-auto">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-500/10 flex items-center justify-center">
+            <RefreshCw className="w-8 h-8 text-emerald-500" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">Run Your First Audit</h3>
+          <p className="text-muted-foreground mb-6">
+            Run a technical audit on <span className="font-medium text-white">{siteDomain}</span> to 
+            identify SEO issues and get actionable recommendations.
+          </p>
+          <Button onClick={onRunAudit} className="bg-emerald-600 hover:bg-emerald-500">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Run Audit Now
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="p-12">
       <div className="text-center max-w-md mx-auto">
         <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
           <Globe className="w-8 h-8 text-primary" />
         </div>
-        <h3 className="text-xl font-semibold mb-2">No Audit Data Yet</h3>
+        <h3 className="text-xl font-semibold mb-2">No Site Selected</h3>
         <p className="text-muted-foreground mb-6">
-          Add a site and run your first technical audit to identify SEO issues
-          and opportunities for improvement.
+          Add a site to run technical audits and identify SEO issues.
         </p>
-        <Link href="/onboarding">
+        <Link href="/sites/new">
           <Button>Add Your First Site</Button>
         </Link>
       </div>
@@ -295,16 +320,19 @@ export default function AuditPage() {
   const [filterSeverity, setFilterSeverity] = useState<IssueSeverity | "all">("all");
   const [fixingIssue, setFixingIssue] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { selectedSite, isLoading: siteLoading } = useSite();
 
-  // Fetch audit data
+  // Fetch audit data for selected site
   const { data, isLoading, error, refetch } = useQuery<AuditData>({
-    queryKey: ["audit"],
+    queryKey: ["audit", selectedSite?.id],
     queryFn: async () => {
-      const response = await fetch("/api/audit/issues");
+      if (!selectedSite?.id) return null;
+      const response = await fetch(`/api/audit/issues?siteId=${selectedSite.id}`);
       if (!response.ok) throw new Error("Failed to fetch audit data");
       const json = await response.json();
       return json.data;
     },
+    enabled: !!selectedSite?.id,
   });
 
   // Run new scan mutation
@@ -418,7 +446,13 @@ export default function AuditPage() {
       {isLoading && <AuditLoading />}
 
       {/* Empty State */}
-      {!isLoading && !error && !hasData && <EmptyState />}
+      {!isLoading && !siteLoading && !error && !hasData && (
+        <EmptyState 
+          hasSite={!!selectedSite} 
+          siteDomain={selectedSite?.domain}
+          onRunAudit={() => scanMutation.mutate()}
+        />
+      )}
 
       {/* Data View */}
       {!isLoading && hasData && (

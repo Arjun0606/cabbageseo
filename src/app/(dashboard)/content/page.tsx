@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { useSite } from "@/contexts/site-context";
 import {
   FileText,
   Plus,
@@ -244,12 +245,16 @@ function EmptyState() {
 
 export default function ContentPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { selectedSite } = useSite();
 
-  // Fetch content data
+  // Fetch content data for selected site
   const { data, isLoading, error, refetch } = useQuery<ContentData>({
-    queryKey: ["content"],
+    queryKey: ["content", selectedSite?.id],
     queryFn: async () => {
-      const response = await fetch("/api/content");
+      const url = selectedSite?.id 
+        ? `/api/content?siteId=${selectedSite.id}`
+        : "/api/content";
+      const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch content");
       const json = await response.json();
       return json.data;
