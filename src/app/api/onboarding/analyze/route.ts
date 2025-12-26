@@ -489,6 +489,60 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
       } as never);
 
     // ========================================
+    // STEP 7: Save individual issues to database
+    // ========================================
+    if (homepageAnalysis) {
+      // Extract all issues (fail/warning) from SEO breakdown
+      const allSeoItems = [
+        ...homepageAnalysis.seo.details.technical.map(i => ({ ...i, category: "technical" })),
+        ...homepageAnalysis.seo.details.content.map(i => ({ ...i, category: "content" })),
+        ...homepageAnalysis.seo.details.meta.map(i => ({ ...i, category: "meta" })),
+        ...homepageAnalysis.seo.details.performance.map(i => ({ ...i, category: "performance" })),
+        ...homepageAnalysis.seo.details.accessibility.map(i => ({ ...i, category: "accessibility" })),
+      ];
+
+      // Also extract AIO issues
+      const allAioItems = [
+        ...homepageAnalysis.aio.details.structure.map(i => ({ ...i, category: "aio-structure" })),
+        ...homepageAnalysis.aio.details.authority.map(i => ({ ...i, category: "aio-authority" })),
+        ...homepageAnalysis.aio.details.schema.map(i => ({ ...i, category: "aio-schema" })),
+        ...homepageAnalysis.aio.details.contentQuality.map(i => ({ ...i, category: "aio-content" })),
+        ...homepageAnalysis.aio.details.quotability.map(i => ({ ...i, category: "aio-quotability" })),
+      ];
+
+      // Filter to only issues (fail or warning)
+      const issues = [...allSeoItems, ...allAioItems]
+        .filter(item => item.status === "fail" || item.status === "warning")
+        .map(item => ({
+          site_id: siteId,
+          page_url: normalizedUrl,
+          category: item.category,
+          severity: item.status === "fail" ? "critical" : "warning",
+          title: item.name,
+          description: item.reason,
+          suggested_value: item.howToFix || null,
+          auto_fixable: false,
+          status: "open",
+          is_resolved: false,
+        }));
+
+      // Delete old issues for this site (fresh analysis)
+      await serviceClient
+        .from("issues")
+        .delete()
+        .eq("site_id", siteId);
+
+      // Insert new issues
+      if (issues.length > 0) {
+        await serviceClient
+          .from("issues")
+          .insert(issues as never);
+      }
+
+      console.log(`[Onboarding Analysis] Saved ${issues.length} issues for site ${siteId}`);
+    }
+
+    // ========================================
     // Return results with AIO scores!
     // ========================================
     const result: OnboardingResult = {
