@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSite } from "@/contexts/site-context";
 import {
@@ -231,27 +231,30 @@ function IssueCard({
 // EMPTY STATE
 // ============================================
 
-function EmptyState({ hasSite, siteDomain, onRunAudit }: { 
+function EmptyState({ hasSite, siteDomain, isAutoRunning }: { 
   hasSite: boolean; 
   siteDomain?: string;
-  onRunAudit?: () => void;
+  isAutoRunning?: boolean;
 }) {
   if (hasSite) {
+    // Show analyzing state - audit auto-runs, no manual trigger needed
     return (
       <Card className="p-12">
         <div className="text-center max-w-md mx-auto">
           <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-500/10 flex items-center justify-center">
-            <RefreshCw className="w-8 h-8 text-emerald-500" />
+            <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">Run Your First Audit</h3>
-          <p className="text-muted-foreground mb-6">
-            Run a technical audit on <span className="font-medium text-white">{siteDomain}</span> to 
-            identify SEO issues and get actionable recommendations.
+          <h3 className="text-xl font-semibold mb-2">
+            {isAutoRunning ? "Analyzing Your Site..." : "Preparing Audit..."}
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            Scanning <span className="font-medium text-white">{siteDomain}</span> for SEO issues.
+            This usually takes 15-30 seconds.
           </p>
-          <Button onClick={onRunAudit} className="bg-emerald-600 hover:bg-emerald-500">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Run Audit Now
-          </Button>
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Crawling pages and analyzing content...</span>
+          </div>
         </div>
       </Card>
     );
@@ -319,6 +322,8 @@ export default function AuditPage() {
   const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
   const [filterSeverity, setFilterSeverity] = useState<IssueSeverity | "all">("all");
   const [fixingIssue, setFixingIssue] = useState<string | null>(null);
+  const [isAutoRunning, setIsAutoRunning] = useState(false);
+  const hasAutoRun = useRef(false);
   const queryClient = useQueryClient();
   const { selectedSite, isLoading: siteLoading } = useSite();
 
@@ -338,21 +343,42 @@ export default function AuditPage() {
   // Run new scan mutation
   const scanMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch("/api/autopilot/tasks", {
+      // Use the onboarding analyze endpoint which actually runs analysis
+      const response = await fetch("/api/onboarding/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "crawl", action: "start" }),
+        body: JSON.stringify({ url: selectedSite?.domain }),
       });
       if (!response.ok) throw new Error("Failed to start scan");
       return response.json();
     },
     onSuccess: () => {
-      // Refresh after a delay to allow scan to complete
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["audit"] });
-      }, 5000);
+      setIsAutoRunning(false);
+      // Refresh immediately after scan completes
+      queryClient.invalidateQueries({ queryKey: ["audit"] });
+      refetch();
+    },
+    onError: () => {
+      setIsAutoRunning(false);
     },
   });
+
+  // AUTO-RUN: If we have a site but no data, automatically start the audit
+  useEffect(() => {
+    if (
+      selectedSite?.id &&
+      !isLoading &&
+      !siteLoading &&
+      !data &&
+      !error &&
+      !scanMutation.isPending &&
+      !hasAutoRun.current
+    ) {
+      hasAutoRun.current = true;
+      setIsAutoRunning(true);
+      scanMutation.mutate();
+    }
+  }, [selectedSite?.id, isLoading, siteLoading, data, error, scanMutation]);
 
   // Fix issue mutation
   const fixMutation = useMutation({
@@ -445,12 +471,12 @@ export default function AuditPage() {
       {/* Loading State */}
       {isLoading && <AuditLoading />}
 
-      {/* Empty State */}
+      {/* Empty State - Shows analyzing state (auto-runs) */}
       {!isLoading && !siteLoading && !error && !hasData && (
         <EmptyState 
           hasSite={!!selectedSite} 
           siteDomain={selectedSite?.domain}
-          onRunAudit={() => scanMutation.mutate()}
+          isAutoRunning={isAutoRunning || scanMutation.isPending}
         />
       )}
 
