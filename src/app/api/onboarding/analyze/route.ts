@@ -515,7 +515,7 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
         .filter(item => item.status === "fail" || item.status === "warning")
         .map(item => ({
           site_id: siteId,
-          page_url: normalizedUrl,
+          page_url: url,
           category: item.category,
           severity: item.status === "fail" ? "critical" : "warning",
           title: item.name,
