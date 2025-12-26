@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -480,6 +480,7 @@ export default function SiteStrategyPage() {
   const [articlesPerWeek, setArticlesPerWeek] = useState(2);
 
   const [activeTab, setActiveTab] = useState("recommendations");
+  const hasAutoRun = useRef(false);
 
   // Load site data
   useEffect(() => {
@@ -498,7 +499,24 @@ export default function SiteStrategyPage() {
     loadSite();
   }, [siteId]);
 
-  // Run AI analysis
+  // AUTO-RUN: Automatically generate strategy when page loads with no data
+  useEffect(() => {
+    if (
+      site &&
+      !isLoading &&
+      !isAnalyzing &&
+      recommendations.length === 0 &&
+      !error &&
+      !hasAutoRun.current
+    ) {
+      hasAutoRun.current = true;
+      runAnalysisRef.current();
+    }
+  }, [site, isLoading, isAnalyzing, recommendations.length, error]);
+
+  // Run AI analysis (using ref so we can call it from useEffect)
+  const runAnalysisRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  
   const runAnalysis = async () => {
     setIsAnalyzing(true);
     setAnalysisProgress(0);
@@ -631,6 +649,9 @@ export default function SiteStrategyPage() {
       setIsAnalyzing(false);
     }
   };
+
+  // Assign to ref so useEffect can call it
+  runAnalysisRef.current = runAnalysis;
 
   // Generate content for a recommendation
   const handleGenerate = async (id: string) => {

@@ -35,6 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NextSteps } from "@/components/onboarding/next-steps";
+import { QuickActionBar } from "@/components/quick-action-bar";
 
 // ============================================
 // TYPES
@@ -437,14 +438,17 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
-          <p className="text-zinc-400">
-            Welcome back. What do you want to create today?
+      {/* Header with Quick Action */}
+      <div className="space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-white mb-2">What do you want to do?</h1>
+          <p className="text-zinc-400 mb-6">
+            Paste a URL to analyze, or enter a topic to generate content
           </p>
         </div>
+        
+        {/* The Cursor-like input */}
+        <QuickActionBar />
       </div>
 
       {/* HERO ACTIONS - The Money Path */}
