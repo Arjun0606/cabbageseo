@@ -97,7 +97,13 @@ export async function POST(request: NextRequest) {
   // Create admin Supabase client (bypasses RLS)
   // Using 'any' type to avoid strict typing issues with webhook updates
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase = createServiceClient() as any;
+  let supabase: any;
+  try {
+    supabase = createServiceClient();
+  } catch (e) {
+    console.error("[Dodo Webhook] Failed to create service client:", e);
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
 
   try {
     switch (event.type) {

@@ -80,7 +80,13 @@ export async function POST(request: NextRequest) {
   }
 
   // Use service client for database operations (bypasses RLS)
-  const serviceClient = createServiceClient();
+  let serviceClient;
+  try {
+    serviceClient = createServiceClient();
+  } catch (e) {
+    console.error("[Checkout] Failed to create service client:", e);
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
 
   try {
     const body = await request.json();

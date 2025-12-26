@@ -83,7 +83,13 @@ function getIntervalFromProductId(productId: string | undefined): string {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = createServiceClient();
+  let supabase;
+  try {
+    supabase = createServiceClient();
+  } catch (e) {
+    console.error("[Webhook] Failed to create service client:", e);
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
 
   try {
     // Get raw body for signature verification
@@ -139,6 +145,12 @@ export async function POST(request: NextRequest) {
         const plan = getPlanFromProductId(subscriptionData.product_id);
         const interval = getIntervalFromProductId(subscriptionData.product_id);
         
+        // Safely access customer_id with optional chaining
+        const customerId = subscriptionData.customer?.customer_id;
+        if (!customerId) {
+          console.warn("[Webhook] No customer_id in subscription data");
+        }
+        
         const { error } = await supabase
           .from("organizations")
           .update({
@@ -148,7 +160,7 @@ export async function POST(request: NextRequest) {
             stripe_subscription_id: subscriptionData.subscription_id,
             current_period_start: subscriptionData.previous_billing_date,
             current_period_end: subscriptionData.next_billing_date,
-            stripe_customer_id: subscriptionData.customer.customer_id,
+            ...(customerId && { stripe_customer_id: customerId }),
           } as never)
           .eq("id", organizationId);
 

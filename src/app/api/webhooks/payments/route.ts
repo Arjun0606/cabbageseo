@@ -36,7 +36,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const supabase = createServiceClient();
+  let supabase;
+  try {
+    supabase = createServiceClient();
+  } catch (e) {
+    console.error("[Payments Webhook] Failed to create service client:", e);
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
 
   try {
     switch (event.type) {

@@ -72,20 +72,21 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       
       const data = await res.json();
       if (data.success && data.data?.sites) {
+        // API returns camelCase field names
         const mappedSites: Site[] = data.data.sites.map((s: {
           id: string;
           domain: string;
-          seo_score?: number;
-          aio_score?: number;
-          pages_count?: number;
-          last_audit_at?: string;
+          seoScore?: number;
+          aioScore?: number;
+          pagesCount?: number;
+          lastCrawlAt?: string;
         }) => ({
           id: s.id,
           domain: s.domain,
-          seoScore: s.seo_score || null,
-          aioScore: s.aio_score || null,
-          pagesCount: s.pages_count || 0,
-          lastAuditAt: s.last_audit_at || null,
+          seoScore: s.seoScore ?? null,
+          aioScore: s.aioScore ?? null,
+          pagesCount: s.pagesCount ?? 0,
+          lastAuditAt: s.lastCrawlAt ?? null,
         }));
         setSites(mappedSites);
       }

@@ -40,7 +40,13 @@ export async function GET() {
   }
 
   // Use service client for database operations (bypasses RLS)
-  const serviceClient = createServiceClient();
+  let serviceClient;
+  try {
+    serviceClient = createServiceClient();
+  } catch (e) {
+    console.error("[Account API GET] Failed to create service client:", e);
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
 
   try {
     // Get user profile
@@ -163,7 +169,13 @@ export async function PUT(request: NextRequest) {
   }
 
   // Use service client for database operations (bypasses RLS)
-  const serviceClient = createServiceClient();
+  let serviceClient;
+  try {
+    serviceClient = createServiceClient();
+  } catch (e) {
+    console.error("[Account API PATCH] Failed to create service client:", e);
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
 
   try {
     const body = await request.json();
@@ -244,7 +256,13 @@ export async function DELETE() {
   }
 
   // Use service client for database operations (bypasses RLS)
-  const serviceClient = createServiceClient();
+  let serviceClient;
+  try {
+    serviceClient = createServiceClient();
+  } catch (e) {
+    console.error("[Account API DELETE] Failed to create service client:", e);
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
 
   try {
     // Get user's organization and role
