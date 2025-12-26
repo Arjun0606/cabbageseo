@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   CreditCard,
@@ -226,7 +226,17 @@ function PlanCard({
 // MAIN PAGE
 // ============================================
 
-export default function BillingPage() {
+// Loading fallback for Suspense
+function BillingPageLoading() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
+
+// Content component that uses useSearchParams
+function BillingPageContent() {
   const searchParams = useSearchParams();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -602,5 +612,14 @@ export default function BillingPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// Wrap in Suspense for useSearchParams
+export default function BillingPage() {
+  return (
+    <Suspense fallback={<BillingPageLoading />}>
+      <BillingPageContent />
+    </Suspense>
   );
 }
