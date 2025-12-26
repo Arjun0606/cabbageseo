@@ -11,8 +11,9 @@ import { getPlan, getPlanLimits } from "@/lib/billing/plans";
 
 // ============================================
 // 🔓 TESTING MODE - AUTH BYPASS
+// Set TESTING_MODE=true in .env for local testing
 // ============================================
-const TESTING_MODE = true;
+const TESTING_MODE = process.env.TESTING_MODE === "true";
 
 export async function GET() {
   const supabase = await createClient();

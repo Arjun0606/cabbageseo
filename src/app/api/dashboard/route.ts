@@ -53,9 +53,9 @@ interface DashboardData {
 
 // ============================================
 // 🔓 TESTING MODE - AUTH BYPASS
-// Set to false before production launch
+// Set TESTING_MODE=true in .env for local testing
 // ============================================
-const TESTING_MODE = true;
+const TESTING_MODE = process.env.TESTING_MODE === "true";
 
 export async function GET() {
   // Use service client in testing mode to bypass RLS

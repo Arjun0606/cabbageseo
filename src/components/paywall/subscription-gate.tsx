@@ -26,9 +26,9 @@ const FEATURES = [
 export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   // ============================================
   // 🔓 TESTING MODE - PAYWALL DISABLED
-  // Set to false to enable paywall for production
+  // Set NEXT_PUBLIC_TESTING_MODE=true in .env for local testing
   // ============================================
-  const TESTING_MODE = true;
+  const TESTING_MODE = process.env.NEXT_PUBLIC_TESTING_MODE === "true";
 
   const router = useRouter();
   const pathname = usePathname();

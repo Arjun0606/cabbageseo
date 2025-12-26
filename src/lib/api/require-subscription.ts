@@ -10,9 +10,9 @@ import { getSubscriptionInfo, type PlanId } from "@/lib/billing";
 
 // ============================================
 // 🔓 TESTING MODE - SUBSCRIPTION CHECKS DISABLED
-// Set to false to enable for production launch
+// Set TESTING_MODE=true in .env for local testing
 // ============================================
-const TESTING_MODE = true;
+const TESTING_MODE = process.env.TESTING_MODE === "true";
 
 export interface SubscriptionCheckResult {
   authorized: boolean;
