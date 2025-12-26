@@ -607,7 +607,7 @@ export default function AIODashboardPage() {
 
         {/* Citations Tab */}
         <TabsContent value="citations" className="space-y-4">
-          <CitationsPanel siteId={activeSiteId} />
+          <CitationsPanel siteId={activeSiteId || null} />
         </TabsContent>
       </Tabs>
 
