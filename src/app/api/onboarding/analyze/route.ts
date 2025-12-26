@@ -80,22 +80,10 @@ function classifyOpportunity(volume: number, difficulty: number): "high" | "medi
   return "low";
 }
 
+// Testing mode - read from environment
+const TESTING_MODE = process.env.TESTING_MODE === "true";
+
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  
-  if (!supabase) {
-    return NextResponse.json(
-      { error: "Database not configured" },
-      { status: 503 }
-    );
-  }
-
-  // Check auth
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   // Use service client for database writes (bypasses RLS)
   let serviceClient;
   try {
@@ -103,6 +91,57 @@ export async function POST(request: NextRequest) {
   } catch (e) {
     console.error("[Onboarding Analyze] Failed to create service client:", e);
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
+
+  let userId: string;
+  let userEmail: string;
+
+  if (TESTING_MODE) {
+    // TESTING: Use a test user context
+    console.log("[Onboarding Analyze] TESTING_MODE: Bypassing auth");
+    
+    // Get or create a test user
+    const { data: testUser } = await serviceClient
+      .from("users")
+      .select("id, email")
+      .limit(1)
+      .single();
+    
+    const typedTestUser = testUser as { id: string; email: string } | null;
+    if (typedTestUser) {
+      userId = typedTestUser.id;
+      userEmail = typedTestUser.email || "test@example.com";
+    } else {
+      // Create a test user if none exists
+      const testId = `test-user-${Date.now()}`;
+      const testEmail = "test@cabbageseo.com";
+      await serviceClient
+        .from("users")
+        .insert({
+          id: testId,
+          email: testEmail,
+          full_name: "Test User",
+        } as never);
+      userId = testId;
+      userEmail = testEmail;
+    }
+  } else {
+    // Production: Require authentication
+    const supabase = await createClient();
+    
+    if (!supabase) {
+      return NextResponse.json(
+        { error: "Database not configured" },
+        { status: 503 }
+      );
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    userId = user.id;
+    userEmail = user.email || "";
   }
 
   try {
@@ -128,20 +167,19 @@ export async function POST(request: NextRequest) {
     const { data: userData } = await serviceClient
       .from("users")
       .select("organization_id")
-      .eq("id", user.id)
+      .eq("id", userId)
       .single();
 
     let organizationId = (userData as { organization_id?: string } | null)?.organization_id;
 
     // If user doesn't exist or no organization, create them
-    if (!userData) {
+    if (!userData && !TESTING_MODE) {
       const { error: userError } = await serviceClient
         .from("users")
         .insert({
-          id: user.id,
-          email: user.email,
-          full_name: user.user_metadata?.full_name || user.email?.split("@")[0],
-          avatar_url: user.user_metadata?.avatar_url,
+          id: userId,
+          email: userEmail,
+          full_name: userEmail?.split("@")[0] || "User",
         } as never);
 
       if (userError) {
@@ -154,8 +192,8 @@ export async function POST(request: NextRequest) {
       const { data: newOrg, error: orgError } = await serviceClient
         .from("organizations")
         .insert({
-          name: `${user.email?.split("@")[0]}'s Organization`,
-          slug: `org-${user.id.slice(0, 8)}-${Date.now()}`,
+          name: `${userEmail?.split("@")[0] || "Test"}'s Organization`,
+          slug: `org-${userId.slice(0, 8)}-${Date.now()}`,
           subscription_status: "trialing",
         } as never)
         .select("id")
@@ -166,7 +204,7 @@ export async function POST(request: NextRequest) {
         const { data: existingOrg } = await serviceClient
           .from("organizations")
           .select("id")
-          .eq("owner_id", user.id)
+          .eq("owner_id", userId)
           .single();
         
         if (existingOrg) {
@@ -185,9 +223,9 @@ export async function POST(request: NextRequest) {
       await serviceClient
         .from("users")
         .upsert({ 
-          id: user.id,
+          id: userId,
           organization_id: organizationId,
-          email: user.email,
+          email: userEmail,
         } as never);
     }
 
