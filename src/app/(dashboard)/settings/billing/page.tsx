@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   CreditCard,
   Check,
@@ -14,6 +15,8 @@ import {
   Package,
   Loader2,
   ChevronRight,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -224,12 +227,48 @@ function PlanCard({
 // ============================================
 
 export default function BillingPage() {
+  const searchParams = useSearchParams();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<UsageData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
+  const [checkoutStatus, setCheckoutStatus] = useState<"success" | "cancelled" | "pending" | null>(null);
+  const [checkingSession, setCheckingSession] = useState(false);
+
+  // Check checkout session status if returning from payment
+  useEffect(() => {
+    const sessionId = searchParams.get("session_id");
+    if (sessionId && sessionId !== "{CHECKOUT_SESSION_ID}") {
+      setCheckingSession(true);
+      // Verify session status with our API
+      fetch(`/api/billing/verify-session?session_id=${sessionId}`)
+        .then(res => res.json())
+        .then(json => {
+          if (json.success) {
+            if (json.data?.status === "succeeded") {
+              setCheckoutStatus("success");
+            } else if (json.data?.status === "cancelled" || json.data?.status === "failed") {
+              setCheckoutStatus("cancelled");
+            } else {
+              setCheckoutStatus("pending");
+            }
+          } else {
+            // If we can't verify, assume cancelled (user closed checkout)
+            setCheckoutStatus("cancelled");
+          }
+        })
+        .catch(() => {
+          setCheckoutStatus("cancelled");
+        })
+        .finally(() => {
+          setCheckingSession(false);
+          // Clear the URL params after checking
+          window.history.replaceState({}, "", "/settings/billing");
+        });
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     async function fetchUsage() {
@@ -245,7 +284,7 @@ export default function BillingPage() {
       }
     }
     fetchUsage();
-  }, []);
+  }, [checkoutStatus]); // Refetch when checkout completes
 
   const handleManageBilling = async () => {
     try {
@@ -315,6 +354,56 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-8">
+      {/* Checkout Status Notification */}
+      {checkingSession && (
+        <Card className="border-blue-500/30 bg-blue-500/5">
+          <CardContent className="py-4 flex items-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+            <span>Verifying your payment...</span>
+          </CardContent>
+        </Card>
+      )}
+      
+      {checkoutStatus === "success" && (
+        <Card className="border-emerald-500/30 bg-emerald-500/5">
+          <CardContent className="py-4 flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            <div>
+              <p className="font-medium text-emerald-400">Payment successful!</p>
+              <p className="text-sm text-zinc-400">Your subscription has been upgraded. Thank you for your purchase!</p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="ml-auto"
+              onClick={() => setCheckoutStatus(null)}
+            >
+              Dismiss
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+      
+      {checkoutStatus === "cancelled" && (
+        <Card className="border-yellow-500/30 bg-yellow-500/5">
+          <CardContent className="py-4 flex items-center gap-3">
+            <XCircle className="w-5 h-5 text-yellow-400" />
+            <div>
+              <p className="font-medium text-yellow-400">Checkout cancelled</p>
+              <p className="text-sm text-zinc-400">Your payment was not completed. You can try again anytime.</p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="ml-auto"
+              onClick={() => setCheckoutStatus(null)}
+            >
+              Dismiss
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Current Plan */}
       <Card>
         <CardHeader>
