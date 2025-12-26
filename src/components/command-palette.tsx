@@ -233,7 +233,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           siteId: analysis.siteId,
         });
 
-        refreshSites();
+        // Refresh sites list and select the newly analyzed site
+        await refreshSites();
+        if (analysis.siteId) {
+          selectSite(analysis.siteId);
+        }
       }
     } catch (error) {
       addResult("error", error instanceof Error ? error.message : "Analysis failed. Please try again.");

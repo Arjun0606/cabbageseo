@@ -340,21 +340,40 @@ export default function AuditPage() {
     enabled: !!selectedSite?.id,
   });
 
-  // Run new scan mutation
+  // Run new scan mutation with timeout handling
   const scanMutation = useMutation({
     mutationFn: async () => {
       // Ensure we have a full URL with protocol
       const domain = selectedSite?.domain || "";
       const url = domain.startsWith("http") ? domain : `https://${domain}`;
       
-      // Use the onboarding analyze endpoint which actually runs analysis
-      const response = await fetch("/api/onboarding/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-      if (!response.ok) throw new Error("Failed to start scan");
-      return response.json();
+      // Use AbortController for timeout (90 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
+      
+      try {
+        const response = await fetch("/api/onboarding/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to analyze site");
+        }
+        return response.json();
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err instanceof Error && err.name === "AbortError") {
+          // On timeout, still try to refetch - analysis might have saved partial data
+          await refetch();
+          throw new Error("Analysis is taking longer than expected. Refreshing to check for results...");
+        }
+        throw err;
+      }
     },
     onSuccess: () => {
       setIsAutoRunning(false);
@@ -362,13 +381,16 @@ export default function AuditPage() {
       queryClient.invalidateQueries({ queryKey: ["audit"] });
       refetch();
     },
-    onError: () => {
+    onError: (error) => {
       setIsAutoRunning(false);
+      console.error("Scan error:", error);
+      // Still try to refetch in case partial data was saved
+      refetch();
     },
   });
 
-  // Check if we have meaningful data
-  const hasData = data && (data.issues?.length > 0 || data.stats?.passed > 0);
+  // Check if we have meaningful data (issues exist or we have stats)
+  const hasData = data && (data.issues?.length > 0 || (data.stats?.total ?? 0) > 0);
 
   // AUTO-RUN: If we have a site but no meaningful data, automatically start the audit
   useEffect(() => {
