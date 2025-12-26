@@ -343,11 +343,15 @@ export default function AuditPage() {
   // Run new scan mutation
   const scanMutation = useMutation({
     mutationFn: async () => {
+      // Ensure we have a full URL with protocol
+      const domain = selectedSite?.domain || "";
+      const url = domain.startsWith("http") ? domain : `https://${domain}`;
+      
       // Use the onboarding analyze endpoint which actually runs analysis
       const response = await fetch("/api/onboarding/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: selectedSite?.domain }),
+        body: JSON.stringify({ url }),
       });
       if (!response.ok) throw new Error("Failed to start scan");
       return response.json();
@@ -363,13 +367,16 @@ export default function AuditPage() {
     },
   });
 
-  // AUTO-RUN: If we have a site but no data, automatically start the audit
+  // Check if we have meaningful data
+  const hasData = data && (data.issues?.length > 0 || data.stats?.passed > 0);
+
+  // AUTO-RUN: If we have a site but no meaningful data, automatically start the audit
   useEffect(() => {
     if (
       selectedSite?.id &&
       !isLoading &&
       !siteLoading &&
-      !data &&
+      !hasData &&
       !error &&
       !scanMutation.isPending &&
       !hasAutoRun.current
@@ -378,7 +385,7 @@ export default function AuditPage() {
       setIsAutoRunning(true);
       scanMutation.mutate();
     }
-  }, [selectedSite?.id, isLoading, siteLoading, data, error, scanMutation]);
+  }, [selectedSite?.id, isLoading, siteLoading, hasData, error, scanMutation]);
 
   // Fix issue mutation
   const fixMutation = useMutation({
@@ -421,8 +428,6 @@ export default function AuditPage() {
     }
     setSelectedIssues([]);
   };
-
-  const hasData = data && (data.issues.length > 0 || data.stats.passed > 0);
 
   return (
     <div className="space-y-6">
