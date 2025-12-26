@@ -225,6 +225,13 @@ export default function SiteDetailsPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link href={`/sites/${siteId}/strategy`}>
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Content Strategy
+            </Button>
+          </Link>
+          
           <Button
             variant="outline"
             size="sm"

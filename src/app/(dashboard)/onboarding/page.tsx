@@ -711,38 +711,55 @@ export default function OnboardingPage() {
         </Card>
       )}
 
-      {/* CTA - Push to Subscribe */}
-      <Card className="p-8 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20">
+      {/* Primary CTA - Get Content Strategy */}
+      <Card className="p-8 bg-gradient-to-br from-primary/10 to-purple-500/10 border-primary/20">
         <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center p-3 bg-emerald-500/20 rounded-xl">
-            <Sparkles className="w-8 h-8 text-emerald-400" />
+          <div className="inline-flex items-center justify-center p-3 bg-primary/20 rounded-xl">
+            <Rocket className="w-8 h-8 text-primary" />
           </div>
-          <h3 className="text-2xl font-bold">Ready to rank higher?</h3>
+          <h3 className="text-2xl font-bold">Get Your AI Content Strategy</h3>
           <p className="text-muted-foreground max-w-md mx-auto">
-            Choose a plan to unlock AI content generation, keyword tracking, and full SEO optimization tools.
+            Our AI will analyze your competitors and generate a personalized content calendar with the highest-impact topics.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Button 
               size="lg" 
-              className="gap-2 px-8 bg-emerald-600 hover:bg-emerald-500" 
-              onClick={() => router.push("/pricing")}
+              className="gap-2 px-8" 
+              onClick={() => router.push(`/sites/${analysis?.siteId}/strategy`)}
             >
               <Sparkles className="w-5 h-5" />
-              Choose Your Plan
+              Generate Content Strategy
             </Button>
             <Button 
               size="lg" 
               variant="outline" 
               className="gap-2"
-              onClick={() => router.push("/analyze")}
+              onClick={() => router.push("/dashboard")}
             >
-              Try Free Analyzer
+              Go to Dashboard
               <ArrowRight className="w-5 h-5" />
             </Button>
           </div>
-          <p className="text-sm text-zinc-500 pt-2">
-            Starting at <span className="text-emerald-400 font-semibold">$29/month</span> · Cancel anytime
-          </p>
+        </div>
+      </Card>
+      
+      {/* Secondary CTA - Upgrade */}
+      <Card className="p-6 border-dashed">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-center sm:text-left">
+            <h4 className="font-semibold">Want unlimited content generation?</h4>
+            <p className="text-sm text-muted-foreground">
+              Starting at <span className="text-emerald-400 font-semibold">$29/month</span> · Cancel anytime
+            </p>
+          </div>
+          <Button 
+            variant="outline"
+            className="gap-2" 
+            onClick={() => router.push("/pricing")}
+          >
+            View Plans
+            <ArrowRight className="w-4 h-4" />
+          </Button>
         </div>
       </Card>
     </div>
