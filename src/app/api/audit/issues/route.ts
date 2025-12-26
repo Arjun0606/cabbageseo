@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
   if (TESTING_MODE) {
     const { data: orgs } = await supabase.from("organizations").select("id").limit(1);
-    orgId = orgs?.[0]?.id || null;
+    orgId = (orgs?.[0] as { id: string } | undefined)?.id || null;
   } else {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
 
   if (TESTING_MODE) {
     const { data: orgs } = await supabase.from("organizations").select("id").limit(1);
-    orgId = orgs?.[0]?.id || null;
+    orgId = (orgs?.[0] as { id: string } | undefined)?.id || null;
   } else {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

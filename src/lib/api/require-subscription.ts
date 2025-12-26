@@ -59,7 +59,7 @@ export async function requireSubscription(
         .from("organizations")
         .select("id")
         .limit(1);
-      organizationId = orgs?.[0]?.id;
+      organizationId = (orgs?.[0] as { id: string } | undefined)?.id;
     }
     
     // Always authorize in testing mode
