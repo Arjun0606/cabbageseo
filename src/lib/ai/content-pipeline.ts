@@ -635,18 +635,63 @@ export class ContentPipeline {
   // ============================================
 
   /**
-   * Parse JSON from AI response
+   * Parse JSON from AI response with robust extraction
    */
   private parseJSON<T>(content: string): T {
-    try {
-      // Try to extract JSON from response
-      const jsonMatch = content.match(/[\[{][\s\S]*[\]}]/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+    // First, try to extract JSON from markdown code blocks
+    const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      try {
+        return JSON.parse(codeBlockMatch[1].trim());
+      } catch {
+        // Continue to other extraction methods
       }
-      return JSON.parse(content);
+    }
+
+    // Try to find balanced JSON by finding start and matching end
+    const trimmed = content.trim();
+    
+    // Find the first [ or {
+    const arrayStart = trimmed.indexOf('[');
+    const objectStart = trimmed.indexOf('{');
+    
+    let startIndex = -1;
+    let isArray = false;
+    
+    if (arrayStart >= 0 && (objectStart < 0 || arrayStart < objectStart)) {
+      startIndex = arrayStart;
+      isArray = true;
+    } else if (objectStart >= 0) {
+      startIndex = objectStart;
+      isArray = false;
+    }
+    
+    if (startIndex >= 0) {
+      // Try to parse from this position, looking for valid JSON
+      const jsonCandidate = trimmed.slice(startIndex);
+      
+      // Try parsing progressively shorter strings until we find valid JSON
+      // This handles cases where there's trailing text after the JSON
+      const endChar = isArray ? ']' : '}';
+      let lastEndIndex = jsonCandidate.lastIndexOf(endChar);
+      
+      while (lastEndIndex >= 0) {
+        const attempt = jsonCandidate.slice(0, lastEndIndex + 1);
+        try {
+          return JSON.parse(attempt);
+        } catch {
+          // Find the previous end character
+          lastEndIndex = jsonCandidate.lastIndexOf(endChar, lastEndIndex - 1);
+        }
+      }
+    }
+
+    // Last resort: try parsing the entire content
+    try {
+      return JSON.parse(trimmed);
     } catch (error) {
-      console.error("Failed to parse JSON:", content.slice(0, 500));
+      console.error("Failed to parse JSON. Content preview:", content.slice(0, 500));
+      console.error("Content length:", content.length);
       throw new Error(`Failed to parse AI response as JSON: ${(error as Error).message}`);
     }
   }

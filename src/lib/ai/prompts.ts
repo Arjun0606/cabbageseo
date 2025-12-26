@@ -50,8 +50,10 @@ Return JSON array:
    */
   generateContentIdeas: (topic: string, existingTitles: string[] = [], count: number = 10) => ({
     system: `You are an SEO content strategist. Generate unique, search-optimized content ideas.
+
+CRITICAL: Output ONLY a valid JSON array. No markdown, no explanation, no code blocks. Just raw JSON.
+
 Rules:
-- Return ONLY valid JSON array
 - Ideas must be unique and not overlap with existing content
 - Focus on topics with clear search intent`,
     user: `Generate ${count} SEO content ideas for: "${topic}"
@@ -60,19 +62,13 @@ ${existingTitles.length > 0 ? `Existing articles (avoid similar topics):\n${exis
 
 For each idea provide:
 - title: Compelling, click-worthy title (50-60 chars)
-- keyword: Primary target keyword
-- intent: Search intent type
-- difficulty: Estimated ranking difficulty
+- keyword: Primary target keyword  
+- intent: informational/commercial/transactional/navigational
+- difficulty: easy/medium/hard
 - trafficPotential: low/medium/high
 
-Return JSON array:
-[{
-  "title": "Article Title Here",
-  "keyword": "target keyword",
-  "intent": "informational",
-  "difficulty": "easy",
-  "trafficPotential": "high"
-}]`,
+Output ONLY this JSON array format (no other text):
+[{"title":"Article Title","keyword":"keyword","intent":"informational","difficulty":"easy","trafficPotential":"high"}]`,
   }),
 
   // ============================================
