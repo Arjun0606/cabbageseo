@@ -5,7 +5,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+
+// ============================================
+// 🔓 TESTING MODE - AUTH BYPASS
+// Set TESTING_MODE=true in .env for local testing
+// ============================================
+const TESTING_MODE = process.env.TESTING_MODE === "true";
 
 interface IssueRow {
   id: string;
@@ -25,15 +31,40 @@ interface IssueRow {
 
 // GET - List issues
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
+  let supabase;
+  try {
+    supabase = TESTING_MODE ? createServiceClient() : await createClient();
+  } catch (e: unknown) {
+    console.error("[Issues API GET] Error creating service client:", e);
+    return NextResponse.json({ error: "Database service client not configured" }, { status: 500 });
+  }
   
   if (!supabase) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  let orgId: string | null = null;
+
+  if (TESTING_MODE) {
+    const { data: orgs } = await supabase.from("organizations").select("id").limit(1);
+    orgId = orgs?.[0]?.id || null;
+  } else {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data: userData } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    orgId = (userData as { organization_id?: string } | null)?.organization_id || null;
+  }
+
+  if (!orgId) {
+    return NextResponse.json({ success: true, data: { issues: [], stats: {} } });
   }
 
   try {
@@ -43,18 +74,6 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get("category");
     const status = searchParams.get("status") || "open";
     const limit = parseInt(searchParams.get("limit") || "100");
-
-    // Get user's organization
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
-    if (!orgId) {
-      return NextResponse.json({ success: true, data: { issues: [], stats: {} } });
-    }
 
     // Get user's sites
     const { data: sites } = await supabase
@@ -147,15 +166,40 @@ export async function GET(request: NextRequest) {
 
 // POST - Fix issues
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
+  let supabase;
+  try {
+    supabase = TESTING_MODE ? createServiceClient() : await createClient();
+  } catch (e: unknown) {
+    console.error("[Issues API POST] Error creating service client:", e);
+    return NextResponse.json({ error: "Database service client not configured" }, { status: 500 });
+  }
   
   if (!supabase) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  let orgId: string | null = null;
+
+  if (TESTING_MODE) {
+    const { data: orgs } = await supabase.from("organizations").select("id").limit(1);
+    orgId = orgs?.[0]?.id || null;
+  } else {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data: userData } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    orgId = (userData as { organization_id?: string } | null)?.organization_id || null;
+  }
+
+  if (!orgId) {
+    return NextResponse.json({ error: "No organization found" }, { status: 400 });
   }
 
   try {
@@ -164,18 +208,6 @@ export async function POST(request: NextRequest) {
 
     if (!action || !issueIds || !Array.isArray(issueIds)) {
       return NextResponse.json({ error: "Action and issue IDs are required" }, { status: 400 });
-    }
-
-    // Verify ownership
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
     // Get user's sites

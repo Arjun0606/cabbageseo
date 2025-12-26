@@ -5,7 +5,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+
+// ============================================
+// 🔓 TESTING MODE - AUTH BYPASS
+// Set TESTING_MODE=true in .env for local testing
+// ============================================
+const TESTING_MODE = process.env.TESTING_MODE === "true";
 
 interface ContentItem {
   id: string;
@@ -31,15 +37,42 @@ interface ContentItem {
 
 // GET - List content for user's sites
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
+  let supabase;
+  try {
+    supabase = TESTING_MODE ? createServiceClient() : await createClient();
+  } catch (e: unknown) {
+    console.error("[Content API GET] Error creating service client:", e);
+    return NextResponse.json({ error: "Database service client not configured" }, { status: 500 });
+  }
   
   if (!supabase) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  let orgId: string | null = null;
+
+  if (TESTING_MODE) {
+    // Get first org for testing
+    const { data: orgs } = await supabase.from("organizations").select("id").limit(1);
+    orgId = orgs?.[0]?.id || null;
+  } else {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get user's organization
+    const { data: userData } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    orgId = (userData as { organization_id?: string } | null)?.organization_id || null;
+  }
+
+  if (!orgId) {
+    return NextResponse.json({ success: true, data: { content: [], total: 0 } });
   }
 
   try {
@@ -49,18 +82,6 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const limit = parseInt(searchParams.get("limit") || "50");
     const offset = parseInt(searchParams.get("offset") || "0");
-
-    // Get user's organization
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
-    if (!orgId) {
-      return NextResponse.json({ success: true, data: { content: [], total: 0 } });
-    }
 
     // Get user's sites
     const { data: sites } = await supabase
@@ -121,15 +142,40 @@ export async function GET(request: NextRequest) {
 
 // POST - Create new content
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
+  let supabase;
+  try {
+    supabase = TESTING_MODE ? createServiceClient() : await createClient();
+  } catch (e: unknown) {
+    console.error("[Content API POST] Error creating service client:", e);
+    return NextResponse.json({ error: "Database service client not configured" }, { status: 500 });
+  }
   
   if (!supabase) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  let orgId: string | null = null;
+
+  if (TESTING_MODE) {
+    const { data: orgs } = await supabase.from("organizations").select("id").limit(1);
+    orgId = orgs?.[0]?.id || null;
+  } else {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data: userData } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    orgId = (userData as { organization_id?: string } | null)?.organization_id || null;
+  }
+
+  if (!orgId) {
+    return NextResponse.json({ error: "No organization found" }, { status: 400 });
   }
 
   try {
@@ -138,18 +184,6 @@ export async function POST(request: NextRequest) {
 
     if (!siteId || !title) {
       return NextResponse.json({ error: "Site ID and title are required" }, { status: 400 });
-    }
-
-    // Verify user owns this site
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
     const { data: site } = await supabase
@@ -207,15 +241,40 @@ export async function POST(request: NextRequest) {
 
 // PATCH - Update content
 export async function PATCH(request: NextRequest) {
-  const supabase = await createClient();
+  let supabase;
+  try {
+    supabase = TESTING_MODE ? createServiceClient() : await createClient();
+  } catch (e: unknown) {
+    console.error("[Content API PATCH] Error creating service client:", e);
+    return NextResponse.json({ error: "Database service client not configured" }, { status: 500 });
+  }
   
   if (!supabase) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  let orgId: string | null = null;
+
+  if (TESTING_MODE) {
+    const { data: orgs } = await supabase.from("organizations").select("id").limit(1);
+    orgId = orgs?.[0]?.id || null;
+  } else {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data: userData } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    orgId = (userData as { organization_id?: string } | null)?.organization_id || null;
+  }
+
+  if (!orgId) {
+    return NextResponse.json({ error: "No organization found" }, { status: 400 });
   }
 
   try {
@@ -224,18 +283,6 @@ export async function PATCH(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json({ error: "Content ID is required" }, { status: 400 });
-    }
-
-    // Verify user owns this content
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
     // Get content with site info
@@ -295,15 +342,40 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE - Delete content
 export async function DELETE(request: NextRequest) {
-  const supabase = await createClient();
+  let supabase;
+  try {
+    supabase = TESTING_MODE ? createServiceClient() : await createClient();
+  } catch (e: unknown) {
+    console.error("[Content API DELETE] Error creating service client:", e);
+    return NextResponse.json({ error: "Database service client not configured" }, { status: 500 });
+  }
   
   if (!supabase) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  let orgId: string | null = null;
+
+  if (TESTING_MODE) {
+    const { data: orgs } = await supabase.from("organizations").select("id").limit(1);
+    orgId = orgs?.[0]?.id || null;
+  } else {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data: userData } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    orgId = (userData as { organization_id?: string } | null)?.organization_id || null;
+  }
+
+  if (!orgId) {
+    return NextResponse.json({ error: "No organization found" }, { status: 400 });
   }
 
   try {
@@ -312,18 +384,6 @@ export async function DELETE(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json({ error: "Content ID is required" }, { status: 400 });
-    }
-
-    // Verify ownership (same logic as PATCH)
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
     const { data: existingContent } = await supabase
