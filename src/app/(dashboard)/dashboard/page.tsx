@@ -34,6 +34,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NextSteps } from "@/components/onboarding/next-steps";
 
 // ============================================
 // TYPES
@@ -465,6 +466,9 @@ export default function DashboardPage() {
           badge="Quick wins"
         />
       </div>
+
+      {/* Next Steps Guide */}
+      <NextSteps />
 
       {/* Main Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
