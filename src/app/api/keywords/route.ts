@@ -7,8 +7,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { requireSubscription } from "@/lib/api/require-subscription";
+
+const TESTING_MODE = process.env.TESTING_MODE === "true";
 
 interface KeywordRow {
   id: string;
@@ -29,19 +31,44 @@ interface KeywordRow {
 
 // GET - List keywords
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
+  let supabase;
+  try {
+    supabase = TESTING_MODE ? createServiceClient() : await createClient();
+  } catch (e) {
+    console.error("[Keywords API] Supabase error:", e);
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
   
   if (!supabase) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  // Keywords require paid subscription
-  const authCheck = await requireSubscription(supabase);
-  if (!authCheck.authorized || !authCheck.userId) {
-    return authCheck.error;
+  let orgId: string | null = null;
+
+  if (TESTING_MODE) {
+    // In testing mode, get the first organization
+    const { data: orgs } = await supabase.from("organizations").select("id").limit(1);
+    orgId = (orgs?.[0] as { id: string } | undefined)?.id || null;
+  } else {
+    // Keywords require paid subscription
+    const authCheck = await requireSubscription(supabase);
+    if (!authCheck.authorized || !authCheck.userId) {
+      return authCheck.error!;
+    }
+
+    // Get user's organization
+    const { data: userData } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", authCheck.userId)
+      .single();
+
+    orgId = (userData as { organization_id?: string } | null)?.organization_id || null;
   }
 
-  const userId = authCheck.userId;
+  if (!orgId) {
+    return NextResponse.json({ success: true, data: { keywords: [], clusters: [], total: 0 } });
+  }
 
   try {
     const { searchParams } = new URL(request.url);
@@ -50,18 +77,6 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search");
     const limit = parseInt(searchParams.get("limit") || "100");
     const offset = parseInt(searchParams.get("offset") || "0");
-
-    // Get user's organization
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", userId)
-      .single();
-
-    const orgId = (userData as { organization_id?: string } | null)?.organization_id;
-    if (!orgId) {
-      return NextResponse.json({ success: true, data: { keywords: [], clusters: [], total: 0 } });
-    }
 
     // Get user's sites
     const { data: sites } = await supabase
