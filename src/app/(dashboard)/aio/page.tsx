@@ -15,6 +15,7 @@ import {
   ExternalLink,
   RefreshCw,
   Info,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -568,11 +569,38 @@ export default function AIODashboardPage() {
         {/* Recommendations Tab */}
         <TabsContent value="recommendations" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Top Optimization Opportunities</CardTitle>
-              <CardDescription>
-                Actions that will have the biggest impact on your AI visibility
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Top Optimization Opportunities</CardTitle>
+                <CardDescription>
+                  Actions that will have the biggest impact on your AI visibility
+                </CardDescription>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={async () => {
+                  if (!selectedSite?.id) return;
+                  try {
+                    const response = await fetch(`/api/export/report?siteId=${selectedSite.id}&type=aio`);
+                    const result = await response.json();
+                    if (result.success) {
+                      const blob = new Blob([result.data.markdown], { type: "text/markdown" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = result.data.filename;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }
+                  } catch (e) {
+                    console.error("Export failed:", e);
+                  }
+                }}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export for Cursor
+              </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               {recommendations.map((rec, i) => (

@@ -508,7 +508,30 @@ export default function AuditPage() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" size="sm" disabled={!hasData}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            disabled={!hasData || !selectedSite}
+            onClick={async () => {
+              if (!selectedSite?.id) return;
+              try {
+                const response = await fetch(`/api/export/report?siteId=${selectedSite.id}&type=seo`);
+                const result = await response.json();
+                if (result.success) {
+                  // Create and download the file
+                  const blob = new Blob([result.data.markdown], { type: "text/markdown" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = result.data.filename;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }
+              } catch (e) {
+                console.error("Export failed:", e);
+              }
+            }}
+          >
             <Download className="w-4 h-4 mr-2" />
             Export Report
           </Button>

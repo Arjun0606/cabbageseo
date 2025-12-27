@@ -500,6 +500,55 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
     // STEP 7: Save individual issues to database
     // ========================================
     if (homepageAnalysis) {
+      // Map analyzer item names to database issue_type enum values
+      const mapToIssueType = (name: string, category: string): string | null => {
+        const nameToType: Record<string, string> = {
+          // SEO Technical
+          "Schema Markup": "missing_schema",
+          "H1 Heading": "missing_h1",
+          "Subheadings (H2)": "missing_h1", // Use closest match
+          // SEO Meta
+          "Title Tag": "missing_meta_title",
+          "Meta Description": "missing_meta_description",
+          // SEO Content
+          "Content Length": "thin_content",
+          // SEO Performance
+          "Page Load Time": "slow_page",
+          // SEO Accessibility
+          "Image Alt Text": "missing_alt",
+          // AIO Structure
+          "FAQ Section": "aio_missing_faq",
+          "Lists & Steps": "aio_missing_howto",
+          "Direct Answers": "aio_poor_answer_structure",
+          "Key Takeaways": "aio_poor_answer_structure",
+          // AIO Authority
+          "Author Information": "aio_no_expert_attribution",
+          "Citations & Sources": "aio_no_expert_attribution",
+          "Expert Quotes": "aio_no_expert_attribution",
+          // AIO Schema
+          "JSON-LD Present": "missing_schema",
+          "FAQ Schema": "aio_missing_faq",
+          "HowTo Schema": "aio_missing_howto",
+          // AIO Content Quality
+          "Definitions": "aio_missing_definitions",
+          "Statistics & Data": "aio_low_entity_density",
+          "Comparisons": "aio_low_entity_density",
+          "Original Research": "aio_low_entity_density",
+          // AIO Quotability
+          "Quotable Snippets": "aio_weak_quotability",
+          "Sentence Brevity": "aio_weak_quotability",
+          "Strong Opening": "aio_weak_quotability",
+          "Scannable Format": "aio_weak_quotability",
+        };
+        
+        // Direct match
+        if (nameToType[name]) return nameToType[name];
+        
+        // Fallback based on category
+        if (category.startsWith("aio")) return "aio_poor_answer_structure";
+        return "thin_content"; // Default fallback for SEO issues
+      };
+
       // Extract all issues (fail/warning) from SEO breakdown
       const allSeoItems = [
         ...homepageAnalysis.seo.details.technical.map(i => ({ ...i, category: "technical" })),
@@ -518,21 +567,25 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
         ...homepageAnalysis.aio.details.quotability.map(i => ({ ...i, category: "aio-quotability" })),
       ];
 
-      // Filter to only issues (fail or warning)
+      // Filter to only issues (fail or warning) and map to DB schema
       const issues = [...allSeoItems, ...allAioItems]
         .filter(item => item.status === "fail" || item.status === "warning")
         .map(item => ({
           site_id: siteId,
-          page_url: url,
-          category: item.category,
+          type: mapToIssueType(item.name, item.category), // Map to valid issue_type enum
           severity: item.status === "fail" ? "critical" : "warning",
           title: item.name,
           description: item.reason,
+          recommendation: item.howToFix || null,
+          affected_url: url,
           suggested_value: item.howToFix || null,
           auto_fixable: false,
+          can_auto_fix: false,
           status: "open",
           is_resolved: false,
         }));
+
+      console.log(`[Onboarding Analysis] Prepared ${issues.length} issues to save for site ${siteId}`);
 
       // Delete old issues for this site (fresh analysis)
       await serviceClient
@@ -548,6 +601,7 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
         
         if (insertError) {
           console.error(`[Onboarding Analysis] Failed to save issues:`, insertError);
+          console.error(`[Onboarding Analysis] First issue sample:`, JSON.stringify(issues[0], null, 2));
         } else {
           console.log(`[Onboarding Analysis] Successfully saved ${issues.length} issues for site ${siteId}`);
         }
