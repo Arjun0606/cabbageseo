@@ -19,9 +19,9 @@ export default function DashboardLayout({
   return (
     <Suspense fallback={<LoadingState />}>
       <SiteProvider>
-        <SubscriptionGate>
-          <AppLayout>{children}</AppLayout>
-        </SubscriptionGate>
+    <SubscriptionGate>
+      <AppLayout>{children}</AppLayout>
+    </SubscriptionGate>
       </SiteProvider>
     </Suspense>
   );

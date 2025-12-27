@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useSite } from "@/contexts/site-context";
 import { 
   Sparkles, 
   Globe, 
@@ -248,6 +249,7 @@ function QuickWinIcon({ type }: { type: string }) {
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { refreshSites, selectSite } = useSite();
   const [url, setUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisComplete, setAnalysisComplete] = useState(false);
@@ -349,6 +351,12 @@ export default function OnboardingPage() {
 
       setAnalysis(data);
       setAnalysisComplete(true);
+
+      // Refresh sites list and auto-select the newly added site
+      await refreshSites();
+      if (data.siteId) {
+        selectSite(data.siteId);
+      }
 
     } catch (err) {
       console.error("Analysis error:", err);
