@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { createAIOAnalyzer } from "@/lib/aio";
 import type { AIOAnalysisInput } from "@/lib/aio/types";
 import { requireSubscription } from "@/lib/api/require-subscription";
@@ -271,19 +271,25 @@ const TESTING_MODE = process.env.TESTING_MODE === "true";
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // Use service client in testing mode to bypass RLS
+    let supabase;
+    if (TESTING_MODE) {
+      try {
+        supabase = createServiceClient();
+      } catch (e) {
+        console.error("[AIO API GET] Failed to create service client:", e);
+        return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+      }
+    } else {
+      supabase = await createClient();
+    }
     
     if (!supabase) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }
 
     // In testing mode, skip auth
-    let orgId: string | null = null;
-    
-    if (TESTING_MODE) {
-      // Use a test org or skip org check
-      orgId = "test-org";
-    } else {
+    if (!TESTING_MODE) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -296,7 +302,7 @@ export async function GET(request: NextRequest) {
         .eq("id", user.id)
         .single();
 
-      orgId = (userDataGet as { organization_id?: string } | null)?.organization_id || null;
+      const orgId = (userDataGet as { organization_id?: string } | null)?.organization_id || null;
       if (!orgId) {
         return NextResponse.json({ error: "No organization found" }, { status: 400 });
       }
