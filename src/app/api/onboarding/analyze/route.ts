@@ -459,7 +459,9 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
     // ========================================
     // STEP 6: Update site with scores (use serviceClient)
     // ========================================
-    await serviceClient
+    console.log(`[Onboarding Analysis] Updating site ${siteId} with scores: SEO=${analysisResult.seoScore}, AIO=${analysisResult.aioScore}`);
+    
+    const { error: updateError } = await serviceClient
       .from("sites")
       .update({
         is_active: true,
@@ -470,6 +472,12 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
         aio_last_analyzed: new Date().toISOString(),
       } as never)
       .eq("id", siteId);
+    
+    if (updateError) {
+      console.error(`[Onboarding Analysis] Failed to update site scores:`, updateError);
+    } else {
+      console.log(`[Onboarding Analysis] Successfully updated site ${siteId} with SEO=${analysisResult.seoScore}, AIO=${analysisResult.aioScore}`);
+    }
 
     // Save audit result (use serviceClient)
     await serviceClient
