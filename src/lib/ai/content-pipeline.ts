@@ -638,18 +638,39 @@ export class ContentPipeline {
    * Parse JSON from AI response with robust extraction
    */
   private parseJSON<T>(content: string): T {
-    // First, try to extract JSON from markdown code blocks
-    const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (codeBlockMatch) {
-      try {
-        return JSON.parse(codeBlockMatch[1].trim());
-      } catch {
-        // Continue to other extraction methods
+    // Strip any leading/trailing whitespace and common prefixes
+    let cleaned = content.trim();
+    
+    // Remove common AI response prefixes like "Here's the JSON:" etc.
+    const prefixPatterns = [
+      /^here(?:'s| is) (?:the )?(?:json|response|data)[:\s]*/i,
+      /^(?:json|response|data)[:\s]*/i,
+      /^sure[,!]?\s*/i,
+      /^okay[,!]?\s*/i,
+    ];
+    for (const pattern of prefixPatterns) {
+      cleaned = cleaned.replace(pattern, "");
+    }
+    
+    // Try to extract JSON from markdown code blocks (including variations)
+    const codeBlockPatterns = [
+      /```(?:json)?\s*([\s\S]*?)```/,
+      /`([\[\{][\s\S]*?[\]\}])`/,
+    ];
+    
+    for (const pattern of codeBlockPatterns) {
+      const match = cleaned.match(pattern);
+      if (match && match[1]) {
+        try {
+          return JSON.parse(match[1].trim());
+        } catch {
+          // Continue to other extraction methods
+        }
       }
     }
 
     // Try to find balanced JSON by finding start and matching end
-    const trimmed = content.trim();
+    const trimmed = cleaned.trim();
     
     // Find the first [ or {
     const arrayStart = trimmed.indexOf('[');
@@ -690,7 +711,8 @@ export class ContentPipeline {
     try {
       return JSON.parse(trimmed);
     } catch (error) {
-      console.error("Failed to parse JSON. Content preview:", content.slice(0, 500));
+      console.error("Failed to parse JSON. Raw content:", content);
+      console.error("Cleaned content:", cleaned);
       console.error("Content length:", content.length);
       throw new Error(`Failed to parse AI response as JSON: ${(error as Error).message}`);
     }
