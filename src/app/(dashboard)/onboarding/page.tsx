@@ -211,9 +211,9 @@ function SEOScoreDisplay({
         </div>
       </div>
       {size === "large" && (
-        <Badge className={`mt-4 ${getColor(score)}`} variant="secondary">
-          Grade: {getGrade(score)}
-        </Badge>
+      <Badge className={`mt-4 ${getColor(score)}`} variant="secondary">
+        Grade: {getGrade(score)}
+      </Badge>
       )}
     </div>
   );
@@ -563,25 +563,25 @@ export default function OnboardingPage() {
         
         {/* Issues summary */}
         <div className="mt-6 pt-4 border-t flex items-center justify-center gap-8 text-center">
-          <div>
+            <div>
             <p className="text-xl font-bold text-red-500">{analysis?.issues.critical}</p>
-            <p className="text-xs text-muted-foreground">Critical</p>
-          </div>
-          <div>
+              <p className="text-xs text-muted-foreground">Critical</p>
+            </div>
+            <div>
             <p className="text-xl font-bold text-yellow-500">{analysis?.issues.warnings}</p>
-            <p className="text-xs text-muted-foreground">Warnings</p>
-          </div>
-          <div>
+              <p className="text-xs text-muted-foreground">Warnings</p>
+            </div>
+            <div>
             <p className="text-xl font-bold text-green-500">{analysis?.issues.passed}</p>
-            <p className="text-xs text-muted-foreground">Passed</p>
-          </div>
+              <p className="text-xs text-muted-foreground">Passed</p>
+            </div>
           <div className="text-muted-foreground">|</div>
           <div>
             <p className="text-xl font-bold text-primary">{analysis?.pagesAnalyzed}</p>
             <p className="text-xs text-muted-foreground">Pages Analyzed</p>
           </div>
         </div>
-      </Card>
+        </Card>
 
       {/* Quick Wins and Top Fixes */}
       <div className="grid md:grid-cols-2 gap-6">
@@ -749,8 +749,8 @@ export default function OnboardingPage() {
           <div className="text-center sm:text-left">
             <h4 className="font-semibold">Want unlimited content generation?</h4>
             <p className="text-sm text-muted-foreground">
-              Starting at <span className="text-emerald-400 font-semibold">$29/month</span> · Cancel anytime
-            </p>
+            Starting at <span className="text-emerald-400 font-semibold">$29/month</span> · Cancel anytime
+          </p>
           </div>
           <Button 
             variant="outline"

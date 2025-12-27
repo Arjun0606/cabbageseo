@@ -127,19 +127,19 @@ export async function POST(request: NextRequest) {
     }
   } else {
     // Production: Require authentication
-    const supabase = await createClient();
-    
-    if (!supabase) {
-      return NextResponse.json(
-        { error: "Database not configured" },
-        { status: 503 }
-      );
-    }
+  const supabase = await createClient();
+  
+  if (!supabase) {
+    return NextResponse.json(
+      { error: "Database not configured" },
+      { status: 503 }
+    );
+  }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
     userId = user.id;
     userEmail = user.email || "";
   }
@@ -411,48 +411,48 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
     if (homepageAnalysis) {
       // AIO-specific quick wins
       if (!homepageAnalysis.aio.factors.hasSchema) {
-        quickWins.push({
+      quickWins.push({
           type: "schema",
           title: "Add JSON-LD structured data for AI visibility",
           impact: "high",
-        });
-      }
-      
+      });
+    }
+
       if (!homepageAnalysis.aio.factors.hasFAQSection) {
-        quickWins.push({
+      quickWins.push({
           type: "faq",
           title: "Add FAQ section - AI platforms love Q&A format",
-          impact: "high",
-        });
-      }
-      
+        impact: "high",
+      });
+    }
+
       if (!homepageAnalysis.aio.factors.hasDirectAnswers) {
-        quickWins.push({
+      quickWins.push({
           type: "content",
           title: "Add direct definitions (X is...) for AI citations",
-          impact: "medium",
-        });
+        impact: "medium",
+      });
       }
     }
 
     // If not enough quick wins, add generic ones
     if (quickWins.length < 3) {
       if (analysisResult.issues.critical > 0) {
-        quickWins.push({
+      quickWins.push({
           type: "technical",
           title: `Fix ${analysisResult.issues.critical} critical SEO issues`,
-          impact: "high",
+        impact: "high",
           count: analysisResult.issues.critical,
-        });
+      });
       }
       
       if (analysisResult.issues.warnings > 0) {
-        quickWins.push({
+      quickWins.push({
           type: "optimization",
           title: `Address ${analysisResult.issues.warnings} SEO warnings`,
-          impact: "medium",
+        impact: "medium",
           count: analysisResult.issues.warnings,
-        });
+      });
       }
     }
 

@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
+import { useSite } from "@/contexts/site-context";
 
 // ============================================
 // TYPES
@@ -214,6 +215,7 @@ export default function SitesPage() {
   const [newSiteDomain, setNewSiteDomain] = useState("");
   const [newSiteName, setNewSiteName] = useState("");
   const queryClient = useQueryClient();
+  const { refreshSites } = useSite();
 
   // Fetch sites
   const { data, isLoading, error, refetch } = useQuery<SitesData>({
@@ -256,6 +258,8 @@ export default function SitesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sites"] });
+      // Also refresh the global site context to update the site switcher
+      refreshSites();
     },
   });
 
@@ -387,7 +391,7 @@ export default function SitesPage() {
                     <p className="text-2xl font-bold">{data.sites.reduce((sum, s) => sum + s.keywords, 0)}</p>
                     <p className="text-xs text-muted-foreground">Keywords Tracked</p>
                   </div>
-                </div>
+                    </div>
               </CardContent>
             </Card>
             <Card>
