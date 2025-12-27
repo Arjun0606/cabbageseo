@@ -231,11 +231,43 @@ function IssueCard({
 // EMPTY STATE
 // ============================================
 
-function EmptyState({ hasSite, siteDomain, isAutoRunning }: { 
+function EmptyState({ hasSite, siteDomain, siteScore, isAutoRunning, onRunAudit }: { 
   hasSite: boolean; 
   siteDomain?: string;
+  siteScore?: number;
   isAutoRunning?: boolean;
+  onRunAudit?: () => void;
 }) {
+  // If site has a score from previous analysis, show summary
+  if (hasSite && siteScore && siteScore > 0 && !isAutoRunning) {
+    const getScoreColor = (score: number) => {
+      if (score >= 80) return "text-green-500";
+      if (score >= 60) return "text-yellow-500";
+      return "text-red-500";
+    };
+    
+    return (
+      <Card className="p-12">
+        <div className="text-center max-w-md mx-auto">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-zinc-800 flex items-center justify-center border-4 border-emerald-500/20">
+            <span className={`text-3xl font-bold ${getScoreColor(siteScore)}`}>{siteScore}</span>
+          </div>
+          <h3 className="text-xl font-semibold mb-2">
+            {siteDomain} Analysis Complete
+          </h3>
+          <p className="text-muted-foreground mb-6">
+            Your site scored <span className={`font-semibold ${getScoreColor(siteScore)}`}>{siteScore}/100</span>.
+            Run a detailed audit to see specific issues and recommendations.
+          </p>
+          <Button onClick={onRunAudit}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Run Detailed Audit
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
   if (hasSite) {
     // Show analyzing state - audit auto-runs, no manual trigger needed
     return (
@@ -389,16 +421,25 @@ export default function AuditPage() {
     },
   });
 
-  // Check if we have meaningful data (issues exist or we have stats)
-  const hasData = data && (data.issues?.length > 0 || (data.stats?.passed ?? 0) > 0 || (data.stats?.critical ?? 0) > 0);
+  // Check if we have meaningful data (issues exist or stats exist)
+  const hasData = data && (
+    data.issues?.length > 0 || 
+    (data.stats?.passed ?? 0) > 0 || 
+    (data.stats?.critical ?? 0) > 0
+  );
+  
+  // Site already has a score (from command palette analysis) - don't auto-run
+  const siteHasScore = selectedSite?.seoScore && selectedSite.seoScore > 0;
 
-  // AUTO-RUN: If we have a site but no meaningful data, automatically start the audit
+  // AUTO-RUN: If we have a site but no meaningful data AND no existing score, automatically start the audit
+  // If the site already has a score, don't auto-run (the analysis was already done)
   useEffect(() => {
     if (
       selectedSite?.id &&
       !isLoading &&
       !siteLoading &&
       !hasData &&
+      !siteHasScore &&
       !error &&
       !scanMutation.isPending &&
       !hasAutoRun.current
@@ -407,7 +448,7 @@ export default function AuditPage() {
       setIsAutoRunning(true);
       scanMutation.mutate();
     }
-  }, [selectedSite?.id, isLoading, siteLoading, hasData, error, scanMutation]);
+  }, [selectedSite?.id, isLoading, siteLoading, hasData, siteHasScore, error, scanMutation]);
 
   // Fix issue mutation
   const fixMutation = useMutation({
@@ -498,12 +539,14 @@ export default function AuditPage() {
       {/* Loading State */}
       {isLoading && <AuditLoading />}
 
-      {/* Empty State - Shows analyzing state (auto-runs) */}
+      {/* Empty State - Shows analyzing state (auto-runs) or score summary if already analyzed */}
       {!isLoading && !siteLoading && !error && !hasData && (
         <EmptyState 
           hasSite={!!selectedSite} 
           siteDomain={selectedSite?.domain}
+          siteScore={selectedSite?.seoScore ?? undefined}
           isAutoRunning={isAutoRunning || scanMutation.isPending}
+          onRunAudit={() => scanMutation.mutate()}
         />
       )}
 
