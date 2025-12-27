@@ -156,11 +156,11 @@ export async function POST(request: NextRequest) {
         const result = await contentPipeline.generateContentIdeas(
           body.topic,
           body.existingTitles || [],
-          options.count || 10
+          options.count || 5
         );
         return NextResponse.json({
           success: true,
-          data: result.ideas,
+          data: { ideas: result.ideas },
           usage: result.usage,
         });
       }

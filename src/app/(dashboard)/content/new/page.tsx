@@ -239,32 +239,16 @@ function NewContentPageContent() {
 
       const data = await response.json();
       
-      if (data.success && data.data?.ideas) {
-        setContentIdeas(data.data.ideas.map((idea: { title: string; keyword?: string; trafficPotential?: string }) => ({
+      if (data.success && data.data?.ideas && Array.isArray(data.data.ideas)) {
+        setContentIdeas(data.data.ideas.map((idea: { title: string; keyword?: string; intent?: string; trafficPotential?: string; difficulty?: string }) => ({
           title: idea.title,
           keyword: idea.keyword || targetKeyword,
-          description: `Traffic potential: ${idea.trafficPotential || "medium"}`,
+          description: idea.intent 
+            ? `${idea.intent} • ${idea.difficulty || "medium"} difficulty • ${idea.trafficPotential || "medium"} traffic`
+            : `Traffic potential: ${idea.trafficPotential || "medium"}`,
         })));
       } else {
-        // Fallback to generated ideas if API doesn't return expected format
-        const capitalizedKeyword = targetKeyword.charAt(0).toUpperCase() + targetKeyword.slice(1);
-        setContentIdeas([
-          {
-            title: `The Complete Guide to ${capitalizedKeyword}`,
-            keyword: targetKeyword,
-            description: `A comprehensive guide covering everything about ${targetKeyword}.`,
-          },
-          {
-            title: `${capitalizedKeyword}: Best Practices for 2025`,
-            keyword: targetKeyword,
-            description: `Latest strategies and best practices for ${targetKeyword}.`,
-          },
-          {
-            title: `How to Master ${capitalizedKeyword} (Step-by-Step)`,
-            keyword: `how to ${targetKeyword}`,
-            description: `Step-by-step tutorial to master ${targetKeyword}.`,
-          },
-        ]);
+        throw new Error("AI did not return valid content ideas. Please try again.");
       }
 
       setStep("ideas");
