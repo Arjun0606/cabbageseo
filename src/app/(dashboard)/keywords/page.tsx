@@ -257,15 +257,26 @@ export default function KeywordsPage() {
     retry: false,
   });
 
-  // Research mutation
+  // Research mutation - uses the keyword research API
   const researchMutation = useMutation({
-    mutationFn: async (topic: string) => {
-      const response = await fetch("/api/keywords", {
+    mutationFn: async (seedKeyword: string) => {
+      if (!selectedSite?.id) {
+        throw new Error("No site selected");
+      }
+      const response = await fetch("/api/keywords/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "research", topic }),
+        body: JSON.stringify({ 
+          siteId: selectedSite.id, 
+          seedKeyword,
+          type: "suggestions",
+          limit: 50,
+        }),
       });
-      if (!response.ok) throw new Error("Research failed");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Research failed");
+      }
       return response.json();
     },
     onSuccess: () => {

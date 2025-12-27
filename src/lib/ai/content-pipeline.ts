@@ -638,10 +638,18 @@ export class ContentPipeline {
    * Parse JSON from AI response with robust extraction
    */
   private parseJSON<T>(content: string): T {
-    // Strip any leading/trailing whitespace and common prefixes
+    // Strip any leading/trailing whitespace
     let cleaned = content.trim();
     
-    // Remove common AI response prefixes like "Here's the JSON:" etc.
+    // FIRST: Aggressively strip markdown code blocks (most common issue)
+    // Handle: ```json\n{...}\n``` and ```\n{...}\n``` and ```json{...}```
+    cleaned = cleaned
+      .replace(/^```(?:json|JSON)?\s*\n?/gm, '')  // Opening fence
+      .replace(/\n?```\s*$/gm, '')                  // Closing fence
+      .replace(/```(?:json|JSON)?/g, '')           // Any remaining fences
+      .trim();
+    
+    // Remove common AI response prefixes
     const prefixPatterns = [
       /^here(?:'s| is) (?:the )?(?:json|response|data)[:\s]*/i,
       /^(?:json|response|data)[:\s]*/i,
@@ -652,20 +660,20 @@ export class ContentPipeline {
       cleaned = cleaned.replace(pattern, "");
     }
     
-    // Try to extract JSON from markdown code blocks (including variations)
-    const codeBlockPatterns = [
-      /```(?:json)?\s*([\s\S]*?)```/,
-      /`([\[\{][\s\S]*?[\]\}])`/,
-    ];
+    // Try direct parse first (most efficient)
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      // Continue to extraction methods
+    }
     
-    for (const pattern of codeBlockPatterns) {
-      const match = cleaned.match(pattern);
-      if (match && match[1]) {
-        try {
-          return JSON.parse(match[1].trim());
-        } catch {
-          // Continue to other extraction methods
-        }
+    // Try to extract JSON from inline code (backticks)
+    const inlineMatch = cleaned.match(/`([\[\{][\s\S]*?[\]\}])`/);
+    if (inlineMatch && inlineMatch[1]) {
+      try {
+        return JSON.parse(inlineMatch[1].trim());
+      } catch {
+        // Continue
       }
     }
 

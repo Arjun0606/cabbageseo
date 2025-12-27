@@ -61,6 +61,7 @@ interface AuditData {
   score: number;
   issues: AuditIssue[];
   stats: {
+    total: number;
     critical: number;
     warning: number;
     info: number;
@@ -421,15 +422,19 @@ export default function AuditPage() {
     },
   });
 
-  // Check if we have meaningful data (issues exist or stats exist)
+  // Check if we have meaningful data (issues exist or stats show we've analyzed)
   const hasData = data && (
     data.issues?.length > 0 || 
-    (data.stats?.passed ?? 0) > 0 || 
-    (data.stats?.critical ?? 0) > 0
+    (data.stats?.total ?? 0) > 0 ||
+    (data.stats?.critical ?? 0) > 0 ||
+    (data.stats?.warning ?? 0) > 0
   );
   
-  // Site already has a score (from command palette analysis) - don't auto-run
+  // Site already has a score (from command palette analysis)
   const siteHasScore = selectedSite?.seoScore && selectedSite.seoScore > 0;
+  
+  // If site has score and no data, it means issues were saved during onboarding
+  // We should display them, not ask to run audit again
 
   // AUTO-RUN: If we have a site but no meaningful data AND no existing score, automatically start the audit
   // If the site already has a score, don't auto-run (the analysis was already done)

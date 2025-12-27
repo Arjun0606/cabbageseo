@@ -534,12 +534,18 @@ Format: [{"title": "Article Title", "keyword": "target keyword", "trafficPotenti
 
       // Insert new issues
       if (issues.length > 0) {
-        await serviceClient
+        const { error: insertError } = await serviceClient
           .from("issues")
           .insert(issues as never);
+        
+        if (insertError) {
+          console.error(`[Onboarding Analysis] Failed to save issues:`, insertError);
+        } else {
+          console.log(`[Onboarding Analysis] Successfully saved ${issues.length} issues for site ${siteId}`);
+        }
+      } else {
+        console.log(`[Onboarding Analysis] No issues to save for site ${siteId}`);
       }
-
-      console.log(`[Onboarding Analysis] Saved ${issues.length} issues for site ${siteId}`);
     }
 
     // ========================================

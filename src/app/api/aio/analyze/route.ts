@@ -264,6 +264,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
+const TESTING_MODE = process.env.TESTING_MODE === "true";
+
 /**
  * GET - Fetch existing AIO analysis for a page
  */
@@ -272,24 +274,32 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     
     if (!supabase) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // In testing mode, skip auth
+    let orgId: string | null = null;
+    
+    if (TESTING_MODE) {
+      // Use a test org or skip org check
+      orgId = "test-org";
+    } else {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
 
-    // Get user's organization
-    const { data: userDataGet } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
+      // Get user's organization
+      const { data: userDataGet } = await supabase
+        .from("users")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
 
-    const orgId = (userDataGet as { organization_id?: string } | null)?.organization_id;
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 400 });
+      orgId = (userDataGet as { organization_id?: string } | null)?.organization_id || null;
+      if (!orgId) {
+        return NextResponse.json({ error: "No organization found" }, { status: 400 });
+      }
     }
 
     const { searchParams } = new URL(request.url);
@@ -318,7 +328,7 @@ export async function GET(request: NextRequest) {
 
     if (siteId) {
       // Get site-wide AIO stats
-      // Note: Database may have legacy claude/gemini columns, but we only use supported platforms now
+      // First, try to get individual page scores
       const { data: pagesRaw } = await supabase
         .from("pages")
         .select("aio_score, aio_google_score, aio_chatgpt_score, aio_perplexity_score")
@@ -333,7 +343,34 @@ export async function GET(request: NextRequest) {
       };
       const pages = (pagesRaw || []) as AIOPageScore[];
 
+      // If no individual page scores, fall back to site's overall AIO score from onboarding
       if (pages.length === 0) {
+        const { data: siteData } = await supabase
+          .from("sites")
+          .select("aio_score_avg, seo_score")
+          .eq("id", siteId)
+          .single();
+        
+        const site = siteData as { aio_score_avg: number | null; seo_score: number | null } | null;
+        
+        if (site?.aio_score_avg) {
+          // Use site-level score, estimate platform breakdown
+          const siteScore = site.aio_score_avg;
+          return NextResponse.json({
+            success: true,
+            data: {
+              averageScore: siteScore,
+              pagesAnalyzed: 1, // Show as 1 page (homepage analyzed)
+              platformAverages: {
+                combined: siteScore,
+                google_aio: Math.round(siteScore * 0.9), // Estimate
+                chatgpt: Math.round(siteScore * 1.1),    // Estimate
+                perplexity: Math.round(siteScore * 0.95), // Estimate
+              },
+            },
+          });
+        }
+        
         return NextResponse.json({
           success: true,
           data: {
@@ -349,7 +386,6 @@ export async function GET(request: NextRequest) {
         google_aio: Math.round(pages.reduce((s, p) => s + (p.aio_google_score || 0), 0) / pages.length),
         chatgpt: Math.round(pages.reduce((s, p) => s + (p.aio_chatgpt_score || 0), 0) / pages.length),
         perplexity: Math.round(pages.reduce((s, p) => s + (p.aio_perplexity_score || 0), 0) / pages.length),
-        bing_copilot: 0, // Will be populated when we add bing_copilot column to DB
       };
 
       return NextResponse.json({

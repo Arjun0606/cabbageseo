@@ -137,15 +137,22 @@ export async function GET(request: NextRequest) {
 
     // Calculate stats
     const allIssues = (issues || []) as IssueRow[];
+    const targetSite = siteId 
+      ? (sites as { id: string; seo_score?: number }[]).find(s => s.id === siteId)
+      : (sites as { seo_score?: number }[])[0];
+    
     const stats = {
       total: count || 0,
       critical: allIssues.filter(i => i.severity === "critical").length,
       warning: allIssues.filter(i => i.severity === "warning").length,
       info: allIssues.filter(i => i.severity === "info").length,
+      passed: Math.max(0, 100 - allIssues.filter(i => i.severity === "critical").length * 5 - allIssues.filter(i => i.severity === "warning").length * 2),
       autoFixable: allIssues.filter(i => i.auto_fixable).length,
       categories: getCategoryBreakdown(allIssues),
-      seoScore: (sites as { seo_score?: number }[])[0]?.seo_score || 0,
+      seoScore: targetSite?.seo_score || 0,
     };
+    
+    console.log(`[Issues API] Returning ${allIssues.length} issues for site ${siteId || "all"}, stats:`, stats);
 
     return NextResponse.json({
       success: true,

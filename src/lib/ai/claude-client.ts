@@ -387,11 +387,25 @@ export class ClaudeClient {
     );
 
     try {
-      // Extract JSON from response
-      const jsonMatch = response.content.match(/[\[{][\s\S]*[\]}]/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+      // Strip markdown code blocks first (most common issue)
+      let content = response.content
+        .replace(/^```(?:json|JSON)?\s*\n?/gm, '')
+        .replace(/\n?```\s*$/gm, '')
+        .replace(/```(?:json|JSON)?/g, '')
+        .trim();
+      
+      // Try direct parse
+      try {
+        return JSON.parse(content);
+      } catch {
+        // Try extracting JSON object/array
+        const jsonMatch = content.match(/[\[{][\s\S]*[\]}]/);
+        if (jsonMatch) {
+          return JSON.parse(jsonMatch[0]);
+        }
       }
+      
+      // Last resort - original content
       return JSON.parse(response.content);
     } catch {
       throw new Error(`Failed to parse JSON response: ${response.content.slice(0, 200)}`);
