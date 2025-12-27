@@ -338,7 +338,8 @@ export default function KeywordsPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["keywords"] });
+      // Invalidate the query with the specific site ID to trigger refetch
+      queryClient.invalidateQueries({ queryKey: ["keywords", selectedSite?.id] });
     },
   });
 

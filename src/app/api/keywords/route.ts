@@ -161,15 +161,17 @@ export async function GET(request: NextRequest) {
       siteDomain: siteLookup[c.site_id] || "Unknown",
     }));
 
-    // Get stats
+    // Get stats - format expected by the UI
     const stats = {
-      totalKeywords: count || 0,
+      total: count || 0,
+      top10: transformedKeywords.filter(k => k.position !== null && k.position <= 10).length,
+      quickWins: transformedKeywords.filter(k => k.difficulty <= 30 && k.volume >= 100).length,
+      clusterCount: transformedClusters.length,
+      // Also include additional stats for other UI elements
       totalVolume: transformedKeywords.reduce((sum, k) => sum + k.volume, 0),
       avgDifficulty: transformedKeywords.length > 0
         ? Math.round(transformedKeywords.reduce((sum, k) => sum + k.difficulty, 0) / transformedKeywords.length)
         : 0,
-      trackedKeywords: transformedKeywords.filter(k => k.position !== null).length,
-      rankingKeywords: transformedKeywords.filter(k => k.position !== null && k.position <= 10).length,
     };
 
     return NextResponse.json({
