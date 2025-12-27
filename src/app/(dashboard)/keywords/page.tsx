@@ -286,6 +286,37 @@ export default function KeywordsPage() {
   // Check for data
   const hasData = data && data.keywords.length > 0;
 
+  // Show empty state if no site selected
+  if (!selectedSite) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Keywords</h1>
+          <p className="text-muted-foreground">
+            Research, track, and optimize your target keywords
+          </p>
+        </div>
+        <Card className="p-12">
+          <div className="text-center max-w-md mx-auto">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+              <Target className="w-8 h-8 text-primary" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">No Site Selected</h3>
+            <p className="text-muted-foreground mb-6">
+              Add a site to start researching keywords and tracking your rankings.
+            </p>
+            <Button asChild>
+              <a href="/sites/new">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Your First Site
+              </a>
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-6">

@@ -285,6 +285,37 @@ export default function ContentPage() {
     );
   }
 
+  // Show empty state if no site selected
+  if (!selectedSite) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Content</h1>
+          <p className="text-muted-foreground">
+            Create, manage, and optimize your SEO content
+          </p>
+        </div>
+        <Card className="p-12">
+          <div className="text-center max-w-md mx-auto">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+              <FileText className="w-8 h-8 text-primary" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">No Site Selected</h3>
+            <p className="text-muted-foreground mb-6">
+              Add a site to start generating and managing your SEO content.
+            </p>
+            <Button asChild>
+              <a href="/sites/new">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Add Your First Site
+              </a>
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}

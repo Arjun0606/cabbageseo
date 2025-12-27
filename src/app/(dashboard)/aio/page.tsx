@@ -427,6 +427,40 @@ export default function AIODashboardPage() {
     return recs;
   })();
 
+  // Show empty state if no site selected
+  if (!selectedSite) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <Brain className="w-8 h-8 text-violet-500" />
+            AI Visibility
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Optimize for AI search platforms: Google AI Overviews, ChatGPT, Perplexity
+          </p>
+        </div>
+        <Card className="p-12">
+          <div className="text-center max-w-md mx-auto">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-violet-500/10 flex items-center justify-center">
+              <Brain className="w-8 h-8 text-violet-500" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">No Site Selected</h3>
+            <p className="text-muted-foreground mb-6">
+              Add a site to analyze your AI visibility and see how AI assistants perceive your content.
+            </p>
+            <Button asChild>
+              <a href="/sites/new">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Add Your First Site
+              </a>
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
