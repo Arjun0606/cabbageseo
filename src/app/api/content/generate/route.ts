@@ -4,6 +4,9 @@ import { dataForSEO } from "@/lib/integrations/dataforseo/client";
 import { contentPipeline } from "@/lib/ai";
 import { requireSubscription } from "@/lib/api/require-subscription";
 
+// Extend timeout for content generation (up to 5 minutes for Vercel Pro)
+export const maxDuration = 120;
+
 const TESTING_MODE = process.env.TESTING_MODE === "true";
 
 export async function POST(request: NextRequest) {
