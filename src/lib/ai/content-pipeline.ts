@@ -715,13 +715,69 @@ export class ContentPipeline {
       }
     }
 
+    // FALLBACK: Try to fix common JSON issues (truncated strings, etc.)
+    try {
+      // Try to fix truncated JSON by closing open structures
+      let fixed = trimmed;
+      if (startIndex >= 0) {
+        fixed = trimmed.slice(startIndex);
+      }
+      
+      // Count brackets to see what needs closing
+      let braceCount = 0;
+      let bracketCount = 0;
+      let inString = false;
+      let escaped = false;
+      
+      for (let i = 0; i < fixed.length; i++) {
+        const char = fixed[i];
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+        if (char === '\\') {
+          escaped = true;
+          continue;
+        }
+        if (char === '"') {
+          inString = !inString;
+          continue;
+        }
+        if (!inString) {
+          if (char === '{') braceCount++;
+          if (char === '}') braceCount--;
+          if (char === '[') bracketCount++;
+          if (char === ']') bracketCount--;
+        }
+      }
+      
+      // If we're in a string, close it
+      if (inString) {
+        fixed += '"';
+      }
+      
+      // Close any open brackets/braces
+      while (bracketCount > 0) {
+        fixed += ']';
+        bracketCount--;
+      }
+      while (braceCount > 0) {
+        fixed += '}';
+        braceCount--;
+      }
+      
+      return JSON.parse(fixed);
+    } catch {
+      // Continue to final error
+    }
+
     // Last resort: try parsing the entire content
     try {
       return JSON.parse(trimmed);
     } catch (error) {
-      console.error("Failed to parse JSON. Raw content:", content);
-      console.error("Cleaned content:", cleaned);
-      console.error("Content length:", content.length);
+      console.error("Failed to parse JSON. Raw content length:", content.length);
+      console.error("First 500 chars:", content.slice(0, 500));
+      console.error("Last 500 chars:", content.slice(-500));
       throw new Error(`Failed to parse AI response as JSON: ${(error as Error).message}`);
     }
   }

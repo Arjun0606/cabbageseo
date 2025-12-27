@@ -42,6 +42,14 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import Link from "next/link";
 
 // ============================================
@@ -180,7 +188,17 @@ function KeywordsLoading() {
 // EMPTY STATE
 // ============================================
 
-function EmptyState() {
+function EmptyState({ onResearch, isResearching }: { onResearch: (keyword: string) => void; isResearching: boolean }) {
+  const [seedKeyword, setSeedKeyword] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  
+  const handleSubmit = () => {
+    if (seedKeyword.trim()) {
+      onResearch(seedKeyword.trim());
+      setDialogOpen(false);
+    }
+  };
+  
   return (
     <Card className="p-12 bg-gradient-to-br from-blue-500/5 to-transparent border-blue-500/20">
       <div className="text-center max-w-lg mx-auto">
@@ -198,14 +216,54 @@ function EmptyState() {
           Enter a topic and get keyword clusters in seconds.
         </p>
         
-        <div className="flex gap-3 justify-center">
-          <Link href="/onboarding">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-500 gap-2 px-8">
-              <Target className="w-5 h-5" />
-              Research Keywords
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="lg" className="bg-blue-600 hover:bg-blue-500 gap-2 px-8" disabled={isResearching}>
+              {isResearching ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Target className="w-5 h-5" />
+              )}
+              {isResearching ? "Researching..." : "Research Keywords"}
             </Button>
-          </Link>
-        </div>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Research Keywords</DialogTitle>
+              <DialogDescription>
+                Enter a seed keyword or topic to find related keywords with search volume and difficulty data.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Seed Keyword or Topic</label>
+                <Input
+                  placeholder="e.g., SEO tools, content marketing, SaaS pricing"
+                  value={seedKeyword}
+                  onChange={(e) => setSeedKeyword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+                />
+              </div>
+              <Button 
+                onClick={handleSubmit} 
+                disabled={!seedKeyword.trim() || isResearching}
+                className="w-full"
+              >
+                {isResearching ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Researching...
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-4 h-4 mr-2" />
+                    Find Keywords
+                  </>
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <div className="mt-8 pt-8 border-t grid grid-cols-3 gap-6 text-center">
           <div>
@@ -416,7 +474,12 @@ export default function KeywordsPage() {
       )}
 
       {/* Empty State */}
-      {!error && !hasData && <EmptyState />}
+      {!error && !hasData && (
+        <EmptyState 
+          onResearch={(keyword) => researchMutation.mutate(keyword)} 
+          isResearching={researchMutation.isPending}
+        />
+      )}
 
       {/* Data View */}
       {hasData && (

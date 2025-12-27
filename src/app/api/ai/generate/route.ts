@@ -8,10 +8,12 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { contentPipeline, RateLimitError } from "@/lib/ai";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { requireSubscription } from "@/lib/api/require-subscription";
 
 export const maxDuration = 60; // Allow up to 60s for content generation
+
+const TESTING_MODE = process.env.TESTING_MODE === "true";
 
 interface GenerateRequest {
   type: "outline" | "article" | "full" | "ideas" | "cluster" | "analyze" | "optimize" | "meta" | "score" | "plan";
@@ -51,15 +53,24 @@ interface GenerateRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check subscription - AI generation requires paid plan
-    const supabase = await createClient();
+    // Check subscription - AI generation requires paid plan (skip in testing mode)
+    let supabase;
+    try {
+      supabase = TESTING_MODE ? createServiceClient() : await createClient();
+    } catch (e) {
+      console.error("[AI Generate] Supabase error:", e);
+      return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+    }
+
     if (!supabase) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }
     
-    const subscription = await requireSubscription(supabase);
-    if (!subscription.authorized) {
-      return subscription.error!;
+    if (!TESTING_MODE) {
+      const subscription = await requireSubscription(supabase);
+      if (!subscription.authorized) {
+        return subscription.error!;
+      }
     }
 
     // Check if AI is configured
