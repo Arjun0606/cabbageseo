@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       contentType = "article",
       customInstructions,
       optimizationMode = "balanced",
-      targetWordCount = 1500,
+      targetWordCount = 1000,
     } = body;
 
     if (!keyword) {
@@ -102,8 +102,8 @@ Return ONLY valid JSON, no markdown code blocks or other text.`;
     console.log("[Content Generate] Calling Claude API for:", keyword);
     
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 8000,
+      model: "claude-3-5-sonnet-20241022", // Use stable model
+      max_tokens: 4000, // Reduced for faster response
       messages: [{ role: "user", content: userPrompt }],
       system: systemPrompt,
     });
