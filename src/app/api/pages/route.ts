@@ -5,29 +5,64 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+
+const TESTING_MODE = process.env.TESTING_MODE === "true";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    
-    if (!supabase) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    let supabase;
+    let organizationId: string | null = null;
+
+    if (TESTING_MODE) {
+      // In testing mode, use service client and get/create test org
+      try {
+        supabase = createServiceClient();
+      } catch (e) {
+        console.error("[Pages API GET] Failed to create service client:", e);
+        return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+      }
+
+      // Get or create test organization
+      const { data: orgs } = await supabase
+        .from("organizations")
+        .select("id")
+        .eq("slug", "test-org")
+        .limit(1);
+
+      if ((orgs as { id: string }[] | null)?.length) {
+        organizationId = (orgs as { id: string }[])[0].id;
+      } else {
+        // Create test org
+        const { data: newOrg } = await supabase
+          .from("organizations")
+          .insert({ name: "Test Organization", slug: "test-org" } as never)
+          .select("id")
+          .single();
+        organizationId = (newOrg as { id: string } | null)?.id || null;
+      }
+    } else {
+      supabase = await createClient();
+      
+      if (!supabase) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      // Get user's organization
+      const { data: userData } = await supabase
+        .from("users")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
+
+      organizationId = (userData as { organization_id?: string } | null)?.organization_id || null;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Get user's organization
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const organizationId = (userData as { organization_id?: string } | null)?.organization_id;
     if (!organizationId) {
       return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
@@ -114,15 +149,26 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    
-    if (!supabase) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    let supabase;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (TESTING_MODE) {
+      try {
+        supabase = createServiceClient();
+      } catch (e) {
+        console.error("[Pages API POST] Failed to create service client:", e);
+        return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+      }
+    } else {
+      supabase = await createClient();
+      
+      if (!supabase) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
     }
 
     const body = await request.json();
