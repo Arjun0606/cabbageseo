@@ -13,6 +13,7 @@ export type AIOPlatform =
   | "perplexity"    // Perplexity AI
   | "bing_copilot"; // Bing Copilot
 
+// All platforms (including legacy bing_copilot for type compatibility)
 export const AIO_PLATFORMS: AIOPlatform[] = [
   "google_aio",
   "chatgpt", 
@@ -20,20 +21,27 @@ export const AIO_PLATFORMS: AIOPlatform[] = [
   "bing_copilot",
 ];
 
+// Platforms shown in the UI (excludes Bing - no API available)
+export const VISIBLE_AIO_PLATFORMS: AIOPlatform[] = [
+  "google_aio",
+  "chatgpt", 
+  "perplexity",
+];
+
 export const PLATFORM_LABELS: Record<AIOPlatform, string> = {
   google_aio: "Google AI Overviews",
   chatgpt: "ChatGPT",
   perplexity: "Perplexity",
-  bing_copilot: "Bing Copilot",
+  bing_copilot: "Bing Copilot", // Legacy - not shown in UI
 };
 
 // Platform weights for combined score (must sum to 1.0)
-// Note: Bing Copilot is excluded from UI but kept for type compatibility
+// Only includes platforms we actually track
 export const PLATFORM_WEIGHTS: Record<AIOPlatform, number> = {
-  google_aio: 0.40,   // 40% - Most important (Google still dominates search)
+  google_aio: 0.45,   // 45% - Most important (Google still dominates search)
   chatgpt: 0.35,      // 35% - Largest AI user base (200M+ weekly)
-  perplexity: 0.25,   // 25% - Growing fast in AI search
-  bing_copilot: 0.00, // 0% - Not currently tracked (API not available)
+  perplexity: 0.20,   // 20% - Growing fast in AI search
+  bing_copilot: 0.00, // 0% - Not tracked (API not available)
 };
 
 // ============================================

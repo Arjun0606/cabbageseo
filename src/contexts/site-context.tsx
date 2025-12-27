@@ -63,12 +63,26 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     }
   }, [searchParams, selectedSiteId]);
 
-  // Auto-select first site if none selected
+  // Auto-select first site if none selected, or clear selection if selected site no longer exists
   useEffect(() => {
-    if (!selectedSiteId && sites.length > 0) {
-      selectSite(sites[0].id);
+    if (!isLoading) {
+      if (selectedSiteId) {
+        // Check if selected site still exists
+        const siteExists = sites.some(s => s.id === selectedSiteId);
+        if (!siteExists && sites.length > 0) {
+          // Selected site was deleted, switch to first available
+          selectSite(sites[0].id);
+        } else if (!siteExists && sites.length === 0) {
+          // No sites left, clear selection
+          setSelectedSiteId(null);
+          localStorage.removeItem("selectedSiteId");
+        }
+      } else if (sites.length > 0) {
+        // No selection, pick first site
+        selectSite(sites[0].id);
+      }
     }
-  }, [sites, selectedSiteId]);
+  }, [sites, selectedSiteId, isLoading]);
 
   async function refreshSites() {
     setIsLoading(true);

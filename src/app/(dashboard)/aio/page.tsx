@@ -28,16 +28,18 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { PLATFORM_LABELS, PLATFORM_WEIGHTS } from "@/lib/aio/types";
+import { PLATFORM_LABELS, PLATFORM_WEIGHTS, VISIBLE_AIO_PLATFORMS } from "@/lib/aio/types";
 import type { AIOPlatform } from "@/lib/aio/types";
 
 // Platform icons/colors
-const platformConfig: Record<AIOPlatform, { color: string; bgColor: string }> = {
+const platformConfig: Record<string, { color: string; bgColor: string }> = {
   google_aio: { color: "text-blue-500", bgColor: "bg-blue-500/10" },
   chatgpt: { color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
   perplexity: { color: "text-violet-500", bgColor: "bg-violet-500/10" },
-  bing_copilot: { color: "text-cyan-500", bgColor: "bg-cyan-500/10" },
 };
+
+// Default config for unknown platforms
+const defaultPlatformConfig = { color: "text-zinc-500", bgColor: "bg-zinc-500/10" };
 
 function ScoreRing({ score, size = 120, label }: { score: number | null; size?: number; label?: string }) {
   const displayScore = score ?? 0;
@@ -96,7 +98,7 @@ function PlatformScoreBar({
   score: number | null; 
   weight: number;
 }) {
-  const config = platformConfig[platform];
+  const config = platformConfig[platform] || defaultPlatformConfig;
   const displayScore = score ?? 0;
 
   return (
@@ -213,9 +215,9 @@ function CitationsPanel({ siteId }: { siteId: string | null }) {
   return (
     <div className="space-y-6">
       {/* Citation Stats */}
-      <div className="grid gap-4 md:grid-cols-5">
-        {(Object.keys(PLATFORM_WEIGHTS) as AIOPlatform[]).map((platform) => {
-          const config = platformConfig[platform];
+      <div className="grid gap-4 md:grid-cols-3">
+        {VISIBLE_AIO_PLATFORMS.map((platform) => {
+          const config = platformConfig[platform] || defaultPlatformConfig;
           const count = (platformCounts[platform] as number) || 0;
           return (
             <Card key={platform} className={cn("border", config.bgColor)}>
@@ -263,7 +265,7 @@ function CitationsPanel({ siteId }: { siteId: string | null }) {
                 discovered_at: string;
                 pages?: { url: string; title: string };
               }) => {
-                const config = platformConfig[citation.platform];
+                const config = platformConfig[citation.platform] || defaultPlatformConfig;
                 return (
                   <div
                     key={citation.id}
@@ -500,7 +502,7 @@ export default function AIODashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            {(Object.keys(PLATFORM_WEIGHTS) as AIOPlatform[]).map((platform) => (
+            {VISIBLE_AIO_PLATFORMS.map((platform) => (
               <PlatformScoreBar
                 key={platform}
                 platform={platform}
