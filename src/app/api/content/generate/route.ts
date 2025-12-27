@@ -13,11 +13,21 @@ const anthropic = process.env.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
 
+// Helper to add timeout to promises
+function withTimeout<T>(promise: Promise<T>, ms: number, errorMessage: string): Promise<T> {
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(errorMessage)), ms)
+  );
+  return Promise.race([promise, timeout]);
+}
+
 export async function POST(request: NextRequest) {
+  console.log("[Content Generate] Starting request");
+  
   // Check if AI is configured
   if (!anthropic) {
     console.error("[Content Generate] Anthropic API key not configured");
-    return NextResponse.json({ error: "AI service not configured" }, { status: 503 });
+    return NextResponse.json({ error: "AI service not configured. Please add ANTHROPIC_API_KEY to environment." }, { status: 503 });
   }
 
   let supabase;
@@ -58,7 +68,7 @@ export async function POST(request: NextRequest) {
       contentType = "article",
       customInstructions,
       optimizationMode = "balanced",
-      targetWordCount = 1000,
+      targetWordCount = 800, // Reduced further for speed
     } = body;
 
     if (!keyword) {
@@ -66,80 +76,71 @@ export async function POST(request: NextRequest) {
     }
 
     const articleTitle = title || `The Complete Guide to ${keyword}`;
+    console.log("[Content Generate] Generating for:", articleTitle);
 
-    // Single comprehensive prompt for reliable generation
-    const systemPrompt = `You are an expert SEO content writer. Generate high-quality, comprehensive content that ranks well in search engines AND is optimized for AI platforms like ChatGPT, Perplexity, and Google AI Overviews.
+    // Simplified prompt for faster generation
+    const systemPrompt = `You are an SEO content writer. Write concise, well-structured content optimized for search engines and AI platforms. Target ${targetWordCount} words.`;
 
-Your content MUST include:
-1. A compelling introduction that directly answers the main query
-2. Well-structured sections with clear H2/H3 headings
-3. Key takeaways or summary boxes
-4. FAQ section with 3-5 relevant questions
-5. Quotable paragraphs (50-150 words) that AI can cite
-6. Statistics and data points where relevant
-7. Clear definitions of key terms
+    const userPrompt = `Write an article titled "${articleTitle}" about "${keyword}".
 
-Write in a professional but accessible tone. Target ${targetWordCount} words.`;
+${customInstructions ? `Instructions: ${customInstructions}` : ""}
 
-    const userPrompt = `Write a comprehensive article titled "${articleTitle}" about "${keyword}".
-
-${customInstructions ? `Additional instructions: ${customInstructions}` : ""}
-
-Format your response as JSON with this exact structure:
+Return ONLY valid JSON (no markdown):
 {
-  "title": "The article title",
-  "metaTitle": "SEO meta title (max 60 chars)",
-  "metaDescription": "SEO meta description (max 160 chars)",
-  "content": "The full article in markdown format with ## for H2, ### for H3, etc.",
-  "faqs": [
-    {"question": "...", "answer": "..."}
-  ],
-  "keyTakeaways": ["takeaway 1", "takeaway 2", "takeaway 3"]
-}
+  "title": "Article title",
+  "metaTitle": "SEO title (max 60 chars)",
+  "metaDescription": "Meta description (max 160 chars)",
+  "content": "Full article in markdown",
+  "faqs": [{"question": "Q1", "answer": "A1"}],
+  "keyTakeaways": ["takeaway 1", "takeaway 2"]
+}`;
 
-Return ONLY valid JSON, no markdown code blocks or other text.`;
-
-    console.log("[Content Generate] Calling Claude API for:", keyword);
+    console.log("[Content Generate] Calling Claude API...");
     
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022", // Use stable model
-      max_tokens: 4000, // Reduced for faster response
-      messages: [{ role: "user", content: userPrompt }],
-      system: systemPrompt,
-    });
+    // Call Claude with 60s timeout
+    const response = await withTimeout(
+      anthropic.messages.create({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 3000,
+        messages: [{ role: "user", content: userPrompt }],
+        system: systemPrompt,
+      }),
+      60000,
+      "Claude API timeout - please try again"
+    );
+
+    console.log("[Content Generate] Claude responded");
 
     const rawContent = response.content[0].type === "text" ? response.content[0].text : "";
     
     // Parse the response
     let parsedContent;
     try {
-      // Clean up the response (remove markdown code blocks if present)
       let cleaned = rawContent.trim();
       cleaned = cleaned.replace(/^```(?:json)?\s*\n?/g, "").replace(/\n?```\s*$/g, "").trim();
       parsedContent = JSON.parse(cleaned);
     } catch (parseError) {
-      console.error("[Content Generate] JSON parse error, using fallback:", parseError);
-      // Fallback: extract content from raw response
+      console.error("[Content Generate] JSON parse error:", parseError);
+      // Fallback
       parsedContent = {
         title: articleTitle,
-        metaTitle: `${articleTitle} | ${keyword}`.slice(0, 60),
-        metaDescription: `Learn everything about ${keyword}. Comprehensive guide with expert tips, best practices, and actionable insights.`.slice(0, 160),
+        metaTitle: `${articleTitle} | Guide`.slice(0, 60),
+        metaDescription: `Learn about ${keyword}. Comprehensive guide with tips and best practices.`.slice(0, 160),
         content: rawContent,
         faqs: [],
         keyTakeaways: [],
       };
     }
 
-    // Calculate word count
     const wordCount = parsedContent.content.split(/\s+/).length;
     const readingTime = Math.ceil(wordCount / 200);
 
-    // Generate simple SEO score based on content quality signals
+    // Simple SEO score
     const seoScore = Math.min(100, Math.round(
       50 + 
       (parsedContent.faqs?.length > 0 ? 15 : 0) +
       (parsedContent.keyTakeaways?.length > 0 ? 10 : 0) +
-      (wordCount > 1000 ? 15 : wordCount > 500 ? 10 : 5) +
+      (wordCount > 500 ? 15 : 5) +
       (parsedContent.content.includes("## ") ? 10 : 0)
     ));
 
@@ -163,7 +164,7 @@ Return ONLY valid JSON, no markdown code blocks or other text.`;
         } as never);
         console.log("[Content Generate] Saved to database");
       } catch (saveError) {
-        console.warn("[Content Generate] Failed to save to database:", saveError);
+        console.warn("[Content Generate] Failed to save:", saveError);
       }
     }
 
@@ -178,7 +179,7 @@ Return ONLY valid JSON, no markdown code blocks or other text.`;
       })),
     } : null;
 
-    console.log("[Content Generate] Success! Word count:", wordCount);
+    console.log("[Content Generate] Success! Words:", wordCount);
 
     return NextResponse.json({
       success: true,
@@ -198,17 +199,10 @@ Return ONLY valid JSON, no markdown code blocks or other text.`;
       },
     });
   } catch (error) {
-    console.error("[Content Generate API] Error:", error);
+    console.error("[Content Generate] Error:", error);
     
-    if (error instanceof Error) {
-      if (error.message.includes("rate limit")) {
-        return NextResponse.json({ error: "Rate limit exceeded. Please try again." }, { status: 429 });
-      }
-    }
+    const errorMessage = error instanceof Error ? error.message : "Failed to generate content";
     
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to generate content" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
