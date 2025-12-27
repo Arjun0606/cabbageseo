@@ -159,15 +159,28 @@ export async function POST(request: NextRequest) {
     }));
 
     if (keywordRows.length > 0) {
-      const { error: insertError } = await supabase
-        .from("keywords")
-        .upsert(keywordRows as never[], { onConflict: "site_id,keyword" });
-
-      if (insertError) {
-        console.error("[Keyword Research] Failed to save keywords:", insertError);
-      } else {
-        console.log(`[Keyword Research] Saved ${keywordRows.length} keywords`);
+      // Insert keywords one by one to handle duplicates gracefully
+      let savedCount = 0;
+      for (const row of keywordRows) {
+        // Check if keyword already exists
+        const { data: existing } = await supabase
+          .from("keywords")
+          .select("id")
+          .eq("site_id", row.site_id)
+          .eq("keyword", row.keyword)
+          .single();
+        
+        if (!existing) {
+          const { error: insertError } = await supabase
+            .from("keywords")
+            .insert(row as never);
+          
+          if (!insertError) {
+            savedCount++;
+          }
+        }
       }
+      console.log(`[Keyword Research] Saved ${savedCount} new keywords (${keywordRows.length - savedCount} already existed)`);
     }
 
     return NextResponse.json({
