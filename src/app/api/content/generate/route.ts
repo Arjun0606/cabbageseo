@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { dataForSEO } from "@/lib/integrations/dataforseo/client";
-import { contentPipeline } from "@/lib/ai";
 import { requireSubscription } from "@/lib/api/require-subscription";
+import Anthropic from "@anthropic-ai/sdk";
 
-// Extend timeout for content generation (up to 5 minutes for Vercel Pro)
+// Extend timeout for content generation
 export const maxDuration = 120;
 
 const TESTING_MODE = process.env.TESTING_MODE === "true";
 
+// Initialize Anthropic client
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
+
 export async function POST(request: NextRequest) {
+  // Check if AI is configured
+  if (!anthropic) {
+    console.error("[Content Generate] Anthropic API key not configured");
+    return NextResponse.json({ error: "AI service not configured" }, { status: 503 });
+  }
+
   let supabase;
   try {
     supabase = TESTING_MODE ? createServiceClient() : await createClient();
@@ -19,20 +29,15 @@ export async function POST(request: NextRequest) {
   }
 
   if (!supabase) {
-    return NextResponse.json(
-      { error: "Database not configured" },
-      { status: 503 }
-    );
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
   let organizationId: string | null = null;
 
   if (TESTING_MODE) {
-    // In testing mode, get the first organization
     const { data: orgs } = await supabase.from("organizations").select("id").limit(1);
     organizationId = (orgs?.[0] as { id: string } | undefined)?.id || null;
   } else {
-    // Check subscription - content generation requires paid plan
     const authCheck = await requireSubscription(supabase);
     if (!authCheck.authorized) {
       return authCheck.error!;
@@ -52,163 +57,152 @@ export async function POST(request: NextRequest) {
       title,
       contentType = "article",
       customInstructions,
-      optimizationMode = "seo", // "seo" | "aio" | "balanced"
-      targetWordCount = 2000,
-      brandVoice,
-      includeSchema = true,
+      optimizationMode = "balanced",
+      targetWordCount = 1500,
     } = body;
 
     if (!keyword) {
-      return NextResponse.json(
-        { error: "Keyword is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Keyword is required" }, { status: 400 });
     }
 
-    // Step 1: Analyze SERP for the keyword
-    let serpResults: Array<{ title: string; snippet: string }> = [];
-    try {
-      const serpAnalysis = await dataForSEO.analyzeSERP(keyword);
-      serpResults = serpAnalysis.results.map((r) => ({
-        title: r.title,
-        snippet: r.description,
-      }));
-    } catch (serpError) {
-      console.warn("SERP analysis failed, continuing without:", serpError);
-      // Continue without SERP data - AI will generate based on keyword alone
-    }
+    const articleTitle = title || `The Complete Guide to ${keyword}`;
 
-    // Step 2: Use content pipeline and generate content
-    const pipeline = contentPipeline;
+    // Single comprehensive prompt for reliable generation
+    const systemPrompt = `You are an expert SEO content writer. Generate high-quality, comprehensive content that ranks well in search engines AND is optimized for AI platforms like ChatGPT, Perplexity, and Google AI Overviews.
+
+Your content MUST include:
+1. A compelling introduction that directly answers the main query
+2. Well-structured sections with clear H2/H3 headings
+3. Key takeaways or summary boxes
+4. FAQ section with 3-5 relevant questions
+5. Quotable paragraphs (50-150 words) that AI can cite
+6. Statistics and data points where relevant
+7. Clear definitions of key terms
+
+Write in a professional but accessible tone. Target ${targetWordCount} words.`;
+
+    const userPrompt = `Write a comprehensive article titled "${articleTitle}" about "${keyword}".
+
+${customInstructions ? `Additional instructions: ${customInstructions}` : ""}
+
+Format your response as JSON with this exact structure:
+{
+  "title": "The article title",
+  "metaTitle": "SEO meta title (max 60 chars)",
+  "metaDescription": "SEO meta description (max 160 chars)",
+  "content": "The full article in markdown format with ## for H2, ### for H3, etc.",
+  "faqs": [
+    {"question": "...", "answer": "..."}
+  ],
+  "keyTakeaways": ["takeaway 1", "takeaway 2", "takeaway 3"]
+}
+
+Return ONLY valid JSON, no markdown code blocks or other text.`;
+
+    console.log("[Content Generate] Calling Claude API for:", keyword);
     
-    // Determine pipeline options based on optimization mode
-    const pipelineOptions = {
-      organizationId,
-      targetWordCount,
-      brandVoice: brandVoice || customInstructions,
-      generateFaqs: true,
-      optimizationMode: optimizationMode as "seo" | "aio" | "balanced",
-      // Enable AIO-specific features for aio/balanced modes
-      addKeyTakeaways: optimizationMode === "aio" || optimizationMode === "balanced",
-      optimizeQuotability: optimizationMode === "aio",
-    };
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 8000,
+      messages: [{ role: "user", content: userPrompt }],
+      system: systemPrompt,
+    });
 
-    // Generate content using the appropriate method
-    let content;
-    if (optimizationMode === "aio" || optimizationMode === "balanced") {
-      // Use AIO-optimized pipeline
-      content = await pipeline.generateAIOContent(keyword, serpResults, pipelineOptions);
-    } else {
-      // Use standard SEO pipeline
-      const outline = await pipeline.generateOutline(keyword, serpResults, targetWordCount);
-      content = await pipeline.generateArticle(keyword, outline.outline, pipelineOptions);
-    }
-
-    // Override title if provided
-    if (title && title.trim()) {
-      content.title = title;
-      // Regenerate meta title to match
-      content.metaTitle = `${title} | ${keyword}`.slice(0, 60);
-    }
-
-    // Step 3: Score the content
-    let seoScore = 0;
-    let aioScore: number | null = null;
+    const rawContent = response.content[0].type === "text" ? response.content[0].text : "";
+    
+    // Parse the response
+    let parsedContent;
     try {
-      const analysisResult = await pipeline.analyzeContent(content.body, keyword);
-      seoScore = analysisResult.analysis.score;
-      
-      // Get AIO score if in aio/balanced mode
-      if (optimizationMode === "aio" || optimizationMode === "balanced") {
-        const aioAnalysis = await pipeline.analyzeAIOReadiness(content.body, keyword);
-        aioScore = aioAnalysis.analysis.overallScore;
-      }
-    } catch (scoreError) {
-      console.warn("Scoring failed:", scoreError);
-    }
-
-    // Step 4: Generate FAQ schema if requested
-    let faqSchema = null;
-    if (includeSchema && content.faqs && content.faqs.length > 0) {
-      faqSchema = {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        mainEntity: content.faqs.map((faq) => ({
-          "@type": "Question",
-          name: faq.question,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: faq.answer,
-          },
-        })),
+      // Clean up the response (remove markdown code blocks if present)
+      let cleaned = rawContent.trim();
+      cleaned = cleaned.replace(/^```(?:json)?\s*\n?/g, "").replace(/\n?```\s*$/g, "").trim();
+      parsedContent = JSON.parse(cleaned);
+    } catch (parseError) {
+      console.error("[Content Generate] JSON parse error, using fallback:", parseError);
+      // Fallback: extract content from raw response
+      parsedContent = {
+        title: articleTitle,
+        metaTitle: `${articleTitle} | ${keyword}`.slice(0, 60),
+        metaDescription: `Learn everything about ${keyword}. Comprehensive guide with expert tips, best practices, and actionable insights.`.slice(0, 160),
+        content: rawContent,
+        faqs: [],
+        keyTakeaways: [],
       };
     }
 
-    // Step 5: Optionally save to database
+    // Calculate word count
+    const wordCount = parsedContent.content.split(/\s+/).length;
+    const readingTime = Math.ceil(wordCount / 200);
+
+    // Generate simple SEO score based on content quality signals
+    const seoScore = Math.min(100, Math.round(
+      50 + 
+      (parsedContent.faqs?.length > 0 ? 15 : 0) +
+      (parsedContent.keyTakeaways?.length > 0 ? 10 : 0) +
+      (wordCount > 1000 ? 15 : wordCount > 500 ? 10 : 5) +
+      (parsedContent.content.includes("## ") ? 10 : 0)
+    ));
+
+    // Save to database if siteId provided
     if (siteId) {
       try {
-        await supabase
-          .from("content")
-          .insert({
-            site_id: siteId,
-            title: content.title,
-            slug: content.title
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, "-")
-              .replace(/^-|-$/g, ""),
-            body: content.body,
-            body_html: content.bodyHtml || null,
-            meta_title: content.metaTitle,
-            meta_description: content.metaDescription,
-            keyword: keyword,
-            word_count: content.wordCount,
-            seo_score: seoScore,
-            aio_score: aioScore,
-            aio_optimized: optimizationMode === "aio" || optimizationMode === "balanced",
-            status: "draft",
-            content_type: contentType,
-          } as never);
+        await supabase.from("content").insert({
+          site_id: siteId,
+          title: parsedContent.title,
+          slug: parsedContent.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+          body: parsedContent.content,
+          meta_title: parsedContent.metaTitle,
+          meta_description: parsedContent.metaDescription,
+          keyword: keyword,
+          word_count: wordCount,
+          seo_score: seoScore,
+          aio_score: seoScore,
+          aio_optimized: optimizationMode === "aio" || optimizationMode === "balanced",
+          status: "draft",
+          content_type: contentType,
+        } as never);
+        console.log("[Content Generate] Saved to database");
       } catch (saveError) {
-        console.warn("Failed to save content to database:", saveError);
-        // Continue - content was still generated
+        console.warn("[Content Generate] Failed to save to database:", saveError);
       }
     }
 
-    // Return in the expected format
+    // Generate FAQ schema
+    const faqSchema = parsedContent.faqs?.length > 0 ? {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: parsedContent.faqs.map((faq: { question: string; answer: string }) => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: { "@type": "Answer", text: faq.answer },
+      })),
+    } : null;
+
+    console.log("[Content Generate] Success! Word count:", wordCount);
+
     return NextResponse.json({
       success: true,
       data: {
-        title: content.title,
-        metaTitle: content.metaTitle,
-        metaDescription: content.metaDescription,
-        body: content.body,
-        bodyHtml: content.bodyHtml,
-        wordCount: content.wordCount,
-        readingTime: content.readingTime,
-        outline: content.outline,
-        faqs: content.faqs,
+        title: parsedContent.title,
+        metaTitle: parsedContent.metaTitle,
+        metaDescription: parsedContent.metaDescription,
+        body: parsedContent.content,
+        wordCount,
+        readingTime,
+        outline: [{ level: 1, text: parsedContent.title }],
+        faqs: parsedContent.faqs || [],
+        keyTakeaways: parsedContent.keyTakeaways || [],
         seoScore,
-        aioScore,
+        aioScore: seoScore,
         schema: faqSchema,
-        usage: content.usage,
       },
     });
   } catch (error) {
     console.error("[Content Generate API] Error:", error);
     
-    // Handle specific error types
     if (error instanceof Error) {
       if (error.message.includes("rate limit")) {
-        return NextResponse.json(
-          { error: "Rate limit exceeded. Please try again in a moment." },
-          { status: 429 }
-        );
-      }
-      if (error.message.includes("usage limit")) {
-        return NextResponse.json(
-          { error: "Usage limit reached. Please upgrade your plan." },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: "Rate limit exceeded. Please try again." }, { status: 429 });
       }
     }
     
