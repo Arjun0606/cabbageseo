@@ -148,6 +148,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save keywords to database
+    // Note: status must be one of: discovered, analyzed, clustered, queued, writing, published
     const keywordRows = keywords.map(kw => ({
       site_id: siteId,
       keyword: kw.keyword.toLowerCase().trim(),
@@ -155,7 +156,7 @@ export async function POST(request: NextRequest) {
       difficulty: kw.difficulty || null,
       cpc: kw.cpc || null,
       intent: kw.intent || "informational",
-      status: "active",
+      status: "discovered" as const,  // Valid KeywordStatus value
     }));
 
     if (keywordRows.length > 0) {
