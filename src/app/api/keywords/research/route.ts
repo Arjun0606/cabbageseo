@@ -159,28 +159,34 @@ export async function POST(request: NextRequest) {
     }));
 
     if (keywordRows.length > 0) {
-      // Insert keywords one by one to handle duplicates gracefully
-      let savedCount = 0;
-      for (const row of keywordRows) {
-        // Check if keyword already exists
-        const { data: existing } = await supabase
+      // Try to insert all keywords at once (more efficient)
+      console.log(`[Keyword Research] Attempting to save ${keywordRows.length} keywords for site ${siteId}`);
+      
+      // First, get existing keywords to avoid duplicates
+      const { data: existingKeywords } = await supabase
+        .from("keywords")
+        .select("keyword")
+        .eq("site_id", siteId);
+      
+      const existingSet = new Set((existingKeywords || []).map((k: { keyword: string }) => k.keyword.toLowerCase()));
+      
+      // Filter to only new keywords
+      const newKeywords = keywordRows.filter(row => !existingSet.has(row.keyword.toLowerCase()));
+      
+      if (newKeywords.length > 0) {
+        const { data: inserted, error: insertError } = await supabase
           .from("keywords")
-          .select("id")
-          .eq("site_id", row.site_id)
-          .eq("keyword", row.keyword)
-          .single();
+          .insert(newKeywords as never[])
+          .select();
         
-        if (!existing) {
-          const { error: insertError } = await supabase
-            .from("keywords")
-            .insert(row as never);
-          
-          if (!insertError) {
-            savedCount++;
-          }
+        if (insertError) {
+          console.error(`[Keyword Research] Insert error:`, insertError);
+        } else {
+          console.log(`[Keyword Research] Successfully saved ${(inserted as unknown[])?.length || 0} new keywords`);
         }
+      } else {
+        console.log(`[Keyword Research] All ${keywordRows.length} keywords already exist`);
       }
-      console.log(`[Keyword Research] Saved ${savedCount} new keywords (${keywordRows.length - savedCount} already existed)`);
     }
 
     return NextResponse.json({
