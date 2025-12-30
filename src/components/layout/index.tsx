@@ -32,7 +32,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/content", label: "Content", icon: FileText, primary: true },
   { href: "/keywords", label: "Keywords", icon: Target },
-  { href: "/aio", label: "AI Visibility", icon: Brain },
+  { href: "/geo", label: "GEO", icon: Brain },
   { href: "/audit", label: "SEO Audit", icon: AlertTriangle },
 ];
 

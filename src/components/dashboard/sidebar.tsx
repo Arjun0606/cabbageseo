@@ -35,7 +35,7 @@ const mainNavItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Keywords", href: "/keywords", icon: Search },
   { title: "Content", href: "/content", icon: FileText },
-  { title: "AI Visibility", href: "/aio", icon: Brain },
+  { title: "GEO", href: "/geo", icon: Brain },
   { title: "SEO Audit", href: "/audit", icon: AlertCircle },
 ];
 

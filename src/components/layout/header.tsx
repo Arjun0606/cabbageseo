@@ -69,8 +69,8 @@ const pageTitles: Record<string, { title: string; description: string }> = {
     title: "Analytics",
     description: "Track your SEO performance",
   },
-  "/aio": {
-    title: "AI Visibility",
+  "/geo": {
+    title: "GEO Score",
     description: "Optimize for AI search platforms",
   },
   "/settings": {

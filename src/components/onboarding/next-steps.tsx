@@ -130,9 +130,9 @@ export function NextSteps() {
     if (selectedSite.aioScore !== null && selectedSite.aioScore < 50) {
       siteSteps.push({
         id: "improve-aio",
-        title: "Improve AI Visibility",
+        title: "Improve GEO Score",
         description: `AI platforms aren't citing you (${selectedSite.aioScore}/100). Add structured data & FAQs.`,
-        href: "/aio",
+        href: "/geo",
         icon: Brain,
         priority: "high",
         completed: false,

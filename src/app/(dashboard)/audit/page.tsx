@@ -633,9 +633,9 @@ export default function AuditPage() {
                     </p>
                   </div>
                 </div>
-                <Link href="/aio">
+                <Link href="/geo">
                   <Button variant="outline" className="gap-2">
-                    View AIO Dashboard
+                    View GEO Dashboard
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </Link>
