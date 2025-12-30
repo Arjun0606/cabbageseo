@@ -9,7 +9,7 @@
  * - A/B test titles
  */
 
-import { claude } from "@/lib/ai/claude-client";
+import { claude } from "@/lib/ai/openai-client";
 import { ContentPipeline } from "@/lib/ai/content-pipeline";
 
 // ============================================

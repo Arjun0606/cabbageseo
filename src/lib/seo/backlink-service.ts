@@ -11,7 +11,7 @@
 
 import { dataForSEO } from "@/lib/integrations/dataforseo/client";
 import { serpapi } from "@/lib/integrations/serpapi/client";
-import { claude } from "@/lib/ai/claude-client";
+import { claude } from "@/lib/ai/openai-client";
 
 // Note: GSC integration for backlinks would require per-user OAuth tokens
 // For now, we use DataForSEO which is pay-per-use and works for any domain

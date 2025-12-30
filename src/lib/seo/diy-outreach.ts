@@ -10,7 +10,7 @@
  * It's not Apollo, but it's FREE and works.
  */
 
-import { claude } from "@/lib/ai/claude-client";
+import { claude } from "@/lib/ai/openai-client";
 import { serpapi } from "@/lib/integrations/serpapi/client";
 
 // ============================================

@@ -9,7 +9,7 @@
  * - Optimize link distribution
  */
 
-import { claude } from "@/lib/ai/claude-client";
+import { claude } from "@/lib/ai/openai-client";
 
 // ============================================
 // TYPES

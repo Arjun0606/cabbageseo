@@ -1,8 +1,13 @@
 /**
  * AI Module for CabbageSEO
  * 
+ * NOW USES OPENAI (GPT-4o-mini) instead of Claude
+ * - Faster response times
+ * - More reliable API
+ * - Better cost efficiency
+ * 
  * Exports:
- * - claude: Low-level Claude client with rate limiting
+ * - claude: AI client (now OpenAI, kept name for compatibility)
  * - contentPipeline: High-level content generation
  * - PROMPTS: SEO-optimized prompt templates
  * 
@@ -18,16 +23,19 @@
  * ```
  */
 
-// Core client
+// Core client - NOW USING OPENAI
 export { 
-  ClaudeClient, 
+  OpenAIClient as ClaudeClient,  // Backward compatible alias
+  OpenAIClient,
   claude,
+  openai,
   RateLimitError,
   OverloadedError,
   AuthenticationError,
   UsageLimitError,
-  type ClaudeModel,
-} from "./claude-client";
+  type AIModel as ClaudeModel,   // Backward compatible alias
+  type AIModel,
+} from "./openai-client";
 
 // Content pipeline
 export {
@@ -51,4 +59,3 @@ export {
   preCheckUsage, 
   getEstimatedCost,
 } from "./with-usage";
-

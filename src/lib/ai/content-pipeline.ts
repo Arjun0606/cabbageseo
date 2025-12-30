@@ -11,7 +11,8 @@
  * Includes usage tracking and cost controls.
  */
 
-import { claude, ClaudeClient, RateLimitError, UsageLimitError } from "./claude-client";
+// NOW USES OPENAI instead of Claude for better reliability
+import { claude, OpenAIClient as ClaudeClient, RateLimitError, UsageLimitError } from "./openai-client";
 import { PROMPTS, estimateTokens, truncateForTokens } from "./prompts";
 
 // ============================================

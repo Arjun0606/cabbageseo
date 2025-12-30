@@ -15,7 +15,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { createCrawler } from "@/lib/crawler";
 import { analyzeMultiplePages, analyzePageUnified, type PageInput } from "@/lib/analyzer";
 import { dataForSEO } from "@/lib/integrations/dataforseo/client";
-import { claude } from "@/lib/ai/claude-client";
+import { claude } from "@/lib/ai/openai-client";
 
 // Types - Now includes AIO score!
 interface OnboardingResult {
