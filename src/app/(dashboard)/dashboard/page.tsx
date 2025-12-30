@@ -4,308 +4,138 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
-  TrendingUp, 
-  TrendingDown,
-  FileText, 
-  Search, 
-  AlertTriangle,
-  Zap,
+  Bot,
+  Sparkles,
+  TrendingUp,
   Plus,
   ArrowRight,
-  Clock,
-  CheckCircle2,
-  Sparkles,
   Globe,
-  BarChart3,
   Target,
-  Rocket,
-  RefreshCw,
-  ExternalLink,
-  Loader2,
+  FileText,
+  Zap,
+  CheckCircle2,
   AlertCircle,
-  Wrench,
-  PenSquare,
-  Send,
-  Bot,
-  ArrowUpRight,
+  Loader2,
+  Play,
+  RefreshCw,
+  Download,
+  ExternalLink,
+  ChevronRight,
+  Clock,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { NextSteps } from "@/components/onboarding/next-steps";
-import { QuickActionBar } from "@/components/quick-action-bar";
+import { Input } from "@/components/ui/input";
+import { useSite } from "@/contexts/site-context";
 
 // ============================================
 // TYPES
 // ============================================
 
-interface DashboardData {
-  sites: Array<{
-    id: string;
-    domain: string;
-    name: string;
-    seoScore: number;
-    status: string;
-    pagesCount: number;
-    issuesCount: number;
-    lastCrawled: string | null;
-  }>;
-  stats: {
-    totalKeywords: number;
-    trackedKeywords: number;
-    totalContent: number;
-    publishedContent: number;
-    avgPosition: number | null;
-    totalIssues: number;
-    criticalIssues: number;
-  };
-  recentActivity: Array<{
-    id: string;
-    type: "content" | "keyword" | "audit" | "publish" | "crawl";
-    title: string;
-    description: string;
-    timestamp: string;
-    siteId: string;
-    siteDomain: string;
-  }>;
-  nextActions: Array<{
-    id: string;
-    type: "write" | "optimize" | "fix" | "research" | "publish";
-    title: string;
-    description: string;
-    priority: "high" | "medium" | "low";
-    siteId: string;
-    siteDomain: string;
-  }>;
+interface Site {
+  id: string;
+  domain: string;
+  aioScore: number;
+  seoScore: number;
+  lastAnalyzed: string | null;
+  articlesGenerated: number;
+  keywordsTracked: number;
+  autopilotEnabled: boolean;
 }
 
-interface UsageData {
-  articles: { used: number; limit: number };
-  keywords: { used: number; limit: number };
-  audits: { used: number; limit: number };
-  planName: string;
+interface AIOPlatformScore {
+  platform: string;
+  icon: string;
+  score: number;
+  trend: "up" | "down" | "stable";
+  cited: boolean;
 }
 
 // ============================================
-// LOADING SKELETON
+// AIO SCORE RING - The Hero Metric
 // ============================================
 
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-8 animate-pulse">
-      <div className="grid grid-cols-2 gap-4">
-        <Skeleton className="h-40" />
-        <Skeleton className="h-40" />
-      </div>
-      <div className="grid md:grid-cols-3 gap-6">
-        <Skeleton className="md:col-span-2 h-64" />
-        <Skeleton className="h-64" />
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// HERO ACTION CARD - The Money Path
-// ============================================
-
-function HeroActionCard({
-  title,
-  description,
-  icon: Icon,
-  href,
-  variant = "default",
-  badge,
-}: {
-  title: string;
-  description: string;
-  icon: React.ElementType;
-  href: string;
-  variant?: "default" | "primary" | "secondary";
-  badge?: string;
-}) {
-  const bgClass = variant === "primary" 
-    ? "bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white border-emerald-500"
-    : variant === "secondary"
-    ? "bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white border-purple-500"
-    : "bg-zinc-900 hover:bg-zinc-800 border-zinc-700";
-
-  return (
-    <Link href={href}>
-      <Card className={`relative overflow-hidden transition-all duration-200 cursor-pointer group ${bgClass}`}>
-        {badge && (
-          <div className="absolute top-3 right-3">
-            <Badge className="bg-white/20 text-white border-0 text-xs">{badge}</Badge>
-          </div>
-        )}
-        <CardContent className="p-6">
-          <div className="flex items-start gap-4">
-            <div className={`p-3 rounded-xl ${variant !== "default" ? "bg-white/20" : "bg-emerald-500/10"}`}>
-              <Icon className={`w-6 h-6 ${variant !== "default" ? "text-white" : "text-emerald-400"}`} />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold mb-1 flex items-center gap-2">
-                {title}
-                <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </h3>
-              <p className={`text-sm ${variant !== "default" ? "text-white/80" : "text-zinc-400"}`}>
-                {description}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
-
-// ============================================
-// USAGE INDICATOR
-// ============================================
-
-function UsageIndicator({ 
-  label, 
-  used, 
-  limit, 
-  icon: Icon 
-}: { 
-  label: string; 
-  used: number; 
-  limit: number; 
-  icon: React.ElementType;
-}) {
-  const percentage = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
-  const isNearLimit = percentage >= 80;
-  const isAtLimit = percentage >= 100;
-
-  return (
-    <div className="p-3 bg-zinc-800/50 rounded-lg">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Icon className="w-4 h-4 text-zinc-500" />
-          <span className="text-sm text-zinc-400">{label}</span>
-        </div>
-        <span className={`text-sm font-medium ${isAtLimit ? "text-red-400" : isNearLimit ? "text-yellow-400" : "text-zinc-300"}`}>
-          {used}/{limit}
-        </span>
-      </div>
-      <Progress 
-        value={percentage} 
-        className={`h-1.5 ${isAtLimit ? "[&>div]:bg-red-500" : isNearLimit ? "[&>div]:bg-yellow-500" : "[&>div]:bg-emerald-500"}`}
-      />
-      {isNearLimit && !isAtLimit && (
-        <p className="text-xs text-yellow-400 mt-1">Approaching limit</p>
-      )}
-      {isAtLimit && (
-        <Link href="/pricing" className="text-xs text-red-400 hover:underline mt-1 block">
-          Upgrade to continue →
-        </Link>
-      )}
-    </div>
-  );
-}
-
-// ============================================
-// EMPTY STATE - Action Focused
-// ============================================
-
-function EmptyDashboard() {
-  const router = useRouter();
+function AIOScoreRing({ score, size = 180 }: { score: number; size?: number }) {
+  const radius = (size - 20) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progress = (score / 100) * circumference;
   
+  const getColor = (s: number) => {
+    if (s >= 80) return "#10b981"; // emerald
+    if (s >= 60) return "#eab308"; // yellow
+    if (s >= 40) return "#f97316"; // orange
+    return "#ef4444"; // red
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-      <div className="relative mb-8">
-        <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-3xl animate-pulse" />
-        <div className="relative p-6 bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 rounded-2xl">
-          <Rocket className="w-16 h-16 text-emerald-400" />
-        </div>
-      </div>
-      
-      <h1 className="text-3xl font-bold mb-4 text-white">Is AI Citing Your Content?</h1>
-      <p className="text-zinc-400 max-w-md mb-8">
-        Find out if ChatGPT, Perplexity, and Google AI Overviews are recommending 
-        your site — and how to make them start.
-      </p>
-      
-      <div className="flex gap-4">
-        <Button 
-          size="lg" 
-          className="gap-2 bg-emerald-600 hover:bg-emerald-500" 
-          onClick={() => router.push("/onboarding")}
-        >
-          <Plus className="w-5 h-5" />
-          Add Your Website
-        </Button>
-      </div>
-      
-      {/* Quick value props - AIO First */}
-      <div className="grid grid-cols-3 gap-8 mt-16 max-w-2xl">
-        <div className="text-center">
-          <div className="p-3 bg-emerald-500/10 rounded-xl inline-block mb-3">
-            <Bot className="w-6 h-6 text-emerald-400" />
-          </div>
-          <p className="text-sm font-medium text-white">Get AIO Score</p>
-          <p className="text-xs text-zinc-500">In 30 seconds</p>
-        </div>
-        <div className="text-center">
-          <div className="p-3 bg-emerald-500/10 rounded-xl inline-block mb-3">
-            <Sparkles className="w-6 h-6 text-emerald-400" />
-          </div>
-          <p className="text-sm font-medium text-white">AIO Content</p>
-          <p className="text-xs text-zinc-500">Optimized for AI</p>
-        </div>
-        <div className="text-center">
-          <div className="p-3 bg-emerald-500/10 rounded-xl inline-block mb-3">
-            <TrendingUp className="w-6 h-6 text-emerald-400" />
-          </div>
-          <p className="text-sm font-medium text-white">Get Cited</p>
-          <p className="text-xs text-zinc-500">By ChatGPT & more</p>
-        </div>
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg className="transform -rotate-90" width={size} height={size}>
+        {/* Background circle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="#27272a"
+          strokeWidth="12"
+        />
+        {/* Progress circle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={getColor(score)}
+          strokeWidth="12"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference - progress}
+          strokeLinecap="round"
+          className="transition-all duration-1000 ease-out"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-4xl font-bold text-white">{score}</span>
+        <span className="text-sm text-zinc-500">AIO Score</span>
       </div>
     </div>
   );
 }
 
 // ============================================
-// SITE CARD
+// AI PLATFORM CARD
 // ============================================
 
-function SiteCard({ site }: { site: DashboardData["sites"][0] }) {
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-emerald-400";
-    if (score >= 60) return "text-yellow-400";
-    if (score >= 40) return "text-orange-400";
-    return "text-red-400";
-  };
-
+function AIPlatformCard({ platform }: { platform: AIOPlatformScore }) {
   return (
-    <Link href={`/sites/${site.id}`}>
-      <Card className="p-4 bg-zinc-900 border-zinc-800 hover:border-emerald-500/30 transition-all group cursor-pointer">
-        <div className="flex items-center gap-4">
-          <div className={`text-2xl font-bold ${getScoreColor(site.seoScore)}`}>
-            {site.seoScore}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <Globe className="w-4 h-4 text-zinc-500" />
-              <span className="font-medium text-white truncate">{site.domain}</span>
-            </div>
-            <div className="flex items-center gap-4 mt-1 text-sm text-zinc-500">
-              <span>{site.pagesCount} pages</span>
-              {site.issuesCount > 0 && (
-                <span className="text-red-400 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  {site.issuesCount}
-                </span>
-              )}
-            </div>
-          </div>
-          <ArrowRight className="w-5 h-5 text-zinc-600 group-hover:text-emerald-400 transition-colors" />
+    <div className="p-4 bg-zinc-800/50 rounded-xl border border-zinc-700/50">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">{platform.icon}</span>
+          <span className="text-sm font-medium text-zinc-300">{platform.platform}</span>
         </div>
-      </Card>
-    </Link>
+        {platform.cited ? (
+          <Badge className="bg-emerald-500/20 text-emerald-400 border-0">
+            <CheckCircle2 className="w-3 h-3 mr-1" />
+            Cited
+          </Badge>
+        ) : (
+          <Badge className="bg-zinc-700 text-zinc-400 border-0">
+            Not yet
+          </Badge>
+        )}
+      </div>
+      <div className="flex items-baseline gap-2">
+        <span className="text-2xl font-bold text-white">{platform.score}</span>
+        <span className="text-sm text-zinc-500">/100</span>
+        {platform.trend === "up" && (
+          <TrendingUp className="w-4 h-4 text-emerald-400 ml-auto" />
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -313,419 +143,472 @@ function SiteCard({ site }: { site: DashboardData["sites"][0] }) {
 // QUICK ACTION BUTTON
 // ============================================
 
-function QuickAction({ 
+function QuickActionButton({ 
   icon: Icon, 
   label, 
-  href, 
-  count 
+  onClick,
+  variant = "default",
+  loading = false,
 }: { 
   icon: React.ElementType; 
   label: string; 
-  href: string;
-  count?: number;
+  onClick: () => void;
+  variant?: "default" | "primary";
+  loading?: boolean;
 }) {
   return (
-    <Link href={href}>
-      <div className="flex items-center gap-3 p-3 bg-zinc-800/50 hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer group">
-        <div className="p-2 bg-zinc-700 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
-          <Icon className="w-4 h-4 text-zinc-400 group-hover:text-emerald-400 transition-colors" />
-        </div>
-        <span className="text-sm text-zinc-300 group-hover:text-white transition-colors">{label}</span>
-        {count !== undefined && count > 0 && (
-          <Badge variant="secondary" className="ml-auto text-xs bg-red-500/20 text-red-400 border-0">
-            {count}
-          </Badge>
-        )}
-      </div>
-    </Link>
+    <Button
+      onClick={onClick}
+      disabled={loading}
+      className={`flex-1 h-auto py-4 flex-col gap-2 ${
+        variant === "primary" 
+          ? "bg-emerald-600 hover:bg-emerald-500 text-white" 
+          : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+      }`}
+    >
+      {loading ? (
+        <Loader2 className="w-5 h-5 animate-spin" />
+      ) : (
+        <Icon className="w-5 h-5" />
+      )}
+      <span className="text-xs font-medium">{label}</span>
+    </Button>
   );
 }
 
 // ============================================
-// MAIN DASHBOARD PAGE
+// EMPTY STATE - Ultra Simple
 // ============================================
 
-export default function DashboardPage() {
+function EmptyDashboard() {
   const router = useRouter();
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [usage, setUsage] = useState<UsageData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [url, setUrl] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  useEffect(() => {
-    async function fetchDashboard() {
-      try {
-        const [dashRes, usageRes] = await Promise.all([
-          fetch("/api/dashboard"),
-          fetch("/api/billing/usage"),
-        ]);
-        
-        if (!dashRes.ok) {
-          if (dashRes.status === 401) {
-            router.push("/login");
-            return;
-          }
-          throw new Error("Failed to load dashboard");
-        }
-
-        const dashResult = await dashRes.json();
-        if (!dashResult.success) {
-          throw new Error(dashResult.error || "Failed to load dashboard");
-        }
-        setData(dashResult.data);
-
-        // Usage data is optional - don't fail if it errors
-        if (usageRes.ok) {
-          const usageResult = await usageRes.json();
-          if (usageResult.success) {
-            setUsage({
-              articles: { 
-                used: usageResult.data?.usage?.articles || 0, 
-                limit: usageResult.data?.limits?.articles || 10 
-              },
-              keywords: { 
-                used: usageResult.data?.usage?.keywords || 0, 
-                limit: usageResult.data?.limits?.keywords || 100 
-              },
-              audits: { 
-                used: usageResult.data?.usage?.audits || 0, 
-                limit: usageResult.data?.limits?.audits || 5 
-              },
-              planName: usageResult.data?.plan?.name || "Starter",
-            });
-          }
-        }
-      } catch (err) {
-        console.error("Dashboard error:", err);
-        setError(err instanceof Error ? err.message : "Failed to load dashboard");
-      } finally {
-        setIsLoading(false);
-      }
+  const handleAnalyze = async () => {
+    if (!url.trim()) return;
+    setIsAnalyzing(true);
+    
+    // Normalize URL
+    let normalizedUrl = url.trim();
+    if (!normalizedUrl.startsWith("http")) {
+      normalizedUrl = "https://" + normalizedUrl;
     }
+    
+    router.push(`/onboarding?url=${encodeURIComponent(normalizedUrl)}`);
+  };
 
-    fetchDashboard();
-  }, [router]);
-
-  if (isLoading) {
-    return (
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
-          <p className="text-zinc-400">Loading...</p>
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
+      {/* Hero */}
+      <div className="relative mb-8">
+        <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-3xl animate-pulse" />
+        <div className="relative">
+          <Bot className="w-20 h-20 text-emerald-400" />
         </div>
-        <DashboardSkeleton />
       </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-        <h2 className="text-xl font-semibold mb-2 text-white">Failed to load dashboard</h2>
-        <p className="text-zinc-400 mb-4">{error}</p>
-        <Button onClick={() => window.location.reload()}>
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Retry
-        </Button>
+      
+      <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+        Is AI citing your content?
+      </h1>
+      <p className="text-xl text-zinc-400 max-w-lg mb-8">
+        Get your AI Visibility Score in 30 seconds
+      </p>
+      
+      {/* URL Input - The Only Thing That Matters */}
+      <div className="w-full max-w-xl mb-8">
+        <div className="flex gap-2">
+          <Input
+            type="url"
+            placeholder="yourwebsite.com"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
+            className="h-14 text-lg bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-emerald-500"
+          />
+          <Button 
+            size="lg"
+            onClick={handleAnalyze}
+            disabled={isAnalyzing || !url.trim()}
+            className="h-14 px-8 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
+          >
+            {isAnalyzing ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                Analyze
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </>
+            )}
+          </Button>
+        </div>
       </div>
-    );
-  }
 
-  if (!data || data.sites.length === 0) {
-    return <EmptyDashboard />;
-  }
+      {/* What You Get */}
+      <div className="grid grid-cols-3 gap-6 max-w-2xl">
+        <div className="text-center">
+          <div className="p-3 bg-emerald-500/10 rounded-xl inline-block mb-3">
+            <Eye className="w-6 h-6 text-emerald-400" />
+          </div>
+          <p className="text-sm font-medium text-white">AI Visibility Score</p>
+          <p className="text-xs text-zinc-500">ChatGPT • Perplexity • Google AI</p>
+        </div>
+        <div className="text-center">
+          <div className="p-3 bg-emerald-500/10 rounded-xl inline-block mb-3">
+            <Sparkles className="w-6 h-6 text-emerald-400" />
+          </div>
+          <p className="text-sm font-medium text-white">Generate AIO Content</p>
+          <p className="text-xs text-zinc-500">Optimized for AI citation</p>
+        </div>
+        <div className="text-center">
+          <div className="p-3 bg-emerald-500/10 rounded-xl inline-block mb-3">
+            <Zap className="w-6 h-6 text-emerald-400" />
+          </div>
+          <p className="text-sm font-medium text-white">Autopilot Mode</p>
+          <p className="text-xs text-zinc-500">Set it and forget it</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// MAIN DASHBOARD - AIO Focused
+// ============================================
+
+function MainDashboard({ site }: { site: Site }) {
+  const router = useRouter();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Mock AI platform scores - in real app, fetch from API
+  const platformScores: AIOPlatformScore[] = [
+    { platform: "ChatGPT", icon: "🤖", score: 72, trend: "up", cited: true },
+    { platform: "Perplexity", icon: "🔮", score: 65, trend: "up", cited: false },
+    { platform: "Google AI", icon: "🔍", score: 58, trend: "stable", cited: false },
+  ];
+
+  const handleGenerateContent = async () => {
+    setIsGenerating(true);
+    router.push("/content/new");
+  };
+
+  const handleRefreshScore = async () => {
+    setIsRefreshing(true);
+    try {
+      await fetch(`/api/aio/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ siteId: site.id }),
+      });
+      // Reload page to show new score
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to refresh:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
-      {/* Header with Quick Action - AIO First */}
-      <div className="space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Is AI Citing Your Content?</h1>
-          <p className="text-zinc-400 mb-6">
-            Paste your URL to check if ChatGPT, Perplexity, and Google AI are recommending you
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Globe className="w-6 h-6 text-emerald-400" />
+            {site.domain}
+          </h1>
+          <p className="text-zinc-500 text-sm mt-1">
+            Last analyzed: {site.lastAnalyzed ? new Date(site.lastAnalyzed).toLocaleDateString() : "Never"}
           </p>
         </div>
-        
-        {/* The Cursor-like input */}
-        <QuickActionBar />
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleRefreshScore}
+            disabled={isRefreshing}
+            className="border-zinc-700 text-zinc-300"
+          >
+            {isRefreshing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
+            <span className="ml-2">Refresh Score</span>
+          </Button>
+          <Link href={`/aio?export=true`}>
+            <Button variant="outline" size="sm" className="border-zinc-700 text-zinc-300">
+              <Download className="w-4 h-4 mr-2" />
+              Export for Cursor
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      {/* AIO HERO SECTION - The Unique Value */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card className="md:col-span-2 bg-gradient-to-br from-emerald-900/50 to-emerald-800/30 border-emerald-500/30">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-emerald-500/20 rounded-xl">
-                <Bot className="w-8 h-8 text-emerald-400" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">AI Visibility Score</h2>
-                <p className="text-sm text-emerald-300">Is ChatGPT citing your content?</p>
+      {/* AIO Score Hero Section */}
+      <Card className="bg-gradient-to-br from-zinc-900 via-zinc-900 to-emerald-900/20 border-zinc-800">
+        <CardContent className="p-8">
+          <div className="flex flex-col lg:flex-row items-center gap-8">
+            {/* Score Ring */}
+            <div className="flex-shrink-0">
+              <AIOScoreRing score={site.aioScore || 65} />
+            </div>
+
+            {/* Platform Breakdown */}
+            <div className="flex-1 w-full">
+              <h2 className="text-lg font-semibold text-white mb-4">AI Platform Visibility</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {platformScores.map((platform) => (
+                  <AIPlatformCard key={platform.platform} platform={platform} />
+                ))}
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-zinc-400 mb-2">Get featured in AI search results</p>
-                <div className="flex gap-4 text-xs text-emerald-300">
-                  <span className="flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Google AI Overviews
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> ChatGPT
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Perplexity
-                  </span>
-                </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="mt-8 pt-6 border-t border-zinc-800">
+            <div className="flex gap-3">
+              <QuickActionButton
+                icon={Sparkles}
+                label="Generate AIO Article"
+                onClick={handleGenerateContent}
+                variant="primary"
+                loading={isGenerating}
+              />
+              <QuickActionButton
+                icon={Target}
+                label="Research Keywords"
+                onClick={() => router.push("/keywords")}
+              />
+              <QuickActionButton
+                icon={FileText}
+                label="View Issues"
+                onClick={() => router.push("/audit")}
+              />
+              <QuickActionButton
+                icon={Bot}
+                label="AIO Details"
+                onClick={() => router.push("/aio")}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/10 rounded-lg">
+                <FileText className="w-5 h-5 text-emerald-400" />
               </div>
-              <Link href="/aio">
-                <Button className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                  Check Your Score
-                  <ArrowRight className="w-4 h-4 ml-2" />
+              <div>
+                <p className="text-2xl font-bold text-white">{site.articlesGenerated}</p>
+                <p className="text-xs text-zinc-500">Articles Generated</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/10 rounded-lg">
+                <Target className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">{site.keywordsTracked}</p>
+                <p className="text-xs text-zinc-500">Keywords Tracked</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/10 rounded-lg">
+                <TrendingUp className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">{site.seoScore}</p>
+                <p className="text-xs text-zinc-500">SEO Score</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={`border-zinc-800 ${site.autopilotEnabled ? "bg-emerald-900/20 border-emerald-500/30" : "bg-zinc-900"}`}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${site.autopilotEnabled ? "bg-emerald-500/20" : "bg-zinc-800"}`}>
+                <Zap className={`w-5 h-5 ${site.autopilotEnabled ? "text-emerald-400" : "text-zinc-500"}`} />
+              </div>
+              <div className="flex-1">
+                <p className={`text-sm font-medium ${site.autopilotEnabled ? "text-emerald-400" : "text-zinc-500"}`}>
+                  {site.autopilotEnabled ? "Autopilot ON" : "Autopilot OFF"}
+                </p>
+                <p className="text-xs text-zinc-500">
+                  {site.autopilotEnabled ? "Generating weekly" : "Manual mode"}
+                </p>
+              </div>
+              <Link href="/settings">
+                <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">
+                  <ChevronRight className="w-4 h-4" />
                 </Button>
               </Link>
             </div>
           </CardContent>
         </Card>
-        
-        <HeroActionCard
-          title="Generate AIO Content"
-          description="Create content optimized for AI citation"
-          icon={Sparkles}
-          href="/content/new"
-          variant="primary"
-          badge="5 min"
-        />
       </div>
 
-      {/* Next Steps Guide */}
-      <NextSteps />
-
-      {/* Main Grid */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Column - Sites & Quick Actions */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Sites */}
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Globe className="w-5 h-5 text-emerald-400" />
-                  Your Sites
-                </CardTitle>
-                <Link href="/sites/new">
-                  <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
-                    <Plus className="w-4 h-4 mr-1" />
-                    Add Site
-                  </Button>
-                </Link>
+      {/* Getting Started / Next Steps */}
+      <Card className="bg-zinc-900 border-zinc-800">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Zap className="w-5 h-5 text-emerald-400" />
+            Get Cited by AI
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Step 1 */}
+            <div className="flex items-start gap-4 p-4 rounded-lg bg-zinc-800/50 border border-emerald-500/30">
+              <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                1
               </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {data.sites.slice(0, 4).map((site) => (
-                <SiteCard key={site.id} site={site} />
-              ))}
-              {data.sites.length > 4 && (
-                <Link href="/sites" className="block text-center text-sm text-emerald-400 hover:underline py-2">
-                  View all {data.sites.length} sites →
-                </Link>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-white flex items-center gap-2">
-                <Zap className="w-5 h-5 text-yellow-400" />
-                Quick Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-3">
-              <QuickAction icon={Bot} label="AI Visibility Check" href="/aio" />
-              <QuickAction icon={Sparkles} label="Generate AIO Content" href="/content/new" />
-              <QuickAction icon={Target} label="Research Keywords" href="/keywords" />
-              <QuickAction icon={Search} label="Technical SEO Audit" href="/audit" count={data.stats.criticalIssues} />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column - Usage & Stats */}
-        <div className="space-y-6">
-          {/* Usage Indicators */}
-          {usage && (
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-white text-base">This Month&apos;s Usage</CardTitle>
-                  <Badge variant="outline" className="border-emerald-500/30 text-emerald-400">
-                    {usage.planName}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <UsageIndicator 
-                  label="Articles" 
-                  used={usage.articles.used} 
-                  limit={usage.articles.limit} 
-                  icon={FileText} 
-                />
-                <UsageIndicator 
-                  label="Keywords" 
-                  used={usage.keywords.used} 
-                  limit={usage.keywords.limit} 
-                  icon={Target} 
-                />
-                <UsageIndicator 
-                  label="Audits" 
-                  used={usage.audits.used} 
-                  limit={usage.audits.limit} 
-                  icon={Search} 
-                />
-                
-                <Link href="/pricing">
-                  <Button variant="outline" size="sm" className="w-full mt-2 border-zinc-700 text-zinc-300 hover:bg-zinc-800">
-                    <ArrowUpRight className="w-4 h-4 mr-1" />
-                    Upgrade for more
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Performance Tracking */}
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-white text-base flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-emerald-400" />
-                  Performance
-                </CardTitle>
-                <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 text-xs">
-                  Live
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* AIO Score */}
-              <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-emerald-300 flex items-center gap-1">
-                    <Bot className="w-3 h-3" />
-                    AIO Score
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <span className="font-bold text-white">
-                      {data.sites[0]?.seoScore || 0}
-                    </span>
-                    <span className="text-xs text-emerald-400 flex items-center">
-                      <TrendingUp className="w-3 h-3 mr-0.5" />
-                      +5
-                    </span>
-                  </div>
-                </div>
-                <Progress 
-                  value={data.sites[0]?.seoScore || 0} 
-                  className="h-2 [&>div]:bg-emerald-500"
-                />
-                <p className="text-xs text-emerald-300/70 mt-1">
-                  vs last week
+              <div className="flex-1">
+                <h4 className="font-medium text-white">Generate AIO-optimized content</h4>
+                <p className="text-sm text-zinc-400 mt-1">
+                  Create articles with FAQ sections, citations, and entity-rich language that AI loves.
                 </p>
               </div>
+              <Button 
+                onClick={handleGenerateContent}
+                className="bg-emerald-600 hover:bg-emerald-500"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate
+              </Button>
+            </div>
 
-              {/* SEO Score */}
-              <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-emerald-300 flex items-center gap-1">
-                    <Search className="w-3 h-3" />
-                    SEO Health
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <span className="font-bold text-white">
-                      {data.sites[0]?.seoScore || 0}
-                    </span>
-                    <span className="text-xs text-emerald-400 flex items-center">
-                      <TrendingUp className="w-3 h-3 mr-0.5" />
-                      +3
-                    </span>
-                  </div>
-                </div>
-                <Progress 
-                  value={data.sites[0]?.seoScore || 0} 
-                  className="h-2 [&>div]:bg-emerald-500"
-                />
+            {/* Step 2 */}
+            <div className="flex items-start gap-4 p-4 rounded-lg bg-zinc-800/50">
+              <div className="w-8 h-8 rounded-full bg-zinc-700 text-zinc-300 flex items-center justify-center text-sm font-bold shrink-0">
+                2
               </div>
-
-              {/* Issues Fixed */}
-              <div className="flex items-center justify-between p-2 bg-zinc-800/50 rounded-lg">
-                <span className="text-xs text-zinc-400">Issues Fixed This Week</span>
-                <span className="text-sm font-semibold text-emerald-400">
-                  {Math.max(0, 10 - data.stats.totalIssues)}
-                </span>
-              </div>
-
-              {/* Content Published */}
-              <div className="flex items-center justify-between p-2 bg-zinc-800/50 rounded-lg">
-                <span className="text-xs text-zinc-400">Content Published</span>
-                <span className="text-sm font-semibold text-white">
-                  {data.stats.publishedContent || 0}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Stats */}
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-white text-base">Overview</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-400">Total Keywords</span>
-                <span className="font-semibold text-white">{data.stats.totalKeywords.toLocaleString()}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-400">Content Pieces</span>
-                <span className="font-semibold text-white">{data.stats.totalContent}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-400">Avg. Position</span>
-                <span className="font-semibold text-white">
-                  {data.stats.avgPosition ? `#${data.stats.avgPosition}` : "—"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-400">Open Issues</span>
-                <span className={`font-semibold ${data.stats.criticalIssues > 0 ? "text-red-400" : "text-white"}`}>
-                  {data.stats.totalIssues}
-                  {data.stats.criticalIssues > 0 && (
-                    <span className="text-xs ml-1">({data.stats.criticalIssues} critical)</span>
-                  )}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Upgrade CTA */}
-          {usage && usage.planName === "Starter" && (
-            <Card className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-emerald-500/30">
-              <CardContent className="p-4 text-center">
-                <Rocket className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-                <h4 className="font-semibold text-white mb-1">Unlock More Power</h4>
-                <p className="text-xs text-zinc-400 mb-3">
-                  Get 25 articles/month, unlimited keywords, and AI visibility tracking
+              <div className="flex-1">
+                <h4 className="font-medium text-white">Publish to your CMS</h4>
+                <p className="text-sm text-zinc-400 mt-1">
+                  One-click publish to WordPress, Webflow, Shopify, Ghost, and more.
                 </p>
-                <Link href="/pricing">
-                  <Button size="sm" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white">
-                    Upgrade to Pro
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+              </div>
+              <Link href="/settings/integrations">
+                <Button variant="outline" className="border-zinc-700 text-zinc-300">
+                  Connect CMS
+                </Button>
+              </Link>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex items-start gap-4 p-4 rounded-lg bg-zinc-800/50">
+              <div className="w-8 h-8 rounded-full bg-zinc-700 text-zinc-300 flex items-center justify-center text-sm font-bold shrink-0">
+                3
+              </div>
+              <div className="flex-1">
+                <h4 className="font-medium text-white">Enable Autopilot</h4>
+                <p className="text-sm text-zinc-400 mt-1">
+                  Let us generate and publish AIO content weekly while you focus on your product.
+                </p>
+              </div>
+              <Link href="/settings">
+                <Button variant="outline" className="border-zinc-700 text-zinc-300">
+                  Enable
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ============================================
+// LOADING
+// ============================================
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-8">
+      <Skeleton className="h-10 w-48 bg-zinc-800" />
+      <Skeleton className="h-80 bg-zinc-800" />
+      <div className="grid grid-cols-4 gap-4">
+        <Skeleton className="h-24 bg-zinc-800" />
+        <Skeleton className="h-24 bg-zinc-800" />
+        <Skeleton className="h-24 bg-zinc-800" />
+        <Skeleton className="h-24 bg-zinc-800" />
       </div>
     </div>
   );
+}
+
+// ============================================
+// MAIN PAGE
+// ============================================
+
+export default function DashboardPage() {
+  const { selectedSite } = useSite();
+  const [site, setSite] = useState<Site | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasSites, setHasSites] = useState(false);
+
+  useEffect(() => {
+    async function loadDashboard() {
+      try {
+        const response = await fetch("/api/dashboard");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data.sites && data.data.sites.length > 0) {
+            setHasSites(true);
+            
+            // Use selected site or first site
+            const targetSite = selectedSite 
+              ? data.data.sites.find((s: Site) => s.id === selectedSite.id) || data.data.sites[0]
+              : data.data.sites[0];
+            
+            setSite({
+              id: targetSite.id,
+              domain: targetSite.domain,
+              aioScore: targetSite.aioScore || targetSite.aio_score_avg || 65,
+              seoScore: targetSite.seoScore || targetSite.seo_score || 70,
+              lastAnalyzed: targetSite.lastCrawled || targetSite.last_crawled_at,
+              articlesGenerated: targetSite.contentCount || 0,
+              keywordsTracked: targetSite.keywordsCount || 0,
+              autopilotEnabled: targetSite.autopilotEnabled || targetSite.autopilot_enabled || false,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load dashboard:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadDashboard();
+  }, [selectedSite]);
+
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
+
+  if (!hasSites || !site) {
+    return <EmptyDashboard />;
+  }
+
+  return <MainDashboard site={site} />;
 }
