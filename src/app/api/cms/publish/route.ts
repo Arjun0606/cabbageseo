@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const { 
       cmsType, 
       content,
-      siteId,  // For Webflow
+      siteId,  // Site to publish for
     } = body as {
       cmsType: CMSType;
       content: PublishContent;
@@ -56,29 +56,68 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get CMS credentials from integrations
-    const { data: integration, error: integrationError } = await supabase
-      .from("integrations")
-      .select("credentials")
-      .eq("organization_id", orgId)
-      .eq("type", cmsType)
-      .eq("status", "active")
-      .single() as { data: { credentials: Record<string, unknown> } | null; error: unknown };
-
-    if (integrationError || !integration) {
+    if (!siteId) {
       return NextResponse.json(
-        { error: `${cmsType} not connected. Please add your ${cmsType} credentials in Settings → Integrations.` },
+        { error: "siteId is required to publish content" },
+        { status: 400 }
+      );
+    }
+
+    // Verify site ownership
+    const { data: site } = await supabase
+      .from("sites")
+      .select("id, domain")
+      .eq("id", siteId)
+      .eq("organization_id", orgId)
+      .single();
+
+    if (!site) {
+      return NextResponse.json(
+        { error: "Site not found or not owned by your organization" },
+        { status: 404 }
+      );
+    }
+
+    // Get CMS credentials from integrations - prefer site-specific, then org-wide
+    let integration: { credentials: Record<string, unknown> } | null = null;
+
+    // First try site-specific integration
+    const { data: siteIntegration } = await supabase
+      .from("integrations")
+      .select("credentials, settings")
+      .eq("organization_id", orgId)
+      .eq("site_id", siteId)
+      .eq("type", cmsType)
+      .eq("status", "connected")
+      .single() as { data: { credentials: Record<string, unknown>; settings: Record<string, unknown> } | null };
+
+    if (siteIntegration) {
+      integration = siteIntegration;
+    } else {
+      // Fall back to org-wide integration
+      const { data: orgIntegration } = await supabase
+        .from("integrations")
+        .select("credentials, settings")
+        .eq("organization_id", orgId)
+        .is("site_id", null)
+        .eq("type", cmsType)
+        .eq("status", "connected")
+        .single() as { data: { credentials: Record<string, unknown>; settings: Record<string, unknown> } | null };
+
+      if (orgIntegration) {
+        integration = orgIntegration;
+      }
+    }
+
+    if (!integration) {
+      return NextResponse.json(
+        { error: `${cmsType} not connected for this site. Please add your ${cmsType} credentials in Settings → Integrations.` },
         { status: 400 }
       );
     }
 
     // Decrypt credentials if needed (credentials are stored encrypted)
     const credentials = integration.credentials as Record<string, string>;
-    
-    // Add siteId for Webflow if provided
-    if (cmsType === "webflow" && siteId) {
-      credentials.siteId = siteId;
-    }
 
     // Create publisher
     const publisher = await createPublisherFromIntegration(cmsType, credentials);

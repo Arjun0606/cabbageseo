@@ -28,10 +28,15 @@ import { createClient } from "@/lib/supabase/client";
 // ============================================
 
 // Only list integrations that are actually implemented
-const integrations = [
-  { name: "WordPress", icon: "🔵" },
-  { name: "Webflow", icon: "🟣" },
-  { name: "Shopify", icon: "🟢" },
+const cmsIntegrations = [
+  { name: "WordPress", icon: "🔵", description: "Publish to your WordPress blog" },
+  { name: "Webflow", icon: "🟣", description: "Sync with Webflow CMS" },
+  { name: "Shopify", icon: "🛒", description: "Create Shopify blog articles" },
+];
+
+const analyticsIntegrations = [
+  { name: "Google Search Console", icon: "🔍", description: "Real ranking data" },
+  { name: "Google Analytics 4", icon: "📊", description: "Traffic analytics" },
 ];
 
 export default function LandingPage() {
@@ -328,29 +333,55 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CMS Integrations - Only real ones */}
+      {/* Integrations - Only real ones */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Publish to Your CMS</h2>
-            <p className="text-zinc-400">One-click publishing to popular platforms</p>
+            <h2 className="text-3xl font-bold text-white mb-4">Integrations</h2>
+            <p className="text-zinc-400">Connect your tools for seamless workflows</p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            {integrations.map((int, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 px-6 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800"
-              >
-                <span className="text-xl">{int.icon}</span>
-                <span className="text-zinc-300">{int.name}</span>
-              </div>
-            ))}
+          {/* CMS Publishing */}
+          <div className="mb-8">
+            <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4 text-center">
+              Publish Content
+            </h3>
+            <div className="flex flex-wrap justify-center gap-4">
+              {cmsIntegrations.map((int, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 px-5 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800"
+                >
+                  <span className="text-xl">{int.icon}</span>
+                  <div>
+                    <span className="text-zinc-200 font-medium">{int.name}</span>
+                    <p className="text-xs text-zinc-500">{int.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <p className="text-center text-sm text-zinc-500">
-            More integrations coming soon
-          </p>
+          {/* Analytics */}
+          <div>
+            <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4 text-center">
+              Analytics
+            </h3>
+            <div className="flex flex-wrap justify-center gap-4">
+              {analyticsIntegrations.map((int, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 px-5 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800"
+                >
+                  <span className="text-xl">{int.icon}</span>
+                  <div>
+                    <span className="text-zinc-200 font-medium">{int.name}</span>
+                    <p className="text-xs text-zinc-500">{int.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
