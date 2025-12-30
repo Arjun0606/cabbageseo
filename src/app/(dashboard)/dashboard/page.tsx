@@ -223,10 +223,10 @@ function EmptyDashboard() {
         </div>
       </div>
       
-      <h1 className="text-3xl font-bold mb-4 text-white">Welcome to CabbageSEO!</h1>
+      <h1 className="text-3xl font-bold mb-4 text-white">Is AI Citing Your Content?</h1>
       <p className="text-zinc-400 max-w-md mb-8">
-        Let&apos;s get you ranking. Add your first site and generate 
-        content that ranks in both Google and AI search.
+        Find out if ChatGPT, Perplexity, and Google AI Overviews are recommending 
+        your site — and how to make them start.
       </p>
       
       <div className="flex gap-4">
@@ -240,28 +240,28 @@ function EmptyDashboard() {
         </Button>
       </div>
       
-      {/* Quick value props */}
+      {/* Quick value props - AIO First */}
       <div className="grid grid-cols-3 gap-8 mt-16 max-w-2xl">
+        <div className="text-center">
+          <div className="p-3 bg-purple-500/10 rounded-xl inline-block mb-3">
+            <Bot className="w-6 h-6 text-purple-400" />
+          </div>
+          <p className="text-sm font-medium text-white">Get AIO Score</p>
+          <p className="text-xs text-zinc-500">In 30 seconds</p>
+        </div>
         <div className="text-center">
           <div className="p-3 bg-emerald-500/10 rounded-xl inline-block mb-3">
             <Sparkles className="w-6 h-6 text-emerald-400" />
           </div>
-          <p className="text-sm font-medium text-white">Generate Articles</p>
-          <p className="text-xs text-zinc-500">In 5 minutes</p>
-        </div>
-        <div className="text-center">
-          <div className="p-3 bg-purple-500/10 rounded-xl inline-block mb-3">
-            <RefreshCw className="w-6 h-6 text-purple-400" />
-          </div>
-          <p className="text-sm font-medium text-white">Refresh Content</p>
-          <p className="text-xs text-zinc-500">Recover traffic</p>
+          <p className="text-sm font-medium text-white">AIO Content</p>
+          <p className="text-xs text-zinc-500">Optimized for AI</p>
         </div>
         <div className="text-center">
           <div className="p-3 bg-blue-500/10 rounded-xl inline-block mb-3">
-            <Bot className="w-6 h-6 text-blue-400" />
+            <TrendingUp className="w-6 h-6 text-blue-400" />
           </div>
-          <p className="text-sm font-medium text-white">AI Visibility</p>
-          <p className="text-xs text-zinc-500">Get cited by AI</p>
+          <p className="text-sm font-medium text-white">Get Cited</p>
+          <p className="text-xs text-zinc-500">By ChatGPT & more</p>
         </div>
       </div>
     </div>
@@ -438,12 +438,12 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header with Quick Action */}
+      {/* Header with Quick Action - AIO First */}
       <div className="space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-2">What do you want to do?</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Is AI Citing Your Content?</h1>
           <p className="text-zinc-400 mb-6">
-            Paste a URL to analyze, or enter a topic to generate content
+            Paste your URL to check if ChatGPT, Perplexity, and Google AI are recommending you
           </p>
         </div>
         
@@ -451,23 +451,51 @@ export default function DashboardPage() {
         <QuickActionBar />
       </div>
 
-      {/* HERO ACTIONS - The Money Path */}
-      <div className="grid md:grid-cols-2 gap-4">
+      {/* AIO HERO SECTION - The Unique Value */}
+      <div className="grid md:grid-cols-3 gap-4">
+        <Card className="md:col-span-2 bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-purple-500/30">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 bg-purple-500/20 rounded-xl">
+                <Bot className="w-8 h-8 text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">AI Visibility Score</h2>
+                <p className="text-sm text-purple-300">Is ChatGPT citing your content?</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-400 mb-2">Get featured in AI search results</p>
+                <div className="flex gap-4 text-xs text-purple-300">
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Google AI Overviews
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> ChatGPT
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Perplexity
+                  </span>
+                </div>
+              </div>
+              <Link href="/aio">
+                <Button className="bg-purple-600 hover:bg-purple-500 text-white">
+                  Check Your Score
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+        
         <HeroActionCard
-          title="Generate New Article"
-          description="Create SEO-optimized content that ranks in Google and gets cited by AI"
+          title="Generate AIO Content"
+          description="Create content optimized for AI citation"
           icon={Sparkles}
           href="/content/new"
           variant="primary"
           badge="5 min"
-        />
-        <HeroActionCard
-          title="Refresh Old Content"
-          description="Update existing pages to recover lost traffic and match current search intent"
-          icon={RefreshCw}
-          href="/content?filter=refresh"
-          variant="secondary"
-          badge="Quick wins"
         />
       </div>
 
@@ -515,10 +543,10 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-3">
+              <QuickAction icon={Bot} label="AI Visibility Check" href="/aio" />
+              <QuickAction icon={Sparkles} label="Generate AIO Content" href="/content/new" />
               <QuickAction icon={Target} label="Research Keywords" href="/keywords" />
-              <QuickAction icon={Search} label="Run SEO Audit" href="/audit" count={data.stats.criticalIssues} />
-              <QuickAction icon={Bot} label="Check AI Visibility" href="/aio" />
-              <QuickAction icon={Sparkles} label="Generate Content" href="/content/new" />
+              <QuickAction icon={Search} label="Technical SEO Audit" href="/audit" count={data.stats.criticalIssues} />
             </CardContent>
           </Card>
         </div>

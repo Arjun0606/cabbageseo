@@ -143,22 +143,22 @@ export default function LandingPage() {
       <section className="pt-32 pb-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
           {/* Target Audience Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm mb-8">
             <Bot className="w-4 h-4" />
-            Built for founders who ship fast
-        </div>
+            The only AI Visibility tool for indie founders
+          </div>
 
-          {/* Main Headline - AIO + Speed */}
+          {/* Main Headline - AIO First */}
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.05]">
-            Rank in Google <span className="text-emerald-400">and AI.</span>
+            Get cited by <span className="text-purple-400">ChatGPT.</span>
             <br />
-            <span className="text-zinc-500">In minutes, not months.</span>
+            <span className="text-zinc-500">Not just ranked on Google.</span>
           </h1>
 
-          {/* SaaS-focused Subheadline */}
+          {/* AIO-focused Subheadline */}
           <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-4 leading-relaxed">
-            The SEO tool for SaaS, startups, and indie makers. Generate AI-optimized content 
-            that ranks in Google AND gets cited by ChatGPT.
+            Check your AI Visibility Score. See if ChatGPT, Perplexity, and Google AI Overviews 
+            are recommending you — and generate content that makes them start.
           </p>
           
           {/* ROI Statement */}
@@ -184,38 +184,38 @@ export default function LandingPage() {
                 size="lg"
                 onClick={handleAnalyze}
                 disabled={isAnalyzing}
-                className="h-14 px-8 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium"
+                className="h-14 px-8 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-medium"
               >
-                {isAnalyzing ? "Analyzing..." : "Analyze Free"}
+                {isAnalyzing ? "Checking..." : "Check AIO Score"}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </div>
 
           <p className="text-sm text-zinc-500">
-            See what&apos;s hurting your rankings in 30 seconds
+            See your AI Visibility Score in 30 seconds — free
           </p>
         </div>
       </section>
 
-      {/* Speed/Value Proof */}
+      {/* AIO Value Proof */}
       <section className="pb-20 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-3 gap-4 md:gap-8">
-            <div className="text-center p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
-              <p className="text-3xl md:text-4xl font-bold text-emerald-400 mb-2">30s</p>
-              <p className="text-sm text-zinc-500">Full site analysis</p>
+            <div className="text-center p-6 bg-purple-900/20 rounded-xl border border-purple-500/20">
+              <p className="text-3xl md:text-4xl font-bold text-purple-400 mb-2">30s</p>
+              <p className="text-sm text-zinc-500">AIO Score check</p>
             </div>
-            <div className="text-center p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
-              <p className="text-3xl md:text-4xl font-bold text-emerald-400 mb-2">5m</p>
-              <p className="text-sm text-zinc-500">Article generated</p>
+            <div className="text-center p-6 bg-purple-900/20 rounded-xl border border-purple-500/20">
+              <p className="text-3xl md:text-4xl font-bold text-purple-400 mb-2">3</p>
+              <p className="text-sm text-zinc-500">AI platforms tracked</p>
             </div>
-            <div className="text-center p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
-              <p className="text-3xl md:text-4xl font-bold text-emerald-400 mb-2">1-click</p>
-              <p className="text-sm text-zinc-500">Publish to CMS</p>
+            <div className="text-center p-6 bg-purple-900/20 rounded-xl border border-purple-500/20">
+              <p className="text-3xl md:text-4xl font-bold text-purple-400 mb-2">5m</p>
+              <p className="text-sm text-zinc-500">AIO content generated</p>
             </div>
           </div>
-                </div>
+        </div>
       </section>
 
       {/* The Money Path - Core Workflow */}
