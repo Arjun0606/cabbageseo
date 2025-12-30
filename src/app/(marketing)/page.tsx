@@ -7,9 +7,7 @@ import {
   ArrowRight,
   Search,
   Zap,
-  Clock,
   FileText,
-  RefreshCw,
   Sparkles,
   Check,
   ChevronRight,
@@ -18,55 +16,22 @@ import {
   Bot,
   Globe,
   Link2,
-  Languages,
-  Shield,
-  Star,
-  MessageCircle,
-  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { ExitIntentPopup } from "@/components/marketing/exit-intent-popup";
 import { createClient } from "@/lib/supabase/client";
 
 // ============================================
-// LANDING PAGE - SEObot-inspired, AIO-first
+// LANDING PAGE - Honest, AIO-first
 // ============================================
 
+// Only list integrations that are actually implemented
 const integrations = [
   { name: "WordPress", icon: "🔵" },
   { name: "Webflow", icon: "🟣" },
   { name: "Shopify", icon: "🟢" },
-  { name: "Ghost", icon: "👻" },
-  { name: "Framer", icon: "⚫" },
-  { name: "Notion", icon: "📝" },
-  { name: "HubSpot", icon: "🟠" },
-  { name: "Next.js", icon: "▲" },
-  { name: "REST API", icon: "🔗" },
-  { name: "Webhooks", icon: "⚡" },
-];
-
-const testimonials = [
-  {
-    quote: "CabbageSEO got our startup mentioned in ChatGPT responses within 2 weeks. Complete game changer.",
-    author: "Sarah Chen",
-    role: "Founder, DevTools.io",
-    avatar: "SC",
-  },
-  {
-    quote: "The Export to Cursor feature is genius. I paste the report and my AI assistant implements all fixes.",
-    author: "Marcus Johnson",
-    role: "Solo Developer",
-    avatar: "MJ",
-  },
-  {
-    quote: "Finally, a tool that understands AI search is the future. 10x better results than our agency.",
-    author: "Elena Rodriguez",
-    role: "CMO, StartupXYZ",
-    avatar: "ER",
-  },
 ];
 
 export default function LandingPage() {
@@ -156,131 +121,122 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section - SEObot-inspired */}
+      {/* Hero Section */}
       <section className="pt-32 pb-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
           {/* Tagline */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-8">
             <Bot className="w-4 h-4" />
-            Powered by AI • Optimized for AI
+            AI Visibility Optimization
           </div>
 
           {/* Main Headline */}
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.05]">
-            CabbageSEO — fully autonomous{" "}
-            <span className="text-emerald-400">«AI Visibility Robot»</span>
+            Get your content{" "}
+            <span className="text-emerald-400">cited by AI</span>
           </h1>
 
           {/* Subheadline */}
           <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-4 leading-relaxed">
-            CabbageSEO takes 100% of SEO & AIO work out of your way so you can focus on building your product.
+            Track your visibility across ChatGPT, Perplexity, and Google AI Overviews. 
+            Generate content optimized for AI citation.
           </p>
 
-          {/* CTA */}
+          {/* Price */}
+          <p className="text-lg text-zinc-500 mb-10">
+            Starting at <span className="text-emerald-400 font-semibold">$29/mo</span>
+          </p>
+
+          {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link href="/signup">
               <Button size="lg" className="h-14 px-8 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium">
-                Get more AI traffic
+                Start Free Trial
                 <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+            <Link href="/analyze">
+              <Button size="lg" variant="outline" className="h-14 px-8 border-zinc-700 text-zinc-300 hover:bg-zinc-800 rounded-xl">
+                Try Free Analysis
               </Button>
             </Link>
           </div>
 
           <p className="text-sm text-zinc-500">
-            * Subscriptions start at $29/mo
+            No credit card required
           </p>
-
-          {/* Founder DM */}
-          <div className="mt-8 inline-flex items-center gap-3 px-4 py-2 bg-zinc-900/50 rounded-full border border-zinc-800">
-            <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-semibold text-sm">
-              A
-            </div>
-            <div className="text-left">
-              <p className="text-xs text-zinc-500">Got a question?</p>
-              <p className="text-sm text-zinc-300">DM the founder on Twitter</p>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* Stats - Social Proof */}
+      {/* URL Analyzer */}
       <section className="pb-20 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">
-              CabbageSEO has optimized thousands of articles!
+        <div className="max-w-2xl mx-auto">
+          <div className="p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
+            <h2 className="text-lg font-semibold text-white mb-4 text-center">
+              Check your AI Visibility Score — free
             </h2>
-            <p className="text-zinc-500">Helping founders get cited by ChatGPT, Perplexity & Google AI</p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { value: "50K+", label: "Articles Generated" },
-              { value: "3", label: "AI Platforms Tracked" },
-              { value: "50+", label: "Languages Supported" },
-              { value: "1M+", label: "Keywords Researched" },
-            ].map((stat, i) => (
-              <div key={i} className="text-center p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
-                <p className="text-3xl md:text-4xl font-bold text-emerald-400">{stat.value}</p>
-                <p className="text-sm text-zinc-500 mt-1">{stat.label}</p>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                <Input
+                  type="url"
+                  placeholder="Enter your website URL"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
+                  className="w-full h-12 pl-12 pr-4 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:ring-emerald-500/20 rounded-lg"
+                />
               </div>
-            ))}
+              <Button
+                onClick={handleAnalyze}
+                disabled={isAnalyzing}
+                className="h-12 px-6 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg"
+              >
+                {isAnalyzing ? "Analyzing..." : "Analyze"}
+              </Button>
+            </div>
+            <p className="text-xs text-zinc-500 mt-3 text-center">
+              Results in 30 seconds • No signup required
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Why Choose CabbageSEO */}
+      {/* What is AIO */}
       <section className="py-20 px-6 bg-zinc-900/30 border-y border-zinc-800/50">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">// Why choose CabbageSEO?</h2>
-            <p className="text-zinc-400">AIO + SEO for project-busy founders</p>
+            <h2 className="text-3xl font-bold text-white mb-4">What is AI Visibility Optimization?</h2>
+            <p className="text-zinc-400 max-w-2xl mx-auto">
+              As AI search grows, traditional SEO isn&apos;t enough. You need to optimize for how 
+              AI platforms like ChatGPT and Perplexity understand and cite your content.
+            </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
                 icon: Bot,
-                title: "AIO Score Tracking",
-                description: "Track your visibility across ChatGPT, Perplexity, and Google AI Overviews. Know when AI cites you.",
-                highlight: true,
+                title: "Track AI Visibility",
+                description: "See your visibility score across ChatGPT, Perplexity, and Google AI Overviews.",
               },
               {
                 icon: Sparkles,
-                title: "AI Content Generation",
-                description: "4000+ word articles with fact-checking, source citations, FAQ schema, and internal linking.",
-              },
-              {
-                icon: Link2,
-                title: "Internal Linking",
-                description: "Automatically scans your content and intelligently links to your most important pages.",
-              },
-              {
-                icon: Globe,
-                title: "CMS Auto-Publish",
-                description: "One-click publishing to WordPress, Webflow, Shopify, Ghost, Framer, and more.",
-              },
-              {
-                icon: Languages,
-                title: "50+ Languages",
-                description: "Native-quality content in any language. Understands cultural nuances and local SEO.",
+                title: "Generate AIO Content",
+                description: "Create articles structured for AI citation with FAQs, definitions, and sources.",
               },
               {
                 icon: Target,
                 title: "Export to Cursor",
-                description: "Generate markdown reports for AI coding assistants. Implement SEO fixes instantly.",
-                highlight: true,
+                description: "Get actionable fixes you can paste directly into your AI coding assistant.",
               },
             ].map((feature, i) => (
               <div
                 key={i}
-                className={`p-6 rounded-xl border ${
-                  feature.highlight
-                    ? "bg-emerald-500/5 border-emerald-500/30"
-                    : "bg-zinc-900/50 border-zinc-800"
-                }`}
+                className="p-6 rounded-xl border bg-zinc-900/50 border-zinc-800"
               >
-                <div className={`p-3 rounded-lg inline-block mb-4 ${feature.highlight ? "bg-emerald-500/20" : "bg-zinc-800"}`}>
-                  <feature.icon className={`w-5 h-5 ${feature.highlight ? "text-emerald-400" : "text-zinc-400"}`} />
+                <div className="p-3 rounded-lg inline-block mb-4 bg-emerald-500/10">
+                  <feature.icon className="w-5 h-5 text-emerald-400" />
                 </div>
                 <h3 className="font-semibold text-white mb-2">{feature.title}</h3>
                 <p className="text-sm text-zinc-400">{feature.description}</p>
@@ -290,81 +246,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CMS Integrations - Like SEObot */}
+      {/* How It Works */}
       <section className="py-20 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">// Auto sync with popular CMS</h2>
-            <p className="text-zinc-400">Integrations</p>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            {integrations.map((int, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 px-4 py-2 bg-zinc-900/50 rounded-lg border border-zinc-800 hover:border-emerald-500/30 transition-colors"
-              >
-                <span className="text-lg">{int.icon}</span>
-                <span className="text-sm text-zinc-300">{int.name}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Link href="/signup">
-              <Button className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                Start Now
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-            <p className="text-xs text-zinc-500 mt-2">* subscriptions start at $29/mo</p>
-          </div>
-        </div>
-      </section>
-
-      {/* URL Analyzer - Gateway to Value */}
-      <section className="py-20 px-6 bg-gradient-to-b from-emerald-900/10 to-zinc-950 border-y border-zinc-800/50">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Check your AI Visibility Score</h2>
-          <p className="text-zinc-400 mb-8">
-            See how visible you are to ChatGPT, Perplexity, and Google AI Overviews — free
-          </p>
-
-          <div className="flex gap-2 max-w-xl mx-auto">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-              <Input
-                type="url"
-                placeholder="Enter your website URL"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
-                className="w-full h-14 pl-12 pr-4 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:ring-emerald-500/20 rounded-xl"
-              />
-            </div>
-            <Button
-              size="lg"
-              onClick={handleAnalyze}
-              disabled={isAnalyzing}
-              className="h-14 px-6 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl"
-            >
-              {isAnalyzing ? "Checking..." : "Analyze"}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-
-          <p className="text-sm text-zinc-500 mt-4">
-            Results in 30 seconds • No signup required
-          </p>
-        </div>
-      </section>
-
-      {/* The Workflow - 4 Steps */}
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">100% Autonomous</h2>
-            <p className="text-zinc-400">Set it up once, get AI traffic forever</p>
+            <h2 className="text-3xl font-bold text-white mb-4">How It Works</h2>
+            <p className="text-zinc-400">From URL to AI-optimized content in minutes</p>
           </div>
 
           <div className="grid md:grid-cols-4 gap-6">
@@ -372,26 +259,26 @@ export default function LandingPage() {
               {
                 step: "1",
                 icon: Globe,
-                title: "Add Your URL",
-                description: "Just enter your url and press \"go\". We handle the rest.",
+                title: "Add Your Site",
+                description: "Paste your URL and we analyze it for AI visibility.",
               },
               {
                 step: "2",
                 icon: Target,
-                title: "AI Research",
-                description: "CabbageSEO researches your site, audience, and keywords automatically.",
+                title: "Get Your Score",
+                description: "See how visible you are to ChatGPT, Perplexity, and Google AI.",
               },
               {
                 step: "3",
                 icon: FileText,
-                title: "Content Plan",
-                description: "We create a content plan and start producing articles every week.",
+                title: "Fix Issues",
+                description: "Export recommendations to Cursor or implement manually.",
               },
               {
                 step: "4",
                 icon: TrendingUp,
-                title: "Track & Grow",
-                description: "Monitor your AIO Score and watch AI platforms start citing you.",
+                title: "Generate Content",
+                description: "Create AIO-optimized articles that AI loves to cite.",
               },
             ].map((item, i) => (
               <div key={i} className="relative">
@@ -414,27 +301,23 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* What You Get - Feature List */}
+      {/* Features */}
       <section className="py-20 px-6 bg-zinc-900/30 border-y border-zinc-800/50">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">What you get</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">What&apos;s Included</h2>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
             {[
-              "Fully automated onboarding. Just enter your url and press \"go\"",
-              "AIO Score tracking across 3 AI platforms",
-              "Keyword research and content planning",
-              "Up to 4000 word articles with fact-checking",
-              "Internal linking automation",
-              "YouTube embeds, Image gen, Tables, Lists",
-              "FAQ schema and structured data",
-              "Anti-hallucination with source citations",
-              "50+ language support",
-              "Export to Cursor/Claude for developers",
-              "All major CMS integrations",
-              "Priority support",
+              "AI Visibility Score across 3 platforms",
+              "AIO-optimized content generation",
+              "Technical SEO audit",
+              "Keyword research & tracking",
+              "Export to Cursor/Claude",
+              "FAQ schema generation",
+              "Internal linking suggestions",
+              "Content with source citations",
             ].map((feature, i) => (
               <div key={i} className="flex items-start gap-3 p-3 bg-zinc-900/50 rounded-lg border border-zinc-800">
                 <Check className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
@@ -445,62 +328,51 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials - Wall of Love */}
+      {/* CMS Integrations - Only real ones */}
       <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">// Wall of love 😍</h2>
-            <p className="text-zinc-400">Founders using CabbageSEO to get AI traffic</p>
+            <h2 className="text-3xl font-bold text-white mb-4">Publish to Your CMS</h2>
+            <p className="text-zinc-400">One-click publishing to popular platforms</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <Card key={i} className="bg-zinc-900/50 border-zinc-800">
-                <CardContent className="p-6">
-                  <div className="flex gap-1 mb-4">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} className="w-4 h-4 fill-emerald-400 text-emerald-400" />
-                    ))}
-                  </div>
-                  <p className="text-zinc-300 mb-4">&ldquo;{t.quote}&rdquo;</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-semibold text-sm">
-                      {t.avatar}
-                    </div>
-                    <div>
-                      <p className="font-medium text-white text-sm">{t.author}</p>
-                      <p className="text-xs text-zinc-500">{t.role}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="flex flex-wrap justify-center gap-4 mb-8">
+            {integrations.map((int, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 px-6 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800"
+              >
+                <span className="text-xl">{int.icon}</span>
+                <span className="text-zinc-300">{int.name}</span>
+              </div>
             ))}
           </div>
+
+          <p className="text-center text-sm text-zinc-500">
+            More integrations coming soon
+          </p>
         </div>
       </section>
 
-      {/* Pricing Teaser */}
+      {/* Pricing CTA */}
       <section className="py-20 px-6 bg-zinc-900/30 border-y border-zinc-800/50">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">// Pricing</h2>
-          <p className="text-zinc-400 mb-8">Perhaps the best ROI on the market</p>
+          <h2 className="text-3xl font-bold text-white mb-4">Simple Pricing</h2>
+          <p className="text-zinc-400 mb-8">Start free, upgrade when you need more</p>
 
           <div className="p-8 bg-gradient-to-br from-emerald-900/30 to-zinc-900 rounded-2xl border border-emerald-500/30 inline-block">
-            <p className="text-6xl font-bold text-white mb-2">
+            <p className="text-5xl font-bold text-white mb-2">
               $<span className="text-emerald-400">29</span>
+              <span className="text-lg text-zinc-500">/mo</span>
             </p>
-            <p className="text-zinc-400 mb-6">/month • Subscriptions start at</p>
+            <p className="text-zinc-400 mb-6">Starter plan</p>
             <Link href="/pricing">
               <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                See all plans
+                See All Plans
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </Link>
           </div>
-
-          <p className="text-sm text-zinc-500 mt-8 max-w-xl mx-auto italic">
-            &ldquo;I built CabbageSEO because I needed it myself. An AI-first SEO tool that understands the future is AI search, not just Google.&rdquo;
-          </p>
         </div>
       </section>
 
@@ -512,7 +384,7 @@ export default function LandingPage() {
             Ready to get cited by AI?
           </h2>
           <p className="text-xl text-zinc-400 mb-8">
-            Join thousands of founders getting AI traffic
+            Start with a free analysis of your website
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup">

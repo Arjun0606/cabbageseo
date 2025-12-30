@@ -10,15 +10,7 @@ import {
   Building2,
   ArrowRight,
   Bot,
-  TrendingUp,
   Rocket,
-  Globe,
-  FileText,
-  Target,
-  RefreshCw,
-  Users,
-  Star,
-  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,25 +25,25 @@ import {
 import { createClient } from "@/lib/supabase/client";
 
 // ============================================
-// PRICING DATA - Better than SEObot
+// PRICING DATA
 // ============================================
 
 const plans = [
   {
     id: "starter",
     name: "Starter",
-    description: "Perfect for indie hackers & small SaaS",
+    description: "For indie hackers & small projects",
     monthlyPrice: 29,
     yearlyPrice: 24,
     icon: Rocket,
     features: [
       { text: "1 website", included: true },
-      { text: "AIO Score + 3 AI platforms", included: true, highlight: true },
+      { text: "AIO Score tracking", included: true, highlight: true },
+      { text: "3 AI platforms monitored", included: true, highlight: true },
       { text: "10 AI-optimized articles/month", included: true },
       { text: "100 keywords tracked", included: true },
       { text: "Technical SEO audit", included: true },
       { text: "Export to Cursor/Claude", included: true, highlight: true },
-      { text: "Fact-checking & citations", included: true },
       { text: "Email support", included: true },
     ],
     cta: "Start Free Trial",
@@ -60,19 +52,19 @@ const plans = [
   {
     id: "pro",
     name: "Pro",
-    description: "For growing startups & businesses",
+    description: "For growing startups",
     monthlyPrice: 79,
     yearlyPrice: 66,
     icon: Zap,
     features: [
       { text: "5 websites", included: true },
-      { text: "Daily AIO tracking + alerts", included: true, highlight: true },
+      { text: "Daily AIO tracking", included: true, highlight: true },
       { text: "50 AI-optimized articles/month", included: true },
       { text: "Unlimited keywords", included: true },
-      { text: "Weekly autopilot content", included: true, highlight: true },
-      { text: "All CMS integrations", included: true },
+      { text: "CMS publishing (WordPress, Webflow, Shopify)", included: true },
       { text: "Internal linking automation", included: true },
       { text: "Priority support", included: true },
+      { text: "Weekly content scheduling", included: true },
     ],
     cta: "Go Pro",
     popular: true,
@@ -80,7 +72,7 @@ const plans = [
   {
     id: "pro_plus",
     name: "Agency",
-    description: "For agencies & content teams",
+    description: "For agencies & teams",
     monthlyPrice: 199,
     yearlyPrice: 166,
     icon: Building2,
@@ -88,11 +80,11 @@ const plans = [
       { text: "20 websites", included: true },
       { text: "Real-time AIO monitoring", included: true, highlight: true },
       { text: "200 AI-optimized articles/month", included: true },
-      { text: "Competitor AIO tracking", included: true, highlight: true },
-      { text: "Daily autopilot content", included: true },
-      { text: "White-label reports", included: true },
+      { text: "All Pro features", included: true },
       { text: "API access", included: true },
-      { text: "Dedicated success manager", included: true },
+      { text: "White-label reports", included: true },
+      { text: "Dedicated support", included: true },
+      { text: "Custom integrations", included: true },
     ],
     cta: "Contact Sales",
     popular: false,
@@ -101,56 +93,28 @@ const plans = [
 
 const faqs = [
   {
-    question: "How is CabbageSEO different from SEObot?",
-    answer: "SEObot focuses on traditional SEO automation. CabbageSEO goes further with AIO (AI Visibility Optimization) - we track and optimize your visibility across ChatGPT, Perplexity, and Google AI Overviews. Plus, our 'Export to Cursor' feature lets developers implement fixes instantly. We also include fact-checking and source citations in every article.",
-  },
-  {
     question: "What is AIO (AI Visibility Optimization)?",
-    answer: "AIO measures how often AI platforms cite your content. As 60%+ of searches now show AI answers, getting cited by ChatGPT, Perplexity, and Google AI Overviews is crucial. CabbageSEO optimizes your content structure, schema markup, and formatting to maximize AI citations.",
+    answer: "AIO measures how well your content appears in AI responses from platforms like ChatGPT, Perplexity, and Google AI Overviews. As more people use AI to search, optimizing for AI visibility is becoming as important as traditional SEO.",
   },
   {
-    question: "How does the autopilot content work?",
-    answer: "Set it and forget it. CabbageSEO researches keywords, generates AIO-optimized articles with fact-checking and citations, adds internal links, and publishes directly to your CMS. You can review before publishing or let it run 100% autonomous.",
+    question: "How does the AI content generation work?",
+    answer: "Our AI analyzes top-ranking content and generates articles optimized for both SEO and AI visibility. Each article includes FAQ sections, source citations, and structured content that AI platforms prefer to cite.",
   },
   {
-    question: "What CMS integrations do you support?",
-    answer: "WordPress, Webflow, Shopify, Ghost, Framer, Notion, HubSpot, Next.js, and any platform with REST API or webhooks. One-click publishing with automatic schema markup.",
+    question: "What's the 'Export to Cursor' feature?",
+    answer: "It generates a structured markdown report of all your SEO/AIO issues that you can paste directly into Cursor, Claude, or other AI coding assistants. The AI can then help implement the fixes in your codebase.",
   },
   {
-    question: "How many languages do you support?",
-    answer: "We support 50+ languages with native-quality content generation. Our AI understands cultural nuances and local SEO requirements for each market.",
+    question: "Which CMS platforms do you support?",
+    answer: "We currently support WordPress, Webflow, and Shopify for one-click publishing. More integrations are on our roadmap.",
+  },
+  {
+    question: "Can I try before I buy?",
+    answer: "Yes! Our URL analyzer is completely free - no signup required. You can analyze any website to see its AI visibility score. We also offer a 14-day free trial on all paid plans.",
   },
   {
     question: "Can I cancel anytime?",
-    answer: "Yes. No contracts, cancel anytime. We also offer a 14-day money-back guarantee if you're not satisfied with the results.",
-  },
-];
-
-const stats = [
-  { value: "50K+", label: "Articles Generated" },
-  { value: "3", label: "AI Platforms Tracked" },
-  { value: "50+", label: "Languages Supported" },
-  { value: "99%", label: "Uptime" },
-];
-
-const testimonials = [
-  {
-    quote: "CabbageSEO got our SaaS mentioned in ChatGPT within 2 weeks. Game changer for organic leads.",
-    author: "Sarah Chen",
-    role: "Founder, DevTools.io",
-    avatar: "SC",
-  },
-  {
-    quote: "The Export to Cursor feature is genius. I paste the report and Claude implements all the fixes.",
-    author: "Marcus Johnson",
-    role: "Solo Developer",
-    avatar: "MJ",
-  },
-  {
-    quote: "Finally, an SEO tool that understands AI search is the future. 10x better than our agency.",
-    author: "Elena Rodriguez",
-    role: "CMO, StartupXYZ",
-    avatar: "ER",
+    answer: "Yes. No contracts, cancel anytime. You'll keep access until the end of your billing period. We also offer a 14-day money-back guarantee.",
   },
 ];
 
@@ -243,15 +207,11 @@ export default function PricingPage() {
       {/* Hero */}
       <section className="pt-32 pb-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <Badge className="mb-6 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-            🚀 Better than SEObot. Focused on AIO.
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            Get your content{" "}
-            <span className="text-emerald-400">cited by AI</span>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+            Simple, transparent pricing
           </h1>
           <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
-            The only SEO tool that tracks and optimizes your visibility across ChatGPT, Perplexity, and Google AI Overviews.
+            Start free with our URL analyzer. Upgrade when you need more.
           </p>
           
           {/* Billing Toggle */}
@@ -268,20 +228,6 @@ export default function PricingPage() {
                 Save 17%
               </Badge>
             </span>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Bar */}
-      <section className="pb-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {stats.map((stat, i) => (
-              <div key={i} className="text-center p-4 bg-zinc-900/50 rounded-xl border border-zinc-800">
-                <p className="text-2xl md:text-3xl font-bold text-emerald-400">{stat.value}</p>
-                <p className="text-sm text-zinc-500">{stat.label}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -364,207 +310,20 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Why Better Than SEObot */}
-      <section className="py-20 px-6 bg-zinc-900/30 border-y border-zinc-800/50">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Why founders choose CabbageSEO</h2>
-            <p className="text-zinc-400">Everything SEObot does, plus AIO optimization</p>
-          </div>
-
-          {/* Feature Comparison */}
-          <div className="grid md:grid-cols-2 gap-8 mb-16">
-            {/* What We Share */}
-            <div className="p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
-              <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-                <Check className="w-5 h-5 text-emerald-400" />
-                What you get (like SEObot)
-              </h3>
-              <ul className="space-y-3 text-sm text-zinc-400">
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-zinc-600" /> Fully autonomous content generation</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-zinc-600" /> 50+ languages supported</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-zinc-600" /> All major CMS integrations</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-zinc-600" /> Internal linking automation</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-zinc-600" /> Keyword research & tracking</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-zinc-600" /> Fact-checking & source citations</li>
-              </ul>
-            </div>
-
-            {/* What Makes Us Better */}
-            <div className="p-6 bg-emerald-500/5 rounded-xl border border-emerald-500/20">
-              <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-emerald-400" />
-                What makes us better
-              </h3>
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-center gap-2 text-emerald-300">
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span><strong>AIO Score</strong> - Track AI visibility across 3 platforms</span>
-                </li>
-                <li className="flex items-center gap-2 text-emerald-300">
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span><strong>ChatGPT/Perplexity tracking</strong> - Know when AI cites you</span>
-                </li>
-                <li className="flex items-center gap-2 text-emerald-300">
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span><strong>Export to Cursor/Claude</strong> - Implement fixes instantly</span>
-                </li>
-                <li className="flex items-center gap-2 text-emerald-300">
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span><strong>AIO-optimized content</strong> - Structured for AI citation</span>
-                </li>
-                <li className="flex items-center gap-2 text-emerald-300">
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span><strong>$29/mo starting</strong> - 40% cheaper than SEObot</span>
-                </li>
-                <li className="flex items-center gap-2 text-emerald-300">
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span><strong>Improvement tracking</strong> - See your AIO gains over time</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Comparison Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-800">
-                  <th className="text-left py-3 px-4 font-medium text-zinc-400">Feature</th>
-                  <th className="text-center py-3 px-4 font-medium text-zinc-400">SEObot</th>
-                  <th className="text-center py-3 px-4 font-medium text-emerald-400">CabbageSEO</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  { feature: "AI Content Generation", seobot: true, cabbage: true },
-                  { feature: "CMS Integrations", seobot: true, cabbage: true },
-                  { feature: "Internal Linking", seobot: true, cabbage: true },
-                  { feature: "50+ Languages", seobot: true, cabbage: true },
-                  { feature: "AIO Score Tracking", seobot: false, cabbage: true, highlight: true },
-                  { feature: "ChatGPT/Perplexity Monitoring", seobot: false, cabbage: true, highlight: true },
-                  { feature: "Export to Cursor/Claude", seobot: false, cabbage: true, highlight: true },
-                  { feature: "AI Citation Alerts", seobot: false, cabbage: true, highlight: true },
-                  { feature: "Starting Price", seobot: "$49/mo", cabbage: "$29/mo", highlight: true },
-                ].map((row, i) => (
-                  <tr key={i} className={`border-b border-zinc-800/50 ${row.highlight ? "bg-emerald-500/5" : ""}`}>
-                    <td className={`py-3 px-4 ${row.highlight ? "text-white font-medium" : "text-zinc-400"}`}>
-                      {row.feature}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {typeof row.seobot === "boolean" ? (
-                        row.seobot ? (
-                          <Check className="w-4 h-4 text-zinc-500 mx-auto" />
-                        ) : (
-                          <X className="w-4 h-4 text-zinc-700 mx-auto" />
-                        )
-                      ) : (
-                        <span className="text-zinc-500">{row.seobot}</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {typeof row.cabbage === "boolean" ? (
-                        row.cabbage ? (
-                          <Check className="w-4 h-4 text-emerald-400 mx-auto" />
-                        ) : (
-                          <X className="w-4 h-4 text-zinc-700 mx-auto" />
-                        )
-                      ) : (
-                        <span className="text-emerald-400 font-semibold">{row.cabbage}</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">100% Autonomous. AIO-First.</h2>
-            <p className="text-zinc-400">Set it up once, get cited by AI forever</p>
-          </div>
-
-          <div className="grid md:grid-cols-4 gap-6">
-            {[
-              {
-                step: "1",
-                icon: Globe,
-                title: "Add Your Site",
-                description: "Paste your URL. We crawl and analyze in 30 seconds.",
-              },
-              {
-                step: "2",
-                icon: Target,
-                title: "Get AIO Score",
-                description: "See your visibility across ChatGPT, Perplexity, Google AI.",
-              },
-              {
-                step: "3",
-                icon: FileText,
-                title: "Generate Content",
-                description: "AI writes AIO-optimized articles with citations.",
-              },
-              {
-                step: "4",
-                icon: Rocket,
-                title: "Watch It Grow",
-                description: "Track improvements and AI citations over time.",
-              },
-            ].map((item, i) => (
-              <div key={i} className="relative">
-                <div className="p-6 bg-zinc-900/50 rounded-xl border border-zinc-800 h-full">
-                  <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold mb-4">
-                    {item.step}
-                  </div>
-                  <item.icon className="w-6 h-6 text-emerald-400 mb-3" />
-                  <h3 className="font-semibold text-white mb-2">{item.title}</h3>
-                  <p className="text-sm text-zinc-500">{item.description}</p>
-                </div>
-                {i < 3 && (
-                  <div className="hidden md:block absolute top-1/2 -right-3 w-6 h-0.5 bg-zinc-800" />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-20 px-6 bg-zinc-900/30 border-y border-zinc-800/50">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Loved by founders</h2>
-            <p className="text-zinc-400">Join thousands getting cited by AI</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <Card key={i} className="bg-zinc-900/50 border-zinc-800">
-                <CardContent className="p-6">
-                  <div className="flex gap-1 mb-4">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} className="w-4 h-4 fill-emerald-400 text-emerald-400" />
-                    ))}
-                  </div>
-                  <p className="text-zinc-300 mb-4 italic">&ldquo;{t.quote}&rdquo;</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-semibold text-sm">
-                      {t.avatar}
-                    </div>
-                    <div>
-                      <p className="font-medium text-white text-sm">{t.author}</p>
-                      <p className="text-xs text-zinc-500">{t.role}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+      {/* Free Tier */}
+      <section className="py-16 px-6 bg-zinc-900/30 border-y border-zinc-800/50">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-2xl font-bold text-white mb-4">Try it free first</h2>
+          <p className="text-zinc-400 mb-8">
+            Our URL analyzer is completely free. Paste any URL to see its AI visibility score, 
+            SEO issues, and recommendations — no signup required.
+          </p>
+          <Link href="/analyze">
+            <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+              Try Free Analysis
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
         </div>
       </section>
 
@@ -598,7 +357,7 @@ export default function PricingPage() {
               Ready to get cited by AI?
             </h2>
             <p className="text-zinc-400 mb-8">
-              Start free. See your AIO Score. Outrank your competitors in AI search.
+              Start with a free analysis, then upgrade when you&apos;re ready.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
