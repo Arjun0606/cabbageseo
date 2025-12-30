@@ -82,15 +82,15 @@ Based on research, AI engines cite content that has:
 | Frontend | Next.js 15 | Fast, modern |
 | Database | Supabase | Simple, scales |
 | AI (Text) | OpenAI GPT-4o-mini | Fast, cheap, good |
-| AI (Images) | Nano Banana (Gemini) | Google's image gen |
+| AI (Images) | OpenAI DALL-E 3 | Same provider, one bill |
 | Payments | Dodo | Simple |
 | Jobs | Inngest | Reliable scheduling |
 
-### Nano Banana Integration
-- Model: `gemini-2.5-flash-image`
-- Use: Featured images for blog posts
-- Docs: https://ai.google.dev/gemini-api/docs/nanobanana
-- Env: `GEMINI_API_KEY`
+### Why OpenAI for Everything?
+- One API key (`OPENAI_API_KEY`)
+- One billing relationship
+- One provider to trust
+- Simpler integration
 
 ---
 

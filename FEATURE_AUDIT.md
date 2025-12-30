@@ -140,9 +140,10 @@ These are nice-to-haves, not essential for GEO:
 | News Article Generation | Not implemented | P3 |
 | Multi-Language UI | Cut (English-only) | - |
 
-### Image Generation
-**Status:** Planned
-**Solution:** Nano Banana integration
+### Image Generation ✅
+**Status:** DONE
+**Solution:** DALL-E 3 (same `OPENAI_API_KEY`)
+**File:** `src/lib/ai/image-generator.ts`
 
 ---
 
