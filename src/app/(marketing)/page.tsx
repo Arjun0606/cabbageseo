@@ -288,7 +288,7 @@ export default function LandingPage() {
                 step: "4",
                 icon: TrendingUp,
                 title: "Generate Content",
-                description: "Create AIO-optimized articles that AI loves to cite.",
+                description: "Create GEO-optimized articles that AI loves to cite.",
               },
             ].map((item, i) => (
               <div key={i} className="relative">
@@ -320,14 +320,18 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 gap-4">
             {[
-              "AI Visibility Score across 3 platforms",
-              "AIO-optimized content generation",
+              "GEO Score across ChatGPT, Perplexity, Google AI",
+              "GEO-optimized content generation",
+              "Up to 4000 words per article",
+              "FAQ sections with schema markup",
+              "100% autopilot mode",
+              "Fact-checking with source citations",
+              "Internal linking automation",
+              "Export to Cursor/Claude",
               "Technical SEO audit",
               "Keyword research & tracking",
-              "Export to Cursor/Claude",
-              "FAQ schema generation",
-              "Internal linking suggestions",
-              "Content with source citations",
+              "CMS one-click publishing",
+              "Multi-language support",
             ].map((feature, i) => (
               <div key={i} className="flex items-start gap-3 p-3 bg-zinc-900/50 rounded-lg border border-zinc-800">
                 <Check className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />

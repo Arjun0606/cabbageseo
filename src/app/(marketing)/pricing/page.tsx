@@ -93,28 +93,64 @@ const plans = [
 
 const faqs = [
   {
-    question: "What is GEO (Generative Engine Optimization)?",
-    answer: "GEO measures how well your content appears in AI responses from platforms like ChatGPT, Perplexity, and Google AI Overviews. As more people use AI to search, optimizing for generative engines is becoming as important as traditional SEO.",
+    question: "1. What is GEO (Generative Engine Optimization)?",
+    answer: "GEO is the practice of optimizing your content to be cited by AI platforms like ChatGPT, Perplexity, and Google AI Overviews. Unlike traditional SEO which focuses on Google rankings, GEO focuses on making your content the go-to source for AI responses. This includes structured data, FAQ sections, direct answers, and citation-worthy content.",
   },
   {
-    question: "How does the AI content generation work?",
-    answer: "Our AI analyzes top-ranking content and generates articles optimized for both SEO and AI visibility. Each article includes FAQ sections, source citations, and structured content that AI platforms prefer to cite.",
+    question: "2. Is CabbageSEO fully automated?",
+    answer: "Yes! Everything is automated. Enter your URL, and CabbageSEO will research your site, analyze your audience, find keywords, create a content plan, and start generating articles weekly. You can moderate articles if you want, but it runs 100% on autopilot by default.",
   },
   {
-    question: "What's the 'Export to Cursor' feature?",
-    answer: "It generates a structured markdown report of all your SEO/GEO issues that you can paste directly into Cursor, Claude, or other AI coding assistants. The AI can then help implement the fixes in your codebase.",
+    question: "3. Does it work in languages other than English?",
+    answer: "Yes! We support multiple languages for content generation. The AI can create quality GEO-optimized articles in most major languages including Spanish, French, German, Portuguese, and more.",
   },
   {
-    question: "Which CMS platforms do you support?",
-    answer: "We currently support WordPress, Webflow, and Shopify for one-click publishing. More integrations are on our roadmap.",
+    question: "4. How do I get started?",
+    answer: "Simply enter your website URL in our free analyzer to get your GEO score. Then sign up for a plan and we'll automatically research your site, audience, and keywords to start generating optimized content.",
   },
   {
-    question: "Can I try before I buy?",
-    answer: "Yes! Our URL analyzer is completely free - no signup required. You can analyze any website to see its AI visibility score. We also offer a 14-day free trial on all paid plans.",
+    question: "5. Can I moderate articles before publishing?",
+    answer: "Absolutely! You can review, edit, or reject any article before it goes live. You're in complete control. We can also notify you via email whenever new articles are ready for review.",
   },
   {
-    question: "Can I cancel anytime?",
-    answer: "Yes. No contracts, cancel anytime. You'll keep access until the end of your billing period. We also offer a 14-day money-back guarantee.",
+    question: "6. How good are the AI-generated articles?",
+    answer: "Our articles are specifically optimized for AI citation - they include FAQ sections, source citations, structured headings, and quotable paragraphs. Quality varies by topic, but our fact-checking system and citation requirements ensure accuracy. We continuously improve to meet or exceed human-level writing.",
+  },
+  {
+    question: "7. What CMS platforms do you support?",
+    answer: "We support WordPress, Webflow, Shopify, Ghost, HubSpot, Notion, Framer, and custom integrations via REST API or Webhooks. One-click publishing to any connected platform.",
+  },
+  {
+    question: "8. Can I edit articles?",
+    answer: "Yes! You can edit any article inside CabbageSEO before publishing. Make changes, add your own insights, or adjust the tone to match your brand voice.",
+  },
+  {
+    question: "9. How does internal linking work?",
+    answer: "CabbageSEO automatically scans your content to identify relevant anchor text opportunities and intelligently links to your most important pages. As your content library grows, it continuously updates and optimizes these connections.",
+  },
+  {
+    question: "10. What's the 'Export to Cursor' feature?",
+    answer: "This generates a structured markdown report of all your SEO/GEO issues that you can paste directly into Cursor, Claude, or any AI coding assistant. The AI can then help implement the fixes in your codebase. Perfect for developers!",
+  },
+  {
+    question: "11. What makes GEO different from SEO?",
+    answer: "SEO optimizes for Google search rankings. GEO optimizes for AI citations. AI platforms like ChatGPT value different things: clear definitions, FAQ sections, authoritative sources, and quotable paragraphs. We optimize for what AI actually uses when answering questions.",
+  },
+  {
+    question: "12. Can I try before I buy?",
+    answer: "Yes! Our URL analyzer is completely free - no signup required. Analyze any website to see its GEO score. We also offer a 14-day free trial on all paid plans.",
+  },
+  {
+    question: "13. Can I get a refund?",
+    answer: "We offer a 14-day money-back guarantee on all plans. If you're not satisfied after trying CabbageSEO, contact us for a full refund. No questions asked.",
+  },
+  {
+    question: "14. Do you offer an API?",
+    answer: "Yes! Agency plans include full API access for custom integrations. You can programmatically generate content, check GEO scores, and publish to any platform.",
+  },
+  {
+    question: "15. How is GEO score calculated?",
+    answer: "We analyze your content across multiple factors: FAQ presence, schema markup, quotability, entity density, content freshness, source citations, and direct answer structure. We then test visibility on ChatGPT, Perplexity, and Google AI Overviews.",
   },
 ];
 
