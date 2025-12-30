@@ -1,129 +1,112 @@
-# CabbageSEO Feature Roadmap
+# CabbageSEO - Lean GEO-Focused Roadmap
 
-## Competitive Analysis: SEObot vs CabbageSEO
+## Philosophy: Lean & Mean
 
-### Feature Parity Matrix
+**Only build what matters for GEO (Generative Engine Optimization).**
 
-| Feature | SEObot | CabbageSEO | Priority | Status |
-|---------|--------|------------|----------|--------|
-| **CORE** |
-| AI Content Generation | ✅ | ✅ | Critical | Done |
-| Autopilot Mode | ✅ | ✅ | Critical | Done |
-| CMS Integrations (12+) | ✅ | ✅ (8) | Critical | Done |
-| Internal Linking | ✅ | ✅ | High | Done |
-| Keyword Research | ✅ | ✅ | High | Done |
-| **OUR DIFFERENTIATOR** |
-| GEO Score (AI Citation) | ❌ | ✅ | Critical | Done |
-| Platform Breakdown (ChatGPT/Perplexity/Google AI) | ❌ | ✅ | Critical | Done |
-| Export to Cursor/Claude | ❌ | ✅ | High | Done |
-| GEO Optimization | ❌ | ✅ | Critical | Done |
-| **CONTENT TYPES** |
-| Blog Articles | ✅ | ✅ | Critical | Done |
-| Listicles | ✅ | ✅ | High | Done |
-| How-to Guides | ✅ | ✅ | High | Done |
-| Q&A Articles | ✅ | ✅ | High | Done |
-| News Articles | ✅ | 🔄 | Medium | Planned |
-| Video to Article (YouTube) | ✅ | 🔄 | Medium | Planned |
-| **SEO TOOLS (FREE)** |
-| FAQ Schema Generator | ✅ | 🔄 | Medium | Planned |
-| Article Schema Generator | ✅ | 🔄 | Medium | Planned |
-| Robots.txt Generator | ✅ | 🔄 | Medium | Planned |
-| Canonical URL Checker | ✅ | 🔄 | Medium | Planned |
-| Broken Link Checker | ✅ | 🔄 | Medium | Planned |
-| Meta Description Generator | ✅ | 🔄 | Medium | Planned |
-| SEO Title Generator | ✅ | 🔄 | Medium | Planned |
-| Sitemap Extractor | ✅ | 🔄 | Medium | Planned |
-| **ADVANCED** |
-| 50+ Languages | ✅ | 🔄 | High | Planned |
-| Programmatic SEO | ✅ | 🔄 | Medium | Planned |
-| AI Backlink Building | ✅ (ListingBott) | 🔄 | High | Planned |
-| Up to 4000 words | ✅ | ✅ | Medium | Done |
-| YouTube Embeds | ✅ | ✅ | Low | Done |
-| Image Generation | ✅ | 🔄 | Medium | Planned |
-| Fact Checking | ✅ | ✅ | High | Done |
-| Citation of Sources | ✅ | ✅ | High | Done |
-| **API & INTEGRATIONS** |
-| REST API | ✅ | ✅ | High | Done |
-| Webhooks | ✅ | ✅ | High | Done |
-| Zapier | ✅ | 🔄 | Medium | Planned |
+No bloat. No feature creep. Just what gets users cited by AI.
 
 ---
 
-## Phase 1: GEO Dominance (Current) ✅
+## ✅ CORE FEATURES (Done)
 
-Our moat - what SEObot doesn't have:
-1. ✅ GEO Score tracking across 3 AI platforms
-2. ✅ GEO-optimized content generation
-3. ✅ Export for Cursor/Claude (developer-friendly)
-4. ✅ Platform-specific optimization (ChatGPT vs Perplexity vs Google AI)
+These are the essentials for GEO dominance:
 
-## Phase 2: Feature Parity (Q1 2025)
-
-Essential features for retention:
-1. 🔄 Multi-language support (start with top 10 languages)
-2. 🔄 Free SEO tools page (for our own SEO + user value)
-3. 🔄 News article generation
-4. 🔄 YouTube video to article
-
-## Phase 3: Growth Features (Q2 2025)
-
-1. 🔄 AI Backlink Builder (partner with directories)
-2. 🔄 Programmatic SEO templates
-3. 🔄 Zapier/Make integration
-4. 🔄 Image generation integration (DALL-E/Midjourney)
-
-## Phase 4: Enterprise (Q3 2025)
-
-1. 🔄 White-label solution
-2. 🔄 Agency dashboard
-3. 🔄 Custom AI training on brand voice
-4. 🔄 Advanced analytics
+| Feature | Why It Matters for GEO |
+|---------|----------------------|
+| **GEO Score** | The metric - are you being cited by AI? |
+| **GEO Content Generation** | Articles optimized for AI citation |
+| **FAQ Schema** | AI loves structured Q&A |
+| **Source Citations** | Perplexity/ChatGPT favor cited content |
+| **Export to Cursor** | Developer-friendly fixes |
+| **CMS Publishing** | Get content live fast |
+| **Autopilot** | Set it and forget it |
 
 ---
 
-## Why GEO is Our Moat
+## 🎯 LEAN FEATURE SET
 
-**SEObot's Problem**: They optimize for Google rankings (dying)
-**Our Solution**: We optimize for AI citations (the future)
+### Keep (Essential for GEO)
+- ✅ GEO Score (ChatGPT, Perplexity, Google AI)
+- ✅ GEO-optimized content generation
+- ✅ Technical SEO audit
+- ✅ Keyword research
+- ✅ CMS integrations (8 platforms)
+- ✅ Internal linking
+- ✅ Export to Cursor
+- ✅ Autopilot mode
+- 🔄 Image generation (nano banana)
 
-| Metric | SEO (SEObot) | GEO (CabbageSEO) |
-|--------|--------------|------------------|
-| Goal | Google page 1 | Get cited by AI |
-| Traffic Source | Google Search | ChatGPT, Perplexity, Google AI |
-| Content Style | Keyword-stuffed | Quotable, structured |
-| Schema Focus | Basic | FAQ, HowTo, Article |
-| Competition | 1000s of SEO tools | Few GEO-focused tools |
-
----
-
-## Implementation Priority
-
-### Immediate (This Week)
-- [ ] Comprehensive FAQ page
-- [ ] Multi-language dropdown (10 languages)
-- [ ] Free tools page with 3-4 tools
-
-### Short-term (Next 2 Weeks)
-- [ ] News article generation
-- [ ] YouTube to article feature
-- [ ] More CMS integrations (Wix, Squarespace)
-
-### Medium-term (Next Month)
-- [ ] AI backlink suggestions
-- [ ] Programmatic SEO
-- [ ] Zapier integration
+### Cut (Not GEO-critical)
+- ❌ Multi-language UI (English-only for now)
+- ❌ AI Backlink building (Phase 2)
+- ❌ YouTube to article (Phase 2)
+- ❌ News article generation (Phase 2)
+- ❌ Zapier integration (Phase 2)
+- ❌ White-label (Phase 3)
+- ❌ Programmatic SEO (Phase 2)
 
 ---
 
-## Revenue Projections
+## What Makes Content GEO-Optimized
 
-Based on SEObot doing ~$100K MRR:
+Based on research, AI engines cite content that has:
 
-| Scenario | Monthly Users | ARPU | MRR |
-|----------|---------------|------|-----|
-| Conservative | 200 | $35 | $7K |
-| Target | 500 | $40 | $20K |
-| Optimistic | 1000 | $45 | $45K |
+1. **Direct Answers** - First 2 sentences answer the question
+2. **FAQ Sections** - With proper schema markup
+3. **Source Citations** - "According to [source]..."
+4. **Clear Definitions** - "X is defined as..."
+5. **Quotable Paragraphs** - 50-150 words, self-contained
+6. **Structured Headings** - Question-based H2s/H3s
+7. **Statistics with Sources** - Numbers + attribution
+8. **Entity Mentions** - Named people, products, orgs
 
-Key: Focus on GEO niche → less competition → higher conversion
+**Our content generator does all of this.** ✅
 
+---
+
+## Pricing (Lean)
+
+| Plan | Price | For |
+|------|-------|-----|
+| Starter | $29/mo | Indie hackers |
+| Pro | $79/mo | Growing startups |
+| Agency | $199/mo | Agencies |
+
+---
+
+## Tech Stack (Lean)
+
+| Layer | Tech | Why |
+|-------|------|-----|
+| Frontend | Next.js 15 | Fast, modern |
+| Database | Supabase | Simple, scales |
+| AI | OpenAI GPT-4o-mini | Fast, cheap, good |
+| Payments | Dodo | Simple |
+| Jobs | Inngest | Reliable scheduling |
+| Images | Nano Banana | Simple image gen |
+
+---
+
+## Success Metrics
+
+| Metric | Target |
+|--------|--------|
+| MRR | $20K |
+| Users | 500 |
+| Churn | <5% |
+| NPS | >50 |
+
+---
+
+## The Moat
+
+```
+SEO Tools (1000s) → Fight for Google rankings → Crowded
+CabbageSEO (1)    → Fight for AI citations   → Blue ocean
+```
+
+We don't compete with Ahrefs, SEMrush, or SEObot.
+We compete for a new metric: **GEO Score**.
+
+That's our moat.

@@ -129,31 +129,20 @@ This audit documents what features ACTUALLY work vs what's just UI.
 
 ---
 
-## 🔴 NOT FULLY IMPLEMENTED
+## 🔴 PHASE 2 (Not GEO-Critical)
 
-### 1. AI Backlink Building
-**Status:** NOT IMPLEMENTED
-**What we have:** Suggestions only
-**What SEObot has:** Actual backlink outreach (ListingBott)
-**Action:** Add to Phase 2 roadmap
+These are nice-to-haves, not essential for GEO:
 
-### 2. YouTube to Article
-**Status:** NOT IMPLEMENTED
-**Action:** Add YouTube transcript extraction + article generation
+| Feature | Status | Priority |
+|---------|--------|----------|
+| AI Backlink Building | Not implemented | P2 |
+| YouTube to Article | Not implemented | P2 |
+| News Article Generation | Not implemented | P3 |
+| Multi-Language UI | Cut (English-only) | - |
 
-### 3. Multi-Language (50+)
-**Status:** PARTIAL
-**What we have:** Can generate in multiple languages if specified
-**What's needed:** Language selector in UI, proper detection
-
-### 4. Image Generation
-**Status:** NOT IMPLEMENTED
-**What we have:** Uses placeholder images
-**What's needed:** DALL-E integration for featured images
-
-### 5. News Article Generation
-**Status:** NOT IMPLEMENTED
-**What's needed:** RSS feed monitoring + auto article generation
+### Image Generation
+**Status:** Planned
+**Solution:** Nano Banana integration
 
 ---
 
