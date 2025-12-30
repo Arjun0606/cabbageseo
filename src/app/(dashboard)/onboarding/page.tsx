@@ -258,11 +258,11 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const [steps, setSteps] = useState<AnalysisStep[]>([
     { id: "1", label: "Connecting to your website...", status: "pending" },
-    { id: "2", label: "Discovering pages...", status: "pending" },
-    { id: "3", label: "Analyzing SEO factors...", status: "pending" },
-    { id: "4", label: "Researching keywords...", status: "pending" },
-    { id: "5", label: "Generating recommendations...", status: "pending" },
-    { id: "6", label: "Finalizing analysis...", status: "pending" },
+    { id: "2", label: "Crawling pages...", status: "pending" },
+    { id: "3", label: "Checking AI visibility...", status: "pending" },
+    { id: "4", label: "Analyzing SEO factors...", status: "pending" },
+    { id: "5", label: "Finding AIO opportunities...", status: "pending" },
+    { id: "6", label: "Calculating your AIO Score...", status: "pending" },
   ]);
 
   const updateStep = useCallback((index: number, updates: Partial<AnalysisStep>) => {
@@ -287,11 +287,11 @@ export default function OnboardingPage() {
     // Reset steps
     setSteps([
       { id: "1", label: "Connecting to your website...", status: "pending" },
-      { id: "2", label: "Discovering pages...", status: "pending" },
-      { id: "3", label: "Analyzing SEO factors...", status: "pending" },
-      { id: "4", label: "Researching keywords...", status: "pending" },
-      { id: "5", label: "Generating recommendations...", status: "pending" },
-      { id: "6", label: "Finalizing analysis...", status: "pending" },
+      { id: "2", label: "Crawling pages...", status: "pending" },
+      { id: "3", label: "Checking AI visibility...", status: "pending" },
+      { id: "4", label: "Analyzing SEO factors...", status: "pending" },
+      { id: "5", label: "Finding AIO opportunities...", status: "pending" },
+      { id: "6", label: "Calculating your AIO Score...", status: "pending" },
     ]);
 
     try {
@@ -383,11 +383,11 @@ export default function OnboardingPage() {
     setProgress(0);
     setSteps([
       { id: "1", label: "Connecting to your website...", status: "pending" },
-      { id: "2", label: "Discovering pages...", status: "pending" },
-      { id: "3", label: "Analyzing SEO factors...", status: "pending" },
-      { id: "4", label: "Researching keywords...", status: "pending" },
-      { id: "5", label: "Generating recommendations...", status: "pending" },
-      { id: "6", label: "Finalizing analysis...", status: "pending" },
+      { id: "2", label: "Crawling pages...", status: "pending" },
+      { id: "3", label: "Checking AI visibility...", status: "pending" },
+      { id: "4", label: "Analyzing SEO factors...", status: "pending" },
+      { id: "5", label: "Finding AIO opportunities...", status: "pending" },
+      { id: "6", label: "Calculating your AIO Score...", status: "pending" },
     ]);
   };
 
