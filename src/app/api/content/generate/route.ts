@@ -111,17 +111,54 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Keyword is required" }, { status: 400 });
     }
 
-    const articleTitle = title || `Guide to ${keyword}`;
+    const articleTitle = title || `The Complete Guide to ${keyword}`;
     console.log("[Content Generate] Generating for:", articleTitle);
 
-    const systemPrompt = `You are an SEO content writer. Write concise, well-structured content. Target ${targetWordCount} words. Always respond with valid JSON only, no markdown.`;
+    // Enhanced system prompt for AIO-optimized content with fact-checking and citations
+    const systemPrompt = `You are an expert SEO and AIO content writer. Create comprehensive, well-researched content that:
 
-    const userPrompt = `Write an article titled "${articleTitle}" about "${keyword}".
+1. Is optimized for AI visibility (ChatGPT, Perplexity, Google AI Overviews)
+2. Includes verifiable facts with source citations
+3. Uses clear definitions ("X is...")
+4. Contains quotable snippets (50-150 words)
+5. Has FAQ schema-ready Q&A sections
+6. Targets ${targetWordCount} words
 
-${customInstructions ? `Instructions: ${customInstructions}` : ""}
+Always respond with valid JSON only, no markdown code blocks.`;
 
-Respond with ONLY this JSON (no markdown code blocks):
-{"title":"${articleTitle}","metaTitle":"${articleTitle.slice(0, 55)}","metaDescription":"Learn about ${keyword}","content":"Write article content here in markdown","faqs":[{"question":"Q1?","answer":"A1"}],"keyTakeaways":["Point 1","Point 2"]}`;
+    const userPrompt = `Write a comprehensive article titled "${articleTitle}" about "${keyword}".
+
+${customInstructions ? `Custom instructions: ${customInstructions}` : ""}
+
+Requirements:
+- Start with a direct answer to "What is ${keyword}?" in the first paragraph
+- Include at least 5 FAQs with detailed answers
+- Add 5-7 key takeaways
+- Include statistics with sources (cite year and organization)
+- Write quotable paragraphs AI can cite (50-150 words each)
+- Use clear H2/H3 structure for AI parsing
+- Add definitions for key terms
+- ${optimizationMode === "aio" ? "Heavily optimize for AI citation" : "Balance SEO and AIO optimization"}
+
+Respond with ONLY this JSON structure (no markdown code blocks):
+{
+  "title": "${articleTitle}",
+  "metaTitle": "max 60 chars title with keyword",
+  "metaDescription": "max 155 chars compelling description",
+  "content": "Full article in markdown with ## headings, lists, and **bold** for important terms",
+  "faqs": [
+    {"question": "What is ${keyword}?", "answer": "Detailed answer..."},
+    {"question": "Why is ${keyword} important?", "answer": "Detailed answer..."},
+    {"question": "How do I get started with ${keyword}?", "answer": "Detailed answer..."},
+    {"question": "What are common mistakes with ${keyword}?", "answer": "Detailed answer..."},
+    {"question": "Additional question?", "answer": "Detailed answer..."}
+  ],
+  "keyTakeaways": ["Key point 1", "Key point 2", "Key point 3", "Key point 4", "Key point 5"],
+  "statistics": [
+    {"stat": "X% of users...", "source": "Source Name, 2024"}
+  ],
+  "sources": ["Source 1", "Source 2"]
+}`;
 
     console.log("[Content Generate] Calling OpenAI...");
     
@@ -149,7 +186,31 @@ Respond with ONLY this JSON (no markdown code blocks):
 
     const wordCount = (parsedContent.content || "").split(/\s+/).length;
     const readingTime = Math.ceil(wordCount / 200);
-    const seoScore = Math.min(100, 50 + (parsedContent.faqs?.length > 0 ? 15 : 0) + (wordCount > 300 ? 15 : 0) + 10);
+    
+    // Calculate AIO-aware scores
+    const hasFaqs = (parsedContent.faqs?.length || 0) >= 3;
+    const hasKeyTakeaways = (parsedContent.keyTakeaways?.length || 0) >= 3;
+    const hasSources = (parsedContent.sources?.length || 0) > 0;
+    const hasStatistics = (parsedContent.statistics?.length || 0) > 0;
+    const isLongEnough = wordCount >= 500;
+    
+    const seoScore = Math.min(100, 
+      40 + // Base
+      (hasFaqs ? 15 : 0) +
+      (hasKeyTakeaways ? 10 : 0) +
+      (isLongEnough ? 15 : 5) +
+      (hasSources ? 10 : 0) +
+      (hasStatistics ? 10 : 0)
+    );
+    
+    const aioScore = Math.min(100,
+      35 + // Base
+      (hasFaqs ? 20 : 0) + // FAQs are critical for AIO
+      (hasKeyTakeaways ? 15 : 0) + // Key takeaways for quotability
+      (hasSources ? 15 : 0) + // Sources add credibility
+      (hasStatistics ? 10 : 0) +
+      (isLongEnough ? 5 : 0)
+    );
 
     // Save to database
     if (siteId) {
@@ -164,16 +225,32 @@ Respond with ONLY this JSON (no markdown code blocks):
           keyword: keyword,
           word_count: wordCount,
           seo_score: seoScore,
+          aio_score: aioScore,
           status: "draft",
           content_type: contentType,
+          aio_optimized: optimizationMode === "aio",
         } as never);
-        console.log("[Content Generate] Saved");
+        console.log("[Content Generate] Saved with AIO score:", aioScore);
       } catch (saveError) {
         console.warn("[Content Generate] Save failed:", saveError);
       }
     }
 
-    console.log("[Content Generate] Success! Words:", wordCount);
+    console.log("[Content Generate] Success! Words:", wordCount, "SEO:", seoScore, "AIO:", aioScore);
+
+    // Generate FAQ schema for the content
+    const faqSchema = parsedContent.faqs?.length > 0 ? {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": parsedContent.faqs.map((faq: { question: string; answer: string }) => ({
+        "@type": "Question",
+        "name": faq.question,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": faq.answer
+        }
+      }))
+    } : null;
 
     return NextResponse.json({
       success: true,
@@ -187,9 +264,12 @@ Respond with ONLY this JSON (no markdown code blocks):
         outline: [{ level: 1, text: parsedContent.title }],
         faqs: parsedContent.faqs || [],
         keyTakeaways: parsedContent.keyTakeaways || [],
+        statistics: parsedContent.statistics || [],
+        sources: parsedContent.sources || [],
         seoScore,
-        aioScore: seoScore,
-        schema: null,
+        aioScore,
+        schema: faqSchema,
+        optimizationMode,
       },
     });
   } catch (error) {

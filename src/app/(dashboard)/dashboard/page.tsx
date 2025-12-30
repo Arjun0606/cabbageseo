@@ -243,8 +243,8 @@ function EmptyDashboard() {
       {/* Quick value props - AIO First */}
       <div className="grid grid-cols-3 gap-8 mt-16 max-w-2xl">
         <div className="text-center">
-          <div className="p-3 bg-purple-500/10 rounded-xl inline-block mb-3">
-            <Bot className="w-6 h-6 text-purple-400" />
+          <div className="p-3 bg-emerald-500/10 rounded-xl inline-block mb-3">
+            <Bot className="w-6 h-6 text-emerald-400" />
           </div>
           <p className="text-sm font-medium text-white">Get AIO Score</p>
           <p className="text-xs text-zinc-500">In 30 seconds</p>
@@ -257,8 +257,8 @@ function EmptyDashboard() {
           <p className="text-xs text-zinc-500">Optimized for AI</p>
         </div>
         <div className="text-center">
-          <div className="p-3 bg-blue-500/10 rounded-xl inline-block mb-3">
-            <TrendingUp className="w-6 h-6 text-blue-400" />
+          <div className="p-3 bg-emerald-500/10 rounded-xl inline-block mb-3">
+            <TrendingUp className="w-6 h-6 text-emerald-400" />
           </div>
           <p className="text-sm font-medium text-white">Get Cited</p>
           <p className="text-xs text-zinc-500">By ChatGPT & more</p>
@@ -453,21 +453,21 @@ export default function DashboardPage() {
 
       {/* AIO HERO SECTION - The Unique Value */}
       <div className="grid md:grid-cols-3 gap-4">
-        <Card className="md:col-span-2 bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-purple-500/30">
+        <Card className="md:col-span-2 bg-gradient-to-br from-emerald-900/50 to-emerald-800/30 border-emerald-500/30">
           <CardContent className="p-6">
             <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-purple-500/20 rounded-xl">
-                <Bot className="w-8 h-8 text-purple-400" />
+              <div className="p-3 bg-emerald-500/20 rounded-xl">
+                <Bot className="w-8 h-8 text-emerald-400" />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">AI Visibility Score</h2>
-                <p className="text-sm text-purple-300">Is ChatGPT citing your content?</p>
+                <p className="text-sm text-emerald-300">Is ChatGPT citing your content?</p>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-zinc-400 mb-2">Get featured in AI search results</p>
-                <div className="flex gap-4 text-xs text-purple-300">
+                <div className="flex gap-4 text-xs text-emerald-300">
                   <span className="flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" /> Google AI Overviews
                   </span>
@@ -480,7 +480,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <Link href="/aio">
-                <Button className="bg-purple-600 hover:bg-purple-500 text-white">
+                <Button className="bg-emerald-600 hover:bg-emerald-500 text-white">
                   Check Your Score
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -599,19 +599,19 @@ export default function DashboardPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-white text-base flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-purple-400" />
+                  <BarChart3 className="w-4 h-4 text-emerald-400" />
                   Performance
                 </CardTitle>
-                <Badge variant="outline" className="border-purple-500/30 text-purple-400 text-xs">
+                <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 text-xs">
                   Live
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* AIO Score */}
-              <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
+              <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-purple-300 flex items-center gap-1">
+                  <span className="text-sm text-emerald-300 flex items-center gap-1">
                     <Bot className="w-3 h-3" />
                     AIO Score
                   </span>
@@ -627,9 +627,9 @@ export default function DashboardPage() {
                 </div>
                 <Progress 
                   value={data.sites[0]?.seoScore || 0} 
-                  className="h-2 [&>div]:bg-purple-500"
+                  className="h-2 [&>div]:bg-emerald-500"
                 />
-                <p className="text-xs text-purple-300/70 mt-1">
+                <p className="text-xs text-emerald-300/70 mt-1">
                   vs last week
                 </p>
               </div>
