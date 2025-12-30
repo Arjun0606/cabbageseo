@@ -59,11 +59,11 @@ const mainNavItems: NavItemType[] = [
   },
 ];
 
-// AIO items - THE MAIN DIFFERENTIATOR
-const aioNavItems: NavItemType[] = [
+// GEO items - THE MAIN DIFFERENTIATOR (Generative Engine Optimization)
+const geoNavItems: NavItemType[] = [
   {
-    name: "AI Visibility",
-    href: "/aio",
+    name: "GEO Score",
+    href: "/geo",
     icon: Brain,
     description: "Track AI platform citations",
     badge: "⭐",
@@ -274,7 +274,7 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 space-y-6 overflow-y-auto p-3">
           <NavSection title="Overview" items={mainNavItems} />
-          <NavSection title="AI Visibility" items={aioNavItems} />
+          <NavSection title="GEO" items={geoNavItems} />
           <NavSection title="SEO Tools" items={seoNavItems} />
           <NavSection title="More" items={toolsNavItems} />
         </nav>

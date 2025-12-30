@@ -39,7 +39,7 @@ import { useSite } from "@/contexts/site-context";
 interface Site {
   id: string;
   domain: string;
-  aioScore: number;
+  geoScore: number;
   seoScore: number;
   lastAnalyzed: string | null;
   articlesGenerated: number;
@@ -47,7 +47,7 @@ interface Site {
   autopilotEnabled: boolean;
 }
 
-interface AIOPlatformScore {
+interface GEOPlatformScore {
   platform: string;
   icon: string;
   score: number;
@@ -56,10 +56,10 @@ interface AIOPlatformScore {
 }
 
 // ============================================
-// AIO SCORE RING - The Hero Metric
+// GEO SCORE RING - The Hero Metric
 // ============================================
 
-function AIOScoreRing({ score, size = 180 }: { score: number; size?: number }) {
+function GEOScoreRing({ score, size = 180 }: { score: number; size?: number }) {
   const radius = (size - 20) / 2;
   const circumference = 2 * Math.PI * radius;
   const progress = (score / 100) * circumference;
@@ -99,7 +99,7 @@ function AIOScoreRing({ score, size = 180 }: { score: number; size?: number }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-4xl font-bold text-white">{score}</span>
-        <span className="text-sm text-zinc-500">AIO Score</span>
+        <span className="text-sm text-zinc-500">GEO Score</span>
       </div>
     </div>
   );
@@ -109,7 +109,7 @@ function AIOScoreRing({ score, size = 180 }: { score: number; size?: number }) {
 // AI PLATFORM CARD
 // ============================================
 
-function AIPlatformCard({ platform }: { platform: AIOPlatformScore }) {
+function AIPlatformCard({ platform }: { platform: GEOPlatformScore }) {
   return (
     <div className="p-4 bg-zinc-800/50 rounded-xl border border-zinc-700/50">
       <div className="flex items-center justify-between mb-3">
@@ -212,7 +212,7 @@ function EmptyDashboard() {
         Is AI citing your content?
       </h1>
       <p className="text-xl text-zinc-400 max-w-lg mb-8">
-        Get your AI Visibility Score in 30 seconds
+        Get your GEO Score in 30 seconds
       </p>
       
       {/* URL Input - The Only Thing That Matters */}
@@ -250,15 +250,15 @@ function EmptyDashboard() {
           <div className="p-3 bg-emerald-500/10 rounded-xl inline-block mb-3">
             <Eye className="w-6 h-6 text-emerald-400" />
           </div>
-          <p className="text-sm font-medium text-white">AI Visibility Score</p>
+          <p className="text-sm font-medium text-white">GEO Score</p>
           <p className="text-xs text-zinc-500">ChatGPT • Perplexity • Google AI</p>
         </div>
         <div className="text-center">
           <div className="p-3 bg-emerald-500/10 rounded-xl inline-block mb-3">
             <Sparkles className="w-6 h-6 text-emerald-400" />
           </div>
-          <p className="text-sm font-medium text-white">Generate AIO Content</p>
-          <p className="text-xs text-zinc-500">Optimized for AI citation</p>
+          <p className="text-sm font-medium text-white">Generate GEO Content</p>
+          <p className="text-xs text-zinc-500">Optimized for AI engines</p>
         </div>
         <div className="text-center">
           <div className="p-3 bg-emerald-500/10 rounded-xl inline-block mb-3">
@@ -273,7 +273,7 @@ function EmptyDashboard() {
 }
 
 // ============================================
-// MAIN DASHBOARD - AIO Focused
+// MAIN DASHBOARD - GEO Focused
 // ============================================
 
 function MainDashboard({ site }: { site: Site }) {
@@ -282,7 +282,7 @@ function MainDashboard({ site }: { site: Site }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Mock AI platform scores - in real app, fetch from API
-  const platformScores: AIOPlatformScore[] = [
+  const platformScores: GEOPlatformScore[] = [
     { platform: "ChatGPT", icon: "🤖", score: 72, trend: "up", cited: true },
     { platform: "Perplexity", icon: "🔮", score: 65, trend: "up", cited: false },
     { platform: "Google AI", icon: "🔍", score: 58, trend: "stable", cited: false },
@@ -296,7 +296,7 @@ function MainDashboard({ site }: { site: Site }) {
   const handleRefreshScore = async () => {
     setIsRefreshing(true);
     try {
-      await fetch(`/api/aio/analyze`, {
+      await fetch(`/api/geo/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ siteId: site.id }),
@@ -338,7 +338,7 @@ function MainDashboard({ site }: { site: Site }) {
             )}
             <span className="ml-2">Refresh Score</span>
           </Button>
-          <Link href={`/aio?export=true`}>
+          <Link href={`/geo?export=true`}>
             <Button variant="outline" size="sm" className="border-zinc-700 text-zinc-300">
               <Download className="w-4 h-4 mr-2" />
               Export for Cursor
@@ -347,13 +347,13 @@ function MainDashboard({ site }: { site: Site }) {
         </div>
       </div>
 
-      {/* AIO Score Hero Section */}
+      {/* GEO Score Hero Section */}
       <Card className="bg-gradient-to-br from-zinc-900 via-zinc-900 to-emerald-900/20 border-zinc-800">
         <CardContent className="p-8">
           <div className="flex flex-col lg:flex-row items-center gap-8">
             {/* Score Ring */}
             <div className="flex-shrink-0">
-              <AIOScoreRing score={site.aioScore || 65} />
+              <GEOScoreRing score={site.geoScore || 65} />
             </div>
 
             {/* Platform Breakdown */}
@@ -372,7 +372,7 @@ function MainDashboard({ site }: { site: Site }) {
             <div className="flex gap-3">
               <QuickActionButton
                 icon={Sparkles}
-                label="Generate AIO Article"
+                label="Generate GEO Article"
                 onClick={handleGenerateContent}
                 variant="primary"
                 loading={isGenerating}
@@ -389,8 +389,8 @@ function MainDashboard({ site }: { site: Site }) {
               />
               <QuickActionButton
                 icon={Bot}
-                label="AIO Details"
-                onClick={() => router.push("/aio")}
+                label="GEO Details"
+                onClick={() => router.push("/geo")}
               />
             </div>
           </div>
@@ -481,7 +481,7 @@ function MainDashboard({ site }: { site: Site }) {
                 1
               </div>
               <div className="flex-1">
-                <h4 className="font-medium text-white">Generate AIO-optimized content</h4>
+                <h4 className="font-medium text-white">Generate GEO-optimized content</h4>
                 <p className="text-sm text-zinc-400 mt-1">
                   Create articles with FAQ sections, citations, and entity-rich language that AI loves.
                 </p>
@@ -521,7 +521,7 @@ function MainDashboard({ site }: { site: Site }) {
               <div className="flex-1">
                 <h4 className="font-medium text-white">Enable Autopilot</h4>
                 <p className="text-sm text-zinc-400 mt-1">
-                  Let us generate and publish AIO content weekly while you focus on your product.
+                  Let us generate and publish GEO content weekly while you focus on your product.
                 </p>
               </div>
               <Link href="/settings">
@@ -583,7 +583,7 @@ export default function DashboardPage() {
             setSite({
               id: targetSite.id,
               domain: targetSite.domain,
-              aioScore: targetSite.aioScore || targetSite.aio_score_avg || 65,
+              geoScore: targetSite.geoScore || targetSite.geo_score_avg || targetSite.aio_score_avg || 65,
               seoScore: targetSite.seoScore || targetSite.seo_score || 70,
               lastAnalyzed: targetSite.lastCrawled || targetSite.last_crawled_at,
               articlesGenerated: targetSite.contentCount || 0,

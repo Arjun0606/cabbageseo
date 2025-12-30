@@ -89,7 +89,7 @@ export function QuickActionBar() {
       if (data.data) {
         const analysis = data.data;
 
-        addResult("score", `SEO: ${analysis.seoScore}/100 | AI Visibility: ${analysis.aioScore}/100`);
+        addResult("score", `SEO: ${analysis.seoScore}/100 | GEO: ${analysis.aioScore}/100`);
 
         if (analysis.issues) {
           const total = analysis.issues.critical + analysis.issues.warnings;

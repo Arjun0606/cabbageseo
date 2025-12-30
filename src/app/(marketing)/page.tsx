@@ -24,7 +24,7 @@ import { ExitIntentPopup } from "@/components/marketing/exit-intent-popup";
 import { createClient } from "@/lib/supabase/client";
 
 // ============================================
-// LANDING PAGE - Honest, AIO-first
+// LANDING PAGE - GEO (Generative Engine Optimization)
 // ============================================
 
 // All CMS integrations - full suite like SEObot
@@ -137,7 +137,7 @@ export default function LandingPage() {
           {/* Tagline */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-8">
             <Bot className="w-4 h-4" />
-            AI Visibility Optimization
+            Generative Engine Optimization
           </div>
 
           {/* Main Headline */}
@@ -183,7 +183,7 @@ export default function LandingPage() {
         <div className="max-w-2xl mx-auto">
           <div className="p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
             <h2 className="text-lg font-semibold text-white mb-4 text-center">
-              Check your AI Visibility Score — free
+              Check your GEO Score — free
             </h2>
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -212,14 +212,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* What is AIO */}
+      {/* What is GEO */}
       <section className="py-20 px-6 bg-zinc-900/30 border-y border-zinc-800/50">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">What is AI Visibility Optimization?</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">What is GEO (Generative Engine Optimization)?</h2>
             <p className="text-zinc-400 max-w-2xl mx-auto">
-              As AI search grows, traditional SEO isn&apos;t enough. You need to optimize for how 
-              AI platforms like ChatGPT and Perplexity understand and cite your content.
+              Traditional SEO isn&apos;t enough anymore. GEO optimizes your content to be cited by 
+              AI platforms like ChatGPT, Perplexity, and Google AI Overviews.
             </p>
           </div>
 
@@ -227,13 +227,13 @@ export default function LandingPage() {
             {[
               {
                 icon: Bot,
-                title: "Track AI Visibility",
+                title: "Track GEO Score",
                 description: "See your visibility score across ChatGPT, Perplexity, and Google AI Overviews.",
               },
               {
                 icon: Sparkles,
-                title: "Generate AIO Content",
-                description: "Create articles structured for AI citation with FAQs, definitions, and sources.",
+                title: "Generate GEO Content",
+                description: "Create articles structured for AI citation with FAQs, schema markup, and sources.",
               },
               {
                 icon: Target,

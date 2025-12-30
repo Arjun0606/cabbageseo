@@ -38,7 +38,7 @@ const plans = [
     icon: Rocket,
     features: [
       { text: "1 website", included: true },
-      { text: "AIO Score tracking", included: true, highlight: true },
+      { text: "GEO Score tracking", included: true, highlight: true },
       { text: "3 AI platforms monitored", included: true, highlight: true },
       { text: "10 AI-optimized articles/month", included: true },
       { text: "100 keywords tracked", included: true },
@@ -58,7 +58,7 @@ const plans = [
     icon: Zap,
     features: [
       { text: "5 websites", included: true },
-      { text: "Daily AIO tracking", included: true, highlight: true },
+      { text: "Daily GEO tracking", included: true, highlight: true },
       { text: "50 AI-optimized articles/month", included: true },
       { text: "Unlimited keywords", included: true },
       { text: "CMS publishing (WordPress, Webflow, Shopify)", included: true },
@@ -78,7 +78,7 @@ const plans = [
     icon: Building2,
     features: [
       { text: "20 websites", included: true },
-      { text: "Real-time AIO monitoring", included: true, highlight: true },
+      { text: "Real-time GEO monitoring", included: true, highlight: true },
       { text: "200 AI-optimized articles/month", included: true },
       { text: "All Pro features", included: true },
       { text: "API access", included: true },
@@ -93,8 +93,8 @@ const plans = [
 
 const faqs = [
   {
-    question: "What is AIO (AI Visibility Optimization)?",
-    answer: "AIO measures how well your content appears in AI responses from platforms like ChatGPT, Perplexity, and Google AI Overviews. As more people use AI to search, optimizing for AI visibility is becoming as important as traditional SEO.",
+    question: "What is GEO (Generative Engine Optimization)?",
+    answer: "GEO measures how well your content appears in AI responses from platforms like ChatGPT, Perplexity, and Google AI Overviews. As more people use AI to search, optimizing for generative engines is becoming as important as traditional SEO.",
   },
   {
     question: "How does the AI content generation work?",
@@ -102,7 +102,7 @@ const faqs = [
   },
   {
     question: "What's the 'Export to Cursor' feature?",
-    answer: "It generates a structured markdown report of all your SEO/AIO issues that you can paste directly into Cursor, Claude, or other AI coding assistants. The AI can then help implement the fixes in your codebase.",
+    answer: "It generates a structured markdown report of all your SEO/GEO issues that you can paste directly into Cursor, Claude, or other AI coding assistants. The AI can then help implement the fixes in your codebase.",
   },
   {
     question: "Which CMS platforms do you support?",

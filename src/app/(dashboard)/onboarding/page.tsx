@@ -259,10 +259,10 @@ export default function OnboardingPage() {
   const [steps, setSteps] = useState<AnalysisStep[]>([
     { id: "1", label: "Connecting to your website...", status: "pending" },
     { id: "2", label: "Crawling pages...", status: "pending" },
-    { id: "3", label: "Checking AI visibility...", status: "pending" },
+    { id: "3", label: "Calculating GEO score...", status: "pending" },
     { id: "4", label: "Analyzing SEO factors...", status: "pending" },
-    { id: "5", label: "Finding AIO opportunities...", status: "pending" },
-    { id: "6", label: "Calculating your AIO Score...", status: "pending" },
+    { id: "5", label: "Finding GEO opportunities...", status: "pending" },
+    { id: "6", label: "Generating recommendations...", status: "pending" },
   ]);
 
   const updateStep = useCallback((index: number, updates: Partial<AnalysisStep>) => {
@@ -288,10 +288,10 @@ export default function OnboardingPage() {
     setSteps([
       { id: "1", label: "Connecting to your website...", status: "pending" },
       { id: "2", label: "Crawling pages...", status: "pending" },
-      { id: "3", label: "Checking AI visibility...", status: "pending" },
+      { id: "3", label: "Calculating GEO score...", status: "pending" },
       { id: "4", label: "Analyzing SEO factors...", status: "pending" },
-      { id: "5", label: "Finding AIO opportunities...", status: "pending" },
-      { id: "6", label: "Calculating your AIO Score...", status: "pending" },
+      { id: "5", label: "Finding GEO opportunities...", status: "pending" },
+      { id: "6", label: "Generating recommendations...", status: "pending" },
     ]);
 
     try {
@@ -384,10 +384,10 @@ export default function OnboardingPage() {
     setSteps([
       { id: "1", label: "Connecting to your website...", status: "pending" },
       { id: "2", label: "Crawling pages...", status: "pending" },
-      { id: "3", label: "Checking AI visibility...", status: "pending" },
+      { id: "3", label: "Calculating GEO score...", status: "pending" },
       { id: "4", label: "Analyzing SEO factors...", status: "pending" },
-      { id: "5", label: "Finding AIO opportunities...", status: "pending" },
-      { id: "6", label: "Calculating your AIO Score...", status: "pending" },
+      { id: "5", label: "Finding GEO opportunities...", status: "pending" },
+      { id: "6", label: "Generating recommendations...", status: "pending" },
     ]);
   };
 
@@ -406,7 +406,7 @@ export default function OnboardingPage() {
                 <Sparkles className="w-12 h-12 text-primary" />
               </div>
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-                Let&apos;s check your AI visibility
+                Let&apos;s check your GEO score
               </h1>
               <p className="text-xl text-muted-foreground max-w-md mx-auto">
                 See if ChatGPT and AI search cite your content, plus a complete SEO audit
@@ -446,8 +446,8 @@ export default function OnboardingPage() {
           {/* Features */}
           <div className="grid grid-cols-3 gap-4 pt-8">
             <div className="text-center p-4">
-              <Sparkles className="w-8 h-8 mx-auto mb-2 text-purple-500" />
-              <p className="text-sm font-medium">AI Visibility</p>
+              <Sparkles className="w-8 h-8 mx-auto mb-2 text-emerald-500" />
+              <p className="text-sm font-medium">GEO Score</p>
               <p className="text-xs text-muted-foreground">ChatGPT, Perplexity, Google AI</p>
             </div>
             <div className="text-center p-4">
@@ -559,8 +559,8 @@ export default function OnboardingPage() {
           </div>
           <div className="text-center">
             <SEOScoreDisplay score={analysis?.aioScore || 0} animate size="medium" color="purple" />
-            <h3 className="text-sm font-medium mt-2">AIO Score</h3>
-            <p className="text-xs text-muted-foreground">AI Visibility</p>
+            <h3 className="text-sm font-medium mt-2">GEO Score</h3>
+            <p className="text-xs text-muted-foreground">Generative Engine Optimization</p>
           </div>
           <div className="text-center">
             <SEOScoreDisplay score={analysis?.combinedScore || 0} animate size="medium" color="emerald" />
@@ -619,11 +619,11 @@ export default function OnboardingPage() {
           )}
         </Card>
 
-        {/* Top AIO Fixes */}
+        {/* Top GEO Fixes */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-500" />
-            Top AI Visibility Fixes
+            <Sparkles className="w-5 h-5 text-emerald-500" />
+            Top GEO Fixes
           </h3>
           {analysis?.topAioFixes && analysis.topAioFixes.length > 0 ? (
             <div className="space-y-3">
@@ -637,7 +637,7 @@ export default function OnboardingPage() {
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground text-sm">Your site is well optimized for AI visibility!</p>
+            <p className="text-muted-foreground text-sm">Your site is well optimized for generative engines!</p>
           )}
         </Card>
       </div>

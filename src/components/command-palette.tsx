@@ -205,9 +205,9 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           subtitle: analysis.seoScore >= 70 ? "Good foundation!" : "Room for improvement",
         });
 
-        // AIO Score
-        addResult("score", `AI Visibility: ${analysis.aioScore}/100`, {
-          subtitle: analysis.aioScore >= 70 ? "AI-friendly content!" : "Optimize for AI assistants",
+        // GEO Score
+        addResult("score", `GEO Score: ${analysis.aioScore}/100`, {
+          subtitle: analysis.aioScore >= 70 ? "AI-friendly content!" : "Optimize for generative engines",
         });
 
         // Issues
@@ -364,12 +364,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         keywords: ["research", "seo", "rank"],
       },
       {
-        id: "action-aio",
-        title: "Check AI Visibility",
+        id: "action-geo",
+        title: "Check GEO Score",
         description: "See how AI assistants see your site",
         icon: Brain,
         category: "actions",
-        action: () => router.push("/aio"),
+        action: () => router.push("/geo"),
         keywords: ["chatgpt", "perplexity", "claude", "ai"],
       },
       {

@@ -32,6 +32,9 @@ import { cn } from "@/lib/utils";
 import { PLATFORM_LABELS, PLATFORM_WEIGHTS, VISIBLE_AIO_PLATFORMS } from "@/lib/aio/types";
 import type { AIOPlatform } from "@/lib/aio/types";
 
+// GEO = Generative Engine Optimization
+// Optimizing for ChatGPT, Perplexity, Google AI Overviews
+
 // Platform icons/colors
 const platformConfig: Record<string, { color: string; bgColor: string }> = {
   google_aio: { color: "text-blue-500", bgColor: "bg-blue-500/10" },
@@ -307,23 +310,23 @@ function CitationsPanel({ siteId }: { siteId: string | null }) {
   );
 }
 
-export default function AIODashboardPage() {
+export default function GEODashboardPage() {
   const { selectedSite, sites } = useSite();
   const activeSiteId = selectedSite?.id;
 
-  // Fetch AIO data for the selected site
+  // Fetch GEO data for the selected site
   const { data: aioData, isLoading, refetch } = useQuery({
     queryKey: ["aio-stats", activeSiteId],
     queryFn: async () => {
       if (!activeSiteId) return null;
       const response = await fetch(`/api/aio/analyze?siteId=${activeSiteId}`);
-      if (!response.ok) throw new Error("Failed to fetch AIO data");
+      if (!response.ok) throw new Error("Failed to fetch GEO data");
       return response.json();
     },
     enabled: !!activeSiteId,
   });
 
-  // Fetch pages with AIO scores
+  // Fetch pages with GEO scores
   const { data: pagesData } = useQuery({
     queryKey: ["pages-aio", activeSiteId],
     queryFn: async () => {
@@ -356,7 +359,7 @@ export default function AIODashboardPage() {
     enabled: !!activeSiteId,
   });
 
-  // Generate recommendations based on AIO scores
+  // Generate recommendations based on GEO scores
   const recommendations = (() => {
     const pagesWithScores = recommendationsData || [];
     const recs: Array<{
@@ -367,11 +370,11 @@ export default function AIODashboardPage() {
       autoFixable: boolean;
     }> = [];
 
-    // Check for pages with low AIO scores
+    // Check for pages with low GEO scores
     const lowScorePages = pagesWithScores.filter((p: { aio_score?: number }) => (p.aio_score || 0) < 50);
     if (lowScorePages.length > 0) {
       recs.push({
-        title: `Optimize ${lowScorePages.length} pages with low AIO scores`,
+        title: `Optimize ${lowScorePages.length} pages with low GEO scores`,
         description: "These pages score below 50 and need significant optimization for AI visibility.",
         priority: "high",
         impact: "+20-30 points",
@@ -435,7 +438,7 @@ export default function AIODashboardPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
             <Brain className="w-8 h-8 text-violet-500" />
-            AI Visibility
+            GEO Score
           </h1>
           <p className="text-muted-foreground mt-1">
             Optimize for AI search platforms: Google AI Overviews, ChatGPT, Perplexity
@@ -469,7 +472,7 @@ export default function AIODashboardPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
             <Brain className="w-8 h-8 text-violet-500" />
-            AI Visibility
+            GEO Score
           </h1>
           <p className="text-muted-foreground mt-1">
             Optimize for AI search platforms: Google AI Overviews, ChatGPT, Perplexity
@@ -497,7 +500,7 @@ export default function AIODashboardPage() {
         <Card className="lg:col-span-1">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2">
-              Combined AIO Score
+              Combined GEO Score
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
@@ -616,7 +619,7 @@ export default function AIODashboardPage() {
             <CardHeader>
               <CardTitle>Page-by-Page Scores</CardTitle>
               <CardDescription>
-                AIO visibility scores for individual pages
+                GEO scores for individual pages
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -657,7 +660,7 @@ export default function AIODashboardPage() {
                           )}>
                             {page.aio_score ?? "—"}
                           </span>
-                          <span className="text-xs text-muted-foreground">AIO</span>
+                          <span className="text-xs text-muted-foreground">GEO</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-muted-foreground" />
                       </div>
