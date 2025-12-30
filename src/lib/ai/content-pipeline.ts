@@ -847,7 +847,7 @@ export class ContentPipeline {
   async optimizeForGEO(
     content: string,
     keyword: string,
-    mode: "seo" | "geo" | "balanced" = "balanced"
+    mode: "seo" | "geo" | "aio" | "balanced" = "balanced"
   ): Promise<{
     optimizedContent: string;
     usage: { costCents: number };
@@ -856,7 +856,9 @@ export class ContentPipeline {
       throw new Error("AI client not configured");
     }
 
-    const prompt = PROMPTS.optimizeForGEO(content, keyword, mode);
+    // Normalize "aio" to "geo" for backwards compatibility
+    const normalizedMode = mode === "aio" ? "geo" : mode;
+    const prompt = PROMPTS.optimizeForGEO(content, keyword, normalizedMode as "seo" | "geo" | "balanced");
     
     const response = await this.client.chat(
       [{ role: "user", content: prompt.user }],

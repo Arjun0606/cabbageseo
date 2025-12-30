@@ -47,7 +47,7 @@ export {
   type KeywordCluster,
   type ContentAnalysis,
   type PipelineOptions,
-  type AIOAnalysisResult,
+  type GEOAnalysisResult,
 } from "./content-pipeline";
 
 // Prompts
