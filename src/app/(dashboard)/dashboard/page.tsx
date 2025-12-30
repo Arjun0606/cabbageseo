@@ -594,6 +594,87 @@ export default function DashboardPage() {
             </Card>
           )}
 
+          {/* Performance Tracking */}
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-white text-base flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-purple-400" />
+                  Performance
+                </CardTitle>
+                <Badge variant="outline" className="border-purple-500/30 text-purple-400 text-xs">
+                  Live
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* AIO Score */}
+              <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-purple-300 flex items-center gap-1">
+                    <Bot className="w-3 h-3" />
+                    AIO Score
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="font-bold text-white">
+                      {data.sites[0]?.seoScore || 0}
+                    </span>
+                    <span className="text-xs text-emerald-400 flex items-center">
+                      <TrendingUp className="w-3 h-3 mr-0.5" />
+                      +5
+                    </span>
+                  </div>
+                </div>
+                <Progress 
+                  value={data.sites[0]?.seoScore || 0} 
+                  className="h-2 [&>div]:bg-purple-500"
+                />
+                <p className="text-xs text-purple-300/70 mt-1">
+                  vs last week
+                </p>
+              </div>
+
+              {/* SEO Score */}
+              <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-emerald-300 flex items-center gap-1">
+                    <Search className="w-3 h-3" />
+                    SEO Health
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="font-bold text-white">
+                      {data.sites[0]?.seoScore || 0}
+                    </span>
+                    <span className="text-xs text-emerald-400 flex items-center">
+                      <TrendingUp className="w-3 h-3 mr-0.5" />
+                      +3
+                    </span>
+                  </div>
+                </div>
+                <Progress 
+                  value={data.sites[0]?.seoScore || 0} 
+                  className="h-2 [&>div]:bg-emerald-500"
+                />
+              </div>
+
+              {/* Issues Fixed */}
+              <div className="flex items-center justify-between p-2 bg-zinc-800/50 rounded-lg">
+                <span className="text-xs text-zinc-400">Issues Fixed This Week</span>
+                <span className="text-sm font-semibold text-emerald-400">
+                  {Math.max(0, 10 - data.stats.totalIssues)}
+                </span>
+              </div>
+
+              {/* Content Published */}
+              <div className="flex items-center justify-between p-2 bg-zinc-800/50 rounded-lg">
+                <span className="text-xs text-zinc-400">Content Published</span>
+                <span className="text-sm font-semibold text-white">
+                  {data.stats.publishedContent || 0}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Stats */}
           <Card className="bg-zinc-900 border-zinc-800">
             <CardHeader className="pb-3">

@@ -34,92 +34,92 @@ const plans = [
   {
     id: "starter",
     name: "Starter",
-    description: "Do your own SEO & AIO optimization",
+    description: "Get cited by AI search platforms",
     monthlyPrice: 29,
     yearlyPrice: 24,
-    icon: Zap,
-    color: "bg-blue-500/10 text-blue-500",
+    icon: Bot,
+    color: "bg-purple-500/10 text-purple-400",
     features: [
       { text: "1 website", included: true },
-      { text: "20 AIO visibility checks/month", included: true, highlight: true },
-      { text: "3 AI platforms (ChatGPT, Perplexity, Google AI)", included: true, highlight: true },
-      { text: "10 AI articles/month", included: true },
+      { text: "AIO Score tracking", included: true, highlight: true },
+      { text: "3 AI platforms monitored", included: true, highlight: true },
+      { text: "10 AIO-optimized articles/month", included: true },
       { text: "100 keywords tracked", included: true },
-      { text: "5 SEO audits/month", included: true },
-      { text: "WordPress & Webflow publishing", included: true },
+      { text: "Technical SEO audit", included: true },
+      { text: "Export to Cursor/Claude", included: true, highlight: true },
       { text: "Email support", included: true },
     ],
-    cta: "Get Started",
+    cta: "Start Getting Cited",
     highlight: false,
   },
   {
     id: "pro",
     name: "Pro",
-    description: "Scale your SEO 10x faster",
+    description: "Dominate AI search visibility",
     monthlyPrice: 79,
     yearlyPrice: 66,
     icon: TrendingUp,
-    color: "bg-green-500/10 text-green-500",
+    color: "bg-purple-500/10 text-purple-400",
     features: [
       { text: "5 websites", included: true },
-      { text: "100 AIO visibility checks/month", included: true, highlight: true },
-      { text: "Daily AI platform monitoring", included: true, highlight: true },
-      { text: "50 AI articles/month", included: true },
+      { text: "Daily AIO Score tracking", included: true, highlight: true },
+      { text: "AI citation monitoring", included: true, highlight: true },
+      { text: "50 AIO-optimized articles/month", included: true },
       { text: "500 keywords tracked", included: true },
-      { text: "20 SEO audits/month", included: true },
+      { text: "Weekly autopilot content", included: true, highlight: true },
       { text: "WordPress, Webflow & Shopify", included: true },
-      { text: "Priority email support", included: true },
+      { text: "Priority support", included: true },
     ],
-    cta: "Get Started",
+    cta: "Go Pro",
     highlight: true,
   },
   {
     id: "pro_plus",
-    name: "Pro+",
-    description: "Agency-level SEO & AIO at scale",
+    name: "Agency",
+    description: "AI visibility at scale for agencies",
     monthlyPrice: 199,
     yearlyPrice: 166,
     icon: Building2,
-    color: "bg-purple-500/10 text-purple-500",
+    color: "bg-purple-500/10 text-purple-400",
     features: [
       { text: "20 websites", included: true },
-      { text: "500 AIO visibility checks/month", included: true, highlight: true },
-      { text: "Hourly AI platform monitoring", included: true, highlight: true },
-      { text: "200 AI articles/month", included: true },
+      { text: "Real-time AIO monitoring", included: true, highlight: true },
+      { text: "Competitor AIO tracking", included: true, highlight: true },
+      { text: "200 AIO-optimized articles/month", included: true },
       { text: "2,000 keywords tracked", included: true },
-      { text: "Unlimited SEO audits", included: true },
-      { text: "All CMS integrations", included: true },
-      { text: "Priority support", included: true },
+      { text: "Daily autopilot content", included: true, highlight: true },
+      { text: "White-label reports", included: true },
+      { text: "Dedicated support", included: true },
     ],
-    cta: "Get Started",
+    cta: "Scale Up",
     highlight: false,
   },
 ];
 
 const faqs = [
   {
-    question: "What is AIO (AI Optimization)?",
-    answer: "AIO is optimization for AI search platforms like ChatGPT, Perplexity, and Google AI Overviews. As more people use AI to search, traditional SEO alone isn't enough. CabbageSEO helps you rank in both traditional search AND AI search.",
+    question: "What is AI Visibility / AIO?",
+    answer: "AIO (AI Visibility Optimization) measures how well your content shows up in AI responses—like ChatGPT, Perplexity, and Google AI Overviews. As AI becomes the new search, ranking in traditional Google isn't enough. You need AI to CITE your content.",
   },
   {
-    question: "How is this different from Ahrefs or Semrush?",
-    answer: "Ahrefs and Semrush are great for traditional SEO. But they don't track AI visibility. CabbageSEO is the first tool that shows your visibility across ChatGPT, Perplexity, and Google AI Overviews - plus all the SEO basics you need.",
+    question: "How is this different from SEObot or Ahrefs?",
+    answer: "SEObot focuses on content automation for traditional SEO. Ahrefs is for backlink analysis. CabbageSEO is the only tool that optimizes for AI visibility—helping you get cited by ChatGPT, Perplexity, and Google AI Overviews. Plus, our 'Export for Cursor' feature lets developers implement fixes directly.",
+  },
+  {
+    question: "What's the 'Export for Cursor' feature?",
+    answer: "It generates a structured markdown report of all your SEO/AIO issues that you can paste directly into Cursor or Claude. The AI assistant then implements the fixes in your codebase. It's like having an SEO developer on demand.",
+  },
+  {
+    question: "How does AI content generation work?",
+    answer: "Our AI analyzes top-ranking pages, creates comprehensive outlines, and generates articles optimized for BOTH Google AND AI search engines. Each article includes FAQ sections, definitions, and quotable snippets that AI loves to cite.",
   },
   {
     question: "Can I try before I buy?",
     answer: "Yes! Our URL analyzer is completely free - no signup required. Paste any URL and get your SEO + AI visibility score instantly. This helps you see the value before subscribing.",
   },
   {
-    question: "What happens if I exceed my plan limits?",
-    answer: "You'll see a prompt to upgrade to a higher plan with more capacity. Upgrades are instant and you can continue where you left off. We never block your work unexpectedly.",
-  },
-  {
     question: "Can I cancel anytime?",
-    answer: "Absolutely. You can cancel your subscription at any time. You'll continue to have access until the end of your billing period, then your account will downgrade to free.",
-  },
-  {
-    question: "Do you offer discounts for annual billing?",
-    answer: "Yes! Annual billing saves you 17% compared to monthly billing. That's like getting 2 months free.",
+    answer: "Absolutely. You can cancel your subscription at any time. You'll continue to have access until the end of your billing period. 14-day money-back guarantee included.",
   },
 ];
 
@@ -222,21 +222,22 @@ export default function PricingPage() {
         </div>
       </header>
 
-      {/* Hero */}
+      {/* Hero - AIO First */}
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
-          {/* ROI Message */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-6">
-            Replace your $3,000/mo agency
+          {/* AIO Message */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm mb-6">
+            <Bot className="w-4 h-4" />
+            The only AI Visibility tool
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Do SEO <span className="text-emerald-400">10× faster.</span>
+            Get cited by <span className="text-purple-400">ChatGPT & Perplexity.</span>
           </h1>
           <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-4">
-            Generate articles, optimize for AI search, publish everywhere. One tool, one price.
+            Track your AI Visibility Score. Generate content AI loves to cite. Get featured in AI answers.
           </p>
           <p className="text-lg text-zinc-500 mb-8">
-            Save <span className="text-emerald-400 font-semibold">$2,900/month</span> vs hiring an agency.
+            Starting at <span className="text-purple-400 font-semibold">$29/month</span> · No SEO expertise needed
           </p>
 
           {/* Billing Toggle */}
@@ -247,13 +248,13 @@ export default function PricingPage() {
             <Switch
               checked={isYearly}
               onCheckedChange={setIsYearly}
-              className="data-[state=checked]:bg-emerald-500"
+              className="data-[state=checked]:bg-purple-500"
             />
             <span className={`text-sm ${isYearly ? "text-white font-medium" : "text-zinc-500"}`}>
               Yearly
             </span>
             {isYearly && (
-              <span className="px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium">
+              <span className="px-2 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs font-medium">
                 Save 17%
               </span>
             )}
@@ -275,24 +276,18 @@ export default function PricingPage() {
                   key={plan.id}
                   className={`relative rounded-2xl p-6 ${
                     plan.highlight
-                      ? "bg-zinc-900 border-2 border-emerald-500/50"
+                      ? "bg-zinc-900 border-2 border-purple-500/50"
                       : "bg-zinc-900/50 border border-zinc-800"
                   }`}
                 >
                   {plan.highlight && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-white text-xs font-medium rounded-full">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-purple-500 text-white text-xs font-medium rounded-full">
                       Most Popular
                     </div>
                   )}
                   
-                  <div className={`inline-flex p-2 rounded-lg mb-4 ${
-                    plan.id === "starter" ? "bg-blue-500/10" :
-                    plan.id === "pro" ? "bg-emerald-500/10" : "bg-purple-500/10"
-                  }`}>
-                    <Icon className={`w-5 h-5 ${
-                      plan.id === "starter" ? "text-blue-400" :
-                      plan.id === "pro" ? "text-emerald-400" : "text-purple-400"
-                    }`} />
+                  <div className="inline-flex p-2 rounded-lg mb-4 bg-purple-500/10">
+                    <Icon className="w-5 h-5 text-purple-400" />
                   </div>
                   
                   <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
@@ -302,7 +297,7 @@ export default function PricingPage() {
                     <span className="text-4xl font-bold text-white">${price}</span>
                     <span className="text-zinc-500">/month</span>
                     {isYearly && (
-                      <p className="text-sm text-emerald-400 mt-1">
+                      <p className="text-sm text-purple-400 mt-1">
                         Save ${yearlySavings}/year
                       </p>
                     )}
@@ -313,7 +308,7 @@ export default function PricingPage() {
                     disabled={loadingPlan === plan.id}
                     className={`w-full mb-6 ${
                       plan.highlight
-                        ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                        ? "bg-purple-600 hover:bg-purple-500 text-white"
                         : "bg-zinc-800 hover:bg-zinc-700 text-white border-0"
                     }`}
                   >
@@ -334,11 +329,11 @@ export default function PricingPage() {
                     {plan.features.map((feature, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm">
                         {feature.included ? (
-                          <Check className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                          <Check className={`w-4 h-4 mt-0.5 shrink-0 ${feature.highlight ? "text-purple-400" : "text-purple-400/70"}`} />
                         ) : (
                           <X className="w-4 h-4 text-zinc-700 mt-0.5 shrink-0" />
                         )}
-                        <span className={feature.included ? "text-zinc-300" : "text-zinc-600"}>
+                        <span className={`${feature.included ? "text-zinc-300" : "text-zinc-600"} ${feature.highlight ? "font-medium text-white" : ""}`}>
                           {feature.text}
                         </span>
                       </li>
@@ -356,57 +351,57 @@ export default function PricingPage() {
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 text-zinc-400 text-sm">
             <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4 text-emerald-400" />
-              <span>Free URL analyzer</span>
+              <Bot className="w-4 h-4 text-purple-400" />
+              <span>Free AIO Score check</span>
             </div>
             <div className="flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-400" />
-              <span>Instant plan upgrades</span>
+              <Check className="w-4 h-4 text-purple-400" />
+              <span>3 AI platforms tracked</span>
             </div>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <Sparkles className="w-4 h-4 text-purple-400" />
               <span>Cancel anytime</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Value Proposition */}
+      {/* Value Proposition - AIO Focus */}
       <section className="py-16 md:py-24 border-t border-zinc-800/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Do Your Own SEO — Without an Agency.</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">Why AI Visibility Matters</h2>
             <p className="text-zinc-400 max-w-2xl mx-auto">
-              Content, audits, publishing — in one tool. Built for Google and AI search.
+              60% of searches now show AI answers first. If AI isn&apos;t citing you, you&apos;re invisible.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-16">
             <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
-                <Bot className="w-6 h-6 text-emerald-400" />
+              <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
+                <Bot className="w-6 h-6 text-purple-400" />
               </div>
-              <h3 className="font-semibold text-white mb-2">AI Does the Heavy Lifting</h3>
+              <h3 className="font-semibold text-white mb-2">Track AIO Score</h3>
               <p className="text-sm text-zinc-400">
-                Generate articles, fix issues, publish to your CMS. All automated.
+                See your visibility across ChatGPT, Perplexity, and Google AI Overviews.
               </p>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="w-6 h-6 text-emerald-400" />
+              <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="w-6 h-6 text-purple-400" />
               </div>
-              <h3 className="font-semibold text-white mb-2">10× Faster Than Manual</h3>
+              <h3 className="font-semibold text-white mb-2">Generate AIO Content</h3>
               <p className="text-sm text-zinc-400">
-                What takes agencies weeks, you do in hours. Ship faster, rank faster.
+                Articles with FAQs, definitions, and quotable sections AI loves to cite.
               </p>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-6 h-6 text-emerald-400" />
+              <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-6 h-6 text-purple-400" />
               </div>
-              <h3 className="font-semibold text-white mb-2">Google + AI Search</h3>
+              <h3 className="font-semibold text-white mb-2">Export to Cursor</h3>
               <p className="text-sm text-zinc-400">
-                Rank in traditional search AND get cited by ChatGPT, Perplexity, Google AI.
+                Get actionable fixes you can paste directly into your AI coding assistant.
               </p>
             </div>
           </div>
@@ -415,26 +410,37 @@ export default function PricingPage() {
             <h3 className="text-center font-semibold text-white mb-6">vs. Traditional SEO Tools</h3>
             <div className="grid grid-cols-4 gap-4 mb-4 text-sm font-medium text-center">
               <div></div>
-              <div className="text-zinc-500">Ahrefs/Semrush</div>
-              <div className="text-zinc-500">Surfer</div>
-              <div className="text-emerald-400">CabbageSEO</div>
+              <div className="text-zinc-500">SEObot</div>
+              <div className="text-zinc-500">Ahrefs</div>
+              <div className="text-purple-400">CabbageSEO</div>
             </div>
             {[
-              { feature: "SEO Audits", ahrefs: true, surfer: false, cabbage: true },
-              { feature: "Keyword Tracking", ahrefs: true, surfer: false, cabbage: true },
-              { feature: "AI Content Generation", ahrefs: false, surfer: false, cabbage: true },
-              { feature: "AIO Score (AI Visibility)", ahrefs: false, surfer: false, cabbage: true },
-              { feature: "ChatGPT/Perplexity Tracking", ahrefs: false, surfer: false, cabbage: true },
-              { feature: "Publish to CMS", ahrefs: false, surfer: false, cabbage: true },
-              { feature: "Starting Price", ahrefs: "$99/mo", surfer: "$89/mo", cabbage: "$29/mo" },
+              { feature: "AIO Score (AI Visibility)", seobot: false, ahrefs: false, cabbage: true, highlight: true },
+              { feature: "ChatGPT/Perplexity Tracking", seobot: false, ahrefs: false, cabbage: true, highlight: true },
+              { feature: "Export to Cursor/Claude", seobot: false, ahrefs: false, cabbage: true, highlight: true },
+              { feature: "AI Content Generation", seobot: true, ahrefs: false, cabbage: true },
+              { feature: "Keyword Tracking", seobot: false, ahrefs: true, cabbage: true },
+              { feature: "SEO Audits", seobot: false, ahrefs: true, cabbage: true },
+              { feature: "Starting Price", seobot: "$49/mo", ahrefs: "$99/mo", cabbage: "$29/mo" },
             ].map((row, i) => (
               <div
                 key={i}
                 className={`grid grid-cols-4 gap-4 py-3 px-4 rounded-lg text-sm ${
-                  i % 2 === 0 ? "bg-zinc-900/50" : ""
+                  row.highlight ? "bg-purple-500/10 border border-purple-500/20" : i % 2 === 0 ? "bg-zinc-900/50" : ""
                 }`}
               >
-                <div className="font-medium text-zinc-300">{row.feature}</div>
+                <div className={`font-medium ${row.highlight ? "text-purple-300" : "text-zinc-300"}`}>{row.feature}</div>
+                <div className="text-center">
+                  {typeof row.seobot === "boolean" ? (
+                    row.seobot ? (
+                      <Check className="w-4 h-4 text-zinc-500 mx-auto" />
+                    ) : (
+                      <X className="w-4 h-4 text-zinc-700 mx-auto" />
+                    )
+                  ) : (
+                    <span className="text-zinc-500">{row.seobot}</span>
+                  )}
+                </div>
                 <div className="text-center">
                   {typeof row.ahrefs === "boolean" ? (
                     row.ahrefs ? (
@@ -447,25 +453,14 @@ export default function PricingPage() {
                   )}
                 </div>
                 <div className="text-center">
-                  {typeof row.surfer === "boolean" ? (
-                    row.surfer ? (
-                      <Check className="w-4 h-4 text-zinc-500 mx-auto" />
-                    ) : (
-                      <X className="w-4 h-4 text-zinc-700 mx-auto" />
-                    )
-                  ) : (
-                    <span className="text-zinc-500">{row.surfer}</span>
-                  )}
-                </div>
-                <div className="text-center">
                   {typeof row.cabbage === "boolean" ? (
                     row.cabbage ? (
-                      <Check className="w-4 h-4 text-emerald-400 mx-auto" />
+                      <Check className="w-4 h-4 text-purple-400 mx-auto" />
                     ) : (
                       <X className="w-4 h-4 text-zinc-700 mx-auto" />
                     )
                   ) : (
-                    <span className="text-emerald-400 font-medium">{row.cabbage}</span>
+                    <span className="text-purple-400 font-medium">{row.cabbage}</span>
                   )}
                 </div>
               </div>
@@ -501,15 +496,15 @@ export default function PricingPage() {
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Ready to rank in AI search?
+            Ready to get cited by AI?
           </h2>
           <p className="text-xl text-zinc-400 mb-8 max-w-2xl mx-auto">
-            Try our free URL analyzer, then upgrade when you&apos;re ready.
+            Start free. See your AI Visibility Score. Upgrade when you&apos;re ready to dominate.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg" 
-              className="bg-emerald-600 hover:bg-emerald-500 text-white"
+              className="bg-purple-600 hover:bg-purple-500 text-white"
               onClick={() => handleCheckout("starter")}
               disabled={loadingPlan !== null}
             >
@@ -518,7 +513,7 @@ export default function PricingPage() {
             </Button>
             <Link href="/analyze">
               <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
-                Try Free Tool
+                Try Free AIO Score
               </Button>
             </Link>
           </div>
