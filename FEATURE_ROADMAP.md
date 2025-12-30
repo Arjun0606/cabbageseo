@@ -81,10 +81,16 @@ Based on research, AI engines cite content that has:
 |-------|------|-----|
 | Frontend | Next.js 15 | Fast, modern |
 | Database | Supabase | Simple, scales |
-| AI | OpenAI GPT-4o-mini | Fast, cheap, good |
+| AI (Text) | OpenAI GPT-4o-mini | Fast, cheap, good |
+| AI (Images) | Nano Banana (Gemini) | Google's image gen |
 | Payments | Dodo | Simple |
 | Jobs | Inngest | Reliable scheduling |
-| Images | Nano Banana | Simple image gen |
+
+### Nano Banana Integration
+- Model: `gemini-2.5-flash-image`
+- Use: Featured images for blog posts
+- Docs: https://ai.google.dev/gemini-api/docs/nanobanana
+- Env: `GEMINI_API_KEY`
 
 ---
 
