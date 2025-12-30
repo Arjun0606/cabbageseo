@@ -117,17 +117,37 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    // Add site domain to each content item
+    // Add site domain to each content item and transform field names
     const contentWithSite = ((content || []) as ContentItem[]).map(item => ({
-      ...item,
+      id: item.id,
+      title: item.title,
+      slug: item.slug,
+      status: item.status || "draft",
+      keyword: item.target_keyword || "",
+      seoScore: item.seo_score || 0,
+      aioScore: item.aio_score || 0,
+      wordCount: item.word_count || 0,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at,
+      publishedAt: item.published_at,
+      publishedUrl: item.published_url,
+      author: "You",
       siteDomain: siteLookup[item.site_id] || "Unknown",
     }));
+
+    // Calculate stats
+    const stats = {
+      total: count || 0,
+      published: contentWithSite.filter(c => c.status === "published").length,
+      drafts: contentWithSite.filter(c => ["draft", "writing", "review"].includes(c.status)).length,
+      ideas: contentWithSite.filter(c => c.status === "idea").length,
+    };
 
     return NextResponse.json({
       success: true,
       data: {
         content: contentWithSite,
-        total: count || 0,
+        stats,
       },
     });
 

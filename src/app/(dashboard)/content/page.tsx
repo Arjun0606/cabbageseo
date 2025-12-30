@@ -261,13 +261,17 @@ export default function ContentPage() {
     },
   });
 
-  const filteredContent = (data?.content || []).filter(
+  const contentItems = data?.content || [];
+  const filteredContent = contentItems.filter(
     (item) =>
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.keyword.toLowerCase().includes(searchQuery.toLowerCase())
+      item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.keyword?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const hasData = data && data.content.length > 0;
+  const hasData = contentItems.length > 0;
+  
+  // Safe stats access
+  const stats = data?.stats || { total: 0, published: 0, drafts: 0, ideas: 0 };
 
   if (isLoading) {
     return (
@@ -367,7 +371,7 @@ export default function ContentPage() {
                     <FileText className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{data.stats.total}</p>
+                    <p className="text-2xl font-bold">{stats.total}</p>
                     <p className="text-xs text-muted-foreground">Total Content</p>
                   </div>
                 </div>
@@ -380,7 +384,7 @@ export default function ContentPage() {
                     <Globe className="w-5 h-5 text-green-500" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{data.stats.published}</p>
+                    <p className="text-2xl font-bold">{stats.published}</p>
                     <p className="text-xs text-muted-foreground">Published</p>
                   </div>
                 </div>
@@ -393,7 +397,7 @@ export default function ContentPage() {
                     <Edit3 className="w-5 h-5 text-yellow-500" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{data.stats.drafts}</p>
+                    <p className="text-2xl font-bold">{stats.drafts}</p>
                     <p className="text-xs text-muted-foreground">In Progress</p>
                   </div>
                 </div>
@@ -406,7 +410,7 @@ export default function ContentPage() {
                     <Sparkles className="w-5 h-5 text-purple-500" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{data.stats.ideas}</p>
+                    <p className="text-2xl font-bold">{stats.ideas}</p>
                     <p className="text-xs text-muted-foreground">Ideas</p>
                   </div>
                 </div>
