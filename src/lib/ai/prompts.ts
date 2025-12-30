@@ -413,19 +413,19 @@ Return JSON:
 
 
 // ============================================
-  // AIO (AI OPTIMIZATION) PROMPTS
+  // GEO (GENERATIVE ENGINE OPTIMIZATION) PROMPTS
   // ============================================
 
   /**
-   * Optimize content for AI visibility
+   * Optimize content for generative engines (ChatGPT, Perplexity, Google AI)
    * Model: Sonnet (quality optimization)
    */
-  optimizeForAIO: (
+  optimizeForGEO: (
     content: string,
     keyword: string,
-    mode: "seo" | "aio" | "balanced" = "balanced"
+    mode: "seo" | "geo" | "balanced" = "balanced"
   ) => ({
-    system: `You are an expert in optimizing content for AI search platforms (ChatGPT, Perplexity, Google AI Overviews, Claude, Gemini).
+    system: `You are an expert in Generative Engine Optimization (GEO) - optimizing content for AI platforms (ChatGPT, Perplexity, Google AI Overviews).
 
 AI platforms value:
 - Clear, quotable paragraphs (50-150 words each)
@@ -439,7 +439,7 @@ AI platforms value:
 - Step-by-step instructions when relevant
 
 Return ONLY the optimized content in markdown format.`,
-    user: `Optimize this content for ${mode === "aio" ? "AI search platforms" : mode === "balanced" ? "both traditional SEO and AI search" : "traditional SEO"}.
+    user: `Optimize this content for ${mode === "geo" ? "generative engines (ChatGPT, Perplexity, Google AI)" : mode === "balanced" ? "both traditional SEO and generative engines" : "traditional SEO"}.
 
 Target keyword: "${keyword}"
 Mode: ${mode.toUpperCase()}
@@ -459,27 +459,32 @@ Return the optimized content only, no explanations.`,
   }),
 
   /**
-   * Generate AIO-optimized outline
+   * Generate GEO-optimized outline
    * Model: Sonnet (strategic planning)
    */
-  generateAIOOutline: (
+  generateGEOOutline: (
     keyword: string,
     serpResults: Array<{ title: string; snippet: string }>,
     wordCount?: number
   ) => {
     const targetWords = wordCount ?? 2000;
     return {
-    system: `You are an expert content strategist optimizing for AI search platforms.
+    system: `You are an expert in Generative Engine Optimization (GEO).
 
-Content must be structured for:
-1. Google AI Overviews - Featured snippets, FAQ schema, E-E-A-T
-2. ChatGPT/SearchGPT - Quotable paragraphs, key takeaways
-3. Perplexity - Citation-worthy content, expert sources
-4. Claude - Semantic clarity, context completeness
-5. Gemini - Schema markup, multimodal readiness
+Content must be structured for citation by:
+1. Google AI Overviews - Featured snippets, FAQ schema, E-E-A-T signals
+2. ChatGPT - Quotable paragraphs, direct answers, key takeaways
+3. Perplexity - Citation-worthy content, statistics with sources, expert attribution
+
+GEO Best Practices:
+- Direct answers in first 2 sentences of each section
+- Conversational headings (how to, what is, why)
+- Clear definitions for key terms
+- Statistics with sources
+- FAQ section with schema-ready Q&A
 
 Return ONLY valid JSON.`,
-    user: `Create an AIO-optimized content outline for: "${keyword}"
+    user: `Create a GEO-optimized content outline for: "${keyword}"
 
 Top-ranking competitors:
 ${serpResults.slice(0, 5).map((r, i) => `${i + 1}. ${r.title}\n   ${r.snippet}`).join("\n\n")}
@@ -586,13 +591,13 @@ Return ONLY the improved content.`,
   }),
 
   /**
-   * Analyze content for AIO readiness
+   * Analyze content for GEO readiness
    * Model: Sonnet (thorough analysis)
    */
-  analyzeAIOReadiness: (content: string, keyword: string) => ({
-    system: `You are an expert in AI search optimization. Analyze content for AI platform visibility.
+  analyzeGEOReadiness: (content: string, keyword: string) => ({
+    system: `You are an expert in Generative Engine Optimization (GEO). Analyze content for AI platform citation readiness.
 Return ONLY valid JSON.`,
-    user: `Analyze this content's AI visibility readiness for: "${keyword}"
+    user: `Analyze this content's GEO score for: "${keyword}"
 
 Content:
 ${content.slice(0, 5000)}
@@ -601,11 +606,9 @@ Analyze and return JSON:
 {
   "overallScore": 0-100,
   "platformScores": {
-    "googleAIO": 0-100,
+    "googleAI": 0-100,
     "chatGPT": 0-100,
-    "perplexity": 0-100,
-    "claude": 0-100,
-    "gemini": 0-100
+    "perplexity": 0-100
   },
   "breakdown": {
     "entityDensity": {"score": 0-100, "found": 5, "recommended": 10},
