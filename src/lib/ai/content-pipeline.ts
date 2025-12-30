@@ -108,8 +108,8 @@ export interface PipelineOptions {
   generateFaqs?: boolean;
   suggestInternalLinks?: boolean;
   availablePages?: Array<{ url: string; title: string; keywords?: string[] }>;
-  /** AIO optimization mode */
-  optimizationMode?: "seo" | "aio" | "balanced";
+  /** GEO optimization mode */
+  optimizationMode?: "seo" | "geo" | "balanced";
   /** Add key takeaways section */
   addKeyTakeaways?: boolean;
   /** Inject additional entities */
@@ -118,10 +118,10 @@ export interface PipelineOptions {
   optimizeQuotability?: boolean;
 }
 
-export interface AIOAnalysisResult {
+export interface GEOAnalysisResult {
   overallScore: number;
   platformScores: {
-    googleAIO: number;
+    googleAI: number;
     chatGPT: number;
     perplexity: number;
     claude: number;
@@ -838,16 +838,16 @@ export class ContentPipeline {
   }
 
   // ============================================
-  // AIO (AI OPTIMIZATION) METHODS
+  // GEO (GENERATIVE ENGINE OPTIMIZATION) METHODS
   // ============================================
 
   /**
    * Optimize content for AI visibility
    */
-  async optimizeForAIO(
+  async optimizeForGEO(
     content: string,
     keyword: string,
-    mode: "seo" | "aio" | "balanced" = "balanced"
+    mode: "seo" | "geo" | "balanced" = "balanced"
   ): Promise<{
     optimizedContent: string;
     usage: { costCents: number };
@@ -856,7 +856,7 @@ export class ContentPipeline {
       throw new Error("AI client not configured");
     }
 
-    const prompt = PROMPTS.optimizeForAIO(content, keyword, mode);
+    const prompt = PROMPTS.optimizeForGEO(content, keyword, mode);
     
     const response = await this.client.chat(
       [{ role: "user", content: prompt.user }],
@@ -871,9 +871,9 @@ export class ContentPipeline {
   }
 
   /**
-   * Generate AIO-optimized outline
+   * Generate GEO-optimized outline
    */
-  async generateAIOOutline(
+  async generateGEOOutline(
     keyword: string,
     serpResults: Array<{ title: string; snippet: string }>,
     targetWordCount: number = 2000
@@ -891,7 +891,7 @@ export class ContentPipeline {
       throw new Error("AI client not configured");
     }
 
-    const prompt = PROMPTS.generateAIOOutline(keyword, serpResults, targetWordCount);
+    const prompt = PROMPTS.generateGEOOutline(keyword, serpResults, targetWordCount);
     
     const response = await this.client.chat(
       [{ role: "user", content: prompt.user }],
@@ -899,7 +899,7 @@ export class ContentPipeline {
       { model: "sonnet", maxTokens: 4096 }
     );
 
-    type AIOOutline = ContentOutline & {
+    type GEOOutline = ContentOutline & {
       keyTakeaways?: string[];
       definitions?: string[];
       statistics?: string[];
@@ -907,12 +907,12 @@ export class ContentPipeline {
       schemaTypes?: string[];
     };
 
-    let outline: AIOOutline;
+    let outline: GEOOutline;
     try {
-      outline = this.parseJSON<AIOOutline>(response.content);
+      outline = this.parseJSON<GEOOutline>(response.content);
     } catch (parseError) {
       // Fallback: create a basic outline if parsing fails
-      console.warn("[Content Pipeline] AIO outline parse failed, using fallback:", parseError);
+      console.warn("[Content Pipeline] GEO outline parse failed, using fallback:", parseError);
       const capitalizedKeyword = keyword.charAt(0).toUpperCase() + keyword.slice(1);
       outline = {
         title: `The Complete Guide to ${capitalizedKeyword}`,
@@ -1031,20 +1031,20 @@ export class ContentPipeline {
   }
 
   /**
-   * Analyze content for AIO readiness
+   * Analyze content for GEO readiness
    */
-  async analyzeAIOReadiness(
+  async analyzeGEOReadiness(
     content: string,
     keyword: string
   ): Promise<{
-    analysis: AIOAnalysisResult;
+    analysis: GEOAnalysisResult;
     usage: { costCents: number };
   }> {
     if (!this.isReady()) {
       throw new Error("AI client not configured");
     }
 
-    const prompt = PROMPTS.analyzeAIOReadiness(content, keyword);
+    const prompt = PROMPTS.analyzeGEOReadiness(content, keyword);
     
     const response = await this.client.chat(
       [{ role: "user", content: prompt.user }],
@@ -1052,7 +1052,7 @@ export class ContentPipeline {
       { model: "sonnet", maxTokens: 2048 }
     );
 
-    const analysis = this.parseJSON<AIOAnalysisResult>(response.content);
+    const analysis = this.parseJSON<GEOAnalysisResult>(response.content);
 
     return {
       analysis,
@@ -1061,9 +1061,9 @@ export class ContentPipeline {
   }
 
   /**
-   * Full AIO content generation pipeline
+   * Full GEO content generation pipeline
    */
-  async generateAIOContent(
+  async generateGEOContent(
     keyword: string,
     serpResults: Array<{ title: string; snippet: string }>,
     options: PipelineOptions = {}
@@ -1071,8 +1071,8 @@ export class ContentPipeline {
     const tracker = createUsageTracker();
     const targetWordCount = options.targetWordCount || 2000;
 
-    // Step 1: Generate AIO-optimized outline
-    const { outline, usage: outlineUsage } = await this.generateAIOOutline(
+    // Step 1: Generate GEO-optimized outline
+    const { outline, usage: outlineUsage } = await this.generateGEOOutline(
       keyword,
       serpResults,
       targetWordCount
@@ -1080,7 +1080,7 @@ export class ContentPipeline {
 
     recordUsage(
       tracker,
-      "aio_outline",
+      "geo_outline",
       "sonnet",
       0,
       0,
@@ -1096,19 +1096,19 @@ export class ContentPipeline {
     // Update usage
     result.usage.totalCostCents += outlineUsage.costCents;
 
-    // Step 3: Optimize for AIO if requested
-    if (options.optimizationMode === "aio" || options.optimizationMode === "balanced") {
-      const { optimizedContent, usage: aioUsage } = await this.optimizeForAIO(
+    // Step 3: Optimize for GEO if requested
+    if (options.optimizationMode === "geo" || options.optimizationMode === "balanced") {
+      const { optimizedContent, usage: geoUsage } = await this.optimizeForGEO(
         result.body,
         keyword,
         options.optimizationMode
       );
       result.body = optimizedContent;
-      result.usage.totalCostCents += aioUsage.costCents;
+      result.usage.totalCostCents += geoUsage.costCents;
       result.usage.steps.push({
-        step: "aio_optimization",
+        step: "geo_optimization",
         model: "sonnet",
-        costCents: aioUsage.costCents,
+        costCents: geoUsage.costCents,
       });
     }
 

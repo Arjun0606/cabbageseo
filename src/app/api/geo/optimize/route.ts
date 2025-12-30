@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case "optimize":
         // Full AIO optimization
-        result = await contentPipeline.optimizeForAIO(
+        result = await contentPipeline.optimizeForGEO(
           content,
           keyword || "general",
           mode as "seo" | "aio" | "balanced"
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
       case "analyze":
         // Analyze AIO readiness
-        result = await contentPipeline.analyzeAIOReadiness(
+        result = await contentPipeline.analyzeGEOReadiness(
           content,
           keyword || "general"
         );
