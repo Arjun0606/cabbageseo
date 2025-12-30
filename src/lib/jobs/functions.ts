@@ -751,6 +751,130 @@ export const scheduledDailyAnalytics = inngest.createFunction(
 );
 
 // ============================================
+// WEEKLY CONTENT GENERATION (SEObot-style autopilot)
+// ============================================
+
+export const scheduledWeeklyContent = inngest.createFunction(
+  {
+    id: "scheduled-weekly-content",
+    name: "Weekly Content Generation",
+  },
+  { cron: "0 9 * * 1" }, // Every Monday at 9 AM
+  async ({ step }) => {
+    // Get all sites with autopilot enabled
+    const sites = await step.run("get-autopilot-sites", async () => {
+      const supabase = createServiceClient();
+      const { data } = await (supabase as any)
+        .from("sites")
+        .select("id, organization_id, domain, url")
+        .eq("autopilot_enabled", true)
+        .eq("status", "active");
+      return data || [];
+    });
+
+    const results = [];
+
+    for (const site of sites) {
+      // Step 1: Get a keyword to write about
+      const keyword = await step.run(`get-keyword-${site.id}`, async () => {
+        const supabase = createServiceClient();
+        // Get an unused keyword with good potential
+        const { data } = await (supabase as any)
+          .from("keywords")
+          .select("id, keyword, volume, difficulty")
+          .eq("site_id", site.id)
+          .eq("status", "discovered")
+          .order("volume", { ascending: false })
+          .limit(1)
+          .single();
+        return data;
+      });
+
+      if (!keyword) {
+        results.push({ siteId: site.id, skipped: true, reason: "No keywords available" });
+        continue;
+      }
+
+      // Step 2: Generate content
+      const content = await step.run(`generate-${site.id}`, async () => {
+        // Use OpenAI to generate content
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) return null;
+
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            max_tokens: 3000,
+            messages: [
+              {
+                role: "system",
+                content: "You are an SEO content writer. Write comprehensive, well-structured articles that are optimized for both search engines and AI platforms like ChatGPT and Perplexity."
+              },
+              {
+                role: "user",
+                content: `Write a 1500-word article about "${keyword.keyword}" for the website ${site.domain}. Include an introduction, 3-4 main sections with H2 headings, practical tips, and a conclusion. Make it optimized for AI visibility.`
+              }
+            ]
+          }),
+        });
+
+        const data = await response.json();
+        return data.choices?.[0]?.message?.content || null;
+      });
+
+      if (!content) {
+        results.push({ siteId: site.id, skipped: true, reason: "Content generation failed" });
+        continue;
+      }
+
+      // Step 3: Save content to database
+      await step.run(`save-${site.id}`, async () => {
+        const supabase = createServiceClient();
+        
+        // Create content record
+        await (supabase as any).from("content").insert({
+          site_id: site.id,
+          title: `Guide to ${keyword.keyword}`,
+          slug: keyword.keyword.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+          body: content,
+          meta_title: `${keyword.keyword} - Complete Guide`,
+          meta_description: `Learn everything about ${keyword.keyword}. Expert tips and strategies.`,
+          keyword: keyword.keyword,
+          word_count: content.split(/\s+/).length,
+          status: "draft",
+          content_type: "article",
+          aio_optimized: true,
+        });
+
+        // Mark keyword as used
+        await (supabase as any)
+          .from("keywords")
+          .update({ status: "writing" })
+          .eq("id", keyword.id);
+      });
+
+      results.push({ 
+        siteId: site.id, 
+        success: true, 
+        keyword: keyword.keyword,
+        wordCount: content.split(/\s+/).length 
+      });
+    }
+
+    return { 
+      processed: sites.length, 
+      generated: results.filter(r => r.success).length,
+      results 
+    };
+  }
+);
+
+// ============================================
 // EXPORT ALL FUNCTIONS
 // ============================================
 
@@ -764,5 +888,6 @@ export const functions = [
   runAutopilot,
   scheduledWeeklyCrawl,
   scheduledDailyAnalytics,
+  scheduledWeeklyContent,  // NEW: SEObot-style weekly content
 ];
 
