@@ -124,45 +124,51 @@ function EmptyState({ onAddSite }: { onAddSite: () => void }) {
 // SITE CARD
 // ============================================
 
-function SiteCard({ site, onDelete }: { site: Site; onDelete: () => void }) {
+function SiteCard({ site, onDelete, isDeleting }: { site: Site; onDelete: () => void; isDeleting: boolean }) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   return (
-    <Card className="hover:shadow-md transition-shadow hover:border-primary/50 cursor-pointer group">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <Link href={`/sites/${site.id}`} className="flex items-center gap-3 flex-1">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-              <Globe className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-lg group-hover:text-primary transition-colors">{site.name}</CardTitle>
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                {site.domain}
-                <ExternalLink className="w-3 h-3" />
-              </span>
-            </div>
-          </Link>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/settings/integrations?site=${site.id}`}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-500" onClick={onDelete}>
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardHeader>
+    <>
+      <Card className="hover:shadow-md transition-shadow hover:border-primary/50 cursor-pointer group">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <Link href={`/sites/${site.id}`} className="flex items-center gap-3 flex-1">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <Globe className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg group-hover:text-primary transition-colors">{site.name}</CardTitle>
+                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                  {site.domain}
+                  <ExternalLink className="w-3 h-3" />
+                </span>
+              </div>
+            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/settings/integrations?site=${site.id}`}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="text-red-500 focus:text-red-500" 
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Site
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardHeader>
       <CardContent className="space-y-4">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 text-center">
@@ -203,6 +209,65 @@ function SiteCard({ site, onDelete }: { site: Site; onDelete: () => void }) {
         </div>
       </CardContent>
     </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-500">
+              <Trash2 className="w-5 h-5" />
+              Delete Site
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong>{site.domain}</strong>? This will permanently remove:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-orange-500" />
+                All SEO audit data and issues
+              </li>
+              <li className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-orange-500" />
+                All keyword research and rankings
+              </li>
+              <li className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-orange-500" />
+                All generated content for this site
+              </li>
+              <li className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-orange-500" />
+                All GEO analysis and recommendations
+              </li>
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDeleteConfirm(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={() => {
+                onDelete();
+                setShowDeleteConfirm(false);
+              }}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4 mr-2" />
+              )}
+              Delete Forever
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -416,9 +481,10 @@ export default function SitesPage() {
                 key={site.id}
                 site={site}
                 onDelete={() => deleteMutation.mutate(site.id)}
+                isDeleting={deleteMutation.isPending}
               />
             ))}
-              </div>
+          </div>
         </>
       )}
     </div>
