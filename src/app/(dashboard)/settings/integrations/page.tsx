@@ -75,7 +75,7 @@ const PUBLISH_INTEGRATIONS = [
     fields: [
       { key: "siteUrl", label: "Your WordPress URL", placeholder: "https://blog.yourapp.com", type: "url" },
       { key: "username", label: "Username", placeholder: "admin", type: "text" },
-      { key: "password", label: "Application Password", placeholder: "xxxx xxxx xxxx xxxx", type: "password", hint: "Generate in WordPress → Users → Application Passwords" },
+      { key: "applicationPassword", label: "Application Password", placeholder: "xxxx xxxx xxxx xxxx", type: "password", hint: "Generate in WordPress → Users → Application Passwords" },
     ],
   },
   {
@@ -90,7 +90,8 @@ const PUBLISH_INTEGRATIONS = [
       </div>
     ),
     fields: [
-      { key: "apiToken", label: "API Token", placeholder: "Your Webflow API token", type: "password", hint: "Get from Webflow → Account Settings → API Access" },
+      { key: "accessToken", label: "API Token", placeholder: "Your Webflow API token", type: "password", hint: "Get from Webflow → Account Settings → API Access" },
+      { key: "collectionId", label: "Collection ID", placeholder: "collection_xxxxx", type: "text", hint: "ID of the CMS collection to publish to" },
     ],
   },
   {
@@ -107,6 +108,85 @@ const PUBLISH_INTEGRATIONS = [
     fields: [
       { key: "shopDomain", label: "Shop Domain", placeholder: "your-store.myshopify.com", type: "text" },
       { key: "accessToken", label: "Admin API Token", placeholder: "shpat_xxxxx", type: "password", hint: "Create in Shopify Admin → Settings → Apps → Develop apps" },
+    ],
+  },
+  {
+    id: "ghost",
+    type: "ghost",
+    name: "Ghost",
+    description: "Modern publishing platform",
+    benefit: "Clean, fast blog publishing",
+    icon: (
+      <div className="w-10 h-10 rounded-lg bg-gray-500/20 flex items-center justify-center">
+        <span className="text-xl">👻</span>
+      </div>
+    ),
+    fields: [
+      { key: "apiUrl", label: "Ghost URL", placeholder: "https://yourblog.ghost.io", type: "url" },
+      { key: "adminApiKey", label: "Admin API Key", placeholder: "xxxxx:yyyyy", type: "password", hint: "Get from Ghost Admin → Settings → Integrations → Add custom integration" },
+    ],
+  },
+  {
+    id: "notion",
+    type: "notion",
+    name: "Notion",
+    description: "Publish to Notion databases",
+    benefit: "Content in your workspace",
+    icon: (
+      <div className="w-10 h-10 rounded-lg bg-neutral-500/20 flex items-center justify-center">
+        <span className="text-xl">📝</span>
+      </div>
+    ),
+    fields: [
+      { key: "integrationToken", label: "Integration Token", placeholder: "secret_xxxxx", type: "password", hint: "Create at notion.so/my-integrations" },
+      { key: "databaseId", label: "Database ID", placeholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", type: "text", hint: "ID of the database to publish to (from URL)" },
+    ],
+  },
+  {
+    id: "hubspot",
+    type: "hubspot",
+    name: "HubSpot",
+    description: "Marketing & CRM blog",
+    benefit: "Integrated marketing content",
+    icon: (
+      <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
+        <span className="text-xl">🧡</span>
+      </div>
+    ),
+    fields: [
+      { key: "accessToken", label: "Private App Token", placeholder: "pat-xxxxx", type: "password", hint: "Create in HubSpot → Settings → Integrations → Private Apps" },
+    ],
+  },
+  {
+    id: "framer",
+    type: "framer",
+    name: "Framer",
+    description: "Design-first websites",
+    benefit: "Beautiful blog content",
+    icon: (
+      <div className="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center">
+        <span className="text-xl">🎨</span>
+      </div>
+    ),
+    fields: [
+      { key: "projectId", label: "Project ID", placeholder: "Your Framer project ID", type: "text" },
+      { key: "accessToken", label: "API Token", placeholder: "Your Framer API token", type: "password", hint: "Get from Framer project settings" },
+    ],
+  },
+  {
+    id: "webhook",
+    type: "webhook",
+    name: "Webhooks",
+    description: "Custom integrations",
+    benefit: "Connect to Zapier, Make, n8n",
+    icon: (
+      <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+        <span className="text-xl">🔗</span>
+      </div>
+    ),
+    fields: [
+      { key: "webhookUrl", label: "Webhook URL", placeholder: "https://hooks.zapier.com/...", type: "url" },
+      { key: "secretKey", label: "Secret Key (Optional)", placeholder: "For signature verification", type: "password", hint: "We'll sign payloads with HMAC-SHA256" },
     ],
   },
 ];

@@ -27,16 +27,21 @@ import { createClient } from "@/lib/supabase/client";
 // LANDING PAGE - Honest, AIO-first
 // ============================================
 
-// Only list integrations that are actually implemented
+// All CMS integrations - full suite like SEObot
 const cmsIntegrations = [
-  { name: "WordPress", icon: "🔵", description: "Publish to your WordPress blog" },
-  { name: "Webflow", icon: "🟣", description: "Sync with Webflow CMS" },
-  { name: "Shopify", icon: "🛒", description: "Create Shopify blog articles" },
+  { name: "WordPress", icon: "🔵" },
+  { name: "Webflow", icon: "🟣" },
+  { name: "Shopify", icon: "🛒" },
+  { name: "Ghost", icon: "👻" },
+  { name: "Notion", icon: "📝" },
+  { name: "HubSpot", icon: "🧡" },
+  { name: "Framer", icon: "🎨" },
+  { name: "Webhooks", icon: "🔗" },
 ];
 
 const analyticsIntegrations = [
-  { name: "Google Search Console", icon: "🔍", description: "Real ranking data" },
-  { name: "Google Analytics 4", icon: "📊", description: "Traffic analytics" },
+  { name: "Google Search Console", icon: "🔍" },
+  { name: "Google Analytics 4", icon: "📊" },
 ];
 
 export default function LandingPage() {
@@ -333,54 +338,38 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Integrations - Only real ones */}
+      {/* Integrations - Full Suite */}
       <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Integrations</h2>
-            <p className="text-zinc-400">Connect your tools for seamless workflows</p>
+            <h2 className="text-3xl font-bold text-white mb-4">Auto-Sync with Your CMS</h2>
+            <p className="text-zinc-400">One-click publishing to 8 platforms</p>
           </div>
 
-          {/* CMS Publishing */}
-          <div className="mb-8">
-            <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4 text-center">
-              Publish Content
-            </h3>
-            <div className="flex flex-wrap justify-center gap-4">
-              {cmsIntegrations.map((int, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 px-5 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800"
-                >
-                  <span className="text-xl">{int.icon}</span>
-                  <div>
-                    <span className="text-zinc-200 font-medium">{int.name}</span>
-                    <p className="text-xs text-zinc-500">{int.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+          {/* CMS Grid */}
+          <div className="grid grid-cols-4 md:grid-cols-8 gap-4 mb-8">
+            {cmsIntegrations.map((int, i) => (
+              <div
+                key={i}
+                className="flex flex-col items-center gap-2 p-4 bg-zinc-900/50 rounded-lg border border-zinc-800 hover:border-emerald-500/50 transition-colors"
+              >
+                <span className="text-2xl">{int.icon}</span>
+                <span className="text-xs text-zinc-400 text-center">{int.name}</span>
+              </div>
+            ))}
           </div>
 
-          {/* Analytics */}
-          <div>
-            <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4 text-center">
-              Analytics
-            </h3>
-            <div className="flex flex-wrap justify-center gap-4">
-              {analyticsIntegrations.map((int, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 px-5 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800"
-                >
-                  <span className="text-xl">{int.icon}</span>
-                  <div>
-                    <span className="text-zinc-200 font-medium">{int.name}</span>
-                    <p className="text-xs text-zinc-500">{int.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+          {/* Analytics Row */}
+          <div className="flex justify-center gap-4">
+            {analyticsIntegrations.map((int, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 px-4 py-2 bg-zinc-900/50 rounded-lg border border-zinc-800"
+              >
+                <span className="text-lg">{int.icon}</span>
+                <span className="text-sm text-zinc-300">{int.name}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>

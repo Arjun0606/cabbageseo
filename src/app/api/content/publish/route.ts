@@ -12,6 +12,11 @@ import { requireSubscription } from "@/lib/api/require-subscription";
 import { createWordPressClient } from "@/lib/integrations/wordpress/client";
 import { createWebflowClient } from "@/lib/integrations/webflow/client";
 import { createShopifyClient } from "@/lib/integrations/shopify/client";
+import { createGhostClient } from "@/lib/integrations/ghost/client";
+import { createNotionClient } from "@/lib/integrations/notion/client";
+import { createHubSpotClient } from "@/lib/integrations/hubspot/client";
+import { createFramerClient } from "@/lib/integrations/framer/client";
+import { createWebhookClient } from "@/lib/integrations/webhooks/client";
 import { decryptCredentials } from "@/lib/security/encryption";
 
 interface IntegrationRow {
@@ -272,6 +277,176 @@ export async function POST(request: NextRequest) {
           postId: shopifyResult.articleId,
           url: shopifyResult.url,
           error: shopifyResult.error,
+        };
+        break;
+      }
+
+      case "ghost": {
+        const ghost = createGhostClient({
+          apiUrl: credentials.apiUrl,
+          adminApiKey: credentials.adminApiKey,
+        });
+
+        const connected = await ghost.testConnection();
+        if (!connected) {
+          return NextResponse.json({ 
+            error: "Failed to connect to Ghost. Please check your credentials.",
+          }, { status: 401 });
+        }
+
+        const ghostResult = await ghost.publishWithSEO({
+          title: publishTitle,
+          content: publishContent,
+          slug: publishSlug,
+          excerpt: publishMetaDescription,
+          status: status === "publish" ? "published" : "draft",
+          tags: tags || [],
+          seoMeta: {
+            title: publishMetaTitle,
+            description: publishMetaDescription,
+          },
+        });
+        
+        result = {
+          success: ghostResult.success,
+          postId: ghostResult.postId,
+          url: ghostResult.url,
+          error: ghostResult.error,
+        };
+        break;
+      }
+
+      case "notion": {
+        const notion = createNotionClient({
+          integrationToken: credentials.integrationToken,
+          databaseId: credentials.databaseId,
+        });
+
+        const connected = await notion.testConnection();
+        if (!connected) {
+          return NextResponse.json({ 
+            error: "Failed to connect to Notion. Please check your credentials.",
+          }, { status: 401 });
+        }
+
+        const notionResult = await notion.publishWithSEO({
+          title: publishTitle,
+          content: publishContent,
+          slug: publishSlug,
+          excerpt: publishMetaDescription,
+          status: status === "publish" ? "published" : "draft",
+          tags: tags || [],
+          seoMeta: {
+            title: publishMetaTitle,
+            description: publishMetaDescription,
+          },
+        });
+        
+        result = {
+          success: notionResult.success,
+          postId: notionResult.pageId,
+          url: notionResult.url,
+          error: notionResult.error,
+        };
+        break;
+      }
+
+      case "hubspot": {
+        const hubspot = createHubSpotClient({
+          accessToken: credentials.accessToken,
+        });
+
+        const connected = await hubspot.testConnection();
+        if (!connected) {
+          return NextResponse.json({ 
+            error: "Failed to connect to HubSpot. Please check your credentials.",
+          }, { status: 401 });
+        }
+
+        const hubspotResult = await hubspot.publishWithSEO({
+          title: publishTitle,
+          content: publishContent,
+          slug: publishSlug,
+          excerpt: publishMetaDescription,
+          status: status === "publish" ? "published" : "draft",
+          seoMeta: {
+            title: publishMetaTitle,
+            description: publishMetaDescription,
+          },
+        });
+        
+        result = {
+          success: hubspotResult.success,
+          postId: hubspotResult.postId,
+          url: hubspotResult.url,
+          error: hubspotResult.error,
+        };
+        break;
+      }
+
+      case "framer": {
+        const framer = createFramerClient({
+          projectId: credentials.projectId,
+          accessToken: credentials.accessToken,
+        });
+
+        const connected = await framer.testConnection();
+        if (!connected) {
+          return NextResponse.json({ 
+            error: "Failed to connect to Framer. Please check your credentials.",
+          }, { status: 401 });
+        }
+
+        const framerResult = await framer.publishWithSEO({
+          title: publishTitle,
+          content: publishContent,
+          slug: publishSlug,
+          excerpt: publishMetaDescription,
+          status: status === "publish" ? "published" : "draft",
+          seoMeta: {
+            title: publishMetaTitle,
+            description: publishMetaDescription,
+          },
+        });
+        
+        result = {
+          success: framerResult.success,
+          postId: framerResult.itemId,
+          url: framerResult.url,
+          error: framerResult.error,
+        };
+        break;
+      }
+
+      case "webhook": {
+        const webhook = createWebhookClient({
+          webhookUrl: credentials.webhookUrl,
+          secretKey: credentials.secretKey,
+        });
+
+        const connected = await webhook.testConnection();
+        if (!connected) {
+          return NextResponse.json({ 
+            error: "Failed to connect to webhook endpoint. Please check your URL.",
+          }, { status: 401 });
+        }
+
+        const webhookResult = await webhook.publishContent({
+          title: publishTitle,
+          content: publishContent,
+          slug: publishSlug,
+          excerpt: publishMetaDescription,
+          status: status === "publish" ? "published" : "draft",
+          tags: tags || [],
+          seoMeta: {
+            title: publishMetaTitle,
+            description: publishMetaDescription,
+          },
+        });
+        
+        result = {
+          success: webhookResult.success,
+          error: webhookResult.error,
         };
         break;
       }

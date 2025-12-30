@@ -2,7 +2,7 @@
  * CabbageSEO Integration Hub
  * 
  * Centralizes all external service integrations.
- * Each integration is available both as a singleton and as a class for custom configurations.
+ * All CMS integrations SEObot has + more for AIO focus.
  */
 
 // AI Providers
@@ -19,35 +19,66 @@ export { SurferClient, surfer } from "./surfer/client";
 // Analytics
 export { GSCClient, gsc } from "./gsc/client";
 
-// CMS / Publishing
+// CMS / Publishing - Full suite like SEObot
 export { WordPressClient, createWordPressClient } from "./wordpress/client";
 export { WebflowClient, createWebflowClient } from "./webflow/client";
 export { ShopifyClient, createShopifyClient } from "./shopify/client";
+export { GhostClient, createGhostClient } from "./ghost/client";
+export { NotionClient, createNotionClient } from "./notion/client";
+export { HubSpotClient, createHubSpotClient } from "./hubspot/client";
+export { FramerClient, createFramerClient } from "./framer/client";
+export { WebhookClient, createWebhookClient, WEBHOOK_TEMPLATES } from "./webhooks/client";
 
-// Outreach: No external tools needed!
-// We use Claude + scraping + email patterns (see src/lib/seo/diy-outreach.ts)
+// Integration type definitions
+export type CMSIntegrationType = 
+  | "wordpress"
+  | "webflow"
+  | "shopify"
+  | "ghost"
+  | "notion"
+  | "hubspot"
+  | "framer"
+  | "webhook";
 
-// Integration status checker
-export type IntegrationType = 
-  | "anthropic"
+export type AnalyticsIntegrationType =
+  | "gsc"
+  | "ga4";
+
+export type AIIntegrationType =
   | "openai"
+  | "anthropic";
+
+export type IntegrationType = 
+  | CMSIntegrationType
+  | AnalyticsIntegrationType
+  | AIIntegrationType
   | "dataforseo"
   | "serpapi"
   | "ahrefs"
-  | "surfer"
-  | "gsc"
-  | "ga4"
-  | "wordpress"
-  | "webflow"
-  | "shopify";
+  | "surfer";
 
 export interface IntegrationStatus {
   id: IntegrationType;
   name: string;
   configured: boolean;
+  category: "cms" | "analytics" | "ai" | "seo";
   lastVerified?: Date;
   error?: string;
 }
+
+/**
+ * All available CMS integrations
+ */
+export const CMS_INTEGRATIONS = [
+  { id: "wordpress", name: "WordPress", icon: "🔵", description: "Most popular CMS for SaaS blogs" },
+  { id: "webflow", name: "Webflow", icon: "🟣", description: "Popular for SaaS landing pages" },
+  { id: "shopify", name: "Shopify", icon: "🛒", description: "E-commerce & marketplace blogs" },
+  { id: "ghost", name: "Ghost", icon: "👻", description: "Modern publishing platform" },
+  { id: "notion", name: "Notion", icon: "📝", description: "Publish to Notion databases" },
+  { id: "hubspot", name: "HubSpot", icon: "🧡", description: "Marketing & CRM blog" },
+  { id: "framer", name: "Framer", icon: "🎨", description: "Design-first websites" },
+  { id: "webhook", name: "Webhooks", icon: "🔗", description: "Custom integrations (Zapier, Make, n8n)" },
+] as const;
 
 /**
  * Check status of all integrations
@@ -55,18 +86,20 @@ export interface IntegrationStatus {
 export async function checkAllIntegrations(): Promise<IntegrationStatus[]> {
   const statuses: IntegrationStatus[] = [];
 
-  // AI - Anthropic (Claude)
-  statuses.push({
-    id: "anthropic",
-    name: "Anthropic (Claude)",
-    configured: Boolean(process.env.ANTHROPIC_API_KEY),
-  });
-
-  // AI - OpenAI (Fallback)
+  // AI - OpenAI (Primary)
   statuses.push({
     id: "openai",
     name: "OpenAI",
     configured: Boolean(process.env.OPENAI_API_KEY),
+    category: "ai",
+  });
+
+  // AI - Anthropic (Fallback)
+  statuses.push({
+    id: "anthropic",
+    name: "Anthropic (Claude)",
+    configured: Boolean(process.env.ANTHROPIC_API_KEY),
+    category: "ai",
   });
 
   // SEO Data - DataForSEO
@@ -74,6 +107,7 @@ export async function checkAllIntegrations(): Promise<IntegrationStatus[]> {
     id: "dataforseo",
     name: "DataForSEO",
     configured: Boolean(process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD),
+    category: "seo",
   });
 
   // SEO Data - SerpAPI
@@ -81,6 +115,7 @@ export async function checkAllIntegrations(): Promise<IntegrationStatus[]> {
     id: "serpapi",
     name: "SerpAPI",
     configured: Boolean(process.env.SERPAPI_KEY),
+    category: "seo",
   });
 
   // SEO Data - Ahrefs
@@ -88,6 +123,7 @@ export async function checkAllIntegrations(): Promise<IntegrationStatus[]> {
     id: "ahrefs",
     name: "Ahrefs",
     configured: Boolean(process.env.AHREFS_API_KEY),
+    category: "seo",
   });
 
   // Content Optimization - Surfer
@@ -95,6 +131,7 @@ export async function checkAllIntegrations(): Promise<IntegrationStatus[]> {
     id: "surfer",
     name: "Surfer SEO",
     configured: Boolean(process.env.SURFER_API_KEY),
+    category: "seo",
   });
 
   // Analytics - GSC
@@ -102,6 +139,7 @@ export async function checkAllIntegrations(): Promise<IntegrationStatus[]> {
     id: "gsc",
     name: "Google Search Console",
     configured: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+    category: "analytics",
   });
 
   // Analytics - GA4
@@ -109,24 +147,11 @@ export async function checkAllIntegrations(): Promise<IntegrationStatus[]> {
     id: "ga4",
     name: "Google Analytics 4",
     configured: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+    category: "analytics",
   });
 
-  // CMS - Webflow
-  statuses.push({
-    id: "webflow",
-    name: "Webflow",
-    configured: Boolean(process.env.WEBFLOW_API_KEY),
-  });
-
-  // CMS - Shopify
-  statuses.push({
-    id: "shopify",
-    name: "Shopify",
-    configured: Boolean(process.env.SHOPIFY_STORE_URL && process.env.SHOPIFY_ACCESS_TOKEN),
-  });
-
-  // Outreach: Using Claude AI (no external service needed)
-  // See src/lib/seo/diy-outreach.ts
+  // CMS integrations are user-configured, not env-based
+  // They're stored in the integrations table per organization
 
   return statuses;
 }
@@ -147,14 +172,14 @@ export function getSEODataProvider(): "dataforseo" | "serpapi" | null {
 
 /**
  * Get available AI provider
- * Prefers Anthropic (Claude), falls back to OpenAI
+ * OpenAI is now primary for reliability
  */
-export function getAIProvider(): "anthropic" | "openai" | null {
-  if (process.env.ANTHROPIC_API_KEY) {
-    return "anthropic";
-  }
+export function getAIProvider(): "openai" | "anthropic" | null {
   if (process.env.OPENAI_API_KEY) {
     return "openai";
+  }
+  if (process.env.ANTHROPIC_API_KEY) {
+    return "anthropic";
   }
   return null;
 }
