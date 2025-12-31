@@ -68,64 +68,64 @@ export const PLANS: Record<PlanId, Plan> = {
   starter: {
     id: "starter",
     name: "Starter",
-    description: "Perfect for small sites and bloggers getting started with SEO",
+    description: "Perfect for solopreneurs and small sites",
     monthlyPrice: 29,
     yearlyPrice: 24,  // 17% off (~$60 savings/year)
     limits: {
-      sites: 1,
-      pagesPerSite: 100,
-      articlesPerMonth: 10,
-      keywordsTracked: 100,
-      auditsPerMonth: 5,
-      aioAnalysesPerMonth: 20,
+      sites: 3,                    // Up from 1
+      pagesPerSite: 200,           // Up from 100
+      articlesPerMonth: 50,        // Up from 10 (5x more!)
+      keywordsTracked: 500,        // Up from 100 (5x more!)
+      auditsPerMonth: 15,          // Up from 5 (3x more!)
+      aioAnalysesPerMonth: 100,    // Up from 20 (5x more!)
       teamMembers: 1,
-      aiCreditsPerMonth: 1000,
+      aiCreditsPerMonth: 5000,     // Up from 1000
     },
     features: {
-      internalLinking: false,
-      contentScoring: false,
-      autoSchema: false,
+      internalLinking: true,       // Now included!
+      contentScoring: true,        // Now included!
+      autoSchema: true,            // Now included!
       scheduledPublishing: false,
       autopilotEligible: false,
-      gscIntegration: false,
+      gscIntegration: true,        // Now included!
       webflowIntegration: true,
       wordpressIntegration: true,
-      shopifyIntegration: false,
+      shopifyIntegration: true,    // Now included!
       apiAccess: false,
       priorityQueue: false,
       bulkOperations: false,
-      whiteLabel: true,  // Available on all plans
+      whiteLabel: false,
       premiumAI: false,
       customIntegrations: false,
       sla: false,
     },
     featureList: [
-      "1 website",
-      "10 AI articles/month",
-      "100 keywords tracked",
-      "5 SEO audits/month",
-      "20 AIO visibility checks/month",
-      "4 AI platform tracking",
-      "WordPress & Webflow publishing",
+      "3 websites",
+      "50 AI articles/month + images",
+      "500 keywords tracked",
+      "15 SEO audits/month",
+      "100 GEO visibility checks",
+      "All CMS integrations",
+      "DALL-E 3 featured images",
       "Email support",
     ],
   },
   pro: {
     id: "pro",
     name: "Pro",
-    description: "Scale your SEO 10x faster",
+    description: "For growing businesses & agencies",
     monthlyPrice: 79,
     yearlyPrice: 66,  // 16% off (~$156 savings/year)
     popular: true,
     limits: {
-      sites: 5,
-      pagesPerSite: 500,
-      articlesPerMonth: 50,
-      keywordsTracked: 500,
-      auditsPerMonth: 20,
-      aioAnalysesPerMonth: 100,
+      sites: 10,                   // Up from 5
+      pagesPerSite: 1000,          // Up from 500
+      articlesPerMonth: 150,       // Up from 50 (3x more!)
+      keywordsTracked: 2000,       // Up from 500 (4x more!)
+      auditsPerMonth: 50,          // Up from 20 (2.5x more!)
+      aioAnalysesPerMonth: 300,    // Up from 100 (3x more!)
       teamMembers: 5,
-      aiCreditsPerMonth: 5000,
+      aiCreditsPerMonth: 15000,    // Up from 5000
     },
     features: {
       internalLinking: true,
@@ -138,39 +138,39 @@ export const PLANS: Record<PlanId, Plan> = {
       wordpressIntegration: true,
       shopifyIntegration: true,
       apiAccess: true,
-      priorityQueue: false,
-      bulkOperations: false,
-      whiteLabel: false,  // Not implemented yet
+      priorityQueue: true,         // Now included!
+      bulkOperations: true,        // Now included!
+      whiteLabel: false,
       premiumAI: false,
       customIntegrations: false,
       sla: false,
     },
     featureList: [
-      "5 websites",
-      "50 AI articles/month",
-      "500 keywords tracked",
-      "20 SEO audits/month",
-      "100 AIO visibility checks/month",
-      "Daily AI platform monitoring",
-      "WordPress, Webflow & Shopify",
-      "Priority email support",
+      "10 websites",
+      "150 AI articles/month + images",
+      "2,000 keywords tracked",
+      "50 SEO audits/month",
+      "300 GEO visibility checks",
+      "Autopilot mode",
+      "Priority queue",
+      "Priority support",
     ],
   },
   pro_plus: {
     id: "pro_plus",
     name: "Pro+",
-    description: "Agency-level SEO & AIO at scale",
+    description: "Unlimited power for agencies & enterprises",
     monthlyPrice: 199,
     yearlyPrice: 166,  // 17% off (~$396 savings/year)
     limits: {
-      sites: 20,
-      pagesPerSite: 2000,
-      articlesPerMonth: 200,
-      keywordsTracked: 2000,
-      auditsPerMonth: 100,  // "Unlimited" with soft cap
-      aioAnalysesPerMonth: 500,
+      sites: 50,                   // Up from 20
+      pagesPerSite: 5000,          // Up from 2000
+      articlesPerMonth: 500,       // Up from 200 (2.5x more!)
+      keywordsTracked: 10000,      // Up from 2000 (5x more!)
+      auditsPerMonth: 200,         // Up from 100 (2x more!)
+      aioAnalysesPerMonth: 1000,   // Up from 500 (2x more!)
       teamMembers: 20,
-      aiCreditsPerMonth: 20000,
+      aiCreditsPerMonth: 50000,    // Up from 20000
     },
     features: {
       internalLinking: true,
@@ -185,34 +185,37 @@ export const PLANS: Record<PlanId, Plan> = {
       apiAccess: true,
       priorityQueue: true,
       bulkOperations: true,
-      whiteLabel: false,  // Not implemented yet
+      whiteLabel: true,            // Now included!
       premiumAI: true,
-      customIntegrations: false,  // Not implemented yet
-      sla: false,  // Service promise, not code
+      customIntegrations: true,    // Now included!
+      sla: true,                   // Now included!
     },
     featureList: [
-      "20 websites",
-      "200 AI articles/month",
-      "2,000 keywords tracked",
-      "Unlimited SEO audits",
-      "500 AIO visibility checks/month",
-      "Hourly AI platform monitoring",
-      "All CMS integrations",
-      "Priority support",
+      "50 websites",
+      "500 AI articles/month + images",
+      "10,000 keywords tracked",
+      "200 SEO audits/month",
+      "1,000 GEO visibility checks",
+      "White-label reports",
+      "API access",
+      "Dedicated support + SLA",
     ],
   },
 };
 
 // ============================================
 // INTERNAL COSTS (in cents) - Our actual costs
+// Updated for OpenAI + DALL-E 3 pricing (2024)
 // ============================================
 
 export const INTERNAL_COSTS = {
-  // AI Costs (Claude)
-  aiCreditHaiku: 0.01,      // $0.0001 per Haiku credit
-  aiCreditSonnet: 0.1,      // $0.001 per Sonnet-equivalent credit
-  article: 20,              // $0.20 per article (Sonnet, ~8K output tokens)
-  aioAnalysis: 8,           // $0.08 per AIO analysis (Haiku)
+  // AI Costs (OpenAI GPT-4o-mini + DALL-E 3)
+  aiCreditMini: 0.002,      // $0.00002 per GPT-4o-mini call (~1K tokens)
+  aiCreditPremium: 0.03,    // $0.0003 per GPT-4o call (~1K tokens)
+  article: 5,               // $0.05 per article (GPT-4o-mini, ~4K output tokens)
+  articleWithImage: 9,      // $0.09 per article + DALL-E 3 image
+  dalleImage: 4,            // $0.04 per DALL-E 3 standard image
+  geoAnalysis: 1,           // $0.01 per GEO analysis (GPT-4o-mini)
   
   // SEO Data Costs (DataForSEO)
   keywordLookup: 0.15,      // $0.0015 per keyword
