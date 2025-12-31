@@ -43,7 +43,7 @@ const plans = [
       { text: "100 GEO visibility checks", included: true, highlight: true },
       { text: "15 SEO audits/month", included: true },
       { text: "All CMS integrations", included: true },
-      { text: "DALL-E 3 featured images", included: true, highlight: true },
+      { text: "AI-generated featured images", included: true, highlight: true },
       { text: "Email support", included: true },
     ],
     cta: "Start Free Trial",
@@ -130,7 +130,7 @@ const faqs = [
   },
   {
     question: "10. What's the 'Export to Cursor' feature?",
-    answer: "This generates a structured markdown report of all your SEO/GEO issues that you can paste directly into Cursor, Claude, or any AI coding assistant. The AI can then help implement the fixes in your codebase. Perfect for developers!",
+    answer: "This generates a structured markdown report of all your SEO/GEO issues that you can paste directly into any AI coding assistant. The AI can then help implement the fixes in your codebase. Perfect for developers!",
   },
   {
     question: "11. What makes GEO different from SEO?",
@@ -225,8 +225,8 @@ export default function PricingPage() {
               </Link>
             </div>
             <div className="flex items-center gap-3">
-              {isLoggedIn ? (
-                <Link href="/dashboard">
+            {isLoggedIn ? (
+              <Link href="/dashboard">
                   <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">
                     Dashboard
                   </Button>
@@ -365,7 +365,7 @@ export default function PricingPage() {
             SEO issues, and recommendations — no signup required.
           </p>
           <Link href="/analyze">
-            <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+            <Button size="lg" variant="outline" className="border-zinc-600 text-white hover:bg-zinc-800">
               Try Free Analysis
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
@@ -416,7 +416,7 @@ export default function PricingPage() {
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
             <Link href="/analyze">
-              <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+              <Button size="lg" variant="outline" className="border-zinc-600 text-white hover:bg-zinc-800">
                   Try Free Analysis
               </Button>
             </Link>

@@ -106,7 +106,7 @@ export const PLANS: Record<PlanId, Plan> = {
       "15 SEO audits/month",
       "100 GEO visibility checks",
       "All CMS integrations",
-      "DALL-E 3 featured images",
+      "AI-generated featured images",
       "Email support",
     ],
   },
@@ -205,17 +205,17 @@ export const PLANS: Record<PlanId, Plan> = {
 
 // ============================================
 // INTERNAL COSTS (in cents) - Our actual costs
-// Updated for OpenAI + DALL-E 3 pricing (2024)
+// Updated pricing (2024)
 // ============================================
 
 export const INTERNAL_COSTS = {
-  // AI Costs (OpenAI GPT-4o-mini + DALL-E 3)
-  aiCreditMini: 0.002,      // $0.00002 per GPT-4o-mini call (~1K tokens)
-  aiCreditPremium: 0.03,    // $0.0003 per GPT-4o call (~1K tokens)
-  article: 5,               // $0.05 per article (GPT-4o-mini, ~4K output tokens)
-  articleWithImage: 9,      // $0.09 per article + DALL-E 3 image
-  dalleImage: 4,            // $0.04 per DALL-E 3 standard image
-  geoAnalysis: 1,           // $0.01 per GEO analysis (GPT-4o-mini)
+  // AI Costs
+  aiCreditMini: 0.002,      // $0.00002 per AI call (~1K tokens)
+  aiCreditPremium: 0.03,    // $0.0003 per premium AI call (~1K tokens)
+  article: 5,               // $0.05 per article (~4K output tokens)
+  articleWithImage: 9,      // $0.09 per article + image
+  aiImage: 4,               // $0.04 per AI-generated image
+  geoAnalysis: 1,           // $0.01 per GEO analysis
   
   // SEO Data Costs (DataForSEO)
   keywordLookup: 0.15,      // $0.0015 per keyword

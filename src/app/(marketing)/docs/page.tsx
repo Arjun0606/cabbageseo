@@ -69,7 +69,7 @@ const quickStartSteps = [
       "Click 'Generate Article' in the sidebar",
       "Choose a keyword or topic relevant to your site",
       "Select optimization mode (GEO-focused, SEO-focused, or Balanced)",
-      "Each article includes DALL-E 3 featured images automatically",
+      "Each article includes AI-generated featured images automatically",
     ],
     icon: Sparkles,
   },
@@ -133,7 +133,7 @@ const featureGuides = [
       },
       {
         title: "Featured Images",
-        content: "Each article automatically generates a DALL-E 3 featured image. The image is optimized for your topic and saved with your content.",
+        content: "Each article automatically generates an AI-powered featured image. The image is optimized for your topic and saved with your content.",
       },
     ],
   },
@@ -177,7 +177,7 @@ const featureGuides = [
       },
       {
         title: "Exporting for Developers",
-        content: "Click 'Export Report' to download a markdown file. This can be pasted directly into Cursor, Claude, or any AI coding assistant to help implement fixes.",
+        content: "Click 'Export Report' to download a markdown file. This can be pasted directly into any AI coding assistant to help implement fixes.",
       },
     ],
   },
@@ -226,7 +226,7 @@ const faqs = [
   },
   {
     question: "What AI models do you use?",
-    answer: "We use OpenAI's GPT-4o-mini for content generation and analysis (fast and cost-effective), and DALL-E 3 for featured image generation. These models are continuously updated to provide the best results.",
+    answer: "We use state-of-the-art AI models for content generation, analysis, and image creation. Our models are continuously updated to provide the best results and stay ahead of the latest advancements.",
   },
   {
     question: "How do I get my content cited by AI?",
@@ -242,7 +242,7 @@ const faqs = [
   },
   {
     question: "How do I export reports for developers?",
-    answer: "On the SEO Audit page, click 'Export Report' to download a markdown file containing all issues and fix recommendations. This file is formatted to be pasted directly into AI coding assistants like Cursor or Claude for implementation help.",
+    answer: "On the SEO Audit page, click 'Export Report' to download a markdown file containing all issues and fix recommendations. This file is formatted to be pasted directly into AI coding assistants for implementation help.",
   },
   {
     question: "Do you support multiple languages?",
@@ -250,7 +250,7 @@ const faqs = [
   },
   {
     question: "What's the difference between each plan?",
-    answer: "Starter ($29/mo): 50 articles, 500 keywords, 3 sites. Pro ($79/mo): 150 articles, 2000 keywords, 10 sites, autopilot mode. Agency ($199/mo): 500 articles, 10000 keywords, 50 sites, API access, white-label. All plans include DALL-E 3 images.",
+    answer: "Starter ($29/mo): 50 articles, 500 keywords, 3 sites. Pro ($79/mo): 150 articles, 2000 keywords, 10 sites, autopilot mode. Agency ($199/mo): 500 articles, 10000 keywords, 50 sites, API access, white-label. All plans include AI-generated images.",
   },
 ];
 
@@ -515,7 +515,7 @@ export default function DocsPage() {
             <h2 className="text-3xl font-bold text-white mb-4">Export for Developers</h2>
             <p className="text-zinc-400 mb-8">
               Every SEO audit can be exported as a structured markdown report. Paste it directly into 
-              Cursor, Claude, or ChatGPT to get implementation help for fixing issues in your codebase.
+              any AI coding assistant to get implementation help for fixing issues in your codebase.
             </p>
             <div className="bg-zinc-800/50 rounded-xl p-6 text-left border border-zinc-700">
               <p className="text-sm text-zinc-400 font-mono mb-2"># Example Export</p>
@@ -559,7 +559,7 @@ export default function DocsPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/analyze">
-                <Button size="lg" variant="outline" className="border-zinc-700 hover:bg-zinc-800">
+                <Button size="lg" variant="outline" className="border-zinc-600 text-white hover:bg-zinc-800">
                   Free URL Analyzer
                 </Button>
               </Link>

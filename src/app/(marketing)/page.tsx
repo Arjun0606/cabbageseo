@@ -169,7 +169,7 @@ export default function LandingPage() {
               </Button>
             </Link>
             <Link href="/analyze">
-              <Button size="lg" variant="outline" className="h-14 px-8 border-zinc-700 text-zinc-300 hover:bg-zinc-800 rounded-xl">
+              <Button size="lg" variant="outline" className="h-14 px-8 border-zinc-600 text-white hover:bg-zinc-800 rounded-xl">
                 Try Free Analysis
               </Button>
             </Link>
@@ -330,7 +330,7 @@ export default function LandingPage() {
               "100% autopilot mode",
               "Fact-checking with source citations",
               "Internal linking automation",
-              "Export to Cursor/Claude",
+              "Export for AI assistants",
               "Technical SEO audit",
               "Keyword research & tracking",
               "CMS one-click publishing",
@@ -421,7 +421,7 @@ export default function LandingPage() {
               </Button>
             </Link>
             <Link href="/analyze">
-              <Button size="lg" variant="outline" className="h-14 px-8 border-zinc-700 text-zinc-300 hover:bg-zinc-800 rounded-xl">
+              <Button size="lg" variant="outline" className="h-14 px-8 border-zinc-600 text-white hover:bg-zinc-800 rounded-xl">
                 Try Free Analysis
               </Button>
             </Link>

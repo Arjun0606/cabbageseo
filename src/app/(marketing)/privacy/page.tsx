@@ -48,7 +48,7 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-semibold text-zinc-100 mb-3">3. Data Sharing</h2>
             <p>
               We share data only with third-party services necessary to provide our product 
-              (e.g., DataForSEO for keyword research, Anthropic/OpenAI for AI content generation). 
+              (e.g., third-party APIs for keyword research and AI content generation). 
               We do not sell your personal data.
             </p>
           </section>
