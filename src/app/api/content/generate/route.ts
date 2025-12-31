@@ -3,8 +3,8 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { requireSubscription } from "@/lib/api/require-subscription";
 import { requireUsageLimit, incrementUsage } from "@/lib/api/check-usage";
 
-// Shorter timeout for content generation
-export const maxDuration = 30;
+// Content generation timeout (60s for Vercel Pro)
+export const maxDuration = 60;
 
 const TESTING_MODE = process.env.TESTING_MODE === "true";
 
@@ -16,7 +16,7 @@ async function callOpenAI(prompt: string, systemPrompt: string): Promise<string>
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout
+  const timeoutId = setTimeout(() => controller.abort(), 55000); // 55s timeout (allow 5s buffer)
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
