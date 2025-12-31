@@ -176,21 +176,31 @@ export default function PricingPage() {
 
   const handleCheckout = async (planId: string) => {
     setLoadingPlan(planId);
+    const billingPeriod = isYearly ? "yearly" : "monthly";
+    
+    // If not logged in, redirect to signup with plan info
+    if (!isLoggedIn) {
+      window.location.href = `/signup?plan=${planId}&billing=${billingPeriod}`;
+      return;
+    }
+
     try {
-      const billingPeriod = isYearly ? "yearly" : "monthly";
-      const response = await fetch("/api/checkout", {
+      const response = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, billingPeriod }),
+        body: JSON.stringify({ planId, interval: billingPeriod }),
       });
       const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else if (!isLoggedIn) {
-        window.location.href = `/signup?plan=${planId}&billing=${billingPeriod}`;
+      
+      if (data.success && data.data?.checkoutUrl) {
+        window.location.href = data.data.checkoutUrl;
+      } else if (data.error) {
+        console.error("Checkout error:", data.error);
+        alert(data.error);
       }
     } catch (error) {
       console.error("Checkout error:", error);
+      alert("Failed to start checkout. Please try again.");
     } finally {
       setLoadingPlan(null);
     }
@@ -202,7 +212,7 @@ export default function PricingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-sm border-b border-zinc-800/50">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
               <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-8 w-auto" />
               <span className="font-bold text-lg">CabbageSEO</span>
             </Link>
@@ -220,23 +230,23 @@ export default function PricingPage() {
                   <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">
                     Dashboard
                   </Button>
-                </Link>
-              ) : (
-                <>
-                  <Link href="/login">
+              </Link>
+            ) : (
+              <>
+                <Link href="/login">
                     <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">
                       Log in
                     </Button>
-                  </Link>
-                  <Link href="/signup">
+                </Link>
+                <Link href="/signup">
                     <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">
                       Start Free
                     </Button>
-                  </Link>
-                </>
-              )}
-            </div>
+                </Link>
+              </>
+            )}
           </div>
+        </div>
         </div>
       </nav>
 
@@ -249,7 +259,7 @@ export default function PricingPage() {
           <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
             Start free with our URL analyzer. Upgrade when you need more.
           </p>
-          
+
           {/* Billing Toggle */}
           <div className="flex items-center justify-center gap-4 mb-12">
             <span className={`text-sm ${!isYearly ? "text-white" : "text-zinc-500"}`}>Monthly</span>
@@ -263,7 +273,7 @@ export default function PricingPage() {
               <Badge className="ml-2 bg-emerald-500/20 text-emerald-400 border-0 text-xs">
                 Save 17%
               </Badge>
-            </span>
+              </span>
           </div>
         </div>
       </section>
@@ -301,43 +311,43 @@ export default function PricingPage() {
                         <h3 className="text-xl font-bold text-white">{plan.name}</h3>
                         <p className="text-sm text-zinc-500">{plan.description}</p>
                       </div>
-                    </div>
-                    
-                    <div className="mb-6">
+                  </div>
+                  
+                  <div className="mb-6">
                       <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-bold text-white">${price}</span>
+                    <span className="text-4xl font-bold text-white">${price}</span>
                         <span className="text-zinc-500">/mo</span>
                       </div>
-                      {isYearly && (
-                        <p className="text-sm text-emerald-400 mt-1">
-                          Save ${yearlySavings}/year
-                        </p>
-                      )}
-                    </div>
-                    
-                    <Button
-                      onClick={() => handleCheckout(plan.id)}
-                      disabled={loadingPlan === plan.id}
-                      className={`w-full mb-6 ${
+                    {isYearly && (
+                      <p className="text-sm text-emerald-400 mt-1">
+                        Save ${yearlySavings}/year
+                      </p>
+                    )}
+                  </div>
+                  
+                  <Button
+                    onClick={() => handleCheckout(plan.id)}
+                    disabled={loadingPlan === plan.id}
+                    className={`w-full mb-6 ${
                         plan.popular
-                          ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                        ? "bg-emerald-600 hover:bg-emerald-500 text-white"
                           : "bg-zinc-800 hover:bg-zinc-700 text-white"
                       }`}
                     >
                       {loadingPlan === plan.id ? "Loading..." : plan.cta}
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                    
-                    <ul className="space-y-3">
-                      {plan.features.map((feature, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm">
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                  
+                  <ul className="space-y-3">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm">
                           <Check className={`w-4 h-4 mt-0.5 shrink-0 ${feature.highlight ? "text-emerald-400" : "text-zinc-500"}`} />
                           <span className={feature.highlight ? "text-white font-medium" : "text-zinc-400"}>
-                            {feature.text}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                          {feature.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                   </CardContent>
                 </Card>
               );
@@ -369,18 +379,18 @@ export default function PricingPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">Questions?</h2>
           </div>
-          <Accordion type="single" collapsible className="w-full">
-            {faqs.map((faq, i) => (
-              <AccordionItem key={i} value={`faq-${i}`} className="border-zinc-800">
-                <AccordionTrigger className="text-left text-zinc-100 hover:text-white">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-zinc-400">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+            <Accordion type="single" collapsible className="w-full">
+              {faqs.map((faq, i) => (
+                <AccordionItem key={i} value={`faq-${i}`} className="border-zinc-800">
+                  <AccordionTrigger className="text-left text-zinc-100 hover:text-white">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-zinc-400">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
         </div>
       </section>
 
@@ -391,25 +401,25 @@ export default function PricingPage() {
             <Bot className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
             <h2 className="text-3xl font-bold text-white mb-4">
               Ready to get cited by AI?
-            </h2>
+          </h2>
             <p className="text-zinc-400 mb-8">
               Start with a free analysis, then upgrade when you&apos;re ready.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                className="bg-emerald-600 hover:bg-emerald-500 text-white"
-                onClick={() => handleCheckout("starter")}
-                disabled={loadingPlan !== null}
-              >
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg" 
+              className="bg-emerald-600 hover:bg-emerald-500 text-white"
+              onClick={() => handleCheckout("starter")}
+              disabled={loadingPlan !== null}
+            >
                 Start Free Trial
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-              <Link href="/analyze">
-                <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+            <Link href="/analyze">
+              <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
                   Try Free Analysis
-                </Button>
-              </Link>
+              </Button>
+            </Link>
             </div>
             <p className="text-xs text-zinc-500 mt-4">
               No credit card required • 14-day money-back guarantee
@@ -427,8 +437,8 @@ export default function PricingPage() {
               <span className="text-sm text-zinc-500">© 2025 CabbageSEO</span>
             </div>
             <div className="flex gap-6 text-sm text-zinc-500">
-              <Link href="/privacy" className="hover:text-white">Privacy</Link>
-              <Link href="/terms" className="hover:text-white">Terms</Link>
+            <Link href="/privacy" className="hover:text-white">Privacy</Link>
+            <Link href="/terms" className="hover:text-white">Terms</Link>
               <a href="mailto:support@cabbageseo.com" className="hover:text-white">Contact</a>
             </div>
           </div>
