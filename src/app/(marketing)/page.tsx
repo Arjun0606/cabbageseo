@@ -156,7 +156,7 @@ export default function LandingPage() {
           </p>
 
           {/* Price */}
-          <p className="text-lg text-zinc-500 mb-10">
+          <p className="text-lg text-zinc-400 mb-10">
             Starting at <span className="text-emerald-400 font-semibold">$29/mo</span>
           </p>
 
@@ -175,7 +175,7 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-zinc-400">
             No credit card required
           </p>
         </div>
@@ -190,14 +190,14 @@ export default function LandingPage() {
             </h2>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
                 <Input
                   type="url"
                   placeholder="Enter your website URL"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
-                  className="w-full h-12 pl-12 pr-4 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:ring-emerald-500/20 rounded-lg"
+                  className="w-full h-12 pl-12 pr-4 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-emerald-500/20 rounded-lg"
                 />
               </div>
               <Button
@@ -208,7 +208,7 @@ export default function LandingPage() {
                 {isAnalyzing ? "Analyzing..." : "Analyze"}
               </Button>
             </div>
-            <p className="text-xs text-zinc-500 mt-3 text-center">
+            <p className="text-xs text-zinc-400 mt-3 text-center">
               Results in 30 seconds • No signup required
             </p>
           </div>
@@ -301,7 +301,7 @@ export default function LandingPage() {
                   </div>
                   <item.icon className="w-6 h-6 text-emerald-400 mb-3" />
                   <h3 className="font-semibold text-white mb-2">{item.title}</h3>
-                  <p className="text-sm text-zinc-500">{item.description}</p>
+                  <p className="text-sm text-zinc-400">{item.description}</p>
                 </div>
                 {i < 3 && (
                   <div className="hidden md:block absolute top-1/2 -right-3 transform -translate-y-1/2">
@@ -390,7 +390,7 @@ export default function LandingPage() {
           <div className="p-8 bg-gradient-to-br from-emerald-900/30 to-zinc-900 rounded-2xl border border-emerald-500/30 inline-block">
             <p className="text-5xl font-bold text-white mb-2">
               $<span className="text-emerald-400">29</span>
-              <span className="text-lg text-zinc-500">/mo</span>
+              <span className="text-lg text-zinc-400">/mo</span>
             </p>
             <p className="text-zinc-400 mb-6">Starter plan</p>
             <Link href="/pricing">
@@ -426,7 +426,7 @@ export default function LandingPage() {
               </Button>
             </Link>
           </div>
-          <p className="text-xs text-zinc-500 mt-4">
+          <p className="text-xs text-zinc-400 mt-4">
             No credit card required • 14-day money-back guarantee
           </p>
         </div>
@@ -438,9 +438,9 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
               <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-6 w-auto" />
-              <span className="text-sm text-zinc-500">© 2025 CabbageSEO</span>
+              <span className="text-sm text-zinc-400">© 2025 CabbageSEO</span>
             </div>
-            <div className="flex items-center gap-6 text-sm text-zinc-500">
+            <div className="flex items-center gap-6 text-sm text-zinc-400">
               <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
               <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
               <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>

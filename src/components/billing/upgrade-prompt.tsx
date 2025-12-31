@@ -80,7 +80,7 @@ export function UpgradePrompt({
           </Link>
         </div>
 
-        <p className="text-xs text-zinc-500 mt-4">
+        <p className="text-xs text-zinc-400 mt-4">
           Starting at $29/month • Cancel anytime
         </p>
       </CardContent>

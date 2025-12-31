@@ -140,7 +140,7 @@ function TaskCard({
             {task.status === "running" && (
               <div className="space-y-1">
                 <Progress value={task.progress} className="h-2" />
-                <div className="flex justify-between text-xs text-zinc-500">
+                <div className="flex justify-between text-xs text-zinc-400">
                   <span>{task.progress}% complete</span>
                   {task.startedAt && <span>Started {new Date(task.startedAt).toLocaleTimeString()}</span>}
                 </div>
@@ -479,7 +479,7 @@ function AutopilotContent() {
                   value={newTaskPrompt}
                   onChange={(e) => setNewTaskPrompt(e.target.value)}
                   placeholder="e.g., Generate an article about 'best SEO practices for e-commerce sites'"
-                  className="min-h-[80px] bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:ring-emerald-500/20"
+                  className="min-h-[80px] bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-emerald-500/20"
                 />
               </div>
               <div className="flex justify-end mt-3">
@@ -553,7 +553,7 @@ function AutopilotContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="auto-publish" className="text-zinc-200">Auto-Publish</Label>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-zinc-400">
                     Publish content automatically
                   </p>
                 </div>
@@ -569,7 +569,7 @@ function AutopilotContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="notify" className="text-zinc-200">Notifications</Label>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-zinc-400">
                     Notify when tasks complete
                   </p>
                 </div>
@@ -585,7 +585,7 @@ function AutopilotContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="pause-error" className="text-zinc-200">Pause on Error</Label>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-zinc-400">
                     Stop queue if task fails
                   </p>
                 </div>

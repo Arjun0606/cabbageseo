@@ -61,7 +61,7 @@ export default function NotificationsSettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="weekly-report" className="text-zinc-200">Weekly Report</Label>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-400">
                 Get a summary of your SEO performance every week
               </p>
             </div>
@@ -77,7 +77,7 @@ export default function NotificationsSettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="ranking-changes" className="text-zinc-200">Ranking Changes</Label>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-400">
                 Get notified when your keywords move significantly
               </p>
             </div>
@@ -93,7 +93,7 @@ export default function NotificationsSettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="content-published" className="text-zinc-200">Content Published</Label>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-400">
                 Confirmation when content is published to your CMS
               </p>
             </div>
@@ -109,7 +109,7 @@ export default function NotificationsSettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="audit-complete" className="text-zinc-200">Audit Complete</Label>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-400">
                 Get notified when site audits finish running
               </p>
             </div>
@@ -125,7 +125,7 @@ export default function NotificationsSettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="usage-alerts" className="text-zinc-200">Usage Alerts</Label>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-400">
                 Get notified when you're approaching usage limits
               </p>
             </div>
@@ -155,7 +155,7 @@ export default function NotificationsSettingsPage() {
           <div className="flex items-center justify-between opacity-50">
             <div>
               <Label htmlFor="push-enabled" className="text-zinc-200">Enable Push Notifications</Label>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-400">
                 Receive notifications in your browser
               </p>
             </div>
@@ -172,7 +172,7 @@ export default function NotificationsSettingsPage() {
           <div className="flex items-center justify-between opacity-50">
             <div>
               <Label htmlFor="urgent-only" className="text-zinc-200">Urgent Only</Label>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-400">
                 Only receive notifications for critical alerts
               </p>
             </div>

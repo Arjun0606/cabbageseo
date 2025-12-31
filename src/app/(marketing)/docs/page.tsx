@@ -435,7 +435,7 @@ export default function DocsPage() {
                           <step.icon className="w-6 h-6 text-emerald-400" />
                         </div>
                         <h4 className="font-semibold text-white text-sm">{step.label}</h4>
-                        <p className="text-xs text-zinc-500 mt-1">{step.desc}</p>
+                        <p className="text-xs text-zinc-400 mt-1">{step.desc}</p>
                       </CardContent>
                     </Card>
                     {i < 4 && (
@@ -518,7 +518,7 @@ export default function DocsPage() {
               Cursor, Claude, or ChatGPT to get implementation help for fixing issues in your codebase.
             </p>
             <div className="bg-zinc-800/50 rounded-xl p-6 text-left border border-zinc-700">
-              <p className="text-sm text-zinc-500 font-mono mb-2"># Example Export</p>
+              <p className="text-sm text-zinc-400 font-mono mb-2"># Example Export</p>
               <pre className="text-sm text-zinc-300 font-mono overflow-x-auto">
 {`## SEO Audit Report - yoursite.com
 
@@ -580,9 +580,9 @@ export default function DocsPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-6" />
-              <span className="text-sm text-zinc-500">© 2025 CabbageSEO</span>
+              <span className="text-sm text-zinc-400">© 2025 CabbageSEO</span>
             </div>
-            <div className="flex items-center gap-6 text-sm text-zinc-500">
+            <div className="flex items-center gap-6 text-sm text-zinc-400">
               <Link href="/pricing" className="hover:text-white">Pricing</Link>
               <Link href="/docs" className="hover:text-white">Docs</Link>
               <Link href="mailto:support@cabbageseo.com" className="hover:text-white">Support</Link>

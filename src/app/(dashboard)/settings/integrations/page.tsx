@@ -333,7 +333,7 @@ function IntegrationCard({
                     Continue with Google
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
-                  <p className="text-xs text-zinc-500 mt-4">
+                  <p className="text-xs text-zinc-400 mt-4">
                     We only request read-only access to your analytics data.
                   </p>
                 </div>
@@ -351,7 +351,7 @@ function IntegrationCard({
                         className="bg-zinc-800 border-zinc-700 text-white"
                       />
                       {field.hint && (
-                        <p className="text-xs text-zinc-500">{field.hint}</p>
+                        <p className="text-xs text-zinc-400">{field.hint}</p>
                       )}
                     </div>
                   ))}
@@ -555,7 +555,7 @@ export default function IntegrationsPage() {
               <h2 className="text-lg font-semibold text-white">Publish Content</h2>
               <Badge variant="secondary" className="bg-zinc-800 text-zinc-400">CMS</Badge>
             </div>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-zinc-400">
               Connect your blog or CMS to publish AI-generated content with one click.
             </p>
             <div className="grid gap-3">
@@ -581,7 +581,7 @@ export default function IntegrationsPage() {
               <h2 className="text-lg font-semibold text-white">Analytics</h2>
               <Badge variant="secondary" className="bg-zinc-800 text-zinc-400">Google</Badge>
             </div>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-zinc-400">
               Connect Google to see real ranking data and track AI search traffic.
             </p>
             <div className="grid gap-3">

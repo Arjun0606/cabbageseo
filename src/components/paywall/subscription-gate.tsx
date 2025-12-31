@@ -141,7 +141,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
               </Link>
               
               <div className="text-center">
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-zinc-400">
                   Starting at <span className="text-emerald-400 font-semibold">$29/month</span>
                 </p>
               </div>

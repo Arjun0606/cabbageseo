@@ -110,7 +110,7 @@ export function ExitIntentPopup({ onClose }: ExitIntentPopupProps) {
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors"
+          className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -135,13 +135,13 @@ export function ExitIntentPopup({ onClose }: ExitIntentPopupProps) {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
                 <Input
                   type="email"
                   placeholder="Enter your email..."
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-12 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
+                  className="pl-10 h-12 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-400"
                   required
                 />
               </div>
@@ -162,7 +162,7 @@ export function ExitIntentPopup({ onClose }: ExitIntentPopupProps) {
               </Button>
             </form>
 
-            <p className="text-xs text-zinc-500 text-center mt-4">
+            <p className="text-xs text-zinc-400 text-center mt-4">
               No spam. Unsubscribe anytime.
             </p>
           </>

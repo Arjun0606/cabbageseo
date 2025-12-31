@@ -43,7 +43,7 @@ const platformConfig: Record<string, { color: string; bgColor: string }> = {
 };
 
 // Default config for unknown platforms
-const defaultPlatformConfig = { color: "text-zinc-500", bgColor: "bg-zinc-500/10" };
+const defaultPlatformConfig = { color: "text-zinc-400", bgColor: "bg-zinc-500/10" };
 
 function ScoreRing({ score, size = 120, label }: { score: number | null; size?: number; label?: string }) {
   const displayScore = score ?? 0;

@@ -75,8 +75,8 @@ export function SiteSwitcher() {
   if (isLoading) {
     return (
       <Button variant="outline" size="sm" disabled className="w-[180px] justify-between">
-        <Globe className="w-4 h-4 mr-2 text-zinc-500" />
-        <span className="text-zinc-500">Loading...</span>
+        <Globe className="w-4 h-4 mr-2 text-zinc-400" />
+        <span className="text-zinc-400">Loading...</span>
       </Button>
     );
   }
@@ -111,13 +111,13 @@ export function SiteSwitcher() {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {selectedSite && <ScoreBadge score={selectedSite.seoScore} />}
-            <ChevronDown className="w-4 h-4 text-zinc-500" />
+            <ChevronDown className="w-4 h-4 text-zinc-400" />
           </div>
         </Button>
       </DropdownMenuTrigger>
       
       <DropdownMenuContent align="start" className="w-[280px] bg-zinc-900 border-zinc-700">
-        <DropdownMenuLabel className="text-xs text-zinc-500 font-normal">
+        <DropdownMenuLabel className="text-xs text-zinc-400 font-normal">
           Your Sites ({sites.length})
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-zinc-800" />
@@ -136,11 +136,11 @@ export function SiteSwitcher() {
                 {site.id === selectedSite?.id ? (
                   <Check className="w-4 h-4 text-emerald-400" />
                 ) : (
-                  <Globe className="w-4 h-4 text-zinc-500" />
+                  <Globe className="w-4 h-4 text-zinc-400" />
                 )}
                 <div>
                   <div className="font-medium">{site.domain}</div>
-                  <div className="text-xs text-zinc-500">
+                  <div className="text-xs text-zinc-400">
                     {site.pagesCount} pages
                   </div>
                 </div>
@@ -152,7 +152,7 @@ export function SiteSwitcher() {
                   target="_blank" 
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-zinc-500 hover:text-zinc-300"
+                  className="text-zinc-400 hover:text-zinc-300"
                 >
                   <ExternalLink className="w-3 h-3" />
                 </a>
@@ -163,7 +163,7 @@ export function SiteSwitcher() {
                     setDeleteDialogOpen(true);
                     setOpen(false);
                   }}
-                  className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 transition-opacity p-1 -m-1"
+                  className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-400 transition-opacity p-1 -m-1"
                   title="Delete site"
                 >
                   <Trash2 className="w-3 h-3" />
@@ -212,7 +212,7 @@ export function SiteSwitcher() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-sm text-zinc-500 mb-3">This will permanently remove:</p>
+            <p className="text-sm text-zinc-400 mb-3">This will permanently remove:</p>
             <ul className="space-y-2 text-sm text-zinc-400">
               <li className="flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-orange-500" />

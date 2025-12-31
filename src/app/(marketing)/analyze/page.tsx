@@ -201,7 +201,7 @@ function ScoreRing({
         </div>
       </div>
       <p className="mt-2 font-medium">{label}</p>
-      {sublabel && <p className="text-xs text-zinc-500">{sublabel}</p>}
+      {sublabel && <p className="text-xs text-zinc-400">{sublabel}</p>}
     </div>
   );
 }
@@ -231,7 +231,7 @@ function ScoreItemRow({ item }: { item: ScoreItem }) {
           {item.score}/{item.maxScore}
         </span>
       </div>
-      <p className="text-xs text-zinc-500 ml-6">{item.reason}</p>
+      <p className="text-xs text-zinc-400 ml-6">{item.reason}</p>
       {item.howToFix && item.status !== "pass" && (
         <div className="ml-6 mt-1 flex items-start gap-1">
           <Lightbulb className="w-3 h-3 text-yellow-500 mt-0.5 flex-shrink-0" />
@@ -310,13 +310,13 @@ function FactorCheck({
       ) : (
         <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
       )}
-      <span className={`text-sm ${checked ? "text-zinc-100" : "text-zinc-500"}`}>
+      <span className={`text-sm ${checked ? "text-zinc-100" : "text-zinc-400"}`}>
         {label}
       </span>
       {impact === "high" && !checked && (
         <Badge variant="destructive" className="text-[10px] px-1 py-0">High Impact</Badge>
       )}
-      {tooltip && <Info className="w-3 h-3 text-zinc-500" />}
+      {tooltip && <Info className="w-3 h-3 text-zinc-400" />}
     </div>
   );
 
@@ -659,13 +659,13 @@ Add JSON-LD structured data to the page. Include:
 
           <form onSubmit={handleAnalyze} className="flex gap-2 max-w-xl mx-auto">
             <div className="relative flex-1">
-              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
               <Input
                 type="text"
                 placeholder="Enter your website URL..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                className="pl-10 h-12 text-lg bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:ring-emerald-500/20"
+                className="pl-10 h-12 text-lg bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-emerald-500/20"
                 disabled={loading}
               />
             </div>
@@ -809,7 +809,7 @@ Add JSON-LD structured data to the page. Include:
                     <p className="text-zinc-400 mb-2">
                       We found <span className="text-red-400 font-bold">{totalIssues} issues</span> affecting your visibility.
                     </p>
-                    <p className="text-sm text-zinc-500 mb-6">
+                    <p className="text-sm text-zinc-400 mb-6">
                       Sign up free to see the full breakdown, detailed recommendations, and AI-powered fixes.
                     </p>
                     
@@ -823,24 +823,24 @@ Add JSON-LD structured data to the page. Include:
                       </Button>
                     </Link>
                     
-                    <p className="text-xs text-zinc-500 mt-4">
+                    <p className="text-xs text-zinc-400 mt-4">
                       ✓ Free account · ✓ Full breakdown · ✓ AI recommendations
                     </p>
 
                     {/* Optional email capture for those not ready to sign up */}
                     <div className="mt-6 pt-6 border-t border-zinc-700">
-                      <p className="text-sm text-zinc-500 mb-3">
+                      <p className="text-sm text-zinc-400 mb-3">
                         Not ready? Get a summary sent to your email:
                       </p>
                       <form onSubmit={handleEmailSubmit} className="flex gap-2 max-w-md mx-auto">
                         <div className="relative flex-1">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                           <Input
                             type="email"
                             placeholder="Your email..."
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="pl-10 h-10 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 text-sm"
+                            className="pl-10 h-10 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-400 text-sm"
                             required
                           />
                         </div>
@@ -889,7 +889,7 @@ Add JSON-LD structured data to the page. Include:
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
-                        <Info className="w-4 h-4 text-zinc-500" />
+                        <Info className="w-4 h-4 text-zinc-400" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         {result.aio.platformScoresAreReal ? (
@@ -944,7 +944,7 @@ Add JSON-LD structured data to the page. Include:
                     )}
                   </div>
                 ) : (
-                  <p className="text-xs text-zinc-500 mb-4 -mt-2">
+                  <p className="text-xs text-zinc-400 mb-4 -mt-2">
                     Estimated visibility based on content factors. Sign up for real platform monitoring.
                   </p>
                 )}
@@ -964,7 +964,7 @@ Add JSON-LD structured data to the page. Include:
                     >
                       <span className="text-2xl">{platform.icon}</span>
                       <p className="text-sm font-medium mt-1">{platform.name}</p>
-                      <p className="text-[10px] text-zinc-500">{platform.desc}</p>
+                      <p className="text-[10px] text-zinc-400">{platform.desc}</p>
                       <p className={`text-2xl font-bold mt-1 ${
                         platform.score >= 70 ? "text-green-500" :
                         platform.score >= 50 ? "text-yellow-500" :
@@ -978,7 +978,7 @@ Add JSON-LD structured data to the page. Include:
                         )}
                       </p>
                       {result.aio.platformScoresAreReal && (
-                        <p className="text-[9px] text-zinc-500 mt-1">
+                        <p className="text-[9px] text-zinc-400 mt-1">
                           {platform.score > 0 ? "cited" : "not found"}
                         </p>
                       )}
@@ -1225,7 +1225,7 @@ Add JSON-LD structured data to the page. Include:
                   <p className="text-lg text-zinc-400 mb-2 max-w-xl mx-auto">
                     While you're reading this, your competitors are getting cited by ChatGPT.
                   </p>
-                  <p className="text-zinc-500 mb-8 max-w-xl mx-auto">
+                  <p className="text-zinc-400 mb-8 max-w-xl mx-auto">
                     CabbageSEO automatically fixes these {totalIssues} issues and keeps your content 
                     AI-optimized. Set it and forget it.
                   </p>
@@ -1248,7 +1248,7 @@ Add JSON-LD structured data to the page. Include:
                             : "bg-zinc-800/50 text-zinc-300"
                         }`}
                       >
-                        <Icon className={`w-5 h-5 ${highlight ? "text-emerald-400" : "text-zinc-500"}`} />
+                        <Icon className={`w-5 h-5 ${highlight ? "text-emerald-400" : "text-zinc-400"}`} />
                         <span className={highlight ? "font-medium" : ""}>{label}</span>
                       </div>
                     ))}
@@ -1270,7 +1270,7 @@ Add JSON-LD structured data to the page. Include:
                   </div>
 
                   {/* Trust signals */}
-                  <p className="text-xs text-zinc-500 mt-6">
+                  <p className="text-xs text-zinc-400 mt-6">
                     ✓ No credit card required &nbsp;•&nbsp; ✓ Cancel anytime &nbsp;•&nbsp; ✓ 14-day free trial
                   </p>
                 </div>
@@ -1328,7 +1328,7 @@ Add JSON-LD structured data to the page. Include:
 
       {/* Footer */}
       <footer className="border-t border-zinc-800 py-8 px-4">
-        <div className="container mx-auto text-center text-sm text-zinc-500">
+        <div className="container mx-auto text-center text-sm text-zinc-400">
           <p>© {new Date().getFullYear()} CabbageSEO. The AI-Native SEO OS.</p>
         </div>
       </footer>

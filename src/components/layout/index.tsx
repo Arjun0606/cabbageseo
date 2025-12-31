@@ -62,7 +62,7 @@ function MiniUsageBar({
 
   return (
     <div className="px-1">
-      <div className="flex items-center justify-between text-[10px] text-zinc-500 mb-0.5">
+      <div className="flex items-center justify-between text-[10px] text-zinc-400 mb-0.5">
         <span>{label}</span>
         <span className={isNearLimit ? "text-yellow-400" : ""}>{used}/{limit}</span>
       </div>

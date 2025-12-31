@@ -202,7 +202,7 @@ export function QuickActionBar() {
           {isUrl ? (
             <Globe className="w-5 h-5 text-emerald-500 ml-2" />
           ) : (
-            <Search className="w-5 h-5 text-zinc-500 ml-2" />
+            <Search className="w-5 h-5 text-zinc-400 ml-2" />
           )}
           <input
             ref={inputRef}
@@ -210,7 +210,7 @@ export function QuickActionBar() {
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder="Paste website URL or enter topic to analyze..."
-            className="flex-1 bg-transparent border-0 outline-none text-white placeholder:text-zinc-500 text-sm py-2"
+            className="flex-1 bg-transparent border-0 outline-none text-white placeholder:text-zinc-400 text-sm py-2"
             disabled={isProcessing}
           />
           {value && !isProcessing && (
@@ -244,7 +244,7 @@ export function QuickActionBar() {
                 result.type === "error" && "bg-red-500/10",
               )}
             >
-              {result.type === "progress" && <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />}
+              {result.type === "progress" && <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />}
               {result.type === "score" && <TrendingUp className="w-4 h-4 text-blue-500" />}
               {result.type === "issue" && <AlertTriangle className="w-4 h-4 text-yellow-500" />}
               {result.type === "content" && <Lightbulb className="w-4 h-4 text-emerald-500" />}
@@ -259,7 +259,7 @@ export function QuickActionBar() {
               </span>
 
               {(result.type === "content" || result.type === "issue" || result.type === "success") && (
-                <ArrowRight className="w-4 h-4 text-zinc-500" />
+                <ArrowRight className="w-4 h-4 text-zinc-400" />
               )}
             </div>
           ))}

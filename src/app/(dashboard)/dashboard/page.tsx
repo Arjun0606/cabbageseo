@@ -99,7 +99,7 @@ function GEOScoreRing({ score, size = 180 }: { score: number; size?: number }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-4xl font-bold text-white">{score}</span>
-        <span className="text-sm text-zinc-500">GEO Score</span>
+        <span className="text-sm text-zinc-400">GEO Score</span>
       </div>
     </div>
   );
@@ -130,7 +130,7 @@ function AIPlatformCard({ platform }: { platform: GEOPlatformScore }) {
       </div>
       <div className="flex items-baseline gap-2">
         <span className="text-2xl font-bold text-white">{platform.score}</span>
-        <span className="text-sm text-zinc-500">/100</span>
+        <span className="text-sm text-zinc-400">/100</span>
         {platform.trend === "up" && (
           <TrendingUp className="w-4 h-4 text-emerald-400 ml-auto" />
         )}
@@ -224,7 +224,7 @@ function EmptyDashboard() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
-            className="h-14 text-lg bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-emerald-500"
+            className="h-14 text-lg bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-400 focus:border-emerald-500"
           />
           <Button 
             size="lg"
@@ -251,21 +251,21 @@ function EmptyDashboard() {
             <Eye className="w-6 h-6 text-emerald-400" />
           </div>
           <p className="text-sm font-medium text-white">GEO Score</p>
-          <p className="text-xs text-zinc-500">ChatGPT • Perplexity • Google AI</p>
+          <p className="text-xs text-zinc-400">ChatGPT • Perplexity • Google AI</p>
         </div>
         <div className="text-center">
           <div className="p-3 bg-emerald-500/10 rounded-xl inline-block mb-3">
             <Sparkles className="w-6 h-6 text-emerald-400" />
           </div>
           <p className="text-sm font-medium text-white">Generate GEO Content</p>
-          <p className="text-xs text-zinc-500">Optimized for AI engines</p>
+          <p className="text-xs text-zinc-400">Optimized for AI engines</p>
         </div>
         <div className="text-center">
           <div className="p-3 bg-emerald-500/10 rounded-xl inline-block mb-3">
             <Zap className="w-6 h-6 text-emerald-400" />
           </div>
           <p className="text-sm font-medium text-white">Autopilot Mode</p>
-          <p className="text-xs text-zinc-500">Set it and forget it</p>
+          <p className="text-xs text-zinc-400">Set it and forget it</p>
         </div>
       </div>
     </div>
@@ -319,7 +319,7 @@ function MainDashboard({ site }: { site: Site }) {
             <Globe className="w-6 h-6 text-emerald-400" />
             {site.domain}
           </h1>
-          <p className="text-zinc-500 text-sm mt-1">
+          <p className="text-zinc-400 text-sm mt-1">
             Last analyzed: {site.lastAnalyzed ? new Date(site.lastAnalyzed).toLocaleDateString() : "Never"}
           </p>
         </div>
@@ -407,7 +407,7 @@ function MainDashboard({ site }: { site: Site }) {
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">{site.articlesGenerated}</p>
-                <p className="text-xs text-zinc-500">Articles Generated</p>
+                <p className="text-xs text-zinc-400">Articles Generated</p>
               </div>
             </div>
           </CardContent>
@@ -421,7 +421,7 @@ function MainDashboard({ site }: { site: Site }) {
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">{site.keywordsTracked}</p>
-                <p className="text-xs text-zinc-500">Keywords Tracked</p>
+                <p className="text-xs text-zinc-400">Keywords Tracked</p>
               </div>
             </div>
           </CardContent>
@@ -435,7 +435,7 @@ function MainDashboard({ site }: { site: Site }) {
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">{site.seoScore}</p>
-                <p className="text-xs text-zinc-500">SEO Score</p>
+                <p className="text-xs text-zinc-400">SEO Score</p>
               </div>
             </div>
           </CardContent>
@@ -445,13 +445,13 @@ function MainDashboard({ site }: { site: Site }) {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${site.autopilotEnabled ? "bg-emerald-500/20" : "bg-zinc-800"}`}>
-                <Zap className={`w-5 h-5 ${site.autopilotEnabled ? "text-emerald-400" : "text-zinc-500"}`} />
+                <Zap className={`w-5 h-5 ${site.autopilotEnabled ? "text-emerald-400" : "text-zinc-400"}`} />
               </div>
               <div className="flex-1">
-                <p className={`text-sm font-medium ${site.autopilotEnabled ? "text-emerald-400" : "text-zinc-500"}`}>
+                <p className={`text-sm font-medium ${site.autopilotEnabled ? "text-emerald-400" : "text-zinc-400"}`}>
                   {site.autopilotEnabled ? "Autopilot ON" : "Autopilot OFF"}
                 </p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-zinc-400">
                   {site.autopilotEnabled ? "Generating weekly" : "Manual mode"}
                 </p>
               </div>

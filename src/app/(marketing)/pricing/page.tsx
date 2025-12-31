@@ -262,13 +262,13 @@ export default function PricingPage() {
 
           {/* Billing Toggle */}
           <div className="flex items-center justify-center gap-4 mb-12">
-            <span className={`text-sm ${!isYearly ? "text-white" : "text-zinc-500"}`}>Monthly</span>
+            <span className={`text-sm ${!isYearly ? "text-white" : "text-zinc-400"}`}>Monthly</span>
             <Switch
               checked={isYearly}
               onCheckedChange={setIsYearly}
               className="data-[state=checked]:bg-emerald-600"
             />
-            <span className={`text-sm ${isYearly ? "text-white" : "text-zinc-500"}`}>
+            <span className={`text-sm ${isYearly ? "text-white" : "text-zinc-400"}`}>
               Yearly
               <Badge className="ml-2 bg-emerald-500/20 text-emerald-400 border-0 text-xs">
                 Save 17%
@@ -309,14 +309,14 @@ export default function PricingPage() {
                       </div>
                       <div>
                         <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-                        <p className="text-sm text-zinc-500">{plan.description}</p>
+                        <p className="text-sm text-zinc-400">{plan.description}</p>
                       </div>
                   </div>
                   
                   <div className="mb-6">
                       <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-bold text-white">${price}</span>
-                        <span className="text-zinc-500">/mo</span>
+                        <span className="text-zinc-400">/mo</span>
                       </div>
                     {isYearly && (
                       <p className="text-sm text-emerald-400 mt-1">
@@ -341,7 +341,7 @@ export default function PricingPage() {
                   <ul className="space-y-3">
                     {plan.features.map((feature, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm">
-                          <Check className={`w-4 h-4 mt-0.5 shrink-0 ${feature.highlight ? "text-emerald-400" : "text-zinc-500"}`} />
+                          <Check className={`w-4 h-4 mt-0.5 shrink-0 ${feature.highlight ? "text-emerald-400" : "text-zinc-400"}`} />
                           <span className={feature.highlight ? "text-white font-medium" : "text-zinc-400"}>
                           {feature.text}
                         </span>
@@ -421,7 +421,7 @@ export default function PricingPage() {
               </Button>
             </Link>
             </div>
-            <p className="text-xs text-zinc-500 mt-4">
+            <p className="text-xs text-zinc-400 mt-4">
               No credit card required • 14-day money-back guarantee
             </p>
           </div>
@@ -434,9 +434,9 @@ export default function PricingPage() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-6 w-auto" />
-              <span className="text-sm text-zinc-500">© 2025 CabbageSEO</span>
+              <span className="text-sm text-zinc-400">© 2025 CabbageSEO</span>
             </div>
-            <div className="flex gap-6 text-sm text-zinc-500">
+            <div className="flex gap-6 text-sm text-zinc-400">
             <Link href="/privacy" className="hover:text-white">Privacy</Link>
             <Link href="/terms" className="hover:text-white">Terms</Link>
               <a href="mailto:support@cabbageseo.com" className="hover:text-white">Contact</a>

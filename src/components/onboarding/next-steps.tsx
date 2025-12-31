@@ -59,7 +59,7 @@ function StepCard({ step, index }: { step: Step; index: number }) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-medium text-emerald-400 line-through opacity-70">{step.title}</p>
-          <p className="text-sm text-zinc-500">{step.description}</p>
+          <p className="text-sm text-zinc-400">{step.description}</p>
         </div>
       </div>
     );
@@ -82,7 +82,7 @@ function StepCard({ step, index }: { step: Step; index: number }) {
               {step.priority}
             </span>
           </div>
-          <p className="text-sm text-zinc-500">{step.description}</p>
+          <p className="text-sm text-zinc-400">{step.description}</p>
         </div>
         <Button size="sm" variant="ghost" className="group-hover:bg-emerald-600 group-hover:text-white transition-all">
           {step.ctaText}
@@ -199,7 +199,7 @@ export function NextSteps() {
             </div>
             <div>
               <CardTitle className="text-lg">Your Next Steps</CardTitle>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-zinc-400">
                 {completedCount === steps.length 
                   ? "All done! 🎉" 
                   : `${steps.length - completedCount} actions to boost your visibility`
