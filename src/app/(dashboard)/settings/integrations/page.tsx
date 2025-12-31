@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Globe,
   BarChart3,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useSite } from "@/contexts/site-context";
 
 // ============================================
 // TYPES
@@ -426,26 +428,36 @@ function IntegrationsLoading() {
 export default function IntegrationsPage() {
   const queryClient = useQueryClient();
   const [connectingType, setConnectingType] = useState<string | null>(null);
+  
+  // Global site context - integrations are connected per-site for CMS publishing
+  const { selectedSite } = useSite();
 
-  // Fetch integrations
+  // Fetch integrations (filtered by selected site)
   const { data, isLoading, error, refetch } = useQuery<IntegrationsData>({
-    queryKey: ["integrations"],
+    queryKey: ["integrations", selectedSite?.id],
     queryFn: async () => {
-      const response = await fetch("/api/integrations");
+      const url = selectedSite?.id 
+        ? `/api/integrations?siteId=${selectedSite.id}`
+        : "/api/integrations";
+      const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch integrations");
       const json = await response.json();
       return json.data;
     },
   });
 
-  // Connect mutation
+  // Connect mutation - links integration to selected site
   const connectMutation = useMutation({
     mutationFn: async ({ type, credentials }: { type: string; credentials: Record<string, string> }) => {
       setConnectingType(type);
       const response = await fetch("/api/integrations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, credentials }),
+        body: JSON.stringify({ 
+          type, 
+          credentials,
+          siteId: selectedSite?.id, // Link to current site
+        }),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -498,6 +510,23 @@ export default function IntegrationsPage() {
           Connect once, publish everywhere. {connectedCount > 0 && `(${connectedCount} connected)`}
         </p>
       </div>
+
+      {/* Site Context Notice */}
+      {selectedSite && (
+        <Card className="p-4 border-emerald-500/30 bg-emerald-500/5">
+          <div className="flex items-center gap-3">
+            <Info className="w-5 h-5 text-emerald-400" />
+            <div>
+              <p className="font-medium text-emerald-400">
+                Integrations for: {selectedSite.domain}
+              </p>
+              <p className="text-sm text-zinc-400">
+                CMS integrations are linked to your selected site. Publishing will go to this site's connected CMS.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Error State */}
       {error && (

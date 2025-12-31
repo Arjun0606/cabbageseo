@@ -103,6 +103,9 @@ export default function LandingPage() {
               <Link href="/pricing" className="text-sm text-zinc-400 hover:text-white transition-colors">
                 Pricing
               </Link>
+              <Link href="/docs" className="text-sm text-zinc-400 hover:text-white transition-colors">
+                Docs
+              </Link>
             </div>
             <div className="flex items-center gap-3">
               {isLoggedIn ? (

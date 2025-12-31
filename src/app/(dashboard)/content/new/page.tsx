@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSite } from "@/contexts/site-context";
 
 // ============================================
 // TYPES
@@ -156,12 +157,14 @@ function NewContentPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const action = searchParams.get("action");
+  
+  // Global site context
+  const { sites: contextSites, selectedSite: globalSelectedSite, isLoading: isLoadingSites } = useSite();
 
-  // State
+  // State - use global site if available
   const [sites, setSites] = useState<Site[]>([]);
   const [selectedSite, setSelectedSite] = useState<string>("");
   const [step, setStep] = useState<"select" | "input" | "ideas" | "generating" | "preview">("select");
-  const [isLoadingSites, setIsLoadingSites] = useState(true);
   
   // Input state
   const [targetKeyword, setTargetKeyword] = useState("");
@@ -178,34 +181,28 @@ function NewContentPageContent() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch sites on mount
+  // Use global site context - skip site selection if site is already selected
   useEffect(() => {
-    async function fetchSites() {
-      try {
-        const response = await fetch("/api/dashboard");
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.data.sites) {
-            setSites(result.data.sites.map((s: { id: string; domain: string; name: string }) => ({
-              id: s.id,
-              domain: s.domain,
-              name: s.name || s.domain,
-            })));
-            // Auto-select first site if only one
-            if (result.data.sites.length === 1) {
-              setSelectedSite(result.data.sites[0].id);
-              setStep("input");
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch sites:", err);
-      } finally {
-        setIsLoadingSites(false);
+    if (!isLoadingSites && contextSites.length > 0) {
+      // Map sites to local format
+      const mappedSites = contextSites.map(s => ({
+        id: s.id,
+        domain: s.domain,
+        name: s.domain,
+      }));
+      setSites(mappedSites);
+      
+      // If there's a globally selected site, use it and skip to input step
+      if (globalSelectedSite) {
+        setSelectedSite(globalSelectedSite.id);
+        setStep("input");
+      } else if (contextSites.length === 1) {
+        // Auto-select first site if only one
+        setSelectedSite(contextSites[0].id);
+        setStep("input");
       }
     }
-    fetchSites();
-  }, []);
+  }, [contextSites, globalSelectedSite, isLoadingSites]);
 
   // Handle generating ideas
   const handleGenerateIdeas = async () => {
