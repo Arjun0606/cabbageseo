@@ -91,17 +91,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify site ownership
-    const { data: site } = await supabase
+    // Verify site ownership and get site context
+    const { data: siteData } = await supabase
       .from("sites")
-      .select("id, domain")
+      .select("id, domain, name, industry")
       .eq("id", siteId)
       .eq("organization_id", orgId)
       .single();
 
-    if (!site) {
+    if (!siteData) {
       return NextResponse.json({ error: "Site not found" }, { status: 404 });
     }
+
+    const site = siteData as { id: string; domain: string; name?: string; industry?: string };
+    
+    // Get existing pages/content to understand site context
+    const { data: pagesData } = await supabase
+      .from("pages")
+      .select("title, url")
+      .eq("site_id", siteId)
+      .limit(10);
+    
+    const existingPages = (pagesData || []) as { title: string; url: string }[];
+    const siteTopics = existingPages.map(p => p.title).filter(Boolean);
+    
+    console.log(`[Keyword Research] Site context: ${site.domain}, Industry: ${site.industry || "unknown"}, Pages: ${siteTopics.length}`);
 
     // Check if DataForSEO is configured
     const hasDataForSEO = !!(process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD);
