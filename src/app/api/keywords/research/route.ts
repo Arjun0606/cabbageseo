@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { dataForSEO } from "@/lib/integrations/dataforseo/client";
+import { requireUsageLimit, incrementUsage } from "@/lib/api/check-usage";
 
 export const maxDuration = 30;
 
@@ -57,6 +58,27 @@ export async function POST(request: NextRequest) {
 
     if (!orgId) {
       return NextResponse.json({ error: "No organization found" }, { status: 400 });
+    }
+
+    // Get user's plan for usage limits
+    const { data: orgData } = await supabase
+      .from("organizations")
+      .select("plan")
+      .eq("id", orgId)
+      .single();
+    const plan = (orgData as { plan?: string } | null)?.plan || "starter";
+
+    // Check usage limits for keywords (skip in testing mode)
+    if (!TESTING_MODE) {
+      const usageCheck = await requireUsageLimit(supabase, orgId, plan, "keywords", 50);
+      if (!usageCheck.allowed) {
+        return NextResponse.json({
+          error: usageCheck.error.message,
+          code: usageCheck.error.code,
+          usage: { current: usageCheck.error.current, limit: usageCheck.error.limit },
+          upgradeUrl: "/pricing",
+        }, { status: 402 });
+      }
     }
 
     const body: ResearchRequest = await request.json();
@@ -188,6 +210,14 @@ export async function POST(request: NextRequest) {
       } else {
         console.log(`[Keyword Research] All ${keywordRows.length} keywords already exist`);
       }
+    }
+
+    // Increment usage counter
+    try {
+      await incrementUsage(supabase, orgId, "keywords", keywords.length);
+      console.log(`[Keyword Research] Usage incremented: ${keywords.length} keywords for org ${orgId}`);
+    } catch (usageError) {
+      console.warn("[Keyword Research] Failed to increment usage:", usageError);
     }
 
     return NextResponse.json({

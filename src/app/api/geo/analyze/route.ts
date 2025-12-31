@@ -9,6 +9,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { createAIOAnalyzer } from "@/lib/aio";
 import type { AIOAnalysisInput } from "@/lib/aio/types";
 import { requireSubscription } from "@/lib/api/require-subscription";
+import { requireUsageLimit, incrementUsage } from "@/lib/api/check-usage";
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,6 +27,18 @@ export async function POST(request: NextRequest) {
     }
 
     const organizationId = subscription.organizationId!;
+    const plan = subscription.plan || "starter";
+
+    // Check usage limits for GEO analyses
+    const usageCheck = await requireUsageLimit(supabase, organizationId, plan, "aio_analyses");
+    if (!usageCheck.allowed) {
+      return NextResponse.json({
+        error: usageCheck.error.message,
+        code: usageCheck.error.code,
+        usage: { current: usageCheck.error.current, limit: usageCheck.error.limit },
+        upgradeUrl: "/pricing",
+      }, { status: 402 });
+    }
 
     const body = await request.json();
     const { 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { requireSubscription } from "@/lib/api/require-subscription";
+import { requireUsageLimit, incrementUsage } from "@/lib/api/check-usage";
 
 // Shorter timeout for content generation
 export const maxDuration = 30;
@@ -93,6 +94,27 @@ export async function POST(request: NextRequest) {
 
   if (!organizationId) {
     return NextResponse.json({ error: "No organization found" }, { status: 400 });
+  }
+
+  // Get user's plan for usage limits
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("plan")
+    .eq("id", organizationId)
+    .single();
+  const plan = (orgData as { plan?: string } | null)?.plan || "starter";
+
+  // Check usage limits (skip in testing mode for now)
+  if (!TESTING_MODE) {
+    const usageCheck = await requireUsageLimit(supabase, organizationId, plan, "articles");
+    if (!usageCheck.allowed) {
+      return NextResponse.json({
+        error: usageCheck.error.message,
+        code: usageCheck.error.code,
+        usage: { current: usageCheck.error.current, limit: usageCheck.error.limit },
+        upgradeUrl: "/pricing",
+      }, { status: 402 });
+    }
   }
 
   try {
@@ -234,6 +256,14 @@ Respond with ONLY this JSON structure (no markdown code blocks):
       } catch (saveError) {
         console.warn("[Content Generate] Save failed:", saveError);
       }
+    }
+
+    // Increment usage counter
+    try {
+      await incrementUsage(supabase, organizationId, "articles", 1);
+      console.log("[Content Generate] Usage incremented for org:", organizationId);
+    } catch (usageError) {
+      console.warn("[Content Generate] Failed to increment usage:", usageError);
     }
 
     console.log("[Content Generate] Success! Words:", wordCount, "SEO:", seoScore, "AIO:", aioScore);

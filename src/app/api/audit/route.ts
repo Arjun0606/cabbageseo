@@ -9,6 +9,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { createAuditEngine, createAutoFixEngine, CrawlResult, AuditResult } from "@/lib/crawler";
 import { protectAPI, validateRequestBody, addSecurityHeaders } from "@/lib/security/api-protection";
 import { requireSubscription } from "@/lib/api/require-subscription";
+import { requireUsageLimit, incrementUsage } from "@/lib/api/check-usage";
 
 export async function POST(request: NextRequest) {
   // Protect endpoint
@@ -25,6 +26,20 @@ export async function POST(request: NextRequest) {
     
     if (!subscription.authorized) {
       return subscription.error!;
+    }
+
+    const organizationId = subscription.organizationId!;
+    const plan = subscription.plan || "starter";
+
+    // Check usage limits for audits
+    const usageCheck = await requireUsageLimit(supabase, organizationId, plan, "audits");
+    if (!usageCheck.allowed) {
+      return NextResponse.json({
+        error: usageCheck.error.message,
+        code: usageCheck.error.code,
+        usage: { current: usageCheck.error.current, limit: usageCheck.error.limit },
+        upgradeUrl: "/pricing",
+      }, { status: 402 });
     }
 
     // Parse and validate request body
@@ -113,6 +128,16 @@ export async function POST(request: NextRequest) {
 
       default:
         return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+    }
+
+    // Increment usage counter for audit actions
+    if (action === "audit") {
+      try {
+        await incrementUsage(supabase, organizationId, "audits", 1);
+        console.log(`[Audit API] Usage incremented for org ${organizationId}`);
+      } catch (usageError) {
+        console.warn("[Audit API] Failed to increment usage:", usageError);
+      }
     }
 
     const response = NextResponse.json({ success: true, data: result });
