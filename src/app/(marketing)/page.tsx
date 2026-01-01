@@ -169,9 +169,9 @@ export default function LandingPage() {
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2.5">
               <img 
-                src="/cabbageseo_logo.png" 
+                src="/apple-touch-icon.png" 
                 alt="CabbageSEO" 
-                className="w-9 h-9 rounded-lg bg-white p-0.5"
+                className="w-10 h-10"
               />
               <span className="font-bold text-lg tracking-tight">CabbageSEO</span>
             </Link>
@@ -590,9 +590,9 @@ export default function LandingPage() {
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <img 
-            src="/cabbageseo_logo.png" 
+            src="/apple-touch-icon.png" 
             alt="CabbageSEO" 
-            className="w-20 h-20 rounded-2xl bg-white p-1 mx-auto mb-8 shadow-2xl shadow-emerald-500/30"
+            className="w-20 h-20 mx-auto mb-8"
           />
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Ready to improve your AI visibility?
@@ -622,9 +622,9 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <img 
-                src="/cabbageseo_logo.png" 
+                src="/apple-touch-icon.png" 
                 alt="CabbageSEO" 
-                className="w-8 h-8 rounded-lg bg-white p-0.5"
+                className="w-8 h-8"
               />
               <span className="text-sm text-zinc-400">© 2026 CabbageSEO</span>
             </div>
