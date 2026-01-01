@@ -168,9 +168,11 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-lg">
-                🥬
-              </div>
+              <img 
+                src="/cabbageseo_logo.png" 
+                alt="CabbageSEO" 
+                className="w-9 h-9 rounded-xl"
+              />
               <span className="font-bold text-lg tracking-tight">CabbageSEO</span>
             </Link>
             <div className="hidden md:flex items-center gap-8">
@@ -587,9 +589,11 @@ export default function LandingPage() {
       {/* Final CTA */}
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-4xl mx-auto mb-8 shadow-2xl shadow-emerald-500/30">
-            🥬
-          </div>
+          <img 
+            src="/cabbageseo_logo.png" 
+            alt="CabbageSEO" 
+            className="w-20 h-20 rounded-3xl mx-auto mb-8 shadow-2xl shadow-emerald-500/30"
+          />
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Ready to improve your AI visibility?
           </h2>
@@ -617,9 +621,11 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-                🥬
-              </div>
+              <img 
+                src="/cabbageseo_logo.png" 
+                alt="CabbageSEO" 
+                className="w-8 h-8 rounded-xl"
+              />
               <span className="text-sm text-zinc-400">© 2026 CabbageSEO</span>
             </div>
             <div className="flex items-center gap-8 text-sm text-zinc-400">
