@@ -11,7 +11,6 @@
  */
 
 import { claude } from "@/lib/ai/openai-client";
-import { serpapi } from "@/lib/integrations/serpapi/client";
 
 // ============================================
 // TYPES
@@ -322,53 +321,45 @@ Best,
 
 export class DIYOutreach {
   /**
-   * Find outreach opportunities from SERP
+   * Find outreach opportunities using AI (no SERP APIs)
+   * AI identifies likely sites that cover this topic
    */
   async findOpportunities(
     keyword: string,
     ourUrl: string,
     limit: number = 10
   ): Promise<OutreachTarget[]> {
-    const serpResults = await serpapi.searchGoogle({ q: keyword, num: 20 });
     const ourDomain = new URL(ourUrl).hostname;
-    const targets: OutreachTarget[] = [];
 
-    for (const result of serpResults.organic_results || []) {
-      try {
-        const targetDomain = new URL(result.link).hostname;
-        if (targetDomain === ourDomain) continue;
+    const prompt = `For the topic "${keyword}", identify ${limit} websites that likely publish content about this topic and would be good outreach targets.
 
-        // Determine outreach reason
-        let reason = "skyscraper";
-        let priority = 50;
-        const title = result.title.toLowerCase();
+Exclude: ${ourDomain}
 
-        if (title.includes("best") || title.includes("top") || title.includes("tools")) {
-          reason = "Resource/roundup page - ask for inclusion";
-          priority = 90;
-        } else if (title.includes("guide") || title.includes("how to")) {
-          reason = "Educational content - suggest as additional resource";
-          priority = 70;
-        } else if (title.includes("review") || title.includes("comparison")) {
-          reason = "Review page - request feature/mention";
-          priority = 80;
-        }
+For each target, provide:
+- domain (e.g., "example.com")
+- pageUrl (likely article URL pattern)
+- pageTitle (what their content is likely about)
+- reason (why this is a good outreach target)
+- priority (50-100, higher = better opportunity)
 
-        targets.push({
-          domain: targetDomain,
-          pageUrl: result.link,
-          pageTitle: result.title,
-          reason,
-          priority,
-        });
+Focus on:
+- Resource/roundup pages (priority 90)
+- Review/comparison sites (priority 80)  
+- Educational/guide content (priority 70)
+- Industry blogs (priority 60)
 
-        if (targets.length >= limit) break;
-      } catch {
-        // Invalid URL
-      }
+Return JSON array: [{ "domain": "...", "pageUrl": "...", "pageTitle": "...", "reason": "...", "priority": 85 }]`;
+
+    try {
+      const targets = await claude.getJSON<OutreachTarget[]>(prompt);
+      return targets
+        .filter(t => t.domain !== ourDomain)
+        .slice(0, limit)
+        .sort((a, b) => b.priority - a.priority);
+    } catch (error) {
+      console.error("AI outreach opportunity finding failed:", error);
+      return [];
     }
-
-    return targets.sort((a, b) => b.priority - a.priority);
   }
 
   /**

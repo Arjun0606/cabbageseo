@@ -2,13 +2,15 @@
  * Keyword Research API
  * POST /api/keywords/research
  * 
- * Performs keyword research using DataForSEO or SerpAPI
- * Returns keyword suggestions with volume, difficulty, and intent
+ * AI-powered keyword research using GPT-5-mini
+ * Returns keyword suggestions with intent, GEO opportunity, and semantic clusters
+ * 
+ * Replaces DataForSEO - better for GEO optimization and much cheaper
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { dataForSEO } from "@/lib/integrations/dataforseo/client";
+import { keywordIntelligence, toDbKeywords, type AIKeyword } from "@/lib/ai/keyword-intelligence";
 import { requireUsageLimit, incrementUsage } from "@/lib/api/check-usage";
 
 export const maxDuration = 30;
@@ -117,83 +119,92 @@ export async function POST(request: NextRequest) {
     
     console.log(`[Keyword Research] Site context: ${site.domain}, Industry: ${site.industry || "unknown"}, Pages: ${siteTopics.length}`);
 
-    // Check if DataForSEO is configured
-    const hasDataForSEO = !!(process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD);
-
-    let keywords: Array<{
-      keyword: string;
-      volume: number;
-      difficulty: number;
-      cpc: number;
-      intent: string;
+    // Use AI-powered keyword intelligence (GPT-5-mini)
+    console.log(`[Keyword Research] Using AI for: ${seedKeyword} (type: ${type})`);
+    
+    let aiKeywords: AIKeyword[] = [];
+    
+    let clusters: Array<{
+      name: string;
+      pillarKeyword: string;
+      suggestedArticles: number;
     }> = [];
+    
+    let topQuestions: string[] = [];
+    let contentGaps: string[] = [];
 
-    if (hasDataForSEO) {
-      console.log(`[Keyword Research] Using DataForSEO for: ${seedKeyword}`);
-      
-      try {
-        switch (type) {
-          case "suggestions":
-            keywords = await dataForSEO.getKeywordSuggestions(seedKeyword, "United States", limit);
-            break;
-          case "competitors":
-            keywords = await dataForSEO.getCompetitorKeywords((site as { domain: string }).domain, limit);
-            break;
-          case "gap":
-            if (body.competitorDomains?.length) {
-              keywords = await dataForSEO.getKeywordGap((site as { domain: string }).domain, body.competitorDomains);
-            }
-            break;
+    try {
+      switch (type) {
+        case "suggestions": {
+          const result = await keywordIntelligence.research(seedKeyword, {
+            siteContext: {
+              domain: site.domain,
+              industry: site.industry || undefined,
+              existingTopics: siteTopics,
+            },
+            limit,
+          });
+          aiKeywords = result.keywords;
+          clusters = result.clusters.map(c => ({
+            name: c.name,
+            pillarKeyword: c.pillarKeyword,
+            suggestedArticles: c.suggestedArticles,
+          }));
+          topQuestions = result.topQuestions;
+          contentGaps = result.contentGaps;
+          console.log(`[Keyword Research] AI generated ${aiKeywords.length} keywords, ${clusters.length} clusters`);
+          break;
         }
-      } catch (error) {
-        console.error("[Keyword Research] DataForSEO error:", error);
-        // Fall through to generate mock data
+        case "competitors": {
+          const result = await keywordIntelligence.analyzeCompetitor(site.domain, {
+            industry: site.industry || undefined,
+            limit,
+          });
+          aiKeywords = result.keywords;
+          contentGaps = result.contentGaps;
+          console.log(`[Keyword Research] Competitor analysis: ${aiKeywords.length} keywords found`);
+          break;
+        }
+        case "gap": {
+          // For gap analysis, analyze first competitor
+          if (body.competitorDomains?.length) {
+            const result = await keywordIntelligence.analyzeCompetitor(body.competitorDomains[0], {
+              yourDomain: site.domain,
+              industry: site.industry || undefined,
+              limit,
+            });
+            aiKeywords = result.keywords;
+            contentGaps = result.contentGaps;
+          }
+          break;
+        }
       }
+    } catch (error) {
+      console.error("[Keyword Research] AI error:", error);
+      // Return error instead of falling back to mock data
+      return NextResponse.json(
+        { error: "Keyword research failed. Please try again." },
+        { status: 500 }
+      );
     }
 
-    // If no keywords found or API not configured, generate mock data for testing
-    if (keywords.length === 0) {
-      console.log(`[Keyword Research] Generating mock data for: ${seedKeyword}`);
-      
-      // Generate realistic mock keywords based on seed
-      const variations = [
-        `best ${seedKeyword}`,
-        `${seedKeyword} tools`,
-        `${seedKeyword} tips`,
-        `how to ${seedKeyword}`,
-        `${seedKeyword} guide`,
-        `${seedKeyword} for beginners`,
-        `${seedKeyword} examples`,
-        `${seedKeyword} software`,
-        `${seedKeyword} strategy`,
-        `free ${seedKeyword}`,
-        `${seedKeyword} optimization`,
-        `${seedKeyword} automation`,
-        `${seedKeyword} best practices`,
-        `${seedKeyword} checklist`,
-        `${seedKeyword} tutorial`,
-      ];
-
-      keywords = variations.slice(0, limit).map((kw, i) => ({
-        keyword: kw,
-        volume: Math.floor(Math.random() * 5000) + 500,
-        difficulty: Math.floor(Math.random() * 60) + 20,
-        cpc: Math.round((Math.random() * 5 + 0.5) * 100) / 100,
-        intent: ["informational", "commercial", "transactional"][Math.floor(Math.random() * 3)],
-      }));
-    }
+    // Convert AI keywords to DB format with volume/difficulty estimates
+    const volumeMap: Record<string, number> = { high: 5000, medium: 1000, low: 200 };
+    const difficultyMap: Record<string, number> = { easy: 25, medium: 50, hard: 75 };
+    
+    const keywords = aiKeywords.map(kw => ({
+      keyword: kw.keyword,
+      volume: volumeMap[kw.estimatedVolume] || 500,
+      difficulty: difficultyMap[kw.difficulty] || 50,
+      cpc: 0, // Not relevant for GEO
+      intent: kw.intent,
+      geoOpportunity: kw.geoOpportunity,
+      questions: kw.questions,
+      entities: kw.entities,
+    }));
 
     // Save keywords to database
-    // Note: status must be one of: discovered, analyzed, clustered, queued, writing, published
-    const keywordRows = keywords.map(kw => ({
-      site_id: siteId,
-      keyword: kw.keyword.toLowerCase().trim(),
-      volume: kw.volume || null,
-      difficulty: kw.difficulty || null,
-      cpc: kw.cpc || null,
-      intent: kw.intent || "informational",
-      status: "discovered" as const,  // Valid KeywordStatus value
-    }));
+    const keywordRows = toDbKeywords(aiKeywords, siteId);
 
     if (keywordRows.length > 0) {
       // Try to insert all keywords at once (more efficient)
@@ -238,8 +249,11 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         keywords,
+        clusters,
+        topQuestions,
+        contentGaps,
         total: keywords.length,
-        source: hasDataForSEO ? "dataforseo" : "generated",
+        source: "ai", // GPT-5-mini powered
       },
     });
 

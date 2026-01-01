@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { createCrawler } from "@/lib/crawler";
 import { analyzeMultiplePages, analyzePageUnified, type PageInput } from "@/lib/analyzer";
-import { dataForSEO } from "@/lib/integrations/dataforseo/client";
+import { keywordIntelligence } from "@/lib/ai/keyword-intelligence";
 import { claude } from "@/lib/ai/openai-client";
 
 // Types - Now includes AIO score!
@@ -342,17 +342,23 @@ Example output: ["keyword1", "keyword2", "keyword3"]`
       }
 
       if (seedKeywords.length > 0) {
-        const keywordData = await dataForSEO.getKeywordSuggestions(
+        // Use AI-powered keyword intelligence instead of DataForSEO
+        const aiKeywords = await keywordIntelligence.getSuggestions(
           seedKeywords[0],
-          "United States",
           20
         );
 
-        keywords = keywordData.slice(0, 10).map(k => ({
+        const volumeMap: Record<string, number> = { high: 5000, medium: 1000, low: 200 };
+        const difficultyMap: Record<string, number> = { easy: 25, medium: 50, hard: 75 };
+        
+        keywords = aiKeywords.slice(0, 10).map(k => ({
           keyword: k.keyword,
-          volume: k.volume || 0,
-          difficulty: k.difficulty || 50,
-          opportunity: classifyOpportunity(k.volume || 0, k.difficulty || 50),
+          volume: volumeMap[k.estimatedVolume] || 500,
+          difficulty: difficultyMap[k.difficulty] || 50,
+          opportunity: classifyOpportunity(
+            volumeMap[k.estimatedVolume] || 500, 
+            difficultyMap[k.difficulty] || 50
+          ),
         }));
       }
     } catch (e) {

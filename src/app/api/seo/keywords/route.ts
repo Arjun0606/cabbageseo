@@ -3,29 +3,30 @@
  * 
  * POST /api/seo/keywords
  * 
+ * 100% AI-powered keyword intelligence for GEO
+ * 
  * Actions:
- * - metrics: Get keyword metrics (volume, difficulty, CPC)
  * - suggestions: Get related keyword suggestions
- * - questions: Get "People Also Ask" questions
- * - gap: Keyword gap analysis vs competitors
+ * - research: Full keyword research with clusters
+ * - questions: Get questions AI engines answer
+ * - competitors: Analyze competitor keywords
+ * - geo: Get GEO analysis for a topic
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { seoData } from "@/lib/seo/data-service";
 
-export const maxDuration = 30; // Allow up to 30s for API calls
+export const maxDuration = 30;
 
 interface KeywordRequest {
-  action: "metrics" | "suggestions" | "questions" | "gap" | "serp" | "ranking";
-  keywords?: string[];
+  action: "suggestions" | "research" | "questions" | "competitors" | "geo";
   keyword?: string;
   seedKeyword?: string;
+  topic?: string;
   domain?: string;
-  competitors?: string[];
+  location?: string;
   options?: {
     location?: string;
-    language?: string;
-    country?: string;
     limit?: number;
   };
 }
@@ -34,29 +35,8 @@ export async function POST(request: NextRequest) {
   try {
     const body: KeywordRequest = await request.json();
     const { action, options = {} } = body;
-
-    // Check provider status
-    const status = seoData.getProviderStatus();
     
     switch (action) {
-      case "metrics": {
-        if (!body.keywords || body.keywords.length === 0) {
-          return NextResponse.json(
-            { error: "Missing required field: keywords (array)" },
-            { status: 400 }
-          );
-        }
-
-        const metrics = await seoData.getKeywordMetrics(body.keywords, options);
-        
-        return NextResponse.json({
-          success: true,
-          data: metrics,
-          count: metrics.length,
-          provider: "dataforseo",
-        });
-      }
-
       case "suggestions": {
         const seedKeyword = body.seedKeyword || body.keyword;
         if (!seedKeyword) {
@@ -73,85 +53,86 @@ export async function POST(request: NextRequest) {
           data: suggestions,
           count: suggestions.length,
           seedKeyword,
-          provider: status.dataForSEO ? "dataforseo" : "serpapi",
+          provider: "ai",
         });
       }
 
-      case "questions": {
-        const keyword = body.keyword || body.seedKeyword;
-        if (!keyword) {
+      case "research": {
+        const seedKeyword = body.seedKeyword || body.keyword;
+        if (!seedKeyword) {
           return NextResponse.json(
-            { error: "Missing required field: keyword" },
+            { error: "Missing required field: seedKeyword or keyword" },
             { status: 400 }
           );
         }
 
-        const questions = await seoData.getQuestions(keyword, options);
+        const research = await seoData.researchKeywords(seedKeyword, options);
+        
+        return NextResponse.json({
+          success: true,
+          data: research,
+          provider: "ai",
+        });
+      }
+
+      case "questions": {
+        const topic = body.topic || body.keyword || body.seedKeyword;
+        if (!topic) {
+          return NextResponse.json(
+            { error: "Missing required field: topic or keyword" },
+            { status: 400 }
+          );
+        }
+
+        const questions = await seoData.getAIQuestions(topic, options);
         
         return NextResponse.json({
           success: true,
           data: questions,
           count: questions.length,
-          keyword,
+          topic,
         });
       }
 
-      case "gap": {
-        if (!body.domain || !body.competitors || body.competitors.length === 0) {
+      case "competitors": {
+        if (!body.domain) {
           return NextResponse.json(
-            { error: "Missing required fields: domain, competitors (array)" },
+            { error: "Missing required field: domain" },
             { status: 400 }
           );
         }
 
-        const gap = await seoData.getKeywordGap(body.domain, body.competitors, options);
+        const analysis = await seoData.analyzeCompetitor(body.domain, options);
         
         return NextResponse.json({
           success: true,
-          data: gap,
-          count: gap.length,
-          yourDomain: body.domain,
-          competitors: body.competitors,
+          data: analysis,
+          domain: body.domain,
         });
       }
 
-      case "serp": {
-        const keyword = body.keyword || body.seedKeyword;
-        if (!keyword) {
+      case "geo": {
+        const topic = body.topic || body.keyword || body.seedKeyword;
+        if (!topic) {
           return NextResponse.json(
-            { error: "Missing required field: keyword" },
+            { error: "Missing required field: topic or keyword" },
             { status: 400 }
           );
         }
 
-        const serp = await seoData.analyzeSERP(keyword, options);
+        const geoAnalysis = await seoData.analyzeForGEO(topic, body.location || options.location);
         
         return NextResponse.json({
           success: true,
-          data: serp,
-          keyword,
-        });
-      }
-
-      case "ranking": {
-        if (!body.keyword || !body.domain) {
-          return NextResponse.json(
-            { error: "Missing required fields: keyword, domain" },
-            { status: 400 }
-          );
-        }
-
-        const ranking = await seoData.checkRanking(body.keyword, body.domain, options);
-        
-        return NextResponse.json({
-          success: true,
-          data: ranking,
+          data: geoAnalysis,
+          topic,
+          location: body.location || options.location,
         });
       }
 
       default:
         return NextResponse.json(
-          { error: `Unknown action: ${action}. Valid actions: metrics, suggestions, questions, gap, serp, ranking` },
+          { error: `Unknown action: ${action}. Valid actions: suggestions, research, questions, competitors, geo` },
           { status: 400 }
         );
     }
@@ -168,19 +149,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET: Check provider status
+// GET: Check API status
 export async function GET() {
-  const status = seoData.getProviderStatus();
-  
   return NextResponse.json({
-    providers: status,
-    message: status.anyAvailable
-      ? "SEO data providers are configured"
-      : "No SEO data providers configured. Please configure DataForSEO or SerpAPI.",
-    instructions: !status.anyAvailable ? {
-      dataForSEO: "Set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD",
-      serpAPI: "Set SERPAPI_KEY",
-    } : undefined,
+    status: "ok",
+    message: "100% AI-powered keyword intelligence. Only OpenAI API key required.",
+    aiConfigured: Boolean(process.env.OPENAI_API_KEY),
+    actions: ["suggestions", "research", "questions", "competitors", "geo"],
   });
 }
-

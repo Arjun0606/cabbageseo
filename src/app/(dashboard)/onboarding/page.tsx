@@ -757,7 +757,7 @@ export default function OnboardingPage() {
           <div className="text-center sm:text-left">
             <h4 className="font-semibold">Want unlimited content generation?</h4>
             <p className="text-sm text-muted-foreground">
-            Starting at <span className="text-emerald-400 font-semibold">$29/month</span> · Cancel anytime
+            Starting at <span className="text-emerald-400 font-semibold">$29/month</span>
           </p>
           </div>
           <Button 

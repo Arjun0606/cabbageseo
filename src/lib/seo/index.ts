@@ -1,24 +1,20 @@
 /**
- * CabbageSEO - SEO Orchestration Layer
+ * CabbageSEO - GEO Orchestration Layer
  * 
- * This is where we bring everything together.
- * We DON'T rebuild SEO tools.
- * We INTEGRATE and ORCHESTRATE existing solutions.
+ * 100% AI-POWERED for Generative Engine Optimization
+ * 
+ * Focus: Getting cited by AI platforms
+ * - ChatGPT
+ * - Perplexity
+ * - Google AI Overviews
+ * 
+ * Location-aware content optimization included.
  */
 
-// Unified SEO Data Service (DataForSEO + SerpAPI)
-export { seoData, SEODataService } from "./data-service";
+// GEO Data Service (AI-powered, no third-party tools)
+export { seoData, SEODataService, type KeywordData, type GEOAnalysis } from "./data-service";
 
-// Backlink Service (Ahrefs alternative - DataForSEO + GSC + Claude)
-export {
-  BacklinkService,
-  backlinks,
-  type BacklinkProfile,
-  type CompetitorAnalysis,
-  type LinkGapOpportunity,
-} from "./backlink-service";
-
-// Internal Linking (LinkWhisper-style)
+// Internal Linking (improves AI crawlability)
 export { 
   InternalLinkingEngine, 
   internalLinking,
@@ -28,7 +24,7 @@ export {
   type LinkOpportunity,
 } from "./internal-linking";
 
-// Content Refresh (auto-detect stale content)
+// Content Refresh (keep content fresh for AI)
 export {
   ContentRefreshEngine,
   contentRefresh,
@@ -38,13 +34,3 @@ export {
   type RefreshReason,
   type TitleVariant,
 } from "./content-refresh";
-
-// DIY Outreach (NO paid tools - Claude + scraping + email patterns)
-export {
-  DIYOutreach,
-  diyOutreach,
-  type OutreachTarget,
-  type ContactInfo,
-  type OutreachEmail,
-  type OutreachPackage,
-} from "./diy-outreach";

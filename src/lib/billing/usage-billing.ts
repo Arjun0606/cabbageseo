@@ -411,8 +411,6 @@ function getUsageField(resourceType: OverageResourceType): string {
     audits: "audits_run",
     aioAnalyses: "aio_analyses",
     aiCredits: "ai_credits_used",
-    serpAnalysis: "serp_calls",
-    backlinks: "backlink_checks",
   };
   return mapping[resourceType];
 }
@@ -424,8 +422,6 @@ function getLimitField(resourceType: OverageResourceType): string {
     audits: "auditsPerMonth",
     aioAnalyses: "aioAnalysesPerMonth",
     aiCredits: "aiCreditsPerMonth",
-    serpAnalysis: "auditsPerMonth", // Shares limit
-    backlinks: "auditsPerMonth",    // Shares limit
   };
   return mapping[resourceType];
 }

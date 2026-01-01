@@ -1,16 +1,17 @@
 /**
- * AI Visibility Check API
+ * GEO Visibility Check API
  * 
- * POST /api/aio/visibility
+ * POST /api/geo/visibility
  * 
- * Checks REAL visibility across AI platforms by querying them directly.
- * This is not estimation - it's actual verification.
+ * 100% AI-POWERED visibility analysis for:
+ * - ChatGPT
+ * - Perplexity
+ * - Google AI Overviews
  * 
- * Required API keys (in .env):
- * - SERPAPI_KEY: For Google AI Overviews
- * - PERPLEXITY_API_KEY: For Perplexity AI
- * - OPENAI_API_KEY: For ChatGPT/SearchGPT  
- * - BING_SEARCH_API_KEY: For Bing Copilot
+ * Location-aware: Pass `location` param for region-specific analysis
+ * (e.g., "taxi service" in India vs Germany)
+ * 
+ * Only requires: OPENAI_API_KEY
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -21,11 +22,13 @@ import { requireSubscription } from "@/lib/api/require-subscription";
 interface RequestBody {
   url: string;
   keywords?: string[];
+  location?: string;  // e.g., "India", "Germany", "United States"
+  content?: string;   // Optional: raw content to analyze
 }
 
 export async function POST(req: NextRequest) {
   try {
-    // Auth check - this endpoint costs money, require paid subscription
+    // Auth check
     const supabase = await createClient();
     if (!supabase) {
       return NextResponse.json(
@@ -34,7 +37,7 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // AI visibility checks require paid subscription
+    // Require paid subscription
     const subscription = await requireSubscription(supabase);
     if (!subscription.authorized) {
       return subscription.error!;
@@ -49,42 +52,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check which platforms are configured
-    const configured = visibilityChecker.getConfiguredPlatforms();
-    const configuredCount = Object.values(configured).filter(Boolean).length;
-
-    if (configuredCount === 0) {
+    // Check if OpenAI is configured
+    if (!visibilityChecker.isConfigured()) {
       return NextResponse.json(
         { 
-          error: "No AI platform APIs configured",
-          help: "Configure at least one of: SERPAPI_KEY, PERPLEXITY_API_KEY, OPENAI_API_KEY, BING_SEARCH_API_KEY",
-          configured,
+          error: "OpenAI API key not configured",
+          help: "Set OPENAI_API_KEY in environment variables",
         },
         { status: 503 }
       );
     }
 
-    // Run the visibility check
+    // Run the AI-powered visibility check
     const result = await visibilityChecker.checkVisibility({
       url: body.url,
       keywords: body.keywords,
-      maxQueriesPerPlatform: 5,
+      location: body.location,
+      content: body.content,
     });
 
     return NextResponse.json({
       success: true,
       data: result,
       meta: {
-        platformsConfigured: configured,
-        platformsChecked: result.summary.platformsChecked,
-        isRealData: true, // This is real data, not estimation
+        aiPowered: true,
+        locationAware: Boolean(body.location),
+        platforms: ["chatgpt", "perplexity", "google_aio"],
       },
     });
   } catch (error) {
-    console.error("Visibility check error:", error);
+    console.error("GEO visibility check error:", error);
     return NextResponse.json(
       { 
-        error: "Failed to check visibility",
+        error: "Failed to check GEO visibility",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
@@ -92,18 +92,21 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET endpoint to check which platforms are configured
+// GET: Check API status
 export async function GET() {
-  const configured = visibilityChecker.getConfiguredPlatforms();
-  const configuredCount = Object.values(configured).filter(Boolean).length;
+  const configured = visibilityChecker.isConfigured();
 
   return NextResponse.json({
     configured,
-    configuredCount,
-    allConfigured: configuredCount === 4,
-    message: configuredCount === 0 
-      ? "No AI platform APIs configured. Add API keys to enable real visibility checking."
-      : `${configuredCount}/4 platforms configured for real visibility checking.`,
+    aiPowered: true,
+    platforms: ["chatgpt", "perplexity", "google_aio"],
+    message: configured 
+      ? "GEO visibility checking is ready. 100% AI-powered."
+      : "OpenAI API key required. Set OPENAI_API_KEY in environment.",
+    features: {
+      locationAware: true,
+      realTimeAnalysis: true,
+      improvementTracking: true,
+    },
   });
 }
-

@@ -46,7 +46,7 @@ const plans = [
       { text: "AI-generated featured images", included: true, highlight: true },
       { text: "Email support", included: true },
     ],
-    cta: "Start Free Trial",
+    cta: "Get Started",
     popular: false,
   },
   {
@@ -138,11 +138,11 @@ const faqs = [
   },
   {
     question: "12. Can I try before I buy?",
-    answer: "Yes! Our URL analyzer is completely free - no signup required. Analyze any website to see its GEO score. We also offer a 14-day free trial on all paid plans.",
+    answer: "Our URL analyzer is completely free - no signup required. You can analyze any website to see its GEO score. For the full dashboard with content generation, keyword tracking, and audits, you'll need a paid plan starting at $29/month.",
   },
   {
-    question: "13. Can I get a refund?",
-    answer: "We offer a 14-day money-back guarantee on all plans. If you're not satisfied after trying CabbageSEO, contact us for a full refund. No questions asked.",
+    question: "13. Can I cancel my subscription?",
+    answer: "Yes, you can cancel your subscription at any time from your account settings. Your access will continue until the end of your current billing period.",
   },
   {
     question: "14. Do you offer an API?",
@@ -240,7 +240,7 @@ export default function PricingPage() {
                 </Link>
                 <Link href="/signup">
                     <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                      Start Free
+                      Get Started
                     </Button>
                 </Link>
               </>
@@ -257,7 +257,7 @@ export default function PricingPage() {
             Simple, transparent pricing
           </h1>
           <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
-            Start free with our URL analyzer. Upgrade when you need more.
+            Try our free URL analyzer. Choose a plan for the full dashboard.
           </p>
 
           {/* Billing Toggle */}
@@ -412,7 +412,7 @@ export default function PricingPage() {
               onClick={() => handleCheckout("starter")}
               disabled={loadingPlan !== null}
             >
-                Start Free Trial
+                Get Started — $29/mo
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
             <Link href="/analyze">
@@ -422,7 +422,7 @@ export default function PricingPage() {
             </Link>
             </div>
             <p className="text-xs text-zinc-400 mt-4">
-              No credit card required • 14-day money-back guarantee
+              Plans start at $29/month
             </p>
           </div>
         </div>

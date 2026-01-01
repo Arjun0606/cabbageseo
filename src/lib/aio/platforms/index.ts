@@ -1,11 +1,12 @@
 /**
  * Platform Analyzers Index
  * 
- * Supports the 4 main AI search platforms we can actually verify:
- * - Google AI Overviews (via SerpAPI)
- * - ChatGPT / SearchGPT (via OpenAI API)
- * - Perplexity (via Perplexity API)
- * - Bing Copilot (via Bing Search API)
+ * 100% AI-POWERED GEO analysis for:
+ * - ChatGPT / SearchGPT
+ * - Perplexity AI
+ * - Google AI Overviews
+ * 
+ * No external SERP APIs - uses GPT-5-mini for analysis
  */
 
 export { BasePlatformAnalyzer } from "./base-analyzer";

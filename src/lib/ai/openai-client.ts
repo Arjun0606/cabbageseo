@@ -1,37 +1,49 @@
 /**
  * OpenAI Client for CabbageSEO
  * 
- * REPLACES Claude - OpenAI is faster and more reliable.
+ * Models (Updated Jan 2026):
+ * - GPT-5-mini: Smart & efficient ($0.25/$2.00 per MTok, 400K context) - DEFAULT
+ * - GPT-4.1-nano: Ultra-cheap for bulk tasks ($0.10/$0.40 per MTok)
+ * - GPT-4.1-mini: Budget option ($0.15/$0.60 per MTok)
+ * - GPT-5: Full power for premium content
  * 
- * Models:
- * - GPT-4o-mini: Fast & cheap for most tasks ($0.15/$0.60 per MTok)
- * - GPT-4o: High quality for premium content ($2.50/$10 per MTok)
- * 
- * This client maintains the same interface as claude-client.ts
- * for easy drop-in replacement.
+ * GPT-5-mini is the default - excellent for keyword intelligence, GEO analysis,
+ * and content generation. 400K context handles large site analyses easily.
  */
 
-// Cost per 1M tokens (in cents) - OpenAI pricing (Dec 2024)
+// Cost per 1M tokens (in cents) - OpenAI pricing (Jan 2026)
 const MODEL_COSTS = {
-  "gpt-4o-mini": { input: 15, output: 60 },       // $0.15/$0.60 per MTok
-  "gpt-4o": { input: 250, output: 1000 },         // $2.50/$10 per MTok
-  "gpt-4o-2024-11-20": { input: 250, output: 1000 },
-  "gpt-4-turbo": { input: 1000, output: 3000 },   // $10/$30 per MTok
+  // GPT-5 Series (Aug 2025) - RECOMMENDED
+  "gpt-5-mini": { input: 25, output: 200 },       // $0.25/$2.00 per MTok - smart & efficient
+  "gpt-5": { input: 500, output: 1500 },          // $5/$15 per MTok - full power
+  // GPT-4.1 Series - Budget options
+  "gpt-4.1-nano": { input: 10, output: 40 },      // $0.10/$0.40 per MTok - ultra cheap
+  "gpt-4.1-mini": { input: 15, output: 60 },      // $0.15/$0.60 per MTok - budget
+  "gpt-4.1": { input: 200, output: 800 },         // $2/$8 per MTok
+  // Legacy (still supported)
+  "gpt-4o-mini": { input: 15, output: 60 },
+  "gpt-4o": { input: 250, output: 1000 },
 } as const;
 
-// Model aliases (matching Claude client interface)
+// Model aliases - map semantic names to actual models
 const MODEL_ALIASES: Record<string, keyof typeof MODEL_COSTS> = {
-  // Map Claude model names to OpenAI equivalents
-  "sonnet": "gpt-4o-mini",        // Fast, good quality
-  "haiku": "gpt-4o-mini",         // Fastest
-  "opus": "gpt-4o",               // Premium
-  // Direct OpenAI names
+  // Recommended aliases
+  "fast": "gpt-5-mini",           // Default for most tasks (smart + efficient)
+  "nano": "gpt-4.1-nano",         // Ultra-cheap for bulk/simple tasks
+  "budget": "gpt-4.1-mini",       // Budget option
+  "quality": "gpt-5",             // Premium content
+  // Claude-compatible aliases
+  "sonnet": "gpt-5-mini",
+  "haiku": "gpt-4.1-nano",
+  "opus": "gpt-5",
+  // Direct model names
+  "gpt-5-mini": "gpt-5-mini",
+  "gpt-5": "gpt-5",
+  "gpt-4.1-nano": "gpt-4.1-nano",
+  "gpt-4.1-mini": "gpt-4.1-mini",
+  "gpt-4.1": "gpt-4.1",
   "gpt-4o-mini": "gpt-4o-mini",
   "gpt-4o": "gpt-4o",
-  "gpt-4-turbo": "gpt-4-turbo",
-  // Short aliases
-  "fast": "gpt-4o-mini",
-  "quality": "gpt-4o",
 };
 
 export type AIModel = keyof typeof MODEL_ALIASES;

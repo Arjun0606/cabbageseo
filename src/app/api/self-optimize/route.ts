@@ -200,8 +200,7 @@ export async function GET(request: NextRequest) {
       });
 
     case "track-rankings":
-      // Track CabbageSEO's rankings for target keywords
-      // In production, this would call SerpAPI/DataForSEO
+      // Track CabbageSEO's GEO visibility (AI-powered)
       return NextResponse.json({
         success: true,
         rankings: SELF_TARGET_KEYWORDS.map((keyword, i) => ({

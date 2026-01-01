@@ -12,7 +12,7 @@
  */
 
 import { AIClient } from "@/lib/integrations/openai/client";
-import { DataForSEOClient } from "@/lib/integrations/dataforseo/client";
+import { keywordIntelligence } from "@/lib/ai/keyword-intelligence";
 import { WordPressClient } from "@/lib/integrations/wordpress/client";
 
 export type AutopilotPhase = 
@@ -99,7 +99,6 @@ type ProgressCallback = (progress: AutopilotProgress) => void;
  */
 export class AutopilotEngine {
   private ai: AIClient;
-  private dataforseo: DataForSEOClient;
   private wordpress?: WordPressClient;
   private config: AutopilotConfig;
   private onProgress?: ProgressCallback;
@@ -109,7 +108,6 @@ export class AutopilotEngine {
     this.onProgress = onProgress;
     
     this.ai = new AIClient();
-    this.dataforseo = new DataForSEOClient();
     
     if (config.wordpress) {
       this.wordpress = new WordPressClient(config.wordpress);
@@ -179,16 +177,26 @@ export class AutopilotEngine {
     const seedKeywords = await this.extractSeedKeywords(discovery.pages);
     this.reportProgress("analysis", 20, `Extracted ${seedKeywords.length} seed keywords`);
     
-    // Get keyword suggestions from DataForSEO
-    const keywordData = await this.dataforseo.getKeywordSuggestions(
-      seedKeywords.slice(0, 10).join(","),
-      "United States",
-      100
+    // Get keyword suggestions using AI intelligence
+    const result = await keywordIntelligence.research(
+      seedKeywords[0] || "seo",
+      { limit: 50 }
     );
     this.reportProgress("analysis", 50, "Fetched keyword data");
     
-    // Use Claude to cluster keywords intelligently
-    const clusters = await this.clusterKeywords(keywordData);
+    // Transform AI clusters to engine format
+    const clusters: KeywordCluster[] = result.clusters.map((c) => ({
+      name: c.name,
+      intent: "informational" as const, // Default intent
+      keywords: c.keywords.map((k) => ({
+        keyword: k.keyword,
+        volume: k.estimatedVolume === "high" ? 5000 : k.estimatedVolume === "medium" ? 1000 : 200,
+        difficulty: k.difficulty === "hard" ? 75 : k.difficulty === "medium" ? 50 : 25,
+        cpc: 0,
+      })),
+      priority: c.totalGeoOpportunity > 200 ? "high" : c.totalGeoOpportunity > 100 ? "medium" : "low",
+      suggestedContentType: "guide" as const, // Default content type
+    }));
     this.reportProgress("analysis", 80, `Created ${clusters.length} keyword clusters`);
     
     // Prioritize clusters

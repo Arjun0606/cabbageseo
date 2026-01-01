@@ -475,7 +475,7 @@ function BillingPageContent() {
                 <DialogHeader>
                   <DialogTitle>Choose Your Plan</DialogTitle>
                   <DialogDescription>
-                    Select the plan that best fits your needs. All plans include a 14-day free trial.
+                    Select the plan that best fits your needs.
                   </DialogDescription>
                 </DialogHeader>
                 

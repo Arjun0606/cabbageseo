@@ -1271,7 +1271,7 @@ Add JSON-LD structured data to the page. Include:
 
                   {/* Trust signals */}
                   <p className="text-xs text-zinc-400 mt-6">
-                    ✓ No credit card required &nbsp;•&nbsp; ✓ Cancel anytime &nbsp;•&nbsp; ✓ 14-day free trial
+                    Paid plans start at $29/month
                   </p>
                 </div>
               </CardContent>

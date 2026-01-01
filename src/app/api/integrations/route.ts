@@ -340,12 +340,7 @@ function getCategoryFromType(type: string): string {
     shopify: "cms",
     gsc: "analytics",
     ga4: "analytics",
-    dataforseo: "seo",
-    ahrefs: "seo",
-    serpapi: "seo",
-    surfer: "seo",
     openai: "ai",
-    anthropic: "ai",
   };
   return categories[type] || "other";
 }
@@ -357,23 +352,17 @@ function getDefaultName(type: string): string {
     shopify: "Shopify",
     gsc: "Google Search Console",
     ga4: "Google Analytics 4",
-    dataforseo: "DataForSEO",
-    ahrefs: "Ahrefs",
-    serpapi: "SerpAPI",
-    surfer: "Surfer SEO",
-    openai: "OpenAI",
-    anthropic: "Anthropic Claude",
+    openai: "OpenAI (GPT-5)",
   };
   return names[type] || type;
 }
 
+// CabbageSEO is 100% AI-powered - no third-party SEO tools needed
 const AVAILABLE_INTEGRATIONS = [
   { type: "wordpress", name: "WordPress", category: "cms", description: "Publish content to WordPress" },
   { type: "webflow", name: "Webflow", category: "cms", description: "Publish to Webflow CMS" },
   { type: "shopify", name: "Shopify", category: "cms", description: "Manage Shopify blog" },
   { type: "gsc", name: "Google Search Console", category: "analytics", description: "Track rankings and clicks" },
   { type: "ga4", name: "Google Analytics 4", category: "analytics", description: "Track traffic" },
-  { type: "dataforseo", name: "DataForSEO", category: "seo", description: "Keyword research" },
-  { type: "ahrefs", name: "Ahrefs", category: "seo", description: "Backlink analysis" },
-  { type: "serpapi", name: "SerpAPI", category: "seo", description: "SERP tracking" },
+  { type: "openai", name: "OpenAI", category: "ai", description: "AI-powered keyword intelligence & content (required)" },
 ];

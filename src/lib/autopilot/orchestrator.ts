@@ -13,8 +13,7 @@
  * Philosophy: We don't reinvent tools - we ORCHESTRATE them
  */
 
-import { DataForSEOClient } from "@/lib/integrations/dataforseo/client";
-import { SerpAPIClient } from "@/lib/integrations/serpapi/client";
+import { keywordIntelligence } from "@/lib/ai/keyword-intelligence";
 import { ContentPipeline, type GeneratedContent } from "@/lib/ai/content-pipeline";
 import { SiteCrawler, type PageData } from "@/lib/crawler/site-crawler";
 import { TechnicalAuditEngine, type AuditResult } from "@/lib/crawler/technical-audit";
@@ -177,8 +176,6 @@ export class SEOOrchestrator {
   private crawler: SiteCrawler;
   private auditEngine: TechnicalAuditEngine;
   private autoFixer: AutoFixEngine;
-  private dataForSEO: DataForSEOClient;
-  private serpAPI: SerpAPIClient;
   private contentPipeline: ContentPipeline;
 
   constructor(config: OrchestrationConfig, onEvent?: EventCallback) {
@@ -206,8 +203,6 @@ export class SEOOrchestrator {
     this.crawler = new SiteCrawler();
     this.auditEngine = new TechnicalAuditEngine();
     this.autoFixer = new AutoFixEngine();
-    this.dataForSEO = new DataForSEOClient();
-    this.serpAPI = new SerpAPIClient();
     this.contentPipeline = new ContentPipeline();
   }
 
@@ -470,18 +465,20 @@ export class SEOOrchestrator {
   private async executeResearch(task: SEOTask): Promise<void> {
     const seeds = this.extractSeedKeywords();
     
-    const suggestions = await this.dataForSEO.getKeywordSuggestions(
-      seeds.join(","),
-      "United States",
-      50
-    );
+    // Use AI-powered keyword intelligence
+    const result = await keywordIntelligence.research(seeds[0] || "seo", {
+      limit: 50,
+    });
     
-    const opportunities: KeywordOpportunity[] = suggestions
-      .filter(kw => kw.difficulty < 50 && kw.volume > 100)
+    const volumeMap: Record<string, number> = { high: 5000, medium: 1000, low: 200 };
+    const difficultyMap: Record<string, number> = { easy: 25, medium: 50, hard: 75 };
+    
+    const opportunities: KeywordOpportunity[] = result.keywords
+      .filter(kw => difficultyMap[kw.difficulty] < 50)
       .map(kw => ({
         keyword: kw.keyword,
-        volume: kw.volume,
-        difficulty: kw.difficulty,
+        volume: volumeMap[kw.estimatedVolume] || 500,
+        difficulty: difficultyMap[kw.difficulty] || 50,
         gap: "not ranking" as const,
       }));
     
@@ -500,33 +497,28 @@ export class SEOOrchestrator {
   }
 
   private async executeCompetitorAnalysis(task: SEOTask): Promise<void> {
+    // Use AI to identify likely competitors based on our topic/keywords
     const keywords = this.state.trackedKeywords.slice(0, 5);
-    const domains = new Map<string, number>();
+    const topicKeywords = keywords.map(k => k.keyword).join(", ");
     
-    for (const kw of keywords) {
-      try {
-        const serpResult = await this.serpAPI.searchGoogle({ q: kw.keyword, num: 10 });
-        const ourDomain = new URL(this.config.siteUrl).hostname;
-        
-        for (const r of serpResult.organic_results || []) {
-          try {
-            const domain = new URL(r.link).hostname;
-            if (domain !== ourDomain) {
-              domains.set(domain, (domains.get(domain) || 0) + 1);
-            }
-          } catch {
-            // Invalid URL
-          }
-        }
-      } catch {
-        // Continue on error
-      }
+    const { openai } = await import("@/lib/ai/openai-client");
+    
+    const prompt = `Based on these keywords: ${topicKeywords}
+    
+Identify 5 likely competitor domains that would rank for these topics.
+Return JSON array: [{"domain": "example.com", "commonKeywords": 3}]`;
+
+    try {
+      const competitors = await openai.getJSON<Array<{ domain: string; commonKeywords: number }>>(prompt);
+      
+      this.state.competitors = competitors.slice(0, 5).map(c => ({
+        domain: c.domain,
+        commonKeywords: c.commonKeywords,
+        estimatedTraffic: 0,
+      }));
+    } catch {
+      this.state.competitors = [];
     }
-    
-    this.state.competitors = Array.from(domains.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([domain, count]) => ({ domain, commonKeywords: count, estimatedTraffic: 0 }));
     
     task.result = { competitors: this.state.competitors.length };
   }
@@ -611,25 +603,28 @@ export class SEOOrchestrator {
   }
 
   private async executeRankTracking(task: SEOTask): Promise<void> {
+    // For GEO, we track AI visibility scores instead of traditional SERP rankings
+    // Import visibility tracker
+    const { visibilityTracker } = await import("@/lib/geo/visibility-tracker");
+    
     const updates: Array<{ keyword: string; change: number }> = [];
-    const ourDomain = new URL(this.config.siteUrl).hostname;
     
     for (const kw of this.state.trackedKeywords) {
       try {
-        const serpResult = await this.serpAPI.searchGoogle({ q: kw.keyword, num: 100 });
-        const results = serpResult.organic_results || [];
-        const ourResult = results.find((r: { link: string; position?: number }) => r.link.includes(ourDomain));
+        // Check AI visibility for this keyword/topic
+        const check = await visibilityTracker.quickCheck(
+          `${this.config.siteUrl}?topic=${encodeURIComponent(kw.keyword)}`
+        );
         
-        const oldPos = kw.position;
-        const newPos = ourResult?.position || 0;
+        const oldScore = kw.position || 0; // Repurpose position as GEO score
+        const newScore = check.overallScore;
         
-        if (oldPos !== newPos) {
-          updates.push({ keyword: kw.keyword, change: oldPos - newPos });
+        if (oldScore !== newScore) {
+          updates.push({ keyword: kw.keyword, change: newScore - oldScore });
         }
         
-        kw.previousPosition = oldPos;
-        kw.position = newPos;
-        kw.url = ourResult?.link;
+        kw.previousPosition = oldScore;
+        kw.position = newScore; // Now represents GEO visibility score
         kw.lastChecked = new Date();
       } catch {
         // Continue on error

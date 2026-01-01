@@ -933,57 +933,34 @@ export async function POST(request: NextRequest) {
       checkedAt: string;
     } | null = null;
 
-    // Try to get real visibility data
+    // Try to get AI-powered visibility analysis
     try {
       const { visibilityChecker } = await import("@/lib/aio/visibility-checker");
-      const configured = visibilityChecker.getConfiguredPlatforms();
-      const hasAnyConfigured = Object.values(configured).some(Boolean);
-
-      if (hasAnyConfigured) {
-        // Extract keywords from page content for queries
+      
+      if (visibilityChecker.isConfigured()) {
+        // Extract keywords from page content for context
         const keywords = extractKeywords(page);
         
         const realResult = await visibilityChecker.checkVisibility({
           url,
-          keywords: keywords.slice(0, 3), // Limit to reduce API calls for free tier
-          maxQueriesPerPlatform: 2,
+          keywords: keywords.slice(0, 5),
         });
 
         platformScores = {
-          googleAIO: realResult.platforms.googleAIO.checked 
-            ? (realResult.platforms.googleAIO.queriesWithCitation / Math.max(1, realResult.platforms.googleAIO.queriesTested)) * 100
-            : 0,
-          perplexity: realResult.platforms.perplexity.checked
-            ? (realResult.platforms.perplexity.queriesWithCitation / Math.max(1, realResult.platforms.perplexity.queriesTested)) * 100
-            : 0,
-          chatGPT: realResult.platforms.chatGPT.checked
-            ? (realResult.platforms.chatGPT.queriesWithCitation / Math.max(1, realResult.platforms.chatGPT.queriesTested)) * 100
-            : 0,
-          bingCopilot: realResult.platforms.bingCopilot.checked
-            ? (realResult.platforms.bingCopilot.queriesWithCitation / Math.max(1, realResult.platforms.bingCopilot.queriesTested)) * 100
-            : 0,
+          googleAIO: realResult.platforms.googleAio.score,
+          perplexity: realResult.platforms.perplexity.score,
+          chatGPT: realResult.platforms.chatgpt.score,
+          bingCopilot: 0, // Not supported in new AI-powered checker
         };
-
-        // Round to nice numbers
-        platformScores.googleAIO = Math.round(platformScores.googleAIO);
-        platformScores.perplexity = Math.round(platformScores.perplexity);
-        platformScores.chatGPT = Math.round(platformScores.chatGPT);
-        platformScores.bingCopilot = Math.round(platformScores.bingCopilot);
 
         platformScoresAreReal = true;
         realVisibilityData = {
-          citations: Object.values(realResult.platforms).flatMap(p => 
-            p.citations.map(c => ({
-              platform: p.platformName,
-              query: c.query,
-              url: c.citedUrl,
-            }))
-          ),
+          citations: [], // AI-powered checker estimates, doesn't find actual citations
           checkedAt: realResult.checkedAt,
         };
       }
     } catch (e) {
-      console.warn("Real visibility check failed, falling back to estimates:", e);
+      console.warn("AI visibility analysis failed, falling back to estimates:", e);
     }
 
     // Fall back to content-based estimates if real check failed or not configured

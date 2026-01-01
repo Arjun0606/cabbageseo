@@ -3,14 +3,15 @@
  * 
  * POST /api/seo/competitors
  * 
+ * 100% AI-POWERED - No external SERP APIs
+ * 
  * Actions:
- * - keywords: Get competitor's ranking keywords
- * - analyze: Full competitor SERP analysis for a keyword
+ * - keywords: Get competitor's likely keywords (AI estimated)
+ * - analyze: Full competitor GEO analysis
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { seoData } from "@/lib/seo/data-service";
-import { serpapi } from "@/lib/integrations/serpapi/client";
 
 export const maxDuration = 30;
 
@@ -38,13 +39,16 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const keywords = await seoData.getCompetitorKeywords(body.domain, options);
+        // Use AI-powered competitor analysis
+        const result = await seoData.analyzeCompetitor(body.domain, options);
         
         return NextResponse.json({
           success: true,
-          data: keywords,
-          count: keywords.length,
+          data: result.keywords,
+          count: result.keywords.length,
           domain: body.domain,
+          contentGaps: result.contentGaps,
+          strengthAreas: result.strengthAreas,
         });
       }
 
@@ -56,35 +60,27 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Use SerpAPI for rich competitor analysis
-        if (serpapi.isConfigured()) {
-          const analysis = await serpapi.analyzeCompetitors(body.keyword, {
-            location: options.location,
-            numResults: options.limit || 20,
-          });
-          
-          return NextResponse.json({
-            success: true,
-            data: analysis,
-          });
-        }
-
-        // Fallback to basic SERP analysis
-        const serp = await seoData.analyzeSERP(body.keyword, options);
+        // Use AI for GEO-focused competitor analysis
+        const geoAnalysis = await seoData.analyzeForGEO(
+          body.keyword,
+          options.location
+        );
         
         return NextResponse.json({
           success: true,
           data: {
             keyword: body.keyword,
-            competitors: serp.organicResults.map(r => ({
-              domain: r.domain,
-              url: r.url,
-              title: r.title,
-              position: r.position,
-            })),
-            dominantDomains: [],
-            avgTitleLength: 0,
-            avgDescriptionLength: 0,
+            location: options.location,
+            geoScores: {
+              chatgpt: geoAnalysis.chatgptScore,
+              perplexity: geoAnalysis.perplexityScore,
+              googleAi: geoAnalysis.googleAiScore,
+              overall: geoAnalysis.overallScore,
+            },
+            questionsToAnswer: geoAnalysis.questionsToAnswer,
+            entitiesToInclude: geoAnalysis.entitiesToInclude,
+            structureRecommendations: geoAnalysis.structureRecommendations,
+            locationContext: geoAnalysis.locationContext,
           },
         });
       }
@@ -107,4 +103,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

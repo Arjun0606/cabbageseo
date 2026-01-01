@@ -1,104 +1,95 @@
 /**
- * AI Visibility Checker
+ * AI Visibility Checker (GEO)
  * 
- * REAL visibility checking - queries AI platforms and checks for citations.
- * This is NOT estimation - it's actual verification of whether your content
- * appears in AI search results.
+ * 100% AI-POWERED - No external SERP APIs required
  * 
- * Platforms:
- * - Google AI Overviews (via SerpAPI)
- * - Perplexity AI (via their API)
- * - ChatGPT/SearchGPT (via OpenAI API with web search)
- * - Bing Copilot (via Bing Web Search API)
+ * Uses GPT-5-mini to analyze content and estimate citation likelihood
+ * across AI platforms (ChatGPT, Perplexity, Google AI).
+ * 
+ * Focus: Generative Engine Optimization (GEO)
+ * - Location-aware analysis
+ * - Entity optimization
+ * - Answer structure scoring
+ * - Quotability assessment
  */
 
-import { serpapi } from "@/lib/integrations/serpapi/client";
+import { openai } from "@/lib/ai/openai-client";
 
-// Platform visibility result
-interface PlatformVisibilityResult {
-  platform: "google_aio" | "perplexity" | "chatgpt" | "bing_copilot";
+// ============================================
+// TYPES
+// ============================================
+
+interface PlatformScore {
+  platform: "chatgpt" | "perplexity" | "google_aio";
   platformName: string;
-  checked: boolean;
-  visible: boolean;
-  citations: CitationResult[];
-  queriesTested: number;
-  queriesWithCitation: number;
+  score: number;              // 0-100
   confidence: "high" | "medium" | "low";
-  error?: string;
+  strengths: string[];
+  improvements: string[];
 }
 
-interface CitationResult {
-  query: string;
-  position?: number;
-  citedUrl?: string;
-  snippet?: string;
-  context?: string;
-}
-
-interface VisibilityCheckResult {
+interface VisibilityResult {
   url: string;
   domain: string;
   checkedAt: string;
+  
+  // Platform-specific scores
   platforms: {
-    googleAIO: PlatformVisibilityResult;
-    perplexity: PlatformVisibilityResult;
-    chatGPT: PlatformVisibilityResult;
-    bingCopilot: PlatformVisibilityResult;
+    chatgpt: PlatformScore;
+    perplexity: PlatformScore;
+    googleAio: PlatformScore;
   };
+  
+  // Overall GEO score
   overallScore: number;
-  summary: {
-    totalQueriesTested: number;
-    totalCitations: number;
-    platformsWithCitations: number;
-    platformsChecked: number;
+  
+  // Key factors analyzed
+  factors: {
+    entityDensity: number;      // Named entities for topical authority
+    quotability: number;        // Easy-to-extract answer snippets
+    answerStructure: number;    // FAQs, definitions, how-tos
+    freshness: number;          // Recent updates, current info
+    expertAttribution: number;  // Expert quotes, author credentials
+    locationRelevance: number;  // Location-specific content
+  };
+  
+  // Top opportunities for improvement
+  quickWins: string[];
+  
+  // Location context if analyzed
+  location?: {
+    region: string;
+    localEntities: string[];
+    recommendations: string[];
   };
 }
 
-interface VisibilityCheckOptions {
+interface CheckOptions {
   url: string;
-  keywords?: string[];
-  maxQueriesPerPlatform?: number;
+  content?: string;           // Raw content (optional - will be fetched if not provided)
+  keywords?: string[];        // Related keywords for context
+  location?: string;          // e.g., "India", "Germany" for location-aware analysis
 }
 
-/**
- * AI Visibility Checker
- * Queries real AI platforms to check if a URL/domain is being cited
- */
+// ============================================
+// AI VISIBILITY CHECKER
+// ============================================
+
 export class AIVisibilityChecker {
-  private perplexityApiKey: string;
-  private openaiApiKey: string;
-  private bingApiKey: string;
-
-  constructor() {
-    this.perplexityApiKey = process.env.PERPLEXITY_API_KEY || "";
-    this.openaiApiKey = process.env.OPENAI_API_KEY || "";
-    this.bingApiKey = process.env.BING_SEARCH_API_KEY || "";
+  /**
+   * Check if OpenAI is configured (our only dependency)
+   */
+  isConfigured(): boolean {
+    return Boolean(process.env.OPENAI_API_KEY);
   }
 
   /**
-   * Check if APIs are configured
+   * Main visibility check - AI-powered analysis
    */
-  getConfiguredPlatforms(): {
-    googleAIO: boolean;
-    perplexity: boolean;
-    chatGPT: boolean;
-    bingCopilot: boolean;
-  } {
-    return {
-      googleAIO: serpapi.isConfigured(),
-      perplexity: Boolean(this.perplexityApiKey),
-      chatGPT: Boolean(this.openaiApiKey),
-      bingCopilot: Boolean(this.bingApiKey),
-    };
-  }
-
-  /**
-   * Main visibility check - queries all available platforms
-   */
-  async checkVisibility(options: VisibilityCheckOptions): Promise<VisibilityCheckResult> {
-    const { url, keywords = [], maxQueriesPerPlatform = 5 } = options;
+  async checkVisibility(options: CheckOptions): Promise<VisibilityResult> {
+    const { url, content = "", keywords = [], location } = options;
     
-    // Extract domain from URL
+    // Extract domain
     let domain: string;
     try {
       const urlObj = new URL(url.startsWith("http") ? url : `https://${url}`);
@@ -107,451 +98,191 @@ export class AIVisibilityChecker {
       domain = url.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
     }
 
-    // If no keywords provided, use domain-based queries
-    const queries = keywords.length > 0 
-      ? keywords.slice(0, maxQueriesPerPlatform)
-      : this.generateDefaultQueries(domain);
+    const contentContext = content.length > 0 
+      ? `Content to analyze (first 5000 chars):\n${content.slice(0, 5000)}`
+      : `Domain: ${domain}\nKeywords: ${keywords.join(", ")}`;
 
-    // Run all platform checks in parallel
-    const [googleAIO, perplexity, chatGPT, bingCopilot] = await Promise.all([
-      this.checkGoogleAIO(domain, queries),
-      this.checkPerplexity(domain, queries),
-      this.checkChatGPT(domain, queries),
-      this.checkBingCopilot(domain, queries),
-    ]);
+    const locationContext = location 
+      ? `User location: ${location}. Analyze for location-specific relevance.`
+      : "";
 
-    // Calculate overall score
-    const platforms = { googleAIO, perplexity, chatGPT, bingCopilot };
-    const platformResults = Object.values(platforms);
-    const checkedPlatforms = platformResults.filter(p => p.checked);
-    const platformsWithCitations = checkedPlatforms.filter(p => p.visible);
-    
-    const totalCitations = platformResults.reduce((sum, p) => sum + p.citations.length, 0);
-    const totalQueries = platformResults.reduce((sum, p) => sum + p.queriesTested, 0);
-    
-    // Score: weight by platform importance and citation frequency
-    let overallScore = 0;
-    if (checkedPlatforms.length > 0) {
-      const weights = { googleAIO: 0.35, perplexity: 0.25, chatGPT: 0.25, bingCopilot: 0.15 };
-      for (const [key, result] of Object.entries(platforms)) {
-        if (result.checked && result.queriesTested > 0) {
-          const citationRate = result.queriesWithCitation / result.queriesTested;
-          overallScore += citationRate * weights[key as keyof typeof weights] * 100;
-        }
-      }
-    }
+    const prompt = `You are a GEO (Generative Engine Optimization) expert. Analyze this content for visibility in AI platforms.
+
+${contentContext}
+
+${locationContext}
+
+Analyze for visibility in:
+1. ChatGPT - Prefers authoritative, well-structured answers
+2. Perplexity - Prefers cited sources, recent information
+3. Google AI Overviews - Prefers clear answers, structured data
+
+For each platform, score 0-100 based on:
+- Entity density (named entities for topical authority)
+- Quotability (easy-to-extract snippets)
+- Answer structure (FAQs, definitions, step-by-step)
+- Freshness (current/updated content)
+- Expert attribution (author credentials, expert quotes)
+${location ? "- Location relevance (region-specific information)" : ""}
+
+Return JSON:
+{
+  "platforms": {
+    "chatgpt": { "score": 75, "confidence": "high", "strengths": ["..."], "improvements": ["..."] },
+    "perplexity": { "score": 68, "confidence": "medium", "strengths": ["..."], "improvements": ["..."] },
+    "googleAio": { "score": 72, "confidence": "high", "strengths": ["..."], "improvements": ["..."] }
+  },
+  "factors": {
+    "entityDensity": 70,
+    "quotability": 65,
+    "answerStructure": 80,
+    "freshness": 60,
+    "expertAttribution": 50,
+    "locationRelevance": ${location ? "75" : "0"}
+  },
+  "quickWins": ["Add FAQ schema", "Include more named entities", "Add expert quotes"],
+  ${location ? '"location": { "region": "...", "localEntities": ["..."], "recommendations": ["..."] },' : ""}
+}`;
+
+    const result = await openai.getJSON<{
+      platforms: {
+        chatgpt: { score: number; confidence: string; strengths: string[]; improvements: string[] };
+        perplexity: { score: number; confidence: string; strengths: string[]; improvements: string[] };
+        googleAio: { score: number; confidence: string; strengths: string[]; improvements: string[] };
+      };
+      factors: {
+        entityDensity: number;
+        quotability: number;
+        answerStructure: number;
+        freshness: number;
+        expertAttribution: number;
+        locationRelevance: number;
+      };
+      quickWins: string[];
+      location?: {
+        region: string;
+        localEntities: string[];
+        recommendations: string[];
+      };
+    }>(prompt);
+
+    // Calculate overall score (weighted average)
+    const overallScore = Math.round(
+      result.platforms.chatgpt.score * 0.35 +
+      result.platforms.perplexity.score * 0.30 +
+      result.platforms.googleAio.score * 0.35
+    );
 
     return {
       url,
       domain,
       checkedAt: new Date().toISOString(),
-      platforms,
-      overallScore: Math.round(overallScore),
-      summary: {
-        totalQueriesTested: totalQueries,
-        totalCitations,
-        platformsWithCitations: platformsWithCitations.length,
-        platformsChecked: checkedPlatforms.length,
+      platforms: {
+        chatgpt: {
+          platform: "chatgpt",
+          platformName: "ChatGPT",
+          score: result.platforms.chatgpt.score,
+          confidence: result.platforms.chatgpt.confidence as "high" | "medium" | "low",
+          strengths: result.platforms.chatgpt.strengths,
+          improvements: result.platforms.chatgpt.improvements,
+        },
+        perplexity: {
+          platform: "perplexity",
+          platformName: "Perplexity AI",
+          score: result.platforms.perplexity.score,
+          confidence: result.platforms.perplexity.confidence as "high" | "medium" | "low",
+          strengths: result.platforms.perplexity.strengths,
+          improvements: result.platforms.perplexity.improvements,
+        },
+        googleAio: {
+          platform: "google_aio",
+          platformName: "Google AI Overviews",
+          score: result.platforms.googleAio.score,
+          confidence: result.platforms.googleAio.confidence as "high" | "medium" | "low",
+          strengths: result.platforms.googleAio.strengths,
+          improvements: result.platforms.googleAio.improvements,
+        },
       },
+      overallScore,
+      factors: result.factors,
+      quickWins: result.quickWins,
+      location: result.location,
     };
   }
 
   /**
-   * Generate default queries based on domain
+   * Quick score check (faster, less detailed)
    */
-  private generateDefaultQueries(domain: string): string[] {
-    const baseName = domain.split(".")[0];
-    return [
-      `what is ${baseName}`,
-      `${baseName} review`,
-      `${baseName} alternatives`,
-      baseName,
-      `${baseName} pricing`,
-    ];
-  }
+  async quickCheck(url: string): Promise<{
+    overallScore: number;
+    chatgpt: number;
+    perplexity: number;
+    googleAio: number;
+    topImprovement: string;
+  }> {
+    const prompt = `Quick GEO visibility score for ${url}:
+Return JSON: { "chatgpt": 0-100, "perplexity": 0-100, "googleAio": 0-100, "topImprovement": "one quick win" }`;
 
-  /**
-   * Check Google AI Overviews via SerpAPI
-   * SerpAPI returns ai_overview with sources when present
-   */
-  private async checkGoogleAIO(domain: string, queries: string[]): Promise<PlatformVisibilityResult> {
-    const result: PlatformVisibilityResult = {
-      platform: "google_aio",
-      platformName: "Google AI Overviews",
-      checked: false,
-      visible: false,
-      citations: [],
-      queriesTested: 0,
-      queriesWithCitation: 0,
-      confidence: "low",
+    const result = await openai.getJSON<{
+      chatgpt: number;
+      perplexity: number;
+      googleAio: number;
+      topImprovement: string;
+    }>(prompt);
+
+    return {
+      overallScore: Math.round(
+        result.chatgpt * 0.35 + result.perplexity * 0.30 + result.googleAio * 0.35
+      ),
+      ...result,
     };
-
-    if (!serpapi.isConfigured()) {
-      result.error = "SerpAPI not configured (SERPAPI_KEY required)";
-      return result;
-    }
-
-    result.checked = true;
-
-    try {
-      for (const query of queries) {
-        result.queriesTested++;
-        
-        const serpResult = await serpapi.searchGoogle({
-          q: query,
-          num: 10,
-        });
-
-        // Check for AI Overview in response
-        // SerpAPI returns ai_overview field when Google shows one
-        const response = serpResult as unknown as Record<string, unknown>;
-        const aiOverview = response.ai_overview as {
-          text?: string;
-          sources?: Array<{ link: string; title?: string; snippet?: string }>;
-        } | undefined;
-
-        if (aiOverview?.sources) {
-          for (const source of aiOverview.sources) {
-            if (this.urlMatchesDomain(source.link, domain)) {
-              result.visible = true;
-              result.queriesWithCitation++;
-              result.citations.push({
-                query,
-                citedUrl: source.link,
-                snippet: source.snippet,
-                context: "Cited in Google AI Overview",
-              });
-              break; // Found citation for this query
-            }
-          }
-        }
-
-        // Also check organic results for Featured Snippet (often pulled into AI Overviews)
-        const organicResults = serpResult.organic_results || [];
-        for (const organic of organicResults) {
-          if (this.urlMatchesDomain(organic.link, domain) && organic.rich_snippet) {
-            // Featured snippet found
-            if (!result.citations.find(c => c.query === query)) {
-              result.citations.push({
-                query,
-                position: organic.position,
-                citedUrl: organic.link,
-                snippet: organic.snippet,
-                context: "Featured Snippet (potential AI Overview source)",
-              });
-            }
-          }
-        }
-
-        // Rate limiting - SerpAPI has limits
-        await this.delay(200);
-      }
-
-      result.confidence = result.queriesTested >= 3 ? "high" : "medium";
-    } catch (error) {
-      result.error = error instanceof Error ? error.message : "Failed to check Google AI Overviews";
-    }
-
-    return result;
   }
 
   /**
-   * Check Perplexity AI via their API
-   * Perplexity returns citations in the response
+   * Compare before/after content changes
    */
-  private async checkPerplexity(domain: string, queries: string[]): Promise<PlatformVisibilityResult> {
-    const result: PlatformVisibilityResult = {
-      platform: "perplexity",
-      platformName: "Perplexity AI",
-      checked: false,
-      visible: false,
-      citations: [],
-      queriesTested: 0,
-      queriesWithCitation: 0,
-      confidence: "low",
+  async compareVersions(
+    url: string,
+    beforeContent: string,
+    afterContent: string
+  ): Promise<{
+    beforeScore: number;
+    afterScore: number;
+    improvement: number;
+    changes: string[];
+  }> {
+    const prompt = `Compare these two versions of content for GEO visibility improvement:
+
+BEFORE:
+${beforeContent.slice(0, 2000)}
+
+AFTER:
+${afterContent.slice(0, 2000)}
+
+Return JSON: {
+  "beforeScore": 0-100,
+  "afterScore": 0-100,
+  "changes": ["what improved", "what still needs work"]
+}`;
+
+    const result = await openai.getJSON<{
+      beforeScore: number;
+      afterScore: number;
+      changes: string[];
+    }>(prompt);
+
+    return {
+      ...result,
+      improvement: result.afterScore - result.beforeScore,
     };
-
-    if (!this.perplexityApiKey) {
-      result.error = "Perplexity API not configured (PERPLEXITY_API_KEY required)";
-      return result;
-    }
-
-    result.checked = true;
-
-    try {
-      for (const query of queries) {
-        result.queriesTested++;
-
-        const response = await fetch("https://api.perplexity.ai/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${this.perplexityApiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "sonar", // Perplexity's search-enabled model
-            messages: [
-              { role: "user", content: query }
-            ],
-            return_citations: true,
-          }),
-        });
-
-        if (!response.ok) {
-          console.warn(`Perplexity API error for query "${query}": ${response.status}`);
-          continue;
-        }
-
-        const data = await response.json() as {
-          citations?: string[];
-          choices?: Array<{
-            message?: {
-              content?: string;
-            };
-          }>;
-        };
-
-        // Check citations array for our domain
-        if (data.citations && Array.isArray(data.citations)) {
-          for (const citation of data.citations) {
-            if (this.urlMatchesDomain(citation, domain)) {
-              result.visible = true;
-              result.queriesWithCitation++;
-              result.citations.push({
-                query,
-                citedUrl: citation,
-                context: "Cited in Perplexity response",
-              });
-              break;
-            }
-          }
-        }
-
-        await this.delay(300); // Rate limiting
-      }
-
-      result.confidence = result.queriesTested >= 3 ? "high" : "medium";
-    } catch (error) {
-      result.error = error instanceof Error ? error.message : "Failed to check Perplexity";
-    }
-
-    return result;
-  }
-
-  /**
-   * Check ChatGPT/SearchGPT via OpenAI API with web search
-   * Uses the responses API with web_search_preview tool
-   */
-  private async checkChatGPT(domain: string, queries: string[]): Promise<PlatformVisibilityResult> {
-    const result: PlatformVisibilityResult = {
-      platform: "chatgpt",
-      platformName: "ChatGPT / SearchGPT",
-      checked: false,
-      visible: false,
-      citations: [],
-      queriesTested: 0,
-      queriesWithCitation: 0,
-      confidence: "low",
-    };
-
-    if (!this.openaiApiKey) {
-      result.error = "OpenAI API not configured (OPENAI_API_KEY required)";
-      return result;
-    }
-
-    result.checked = true;
-
-    try {
-      for (const query of queries) {
-        result.queriesTested++;
-
-        // Use OpenAI's responses API with web search tool
-        const response = await fetch("https://api.openai.com/v1/responses", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${this.openaiApiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "gpt-4o",
-            input: query,
-            tools: [{ type: "web_search_preview" }],
-          }),
-        });
-
-        if (!response.ok) {
-          // Fall back to chat completions if responses API not available
-          console.warn(`OpenAI responses API error: ${response.status}, trying chat completions`);
-          continue;
-        }
-
-        const data = await response.json() as {
-          output?: Array<{
-            type: string;
-            content?: Array<{
-              type: string;
-              annotations?: Array<{
-                type: string;
-                url?: string;
-              }>;
-            }>;
-          }>;
-        };
-
-        // Check for URL citations in the response
-        if (data.output) {
-          for (const outputItem of data.output) {
-            if (outputItem.content) {
-              for (const content of outputItem.content) {
-                if (content.annotations) {
-                  for (const annotation of content.annotations) {
-                    if (annotation.url && this.urlMatchesDomain(annotation.url, domain)) {
-                      result.visible = true;
-                      result.queriesWithCitation++;
-                      result.citations.push({
-                        query,
-                        citedUrl: annotation.url,
-                        context: "Cited in ChatGPT web search response",
-                      });
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        await this.delay(500); // Rate limiting for OpenAI
-      }
-
-      result.confidence = result.queriesTested >= 3 ? "high" : "medium";
-    } catch (error) {
-      result.error = error instanceof Error ? error.message : "Failed to check ChatGPT";
-    }
-
-    return result;
-  }
-
-  /**
-   * Check Bing Copilot via Bing Web Search API
-   * While not exactly Copilot, this shows visibility in Bing's AI-enhanced results
-   */
-  private async checkBingCopilot(domain: string, queries: string[]): Promise<PlatformVisibilityResult> {
-    const result: PlatformVisibilityResult = {
-      platform: "bing_copilot",
-      platformName: "Bing Copilot",
-      checked: false,
-      visible: false,
-      citations: [],
-      queriesTested: 0,
-      queriesWithCitation: 0,
-      confidence: "low",
-    };
-
-    if (!this.bingApiKey) {
-      result.error = "Bing Search API not configured (BING_SEARCH_API_KEY required)";
-      return result;
-    }
-
-    result.checked = true;
-
-    try {
-      for (const query of queries) {
-        result.queriesTested++;
-
-        const params = new URLSearchParams({
-          q: query,
-          count: "10",
-        });
-
-        const response = await fetch(
-          `https://api.bing.microsoft.com/v7.0/search?${params.toString()}`,
-          {
-            headers: {
-              "Ocp-Apim-Subscription-Key": this.bingApiKey,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          console.warn(`Bing API error for query "${query}": ${response.status}`);
-          continue;
-        }
-
-        const data = await response.json() as {
-          webPages?: {
-            value?: Array<{
-              url: string;
-              name: string;
-              snippet: string;
-            }>;
-          };
-          computation?: {
-            value: string;
-          };
-        };
-
-        // Check web results for our domain in top positions
-        // Top 3 positions are most likely to be cited by Copilot
-        if (data.webPages?.value) {
-          for (let i = 0; i < Math.min(3, data.webPages.value.length); i++) {
-            const webResult = data.webPages.value[i];
-            if (this.urlMatchesDomain(webResult.url, domain)) {
-              result.visible = true;
-              result.queriesWithCitation++;
-              result.citations.push({
-                query,
-                position: i + 1,
-                citedUrl: webResult.url,
-                snippet: webResult.snippet,
-                context: `Top ${i + 1} Bing result (likely Copilot source)`,
-              });
-              break;
-            }
-          }
-        }
-
-        await this.delay(200); // Rate limiting
-      }
-
-      result.confidence = result.queriesTested >= 3 ? "medium" : "low";
-      // Note: Bing search isn't exactly Copilot, so confidence is medium at best
-    } catch (error) {
-      result.error = error instanceof Error ? error.message : "Failed to check Bing Copilot";
-    }
-
-    return result;
-  }
-
-  /**
-   * Check if a URL matches the target domain
-   */
-  private urlMatchesDomain(url: string, targetDomain: string): boolean {
-    try {
-      const urlDomain = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
-      const normalizedTarget = targetDomain.replace(/^www\./, "").toLowerCase();
-      return urlDomain === normalizedTarget || urlDomain.endsWith(`.${normalizedTarget}`);
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Simple delay helper
-   */
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
 
-// Export singleton
+// ============================================
+// SINGLETON + EXPORTS
+// ============================================
+
 export const visibilityChecker = new AIVisibilityChecker();
 
-// Export types
-export type {
-  VisibilityCheckResult,
-  PlatformVisibilityResult,
-  CitationResult,
-  VisibilityCheckOptions,
-};
-
+// Also export the newer naming for consistency
+export const geoVisibilityChecker = visibilityChecker;

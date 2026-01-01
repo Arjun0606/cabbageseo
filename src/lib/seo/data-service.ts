@@ -1,38 +1,29 @@
 /**
- * Unified SEO Data Service for CabbageSEO
+ * GEO Data Service for CabbageSEO
  * 
- * Orchestrates DataForSEO and SerpAPI:
- * - DataForSEO: Keyword metrics, search volume, difficulty
- * - SerpAPI: SERP analysis, competitor data, PAA questions
+ * 100% AI-POWERED - No third-party SEO tools
  * 
- * Includes:
- * - Usage tracking for billing
- * - Graceful fallbacks
- * - Caching (TODO: Redis in production)
- * - Rate limiting per provider
+ * Focus: Generative Engine Optimization (GEO)
+ * - Getting cited by ChatGPT, Perplexity, Google AI
+ * - Location/context-aware optimization
+ * - Semantic keyword intelligence
+ * 
+ * Only dependency: OpenAI (GPT-5-mini)
  */
 
-import { dataForSEO, DataForSEOClient } from "@/lib/integrations/dataforseo/client";
-import { serpapi, SerpAPIClient } from "@/lib/integrations/serpapi/client";
+import { keywordIntelligence, type AIKeyword } from "@/lib/ai/keyword-intelligence";
 import { recordSpending } from "@/lib/billing/wallet-monitor";
 
-// Cost per API call (in cents) - adjust based on actual pricing
+// Cost per API call (in cents) - GPT-5-mini pricing (Jan 2026)
 const API_COSTS = {
-  dataforseo: {
-    keywordData: 0.5,        // ~$0.005 per keyword
-    keywordSuggestions: 1,   // ~$0.01 per request
-    serpAnalysis: 2,         // ~$0.02 per request
-    competitorKeywords: 2,   // ~$0.02 per request
-    keywordGap: 3,           // ~$0.03 per request
-  },
-  serpapi: {
-    search: 1,               // ~$0.01 per search (100 free/month then $50/5000)
-    autocomplete: 0.5,       // ~$0.005 per request
-    trends: 1,               // ~$0.01 per request
-  },
+  keywordResearch: 1,      // ~$0.01 per full research
+  keywordSuggestions: 0.5, // ~$0.005 per quick suggestions
+  geoAnalysis: 0.3,        // ~$0.003 per GEO analysis
+  competitorAnalysis: 1,   // ~$0.01 per competitor
+  questionResearch: 0.3,   // ~$0.003 per question set
 };
 
-// Simple in-memory cache (use Redis in production)
+// Simple in-memory cache
 const cache = new Map<string, { data: unknown; expiresAt: number }>();
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
@@ -55,415 +46,310 @@ function setCache(key: string, data: unknown, ttl: number = CACHE_TTL): void {
 
 export interface KeywordData {
   keyword: string;
-  volume: number;
-  difficulty: number;
-  cpc: number;
-  competition: number;
+  volume: number;           // AI-estimated (high/medium/low → number)
+  difficulty: number;       // AI-estimated
   intent: "informational" | "commercial" | "transactional" | "navigational";
-  trend?: "up" | "down" | "stable";
-  serpFeatures?: string[];
+  geoOpportunity: number;   // 0-100 score for AI citation potential
+  questions: string[];      // Related questions AI engines answer
+  entities: string[];       // Named entities for optimization
 }
 
-export interface SerpResult {
-  position: number;
-  url: string;
-  title: string;
-  description: string;
-  domain: string;
-}
-
-export interface SerpAnalysis {
-  keyword: string;
-  totalResults: number;
-  organicResults: SerpResult[];
-  peopleAlsoAsk: string[];
-  relatedSearches: string[];
-  serpFeatures: string[];
-  hasLocalPack: boolean;
-  hasKnowledgeGraph: boolean;
-  hasAds: boolean;
-  difficulty?: number;
-}
-
-export interface CompetitorAnalysis {
-  domain: string;
-  keywords: KeywordData[];
-  topPages: Array<{ url: string; traffic: number; keywords: number }>;
-  overlap: number;  // Percentage of keyword overlap with your site
-}
-
-export interface KeywordGapResult {
-  keyword: string;
-  volume: number;
-  difficulty: number;
-  yourPosition: number | null;
-  competitorPositions: Array<{ domain: string; position: number }>;
-  opportunity: "high" | "medium" | "low";
+export interface GEOAnalysis {
+  topic: string;
+  location?: string;        // For location-aware optimization
+  
+  // AI citation scores (0-100)
+  chatgptScore: number;
+  perplexityScore: number;
+  googleAiScore: number;
+  overallScore: number;
+  
+  // What AI engines look for
+  questionsToAnswer: string[];
+  entitiesToInclude: string[];
+  factsToMention: string[];
+  structureRecommendations: string[];
+  
+  // Location-specific considerations
+  locationContext?: {
+    region: string;
+    localEntities: string[];
+    culturalConsiderations: string[];
+  };
 }
 
 export interface ResearchOptions {
-  location?: string;
+  location?: string;        // e.g., "India", "Germany", "United States"
   language?: string;
-  country?: string;
   limit?: number;
 }
 
 // ============================================
-// SEO DATA SERVICE
+// GEO DATA SERVICE
 // ============================================
 
 export class SEODataService {
-  private dataForSEO: DataForSEOClient;
-  private serpAPI: SerpAPIClient;
   private trackUsage: boolean;
 
   constructor(options: { trackUsage?: boolean } = {}) {
-    this.dataForSEO = dataForSEO;
-    this.serpAPI = serpapi;
     this.trackUsage = options.trackUsage ?? true;
   }
 
   /**
    * Track API cost for billing
    */
-  private trackCost(provider: "dataforseo" | "serpapi", action: string, multiplier: number = 1): void {
+  private trackCost(action: keyof typeof API_COSTS, multiplier: number = 1): void {
     if (!this.trackUsage) return;
-    
-    const costs = API_COSTS[provider];
-    const cost = (costs[action as keyof typeof costs] || 1) * multiplier;
+    const cost = (API_COSTS[action] || 1) * multiplier;
     recordSpending(cost);
   }
 
   /**
-   * Check which providers are configured
+   * Check if AI is configured
    */
-  getProviderStatus(): {
-    dataForSEO: boolean;
-    serpAPI: boolean;
-    anyAvailable: boolean;
-  } {
-    const dataForSEOConfigured = Boolean(
-      process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD
-    );
-    const serpAPIConfigured = this.serpAPI.isConfigured();
-
-    return {
-      dataForSEO: dataForSEOConfigured,
-      serpAPI: serpAPIConfigured,
-      anyAvailable: dataForSEOConfigured || serpAPIConfigured,
-    };
+  isConfigured(): boolean {
+    return Boolean(process.env.OPENAI_API_KEY);
   }
 
   // ============================================
-  // KEYWORD RESEARCH
+  // KEYWORD INTELLIGENCE (AI-Powered)
   // ============================================
 
   /**
-   * Get keyword metrics (volume, difficulty, CPC)
-   * Requires DataForSEO - no mock data fallback
-   */
-  async getKeywordMetrics(
-    keywords: string[],
-    options: ResearchOptions = {}
-  ): Promise<KeywordData[]> {
-    const cacheKey = `metrics:${keywords.join(",")}:${options.location || "US"}`;
-    const cached = getCached<KeywordData[]>(cacheKey);
-    if (cached) return cached;
-
-    const status = this.getProviderStatus();
-
-    if (status.dataForSEO) {
-      try {
-        this.trackCost("dataforseo", "keywordData", keywords.length);
-        const data = await this.dataForSEO.getKeywordData(
-          keywords,
-          options.location || "United States",
-          options.language || "en"
-        );
-        
-        const result = data.map(d => ({
-          ...d,
-          intent: this.normalizeIntent(d.intent),
-        }));
-        
-        setCache(cacheKey, result);
-        return result;
-      } catch (error) {
-        console.error("DataForSEO error:", error);
-        // Fall through to error - no mock data
-      }
-    }
-
-    // Require real API - no mock data
-    throw new Error("DataForSEO not configured. Set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD in environment.");
-  }
-
-  /**
-   * Get keyword suggestions/related keywords
-   * Primary: DataForSEO | Fallback: SerpAPI autocomplete
+   * Get keyword suggestions with GEO opportunity scores
    */
   async getKeywordSuggestions(
     seedKeyword: string,
     options: ResearchOptions = {}
   ): Promise<KeywordData[]> {
-    const cacheKey = `suggestions:${seedKeyword}:${options.location || "US"}`;
+    const cacheKey = `kw:${seedKeyword}:${options.location || "global"}`;
     const cached = getCached<KeywordData[]>(cacheKey);
     if (cached) return cached;
 
-    const status = this.getProviderStatus();
+    this.trackCost("keywordSuggestions");
 
-    // Try DataForSEO first (has volume data)
-    if (status.dataForSEO) {
-      try {
-        this.trackCost("dataforseo", "keywordSuggestions");
-        const suggestions = await this.dataForSEO.getKeywordSuggestions(
-          seedKeyword,
-          options.location || "United States",
-          options.limit || 100
-        );
-        
-        const result = suggestions.map(s => ({
-          ...s,
-          intent: this.normalizeIntent(s.intent),
-        }));
-        
-        setCache(cacheKey, result);
-        return result;
-      } catch (error) {
-        console.error("DataForSEO suggestion error:", error);
-      }
-    }
+    const aiKeywords = await keywordIntelligence.getSuggestions(
+      seedKeyword,
+      options.limit || 30
+    );
 
-    // Fallback to SerpAPI autocomplete (no volume data)
-    if (status.serpAPI) {
-      try {
-        this.trackCost("serpapi", "autocomplete", 5); // Multiple calls
-        const suggestions = await this.serpAPI.getKeywordSuggestions(seedKeyword, {
-          language: options.language || "en",
-          country: options.country || "us",
-        });
-        
-        // No volume data from autocomplete, return with 0s
-        const result = suggestions.slice(0, options.limit || 100).map(s => ({
-          keyword: s,
-          volume: 0,
-          difficulty: 0,
-          cpc: 0,
-          competition: 0,
-          intent: "informational" as const,
-        }));
-        
-        setCache(cacheKey, result);
-        return result;
-      } catch (error) {
-        console.error("SerpAPI autocomplete error:", error);
-      }
-    }
+    const volumeMap: Record<string, number> = { high: 5000, medium: 1000, low: 200 };
+    const difficultyMap: Record<string, number> = { easy: 25, medium: 50, hard: 75 };
 
-    // No mock data - require real API
-    throw new Error("SEO APIs not configured. Set DATAFORSEO or SERPAPI credentials in environment.");
-  }
+    const result: KeywordData[] = aiKeywords.map((k: AIKeyword) => ({
+      keyword: k.keyword,
+      volume: volumeMap[k.estimatedVolume] || 500,
+      difficulty: difficultyMap[k.difficulty] || 50,
+      intent: k.intent,
+      geoOpportunity: k.geoOpportunity,
+      questions: k.questions || [],
+      entities: k.entities || [],
+    }));
 
-  // ============================================
-  // SERP ANALYSIS
-  // ============================================
-
-  /**
-   * Analyze SERP for a keyword
-   * Primary: SerpAPI (richer data) | Fallback: DataForSEO
-   */
-  async analyzeSERP(
-    keyword: string,
-    options: ResearchOptions = {}
-  ): Promise<SerpAnalysis> {
-    const cacheKey = `serp:${keyword}:${options.location || "US"}`;
-    const cached = getCached<SerpAnalysis>(cacheKey);
-    if (cached) return cached;
-
-    const status = this.getProviderStatus();
-
-    // Try SerpAPI first (has PAA, related searches, etc.)
-    if (status.serpAPI) {
-      try {
-        this.trackCost("serpapi", "search");
-        const analysis = await this.serpAPI.analyzeSERP(keyword, {
-          location: options.location,
-          language: options.language,
-          country: options.country,
-          numResults: options.limit || 10,
-        });
-        
-        setCache(cacheKey, analysis);
-        return analysis;
-      } catch (error) {
-        console.error("SerpAPI SERP error:", error);
-      }
-    }
-
-    // Fallback to DataForSEO
-    if (status.dataForSEO) {
-      try {
-        this.trackCost("dataforseo", "serpAnalysis");
-        const analysis = await this.dataForSEO.analyzeSERP(
-          keyword,
-          options.location || "United States"
-        );
-        
-        const result: SerpAnalysis = {
-          keyword: analysis.keyword,
-          totalResults: analysis.totalResults,
-          organicResults: analysis.results,
-          peopleAlsoAsk: [],
-          relatedSearches: [],
-          serpFeatures: analysis.serpFeatures,
-          hasLocalPack: analysis.serpFeatures.includes("local_pack"),
-          hasKnowledgeGraph: analysis.serpFeatures.includes("knowledge_graph"),
-          hasAds: analysis.serpFeatures.includes("ads"),
-        };
-        
-        setCache(cacheKey, result);
-        return result;
-      } catch (error) {
-        console.error("DataForSEO SERP error:", error);
-      }
-    }
-
-    // No mock data - require real API
-    throw new Error("SEO APIs not configured. Set DATAFORSEO or SERPAPI credentials in environment.");
+    setCache(cacheKey, result);
+    return result;
   }
 
   /**
-   * Get "People Also Ask" questions for content ideas
+   * Full keyword research with clustering
    */
-  async getQuestions(
-    keyword: string,
-    options: ResearchOptions = {}
-  ): Promise<string[]> {
-    const serp = await this.analyzeSERP(keyword, options);
-    return serp.peopleAlsoAsk;
-  }
-
-  /**
-   * Get related searches
-   */
-  async getRelatedSearches(
-    keyword: string,
-    options: ResearchOptions = {}
-  ): Promise<string[]> {
-    const serp = await this.analyzeSERP(keyword, options);
-    return serp.relatedSearches;
-  }
-
-  // ============================================
-  // COMPETITOR ANALYSIS
-  // ============================================
-
-  /**
-   * Get competitor's keywords
-   */
-  async getCompetitorKeywords(
-    domain: string,
-    options: ResearchOptions = {}
-  ): Promise<KeywordData[]> {
-    const cacheKey = `competitor:${domain}`;
-    const cached = getCached<KeywordData[]>(cacheKey);
-    if (cached) return cached;
-
-    const status = this.getProviderStatus();
-
-    if (status.dataForSEO) {
-      try {
-        this.trackCost("dataforseo", "competitorKeywords");
-        const keywords = await this.dataForSEO.getCompetitorKeywords(
-          domain,
-          options.limit || 100
-        );
-        
-        const result = keywords.map(k => ({
-          ...k,
-          intent: this.normalizeIntent(k.intent),
-        }));
-        
-        setCache(cacheKey, result);
-        return result;
-      } catch (error) {
-        console.error("Competitor keywords error:", error);
-      }
-    }
-
-    throw new Error("DataForSEO not configured. Set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD in environment.");
-  }
-
-  /**
-   * Get keyword gap analysis
-   */
-  async getKeywordGap(
-    yourDomain: string,
-    competitorDomains: string[],
-    options: ResearchOptions = {}
-  ): Promise<KeywordGapResult[]> {
-    const status = this.getProviderStatus();
-
-    if (status.dataForSEO) {
-      try {
-        this.trackCost("dataforseo", "keywordGap");
-        const gap = await this.dataForSEO.getKeywordGap(yourDomain, competitorDomains);
-        
-        return gap.map(k => ({
-          keyword: k.keyword,
-          volume: k.volume,
-          difficulty: k.difficulty,
-          yourPosition: null,
-          competitorPositions: competitorDomains.map(d => ({ domain: d, position: 0 })),
-          opportunity: this.calculateOpportunity(k.volume, k.difficulty),
-        }));
-      } catch (error) {
-        console.error("Keyword gap error:", error);
-      }
-    }
-
-    return [];
-  }
-
-  /**
-   * Check ranking for a domain
-   */
-  async checkRanking(
-    keyword: string,
-    domain: string,
+  async researchKeywords(
+    seedKeyword: string,
     options: ResearchOptions = {}
   ): Promise<{
-    keyword: string;
-    domain: string;
-    position: number | null;
-    url: string | null;
+    keywords: KeywordData[];
+    clusters: Array<{
+      name: string;
+      pillarKeyword: string;
+      keywords: KeywordData[];
+      suggestedArticles: number;
+    }>;
+    topQuestions: string[];
+    contentGaps: string[];
   }> {
-    const status = this.getProviderStatus();
+    this.trackCost("keywordResearch");
 
-    if (status.serpAPI) {
-      try {
-        this.trackCost("serpapi", "search");
-        const result = await this.serpAPI.checkRanking(keyword, domain, {
-          location: options.location,
-          maxResults: 100,
-        });
-        
-        return {
-          keyword: result.keyword,
-          domain: result.domain,
-          position: result.ranking,
-          url: result.url,
-        };
-      } catch (error) {
-        console.error("Ranking check error:", error);
-      }
-    }
+    const result = await keywordIntelligence.research(seedKeyword, {
+      siteContext: {
+        domain: options.location ? `site in ${options.location}` : undefined,
+      },
+      limit: options.limit || 30,
+    });
+
+    const volumeMap: Record<string, number> = { high: 5000, medium: 1000, low: 200 };
+    const difficultyMap: Record<string, number> = { easy: 25, medium: 50, hard: 75 };
+
+    const keywords: KeywordData[] = result.keywords.map(k => ({
+      keyword: k.keyword,
+      volume: volumeMap[k.estimatedVolume] || 500,
+      difficulty: difficultyMap[k.difficulty] || 50,
+      intent: k.intent,
+      geoOpportunity: k.geoOpportunity,
+      questions: k.questions || [],
+      entities: k.entities || [],
+    }));
+
+    const clusters = result.clusters.map(c => ({
+      name: c.name,
+      pillarKeyword: c.pillarKeyword,
+      keywords: c.keywords.map(k => ({
+        keyword: k.keyword,
+        volume: volumeMap[k.estimatedVolume] || 500,
+        difficulty: difficultyMap[k.difficulty] || 50,
+        intent: k.intent,
+        geoOpportunity: k.geoOpportunity,
+        questions: k.questions || [],
+        entities: k.entities || [],
+      })),
+      suggestedArticles: c.suggestedArticles,
+    }));
 
     return {
-      keyword,
-      domain,
-      position: null,
-      url: null,
+      keywords,
+      clusters,
+      topQuestions: result.topQuestions,
+      contentGaps: result.contentGaps,
+    };
+  }
+
+  /**
+   * Get questions AI engines answer about a topic
+   * These are high-value for getting cited
+   */
+  async getAIQuestions(
+    topic: string,
+    options: ResearchOptions = {}
+  ): Promise<string[]> {
+    const cacheKey = `q:${topic}:${options.location || "global"}`;
+    const cached = getCached<string[]>(cacheKey);
+    if (cached) return cached;
+
+    this.trackCost("questionResearch");
+
+    const questions = await keywordIntelligence.getAIQuestions(
+      options.location ? `${topic} in ${options.location}` : topic,
+      options.limit || 10
+    );
+
+    setCache(cacheKey, questions);
+    return questions;
+  }
+
+  /**
+   * Analyze competitor for GEO opportunities
+   */
+  async analyzeCompetitor(
+    competitorDomain: string,
+    options: ResearchOptions = {}
+  ): Promise<{
+    keywords: KeywordData[];
+    contentGaps: string[];
+    strengthAreas: string[];
+  }> {
+    this.trackCost("competitorAnalysis");
+
+    const result = await keywordIntelligence.analyzeCompetitor(competitorDomain, {
+      limit: options.limit || 20,
+    });
+
+    const volumeMap: Record<string, number> = { high: 5000, medium: 1000, low: 200 };
+    const difficultyMap: Record<string, number> = { easy: 25, medium: 50, hard: 75 };
+
+    return {
+      keywords: result.keywords.map(k => ({
+        keyword: k.keyword,
+        volume: volumeMap[k.estimatedVolume] || 500,
+        difficulty: difficultyMap[k.difficulty] || 50,
+        intent: k.intent,
+        geoOpportunity: k.geoOpportunity,
+        questions: k.questions || [],
+        entities: k.entities || [],
+      })),
+      contentGaps: result.contentGaps,
+      strengthAreas: result.strengthAreas,
+    };
+  }
+
+  // ============================================
+  // LOCATION-AWARE GEO ANALYSIS
+  // ============================================
+
+  /**
+   * Analyze topic for GEO optimization with location awareness
+   * 
+   * Example: "taxi service" in India → Ola, Uber
+   * Example: "taxi service" in Germany → FreeNow, Uber
+   */
+  async analyzeForGEO(
+    topic: string,
+    location?: string
+  ): Promise<GEOAnalysis> {
+    this.trackCost("geoAnalysis");
+
+    const { openai } = await import("@/lib/ai/openai-client");
+
+    const locationContext = location
+      ? `The user is in ${location}. Provide location-specific recommendations.`
+      : "Provide global recommendations.";
+
+    const prompt = `Analyze this topic for GEO (Generative Engine Optimization):
+
+Topic: "${topic}"
+${location ? `Location: ${location}` : ""}
+
+GEO is about getting content cited by AI engines (ChatGPT, Perplexity, Google AI).
+
+${locationContext}
+
+Analyze:
+1. How likely would content about this be cited by each AI platform? (score 0-100)
+2. What questions do users ask that AI would answer about this?
+3. What entities (people, companies, places, concepts) should be mentioned?
+4. What facts/statistics would make content more citable?
+5. How should content be structured for AI extraction?
+${location ? "6. What location-specific entities, companies, or cultural considerations apply?" : ""}
+
+Return JSON:
+{
+  "chatgptScore": number,
+  "perplexityScore": number,
+  "googleAiScore": number,
+  "questionsToAnswer": ["question1", "question2", ...],
+  "entitiesToInclude": ["entity1", "entity2", ...],
+  "factsToMention": ["fact1", "fact2", ...],
+  "structureRecommendations": ["use FAQ schema", "include definitions", ...],
+  ${location ? '"locationContext": {"region": "...", "localEntities": [...], "culturalConsiderations": [...]}' : ""}
+}`;
+
+    const response = await openai.getJSON<{
+      chatgptScore: number;
+      perplexityScore: number;
+      googleAiScore: number;
+      questionsToAnswer: string[];
+      entitiesToInclude: string[];
+      factsToMention: string[];
+      structureRecommendations: string[];
+      locationContext?: {
+        region: string;
+        localEntities: string[];
+        culturalConsiderations: string[];
+      };
+    }>(prompt);
+
+    return {
+      topic,
+      location,
+      chatgptScore: response.chatgptScore,
+      perplexityScore: response.perplexityScore,
+      googleAiScore: response.googleAiScore,
+      overallScore: Math.round(
+        (response.chatgptScore + response.perplexityScore + response.googleAiScore) / 3
+      ),
+      questionsToAnswer: response.questionsToAnswer,
+      entitiesToInclude: response.entitiesToInclude,
+      factsToMention: response.factsToMention,
+      structureRecommendations: response.structureRecommendations,
+      locationContext: response.locationContext,
     };
   }
 
@@ -471,21 +357,20 @@ export class SEODataService {
   // HELPERS
   // ============================================
 
-  private normalizeIntent(intent: string): "informational" | "commercial" | "transactional" | "navigational" {
-    const normalized = intent?.toLowerCase() || "informational";
-    if (["commercial", "transactional", "navigational"].includes(normalized)) {
-      return normalized as "commercial" | "transactional" | "navigational";
-    }
-    return "informational";
+  /**
+   * Get high-GEO-opportunity keywords (likely to get AI citations)
+   */
+  async getGEOOpportunities(
+    seedKeyword: string,
+    options: ResearchOptions = {}
+  ): Promise<KeywordData[]> {
+    const keywords = await this.getKeywordSuggestions(seedKeyword, options);
+    
+    // Filter for high GEO opportunity (score > 60)
+    return keywords
+      .filter(k => k.geoOpportunity > 60)
+      .sort((a, b) => b.geoOpportunity - a.geoOpportunity);
   }
-
-  private calculateOpportunity(volume: number, difficulty: number): "high" | "medium" | "low" {
-    const score = (volume / 1000) * (100 - difficulty) / 100;
-    if (score > 50) return "high";
-    if (score > 20) return "medium";
-    return "low";
-  }
-
 }
 
 // ============================================
@@ -493,4 +378,3 @@ export class SEODataService {
 // ============================================
 
 export const seoData = new SEODataService();
-

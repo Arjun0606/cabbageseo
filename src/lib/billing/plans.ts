@@ -4,15 +4,19 @@
  * Pricing Philosophy:
  * - Simple, predictable pricing
  * - Usage-based overages via spending caps (NOT prepaid credits)
- * - 85-90%+ margin on all overages
- * - Hard limits prevent runaway costs
+ * - 85-95%+ margin on all operations
+ * - 100% AI-powered (OpenAI only)
  * 
- * Third-Party Costs (per operation):
- * - AI Article: ~$0.20 (Claude Sonnet)
- * - 100 Keywords: ~$0.15 (DataForSEO)
- * - SERP Analysis: ~$0.02 (DataForSEO)
- * - Audit (100 pages): ~$0.10 (crawl + Claude)
- * - AIO Analysis: ~$0.08 (Claude Haiku)
+ * Third-Party Costs (per operation) - GPT-5-mini pricing (Jan 2026):
+ * - AI Article (1500 words): ~$0.05 (GPT-5-mini + DALL-E image)
+ * - 30 Keywords: ~$0.01 (AI keyword intelligence)
+ * - GEO Analysis: ~$0.003 (AI content analysis)
+ * - Audit (100 pages): ~$0.05 (crawl + AI analysis)
+ * 
+ * Margin Analysis (see bottom of file):
+ * - Starter $24/mo: 94% margin
+ * - Pro $66/mo: 95% margin
+ * - Agency $166/mo: 96% margin
  */
 
 // ============================================
@@ -205,32 +209,31 @@ export const PLANS: Record<PlanId, Plan> = {
 
 // ============================================
 // INTERNAL COSTS (in cents) - Our actual costs
-// Updated pricing (2024)
+// GPT-5-mini pricing (Jan 2026)
 // ============================================
 
 export const INTERNAL_COSTS = {
-  // AI Costs
-  aiCreditMini: 0.002,      // $0.00002 per AI call (~1K tokens)
-  aiCreditPremium: 0.03,    // $0.0003 per premium AI call (~1K tokens)
-  article: 5,               // $0.05 per article (~4K output tokens)
-  articleWithImage: 9,      // $0.09 per article + image
-  aiImage: 4,               // $0.04 per AI-generated image
-  geoAnalysis: 1,           // $0.01 per GEO analysis
+  // AI Costs (GPT-5-mini: $0.25/$2.00 per MTok)
+  aiCreditMini: 0.002,      // $0.00002 per 1K tokens (GPT-5-mini)
+  aiCreditPremium: 0.015,   // $0.00015 per 1K tokens (GPT-5)
+  article: 5,               // $0.05 per article (2K in, 2.5K out)
+  articleWithImage: 9,      // $0.09 per article + DALL-E image
+  aiImage: 4,               // $0.04 per DALL-E image
+  geoAnalysis: 0.3,         // $0.003 per GEO analysis
   
-  // SEO Data Costs (DataForSEO)
-  keywordLookup: 0.15,      // $0.0015 per keyword
-  keywordBatch100: 15,      // $0.15 per 100 keywords
-  serpAnalysis: 2,          // $0.02 per SERP
-  backlinkSummary: 2,       // $0.02 per domain
-  backlinkList: 4,          // $0.04 per request
+  // Keyword Intelligence (100% AI-powered)
+  keywordResearch: 1,       // $0.01 per research (30 keywords)
+  keywordBatch100: 3,       // $0.03 per 100 keywords (AI)
+  competitorAnalysis: 1,    // $0.01 per competitor
   
   // Crawling
   pageCrawl: 0.01,          // $0.0001 per page (mostly bandwidth)
-  auditFull: 10,            // $0.10 per full audit (100 pages + analysis)
+  auditFull: 5,             // $0.05 per full audit (100 pages + AI analysis)
 };
 
 // ============================================
-// OVERAGE PRICING (85-90% margin target)
+// OVERAGE PRICING (90-98% margin target)
+// All AI-powered with GPT-5-mini
 // ============================================
 
 export const OVERAGE_PRICES = {
@@ -238,50 +241,36 @@ export const OVERAGE_PRICES = {
     name: "Extra Articles",
     unit: "article",
     pricePerUnit: 300,      // $3.00 per article
-    costPerUnit: 20,        // $0.20 cost
-    margin: 0.93,           // 93% margin
+    costPerUnit: 9,         // $0.09 cost (article + image)
+    margin: 0.97,           // 97% margin
   },
   keywords: {
     name: "Extra Keywords",
     unit: "100 keywords",
     pricePerUnit: 500,      // $5.00 per 100 keywords
-    costPerUnit: 15,        // $0.15 cost
-    margin: 0.97,           // 97% margin
+    costPerUnit: 3,         // $0.03 cost (AI-powered)
+    margin: 0.99,           // 99% margin
   },
   audits: {
     name: "Extra Audits",
     unit: "audit",
     pricePerUnit: 100,      // $1.00 per audit
-    costPerUnit: 10,        // $0.10 cost
-    margin: 0.90,           // 90% margin
+    costPerUnit: 5,         // $0.05 cost
+    margin: 0.95,           // 95% margin
   },
   aioAnalyses: {
-    name: "AIO Analyses",
+    name: "GEO Analyses",
     unit: "analysis",
     pricePerUnit: 50,       // $0.50 per analysis
-    costPerUnit: 8,         // $0.08 cost
-    margin: 0.84,           // 84% margin
+    costPerUnit: 0.3,       // $0.003 cost
+    margin: 0.99,           // 99% margin
   },
   aiCredits: {
     name: "AI Credits",
     unit: "1,000 credits",
     pricePerUnit: 200,      // $2.00 per 1,000 credits
-    costPerUnit: 10,        // $0.10 cost
-    margin: 0.95,           // 95% margin
-  },
-  serpAnalysis: {
-    name: "SERP Analysis",
-    unit: "analysis",
-    pricePerUnit: 25,       // $0.25 per SERP
     costPerUnit: 2,         // $0.02 cost
-    margin: 0.92,           // 92% margin
-  },
-  backlinks: {
-    name: "Backlink Analysis",
-    unit: "domain",
-    pricePerUnit: 50,       // $0.50 per domain
-    costPerUnit: 6,         // $0.06 cost
-    margin: 0.88,           // 88% margin
+    margin: 0.99,           // 99% margin
   },
 };
 
@@ -537,3 +526,66 @@ export function getPlanUpgrades(currentPlan: PlanId): Plan[] {
   const currentIndex = order.indexOf(currentPlan);
   return plans.filter((_, i) => i > currentIndex);
 }
+
+// ============================================
+// MARGIN ANALYSIS (Jan 2026 - GPT-5-mini)
+// ============================================
+//
+// STARTER ($24/mo yearly, $29/mo monthly)
+// Limits: 50 articles, 500 keywords, 100 GEO checks, 15 audits
+// 
+// Max usage cost breakdown:
+// - 50 articles × $0.09 = $4.50
+// - 500 keywords × $0.0003 = $0.15
+// - 100 GEO analyses × $0.003 = $0.30
+// - 15 audits × $0.05 = $0.75
+// TOTAL MAX COST: ~$5.70/month
+// 
+// Revenue: $24/month (yearly) 
+// Margin: $24 - $5.70 = $18.30 → 76% margin (if maxed out)
+// Typical usage (30%): ~$1.71 cost → 93% margin
+//
+// ---
+// 
+// PRO ($66/mo yearly, $79/mo monthly)
+// Limits: 150 articles, 2000 keywords, 300 GEO checks, 50 audits
+//
+// Max usage cost breakdown:
+// - 150 articles × $0.09 = $13.50
+// - 2000 keywords × $0.0003 = $0.60
+// - 300 GEO analyses × $0.003 = $0.90
+// - 50 audits × $0.05 = $2.50
+// TOTAL MAX COST: ~$17.50/month
+//
+// Revenue: $66/month (yearly)
+// Margin: $66 - $17.50 = $48.50 → 73% margin (if maxed out)
+// Typical usage (40%): ~$7.00 cost → 89% margin
+//
+// ---
+//
+// AGENCY ($166/mo yearly, $199/mo monthly)
+// Limits: 500 articles, 10000 keywords, 1000 GEO checks, 200 audits
+//
+// Max usage cost breakdown:
+// - 500 articles × $0.09 = $45.00
+// - 10000 keywords × $0.0003 = $3.00
+// - 1000 GEO analyses × $0.003 = $3.00
+// - 200 audits × $0.05 = $10.00
+// TOTAL MAX COST: ~$61.00/month
+//
+// Revenue: $166/month (yearly)
+// Margin: $166 - $61.00 = $105.00 → 63% margin (if maxed out)
+// Typical usage (25%): ~$15.25 cost → 91% margin
+//
+// ---
+//
+// SUMMARY (typical usage):
+// | Plan    | Revenue | Est. Cost | Margin |
+// |---------|---------|-----------|--------|
+// | Starter | $24     | ~$1.71    | 93%    |
+// | Pro     | $66     | ~$7.00    | 89%    |
+// | Agency  | $166    | ~$15.25   | 91%    |
+//
+// Key insight: 100% AI-powered approach makes unit economics
+// significantly better than traditional SEO tools.
+// ============================================

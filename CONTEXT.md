@@ -27,8 +27,9 @@ CabbageSEO is a **GEO (Generative Engine Optimization) SaaS platform** that help
 | **Database** | Supabase (PostgreSQL) |
 | **Auth** | Supabase Auth (Google OAuth + Email) |
 | **Payments** | Dodo Payments (NOT Stripe) |
-| **AI** | OpenAI GPT-4o-mini (content), DALL-E 3 (images) |
-| **Keywords** | DataForSEO API |
+| **AI** | OpenAI GPT-5-mini (content, keywords, GEO), DALL-E 3 (images) |
+| **Keywords** | 100% AI-powered (GPT-5-mini) |
+| **GEO Analysis** | AI-powered visibility scoring (ChatGPT, Perplexity, Google AI) |
 | **Styling** | Tailwind CSS |
 | **Deployment** | Vercel |
 | **Background Jobs** | Inngest |
@@ -191,18 +192,15 @@ DODO_PRO_YEARLY_ID=
 DODO_PRO_PLUS_MONTHLY_ID=
 DODO_PRO_PLUS_YEARLY_ID=
 
-# AI
-OPENAI_API_KEY=         # GPT-4o-mini + DALL-E 3
+# AI (GPT-5-mini for everything)
+OPENAI_API_KEY=         # GPT-5-mini + DALL-E 3
 
-# Keywords & SEO
-DATAFORSEO_LOGIN=
-DATAFORSEO_PASSWORD=
-SERPAPI_KEY=
+# Optional (for SERP analysis)
+SERPAPI_KEY=            # Optional - SerpAPI for competitor SERP data
 
-# Optional (not currently used)
-ANTHROPIC_API_KEY=      # Removed - using OpenAI only
-PERPLEXITY_API_KEY=
-GEMINI_API_KEY=
+# REMOVED - No longer needed:
+# DATAFORSEO_LOGIN=     # Replaced by AI keyword intelligence
+# DATAFORSEO_PASSWORD=  # Replaced by AI keyword intelligence
 
 # Feature Flags
 TESTING_MODE=false      # MUST be false for production

@@ -1,25 +1,26 @@
 /**
  * CabbageSEO Integration Hub
  * 
- * Centralizes all external service integrations.
- * All CMS integrations SEObot has + more for AIO focus.
+ * 100% AI-POWERED - No third-party SEO tools
+ * 
+ * Focus: GEO (Generative Engine Optimization)
+ * - Getting cited by ChatGPT, Perplexity, Google AI
+ * - Location/context-aware content optimization
+ * - No traditional SEO tools needed
+ * 
+ * Only external services:
+ * - OpenAI (GPT-5-mini for everything)
+ * - CMS integrations (for publishing)
+ * - Optional: GSC/GA4 (for tracking, not optimization)
  */
 
-// AI Providers
+// AI Provider (the only external API we need)
 export { AIClient, ai } from "./openai/client";
 
-// SEO Data Providers
-export { DataForSEOClient, dataForSEO } from "./dataforseo/client";
-export { SerpAPIClient, serpapi } from "./serpapi/client";
-export { AhrefsClient, ahrefs } from "./ahrefs/client";
-
-// Content Optimization
-export { SurferClient, surfer } from "./surfer/client";
-
-// Analytics
+// Analytics (optional - for tracking only)
 export { GSCClient, gsc } from "./gsc/client";
 
-// CMS / Publishing - Full suite like SEObot
+// CMS / Publishing - Full suite
 export { WordPressClient, createWordPressClient } from "./wordpress/client";
 export { WebflowClient, createWebflowClient } from "./webflow/client";
 export { ShopifyClient, createShopifyClient } from "./shopify/client";
@@ -44,24 +45,16 @@ export type AnalyticsIntegrationType =
   | "gsc"
   | "ga4";
 
-export type AIIntegrationType =
-  | "openai"
-  | "anthropic";
-
 export type IntegrationType = 
   | CMSIntegrationType
   | AnalyticsIntegrationType
-  | AIIntegrationType
-  | "dataforseo"
-  | "serpapi"
-  | "ahrefs"
-  | "surfer";
+  | "openai";
 
 export interface IntegrationStatus {
-  id: IntegrationType;
+  id: IntegrationType | string;
   name: string;
   configured: boolean;
-  category: "cms" | "analytics" | "ai" | "seo";
+  category: "cms" | "analytics" | "ai";
   lastVerified?: Date;
   error?: string;
 }
@@ -86,55 +79,15 @@ export const CMS_INTEGRATIONS = [
 export async function checkAllIntegrations(): Promise<IntegrationStatus[]> {
   const statuses: IntegrationStatus[] = [];
 
-  // AI - OpenAI (Primary)
+  // AI - OpenAI (the only required external service)
   statuses.push({
     id: "openai",
-    name: "OpenAI",
+    name: "OpenAI (GPT-5)",
     configured: Boolean(process.env.OPENAI_API_KEY),
     category: "ai",
   });
 
-  // AI - Anthropic (Fallback)
-  statuses.push({
-    id: "anthropic",
-    name: "Anthropic (Claude)",
-    configured: Boolean(process.env.ANTHROPIC_API_KEY),
-    category: "ai",
-  });
-
-  // SEO Data - DataForSEO
-  statuses.push({
-    id: "dataforseo",
-    name: "DataForSEO",
-    configured: Boolean(process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD),
-    category: "seo",
-  });
-
-  // SEO Data - SerpAPI
-  statuses.push({
-    id: "serpapi",
-    name: "SerpAPI",
-    configured: Boolean(process.env.SERPAPI_KEY),
-    category: "seo",
-  });
-
-  // SEO Data - Ahrefs
-  statuses.push({
-    id: "ahrefs",
-    name: "Ahrefs",
-    configured: Boolean(process.env.AHREFS_API_KEY),
-    category: "seo",
-  });
-
-  // Content Optimization - Surfer
-  statuses.push({
-    id: "surfer",
-    name: "Surfer SEO",
-    configured: Boolean(process.env.SURFER_API_KEY),
-    category: "seo",
-  });
-
-  // Analytics - GSC
+  // Analytics - GSC (optional)
   statuses.push({
     id: "gsc",
     name: "Google Search Console",
@@ -142,7 +95,7 @@ export async function checkAllIntegrations(): Promise<IntegrationStatus[]> {
     category: "analytics",
   });
 
-  // Analytics - GA4
+  // Analytics - GA4 (optional)
   statuses.push({
     id: "ga4",
     name: "Google Analytics 4",
@@ -150,36 +103,25 @@ export async function checkAllIntegrations(): Promise<IntegrationStatus[]> {
     category: "analytics",
   });
 
-  // CMS integrations are user-configured, not env-based
-  // They're stored in the integrations table per organization
+  // CMS integrations are user-configured per organization
+  // They're stored in the integrations table
 
   return statuses;
 }
 
 /**
- * Get available SEO data provider
- * Prefers DataForSEO, falls back to SerpAPI
+ * Check if AI is configured (the only required dependency)
  */
-export function getSEODataProvider(): "dataforseo" | "serpapi" | null {
-  if (process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD) {
-    return "dataforseo";
-  }
-  if (process.env.SERPAPI_KEY) {
-    return "serpapi";
-  }
-  return null;
+export function isAIConfigured(): boolean {
+  return Boolean(process.env.OPENAI_API_KEY);
 }
 
 /**
- * Get available AI provider
- * OpenAI is now primary for reliability
+ * Get AI provider - OpenAI only
  */
-export function getAIProvider(): "openai" | "anthropic" | null {
+export function getAIProvider(): "openai" | null {
   if (process.env.OPENAI_API_KEY) {
     return "openai";
-  }
-  if (process.env.ANTHROPIC_API_KEY) {
-    return "anthropic";
   }
   return null;
 }
