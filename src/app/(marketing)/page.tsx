@@ -171,7 +171,7 @@ export default function LandingPage() {
               <img 
                 src="/cabbageseo_logo.png" 
                 alt="CabbageSEO" 
-                className="w-9 h-9 rounded-xl"
+                className="w-9 h-9 rounded-lg bg-white p-0.5"
               />
               <span className="font-bold text-lg tracking-tight">CabbageSEO</span>
             </Link>
@@ -592,7 +592,7 @@ export default function LandingPage() {
           <img 
             src="/cabbageseo_logo.png" 
             alt="CabbageSEO" 
-            className="w-20 h-20 rounded-3xl mx-auto mb-8 shadow-2xl shadow-emerald-500/30"
+            className="w-20 h-20 rounded-2xl bg-white p-1 mx-auto mb-8 shadow-2xl shadow-emerald-500/30"
           />
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Ready to improve your AI visibility?
@@ -624,7 +624,7 @@ export default function LandingPage() {
               <img 
                 src="/cabbageseo_logo.png" 
                 alt="CabbageSEO" 
-                className="w-8 h-8 rounded-xl"
+                className="w-8 h-8 rounded-lg bg-white p-0.5"
               />
               <span className="text-sm text-zinc-400">© 2026 CabbageSEO</span>
             </div>
