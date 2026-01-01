@@ -5,6 +5,11 @@
  * - WordPress
  * - Webflow
  * - Shopify
+ * - Ghost
+ * - Notion
+ * - HubSpot
+ * - Framer
+ * - Webhooks
  * 
  * Single interface for all CMS operations
  */
@@ -28,17 +33,52 @@ import {
   type ShopifyConfig 
 } from "@/lib/integrations/shopify/client";
 
+import {
+  GhostClient,
+  createGhostClient,
+  type GhostConfig,
+} from "@/lib/integrations/ghost/client";
+
+import {
+  NotionClient,
+  createNotionClient,
+  type NotionConfig,
+} from "@/lib/integrations/notion/client";
+
+import {
+  HubSpotClient,
+  createHubSpotClient,
+  type HubSpotConfig,
+} from "@/lib/integrations/hubspot/client";
+
+import {
+  FramerClient,
+  createFramerClient,
+  type FramerConfig,
+} from "@/lib/integrations/framer/client";
+
+import {
+  WebhookClient,
+  createWebhookClient,
+  type WebhookConfig,
+} from "@/lib/integrations/webhooks/client";
+
 // ============================================
 // TYPES
 // ============================================
 
-export type CMSType = "wordpress" | "webflow" | "shopify";
+export type CMSType = "wordpress" | "webflow" | "shopify" | "ghost" | "notion" | "hubspot" | "framer" | "webhooks";
 
 export interface CMSConnection {
   type: CMSType;
   wordpress?: WordPressConfig;
   webflow?: WebflowConfig & { siteId: string };
   shopify?: ShopifyConfig & { blogId?: number };
+  ghost?: GhostConfig;
+  notion?: NotionConfig;
+  hubspot?: HubSpotConfig & { blogId?: string };
+  framer?: FramerConfig;
+  webhooks?: WebhookConfig;
 }
 
 export interface PublishContent {
@@ -95,6 +135,11 @@ export class CMSPublisher {
   private wpClient?: WordPressClient;
   private webflowClient?: WebflowClient;
   private shopifyClient?: ShopifyClient;
+  private ghostClient?: GhostClient;
+  private notionClient?: NotionClient;
+  private hubspotClient?: HubSpotClient;
+  private framerClient?: FramerClient;
+  private webhookClient?: WebhookClient;
   private connection: CMSConnection;
 
   constructor(connection: CMSConnection) {
@@ -117,6 +162,31 @@ export class CMSPublisher {
       case "shopify":
         if (connection.shopify) {
           this.shopifyClient = createShopifyClient(connection.shopify);
+        }
+        break;
+      case "ghost":
+        if (connection.ghost) {
+          this.ghostClient = createGhostClient(connection.ghost);
+        }
+        break;
+      case "notion":
+        if (connection.notion) {
+          this.notionClient = createNotionClient(connection.notion);
+        }
+        break;
+      case "hubspot":
+        if (connection.hubspot) {
+          this.hubspotClient = createHubSpotClient(connection.hubspot);
+        }
+        break;
+      case "framer":
+        if (connection.framer) {
+          this.framerClient = createFramerClient(connection.framer);
+        }
+        break;
+      case "webhooks":
+        if (connection.webhooks) {
+          this.webhookClient = createWebhookClient(connection.webhooks);
         }
         break;
     }
@@ -151,6 +221,47 @@ export class CMSPublisher {
         case "shopify":
           if (!this.shopifyClient) throw new Error("Shopify not configured");
           return this.shopifyClient.testConnection();
+
+        case "ghost":
+          if (!this.ghostClient) throw new Error("Ghost not configured");
+          const ghostConnected = await this.ghostClient.testConnection();
+          if (ghostConnected) {
+            const site = await this.ghostClient.getSite();
+            return { success: true, name: site.title };
+          }
+          return { success: false, error: "Ghost connection failed" };
+
+        case "notion":
+          if (!this.notionClient) throw new Error("Notion not configured");
+          const notionConnected = await this.notionClient.testConnection();
+          if (notionConnected) {
+            const user = await this.notionClient.getUser();
+            return { success: true, name: user.name };
+          }
+          return { success: false, error: "Notion connection failed" };
+
+        case "hubspot":
+          if (!this.hubspotClient) throw new Error("HubSpot not configured");
+          const hubspotConnected = await this.hubspotClient.testConnection();
+          if (hubspotConnected) {
+            const account = await this.hubspotClient.getAccountInfo();
+            return { success: true, name: `Portal ${account.portalId}` };
+          }
+          return { success: false, error: "HubSpot connection failed" };
+
+        case "framer":
+          if (!this.framerClient) throw new Error("Framer not configured");
+          const framerConnected = await this.framerClient.testConnection();
+          if (framerConnected) {
+            const project = await this.framerClient.getProject();
+            return { success: true, name: project.name };
+          }
+          return { success: false, error: "Framer connection failed" };
+
+        case "webhooks":
+          if (!this.webhookClient) throw new Error("Webhook not configured");
+          const webhookConnected = await this.webhookClient.testConnection();
+          return { success: webhookConnected, name: "Webhook endpoint" };
           
         default:
           return { success: false, error: "Unknown CMS type" };
@@ -175,6 +286,16 @@ export class CMSPublisher {
           return this.publishToWebflow(content);
         case "shopify":
           return this.publishToShopify(content);
+        case "ghost":
+          return this.publishToGhost(content);
+        case "notion":
+          return this.publishToNotion(content);
+        case "hubspot":
+          return this.publishToHubSpot(content);
+        case "framer":
+          return this.publishToFramer(content);
+        case "webhooks":
+          return this.publishToWebhook(content);
         default:
           return {
             success: false,
@@ -546,6 +667,165 @@ export class CMSPublisher {
   }
 
   // ============================================
+  // GHOST METHODS
+  // ============================================
+
+  private async publishToGhost(content: PublishContent): Promise<PublishResult> {
+    if (!this.ghostClient) {
+      return { success: false, cms: "ghost", error: "Ghost not configured" };
+    }
+
+    const result = await this.ghostClient.publishWithSEO({
+      title: content.title,
+      content: content.content,
+      slug: content.slug,
+      excerpt: content.excerpt,
+      status: content.status === "publish" ? "published" : "draft",
+      tags: content.tags,
+      featuredImage: content.featuredImageUrl,
+      seoMeta: {
+        title: content.seoTitle,
+        description: content.metaDescription,
+      },
+    });
+
+    return {
+      success: result.success,
+      cms: "ghost",
+      postId: result.postId,
+      url: result.url,
+      error: result.error,
+    };
+  }
+
+  // ============================================
+  // NOTION METHODS
+  // ============================================
+
+  private async publishToNotion(content: PublishContent): Promise<PublishResult> {
+    if (!this.notionClient) {
+      return { success: false, cms: "notion", error: "Notion not configured" };
+    }
+
+    const result = await this.notionClient.publishWithSEO({
+      title: content.title,
+      content: content.content,
+      slug: content.slug,
+      excerpt: content.excerpt,
+      status: content.status === "publish" ? "published" : "draft",
+      tags: content.tags,
+      coverUrl: content.featuredImageUrl,
+      seoMeta: {
+        title: content.seoTitle,
+        description: content.metaDescription,
+      },
+    });
+
+    return {
+      success: result.success,
+      cms: "notion",
+      postId: result.pageId,
+      url: result.url,
+      error: result.error,
+    };
+  }
+
+  // ============================================
+  // HUBSPOT METHODS
+  // ============================================
+
+  private async publishToHubSpot(content: PublishContent): Promise<PublishResult> {
+    if (!this.hubspotClient) {
+      return { success: false, cms: "hubspot", error: "HubSpot not configured" };
+    }
+
+    const result = await this.hubspotClient.publishWithSEO({
+      title: content.title,
+      content: content.content,
+      slug: content.slug,
+      excerpt: content.excerpt,
+      status: content.status === "publish" ? "published" : "draft",
+      authorName: content.author,
+      featuredImage: content.featuredImageUrl,
+      blogId: this.connection.hubspot?.blogId,
+      seoMeta: {
+        title: content.seoTitle,
+        description: content.metaDescription,
+      },
+    });
+
+    return {
+      success: result.success,
+      cms: "hubspot",
+      postId: result.postId,
+      url: result.url,
+      error: result.error,
+    };
+  }
+
+  // ============================================
+  // FRAMER METHODS
+  // ============================================
+
+  private async publishToFramer(content: PublishContent): Promise<PublishResult> {
+    if (!this.framerClient) {
+      return { success: false, cms: "framer", error: "Framer not configured" };
+    }
+
+    const result = await this.framerClient.publishWithSEO({
+      title: content.title,
+      content: content.content,
+      slug: content.slug,
+      excerpt: content.excerpt,
+      status: content.status === "publish" ? "published" : "draft",
+      author: content.author,
+      featuredImage: content.featuredImageUrl,
+      seoMeta: {
+        title: content.seoTitle,
+        description: content.metaDescription,
+      },
+    });
+
+    return {
+      success: result.success,
+      cms: "framer",
+      postId: result.itemId,
+      url: result.url,
+      error: result.error,
+    };
+  }
+
+  // ============================================
+  // WEBHOOK METHODS
+  // ============================================
+
+  private async publishToWebhook(content: PublishContent): Promise<PublishResult> {
+    if (!this.webhookClient) {
+      return { success: false, cms: "webhooks", error: "Webhook not configured" };
+    }
+
+    const result = await this.webhookClient.publishContent({
+      title: content.title,
+      content: content.content,
+      slug: content.slug,
+      excerpt: content.excerpt,
+      status: content.status === "publish" ? "published" : "draft",
+      tags: content.tags,
+      featuredImage: content.featuredImageUrl,
+      seoMeta: {
+        title: content.seoTitle,
+        description: content.metaDescription,
+      },
+    });
+
+    return {
+      success: result.success,
+      cms: "webhooks",
+      error: result.error,
+    };
+  }
+
+  // ============================================
   // UTILITIES
   // ============================================
 
@@ -611,6 +891,68 @@ export async function createPublisherFromIntegration(
           shopDomain: credentials.shopDomain,
           accessToken: credentials.accessToken,
           blogId: credentials.blogId ? Number(credentials.blogId) : undefined,
+        },
+      });
+
+    case "ghost":
+      if (!credentials.apiUrl || !credentials.adminApiKey) {
+        return null;
+      }
+      return createCMSPublisher({
+        type: "ghost",
+        ghost: {
+          apiUrl: credentials.apiUrl,
+          adminApiKey: credentials.adminApiKey,
+        },
+      });
+
+    case "notion":
+      if (!credentials.integrationToken) {
+        return null;
+      }
+      return createCMSPublisher({
+        type: "notion",
+        notion: {
+          integrationToken: credentials.integrationToken,
+          databaseId: credentials.databaseId,
+        },
+      });
+
+    case "hubspot":
+      if (!credentials.accessToken) {
+        return null;
+      }
+      return createCMSPublisher({
+        type: "hubspot",
+        hubspot: {
+          accessToken: credentials.accessToken,
+          portalId: credentials.portalId,
+          blogId: credentials.blogId,
+        },
+      });
+
+    case "framer":
+      if (!credentials.projectId || !credentials.accessToken) {
+        return null;
+      }
+      return createCMSPublisher({
+        type: "framer",
+        framer: {
+          projectId: credentials.projectId,
+          accessToken: credentials.accessToken,
+          collectionId: credentials.collectionId,
+        },
+      });
+
+    case "webhooks":
+      if (!credentials.webhookUrl) {
+        return null;
+      }
+      return createCMSPublisher({
+        type: "webhooks",
+        webhooks: {
+          webhookUrl: credentials.webhookUrl,
+          secretKey: credentials.secretKey,
         },
       });
 
