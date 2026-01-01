@@ -3,15 +3,16 @@
  * 
  * POST /api/geo/visibility
  * 
- * 100% AI-POWERED visibility analysis for:
- * - ChatGPT
- * - Perplexity
- * - Google AI Overviews
+ * HYBRID APPROACH:
+ * - Perplexity: REAL citation checking via API (if PERPLEXITY_API_KEY set)
+ * - ChatGPT: Simulated analysis via OpenAI
+ * - Google AI Overviews: AI-powered estimation
  * 
  * Location-aware: Pass `location` param for region-specific analysis
  * (e.g., "taxi service" in India vs Germany)
  * 
- * Only requires: OPENAI_API_KEY
+ * Required: OPENAI_API_KEY
+ * Optional: PERPLEXITY_API_KEY (enables real citation checking)
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -63,7 +64,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Run the AI-powered visibility check
+    // Get capabilities to show what's real vs estimated
+    const capabilities = visibilityChecker.getCapabilities();
+
+    // Run the hybrid visibility check
     const result = await visibilityChecker.checkVisibility({
       url: body.url,
       keywords: body.keywords,
@@ -75,9 +79,13 @@ export async function POST(req: NextRequest) {
       success: true,
       data: result,
       meta: {
-        aiPowered: true,
         locationAware: Boolean(body.location),
-        platforms: ["chatgpt", "perplexity", "google_aio"],
+        capabilities,
+        checkTypes: {
+          perplexity: result.platforms.perplexity.isRealCheck ? "real" : "estimated",
+          chatgpt: "estimated", // Always simulated
+          googleAio: "estimated", // Always AI-powered
+        },
       },
     });
   } catch (error) {
@@ -92,20 +100,42 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET: Check API status
+// GET: Check API status and capabilities
 export async function GET() {
   const configured = visibilityChecker.isConfigured();
+  const capabilities = configured ? visibilityChecker.getCapabilities() : null;
 
   return NextResponse.json({
     configured,
-    aiPowered: true,
-    platforms: ["chatgpt", "perplexity", "google_aio"],
+    capabilities,
+    platforms: [
+      {
+        id: "perplexity",
+        name: "Perplexity AI",
+        checkType: capabilities?.perplexity.real ? "real" : "estimated",
+        method: capabilities?.perplexity.method || "Requires PERPLEXITY_API_KEY",
+      },
+      {
+        id: "chatgpt",
+        name: "ChatGPT / SearchGPT",
+        checkType: "estimated",
+        method: capabilities?.chatgpt.method || "AI-powered simulation",
+      },
+      {
+        id: "google_aio",
+        name: "Google AI Overviews",
+        checkType: "estimated",
+        method: capabilities?.googleAio.method || "AI-powered estimation",
+      },
+    ],
     message: configured 
-      ? "GEO visibility checking is ready. 100% AI-powered."
+      ? capabilities?.perplexity.real 
+        ? "GEO visibility ready with REAL Perplexity citation checking!"
+        : "GEO visibility ready. Add PERPLEXITY_API_KEY for real citation checks."
       : "OpenAI API key required. Set OPENAI_API_KEY in environment.",
     features: {
       locationAware: true,
-      realTimeAnalysis: true,
+      realCitationCheck: capabilities?.perplexity.real || false,
       improvementTracking: true,
     },
   });
