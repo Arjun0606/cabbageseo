@@ -345,6 +345,21 @@ export default function GEODashboardPage() {
     platformAverages: {},
   };
 
+  // Fetch GEO improvement data (real tracking)
+  const { data: improvementData } = useQuery({
+    queryKey: ["geo-improvement", activeSiteId],
+    queryFn: async () => {
+      if (!activeSiteId) return null;
+      const response = await fetch(`/api/geo/improvement?siteId=${activeSiteId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!activeSiteId,
+  });
+
+  const improvement = improvementData?.data?.improvement;
+  const trend = improvementData?.data?.trend || "stable";
+
   // Fetch recommendations from audit
   const { data: recommendationsData } = useQuery({
     queryKey: ["aio-recommendations", activeSiteId],
@@ -519,11 +534,35 @@ export default function GEODashboardPage() {
           <CardContent className="flex flex-col items-center pt-4">
             <ScoreRing score={stats.averageScore} size={160} />
             <div className="flex items-center gap-2 mt-4">
-              {stats.averageScore !== null ? (
+              {improvement ? (
                 <>
-                  <TrendingUp className="w-4 h-4 text-emerald-500" />
-                  <span className="text-sm text-emerald-500">+8 from last month</span>
+                  {trend === "up" && (
+                    <>
+                      <TrendingUp className="w-4 h-4 text-emerald-500" />
+                      <span className="text-sm text-emerald-500">
+                        +{improvement.overall} in the last {improvement.periodDays} days
+                      </span>
+                    </>
+                  )}
+                  {trend === "down" && (
+                    <>
+                      <TrendingDown className="w-4 h-4 text-red-500" />
+                      <span className="text-sm text-red-500">
+                        {improvement.overall} in the last {improvement.periodDays} days
+                      </span>
+                    </>
+                  )}
+                  {trend === "stable" && (
+                    <>
+                      <Minus className="w-4 h-4 text-zinc-400" />
+                      <span className="text-sm text-zinc-400">
+                        Stable over the last {improvement.periodDays} days
+                      </span>
+                    </>
+                  )}
                 </>
+              ) : stats.averageScore !== null ? (
+                <span className="text-sm text-muted-foreground">Tracking improvement...</span>
               ) : (
                 <span className="text-sm text-muted-foreground">No data yet</span>
               )}
