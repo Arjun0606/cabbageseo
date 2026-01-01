@@ -65,7 +65,7 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-semibold text-zinc-100 mb-3">5. Your Rights</h2>
             <p>
               You can request access to, correction of, or deletion of your personal data 
-              at any time by contacting us at privacy@cabbageseo.com.
+              at any time by contacting us at arjun@cabbageseo.com.
             </p>
           </section>
 

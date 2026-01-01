@@ -585,7 +585,8 @@ export default function DocsPage() {
             <div className="flex items-center gap-6 text-sm text-zinc-400">
               <Link href="/pricing" className="hover:text-white">Pricing</Link>
               <Link href="/docs" className="hover:text-white">Docs</Link>
-              <Link href="mailto:support@cabbageseo.com" className="hover:text-white">Support</Link>
+              <Link href="mailto:arjun@cabbageseo.com" className="hover:text-white">Contact</Link>
+              <a href="https://x.com/Arjun06061" target="_blank" rel="noopener noreferrer" className="hover:text-white">𝕏 Twitter</a>
             </div>
           </div>
         </div>

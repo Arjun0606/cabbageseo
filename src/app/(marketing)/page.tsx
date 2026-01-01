@@ -633,7 +633,8 @@ export default function LandingPage() {
               <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
               <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
               <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-              <a href="mailto:hello@cabbageseo.com" className="hover:text-white transition-colors">Contact</a>
+              <a href="mailto:arjun@cabbageseo.com" className="hover:text-white transition-colors">Contact</a>
+              <a href="https://x.com/Arjun06061" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">𝕏 Twitter</a>
             </div>
           </div>
         </div>

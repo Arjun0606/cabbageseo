@@ -93,7 +93,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-semibold text-zinc-100 mb-3">9. Contact</h2>
             <p>
-              Questions about these terms? Email us at legal@cabbageseo.com.
+              Questions about these terms? Email us at arjun@cabbageseo.com or reach out on <a href="https://x.com/Arjun06061" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">𝕏 Twitter</a>.
             </p>
           </section>
         </div>

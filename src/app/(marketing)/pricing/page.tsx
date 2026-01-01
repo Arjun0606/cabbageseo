@@ -439,7 +439,8 @@ export default function PricingPage() {
             <div className="flex gap-6 text-sm text-zinc-400">
             <Link href="/privacy" className="hover:text-white">Privacy</Link>
             <Link href="/terms" className="hover:text-white">Terms</Link>
-              <a href="mailto:support@cabbageseo.com" className="hover:text-white">Contact</a>
+              <a href="mailto:arjun@cabbageseo.com" className="hover:text-white">Contact</a>
+              <a href="https://x.com/Arjun06061" target="_blank" rel="noopener noreferrer" className="hover:text-white">𝕏 Twitter</a>
             </div>
           </div>
         </div>
