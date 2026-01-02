@@ -274,6 +274,104 @@ CabbageSEO
   };
 }
 
+function getCitationAlertTemplate(
+  siteDomain: string,
+  platform: string,
+  query: string,
+  snippet: string,
+  totalCitations: number
+): EmailTemplate {
+  const platformEmoji = {
+    perplexity: "🔮",
+    chatgpt: "🤖",
+    google_aio: "✨",
+  }[platform] || "🎉";
+
+  const platformName = {
+    perplexity: "Perplexity AI",
+    chatgpt: "ChatGPT",
+    google_aio: "Google AI Overview",
+  }[platform] || platform;
+
+  return {
+    subject: `${platformEmoji} ${siteDomain} was cited by ${platformName}!`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background: #f9fafb; }
+    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .logo { font-size: 48px; margin-bottom: 10px; }
+    .card { background: white; border-radius: 12px; padding: 24px; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .platform { display: inline-block; background: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+    .query { background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0; font-style: italic; }
+    .snippet { border-left: 4px solid #10b981; padding-left: 16px; color: #666; }
+    .stats { text-align: center; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 20px; border-radius: 12px; margin: 20px 0; }
+    .stat-number { font-size: 36px; font-weight: bold; }
+    .cta { display: inline-block; background: #10b981; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">${platformEmoji}</div>
+      <h1>You Got Cited!</h1>
+      <p style="color: #666;">Great news — AI is citing your content</p>
+    </div>
+    
+    <div class="card">
+      <p><span class="platform">${platformName}</span></p>
+      <h3 style="margin: 16px 0 8px;">Query that triggered the citation:</h3>
+      <div class="query">"${query}"</div>
+      
+      <h4 style="margin: 16px 0 8px;">How you were mentioned:</h4>
+      <div class="snippet">${snippet}...</div>
+    </div>
+    
+    <div class="stats">
+      <div class="stat-number">${totalCitations}</div>
+      <p style="margin: 0;">Total AI citations found</p>
+    </div>
+    
+    <p style="text-align: center;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/geo-dashboard" class="cta">View All Citations →</a>
+    </p>
+    
+    <p style="text-align: center; color: #666; font-size: 14px;">
+      Keep publishing GEO-optimized content to get more citations!
+    </p>
+    
+    <div class="footer">
+      <p>🥬 CabbageSEO • The AI Citation Engine</p>
+      <p style="font-size: 11px;">You're receiving this because you have citation alerts enabled.</p>
+    </div>
+  </div>
+</body>
+</html>
+    `,
+    text: `
+🎉 ${siteDomain} was cited by ${platformName}!
+
+Query: "${query}"
+
+How you were mentioned:
+${snippet}...
+
+Total AI citations found: ${totalCitations}
+
+View all citations: ${process.env.NEXT_PUBLIC_APP_URL}/geo-dashboard
+
+Keep publishing GEO-optimized content to get more citations!
+
+CabbageSEO
+    `.trim(),
+  };
+}
+
 function getUsageAlertTemplate(metric: string, used: number, limit: number): EmailTemplate {
   const percentage = Math.round((used / limit) * 100);
   
@@ -423,6 +521,20 @@ export const emailService = {
     limit: number
   ): Promise<SendEmailResult> {
     return sendEmail(to, getUsageAlertTemplate(metric, used, limit));
+  },
+
+  /**
+   * Send citation alert - when AI cites your content! 🎉
+   */
+  async sendCitationAlert(
+    to: string,
+    siteDomain: string,
+    platform: string,
+    query: string,
+    snippet: string,
+    totalCitations: number
+  ): Promise<SendEmailResult> {
+    return sendEmail(to, getCitationAlertTemplate(siteDomain, platform, query, snippet, totalCitations));
   },
 
   /**

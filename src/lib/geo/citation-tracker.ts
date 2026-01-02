@@ -430,11 +430,13 @@ export class CitationTracker {
   }
 
   /**
-   * Store citations in database
+   * Store citations in database and send email alerts for new ones
    */
   private async storeCitations(siteId: string, citations: Citation[]): Promise<void> {
     const supabase = await createServiceClient();
     if (!supabase) return;
+
+    const newCitations: Citation[] = [];
 
     for (const citation of citations) {
       // Check if citation already exists (avoid duplicates)
@@ -458,6 +460,75 @@ export class CitationTracker {
         confidence: citation.confidence === "high" ? 0.9 : citation.confidence === "medium" ? 0.7 : 0.5,
         discovered_at: citation.citedAt.toISOString(),
       });
+
+      newCitations.push(citation);
+    }
+
+    // Send email alerts for new citations
+    if (newCitations.length > 0) {
+      await this.sendCitationAlerts(siteId, newCitations);
+    }
+  }
+
+  /**
+   * Send email alerts for new citations
+   */
+  private async sendCitationAlerts(siteId: string, newCitations: Citation[]): Promise<void> {
+    try {
+      const supabase = await createServiceClient();
+      if (!supabase) return;
+
+      // Get site info and owner email
+      const { data: siteData } = await (supabase as any)
+        .from("sites")
+        .select("domain, organization_id")
+        .eq("id", siteId)
+        .single();
+
+      const site = siteData as { domain: string; organization_id: string } | null;
+      if (!site) return;
+
+      // Get organization owner's email
+      const { data: orgData } = await (supabase as any)
+        .from("organizations")
+        .select("owner_id")
+        .eq("id", site.organization_id)
+        .single();
+
+      const org = orgData as { owner_id: string } | null;
+      if (!org) return;
+
+      // Get user email
+      const { data: userData } = await supabase.auth.admin.getUserById(org.owner_id);
+      const userEmail = userData?.user?.email;
+      if (!userEmail) return;
+
+      // Get total citation count
+      const { count } = await (supabase as any)
+        .from("ai_citations")
+        .select("id", { count: "exact" })
+        .eq("site_id", siteId);
+
+      const totalCitations = count || newCitations.length;
+
+      // Import email service dynamically to avoid circular deps
+      const { emailService } = await import("@/lib/email");
+
+      // Send alert for the first new citation (don't spam with multiple emails)
+      const firstCitation = newCitations[0];
+      await emailService.sendCitationAlert(
+        userEmail,
+        site.domain,
+        firstCitation.platform,
+        firstCitation.query,
+        firstCitation.snippet,
+        totalCitations
+      );
+
+      console.log(`[Citation Alert] Sent to ${userEmail} for ${site.domain} - ${newCitations.length} new citations`);
+    } catch (error) {
+      console.error("[Citation Alert] Failed to send:", error);
+      // Don't throw - email failures shouldn't break citation tracking
     }
   }
 
