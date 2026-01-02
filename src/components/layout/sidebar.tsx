@@ -62,11 +62,17 @@ const mainNavItems: NavItemType[] = [
 // GEO items - THE MAIN DIFFERENTIATOR (Generative Engine Optimization)
 const geoNavItems: NavItemType[] = [
   {
-    name: "GEO Score",
-    href: "/geo",
+    name: "GEO Dashboard",
+    href: "/geo-dashboard",
     icon: Brain,
-    description: "Track AI platform citations",
-    badge: "⭐",
+    description: "AI citations & autopilot",
+    badge: "NEW",
+  },
+  {
+    name: "GEO Analysis",
+    href: "/geo",
+    icon: Target,
+    description: "Detailed platform scores",
   },
 ];
 
