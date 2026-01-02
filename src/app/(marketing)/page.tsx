@@ -629,13 +629,16 @@ export default function LandingPage() {
               />
               <span className="text-sm text-zinc-400">© 2026 CabbageSEO</span>
             </div>
-            <div className="flex items-center gap-8 text-sm text-zinc-400">
+            <div className="flex items-center gap-6 text-sm text-zinc-400 flex-wrap justify-center">
+              <Link href="/features" className="hover:text-white transition-colors">Features</Link>
+              <Link href="/how-it-works" className="hover:text-white transition-colors">How It Works</Link>
+              <Link href="/about" className="hover:text-white transition-colors">About</Link>
               <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
               <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
               <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
               <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
               <a href="mailto:arjun@cabbageseo.com" className="hover:text-white transition-colors">Contact</a>
-              <a href="https://x.com/Arjun06061" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">𝕏 Twitter</a>
+              <a href="https://x.com/Arjun06061" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">𝕏</a>
             </div>
           </div>
         </div>
