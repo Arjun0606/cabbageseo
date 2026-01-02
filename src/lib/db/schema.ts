@@ -105,9 +105,10 @@ export const organizations = pgTable(
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
 
-    // Billing
-    stripeCustomerId: text("stripe_customer_id"),
-    stripeSubscriptionId: text("stripe_subscription_id"),
+    // Billing (Dodo Payments)
+    dodoCustomerId: text("dodo_customer_id"),
+    dodoSubscriptionId: text("dodo_subscription_id"),
+    dodoProductId: text("dodo_product_id"),
     plan: planEnum("plan").notNull().default("starter"),
     billingInterval: billingIntervalEnum("billing_interval").default("monthly"),
     subscriptionStatus: subscriptionStatusEnum("subscription_status").default("trialing"),

@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
           await supabase
             .from("organizations")
             .update({
-              stripe_subscription_id: subscription.id as string,
+              dodo_subscription_id: subscription.id as string,
               plan: subscription.plan_id as string,
               subscription_status: subscription.status as string,
               current_period_start: subscription.current_period_start as string,
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
         const { data: orgData } = await supabase
           .from("organizations")
           .select("id")
-          .eq("stripe_customer_id", customerId)
+          .eq("dodo_customer_id", customerId)
           .single();
 
         const org = orgData as { id: string } | null;
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
           const { data: orgData } = await supabase
             .from("organizations")
             .select("id")
-            .eq("stripe_customer_id", customerId)
+            .eq("dodo_customer_id", customerId)
             .single();
 
           const org = orgData as { id: string } | null;

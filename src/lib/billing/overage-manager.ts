@@ -247,11 +247,11 @@ export async function recordOverage(
       // Get org's customer ID
       const { data: orgData } = await supabase
         .from("organizations")
-        .select("stripe_customer_id")
+        .select("dodo_customer_id")
         .eq("id", organizationId)
         .single();
       
-      const customerId = (orgData as { stripe_customer_id?: string } | null)?.stripe_customer_id;
+      const customerId = (orgData as { dodo_customer_id?: string } | null)?.dodo_customer_id;
       
       if (customerId) {
         const client = dodo.getClient();

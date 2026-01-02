@@ -35,8 +35,9 @@ export interface Database {
           id: string;
           name: string;
           slug: string;
-          stripe_customer_id: string | null;
-          stripe_subscription_id: string | null;
+          dodo_customer_id: string | null;
+          dodo_subscription_id: string | null;
+          dodo_product_id: string | null;
           plan: Plan;
           billing_interval: BillingInterval | null;
           subscription_status: SubscriptionStatus | null;
@@ -55,8 +56,9 @@ export interface Database {
           id?: string;
           name: string;
           slug: string;
-          stripe_customer_id?: string | null;
-          stripe_subscription_id?: string | null;
+          dodo_customer_id?: string | null;
+          dodo_subscription_id?: string | null;
+          dodo_product_id?: string | null;
           plan?: Plan;
           billing_interval?: BillingInterval | null;
           subscription_status?: SubscriptionStatus | null;
@@ -73,8 +75,9 @@ export interface Database {
         Update: {
           name?: string;
           slug?: string;
-          stripe_customer_id?: string | null;
-          stripe_subscription_id?: string | null;
+          dodo_customer_id?: string | null;
+          dodo_subscription_id?: string | null;
+          dodo_product_id?: string | null;
           plan?: Plan;
           billing_interval?: BillingInterval | null;
           subscription_status?: SubscriptionStatus | null;

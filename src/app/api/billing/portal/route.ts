@@ -41,12 +41,12 @@ export async function POST(request: NextRequest) {
     // Get organization with customer ID
     const { data: orgData } = await supabase
       .from("organizations")
-      .select("stripe_customer_id")
+      .select("dodo_customer_id")
       .eq("id", profile.organization_id)
       .single();
 
-    const org = orgData as { stripe_customer_id?: string } | null;
-    if (!org?.stripe_customer_id) {
+    const org = orgData as { dodo_customer_id?: string } | null;
+    if (!org?.dodo_customer_id) {
       return NextResponse.json({ error: "No billing account found" }, { status: 400 });
     }
 
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     // Note: Dodo's customer portal doesn't support return_url - it's a standalone portal
     const dodo = getDodo();
     const portalSession = await dodo.customers.customerPortal.create(
-      org.stripe_customer_id,
+      org.dodo_customer_id,
       {
         send_email: false,
       }
@@ -113,7 +113,7 @@ export async function GET() {
         current_period_start,
         current_period_end,
         cancel_at_period_end,
-        stripe_customer_id,
+        dodo_customer_id,
         overage_settings
       `)
       .eq("id", profile.organization_id)
@@ -127,7 +127,7 @@ export async function GET() {
       current_period_start?: string;
       current_period_end?: string;
       cancel_at_period_end?: boolean;
-      stripe_customer_id?: string;
+      dodo_customer_id?: string;
       overage_settings?: Record<string, unknown>;
     } | null;
 
@@ -145,7 +145,7 @@ export async function GET() {
         currentPeriodStart: orgData.current_period_start,
         currentPeriodEnd: orgData.current_period_end,
         cancelAtPeriodEnd: orgData.cancel_at_period_end,
-        hasPaymentMethod: !!orgData.stripe_customer_id,
+        hasPaymentMethod: !!orgData.dodo_customer_id,
         overageSettings: orgData.overage_settings,
       },
     });

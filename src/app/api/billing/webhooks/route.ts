@@ -157,10 +157,10 @@ export async function POST(request: NextRequest) {
             plan,
             billing_interval: interval,
             subscription_status: "active",
-            stripe_subscription_id: subscriptionData.subscription_id,
+            dodo_subscription_id: subscriptionData.subscription_id,
             current_period_start: subscriptionData.previous_billing_date,
             current_period_end: subscriptionData.next_billing_date,
-            ...(customerId && { stripe_customer_id: customerId }),
+            ...(customerId && { dodo_customer_id: customerId }),
           } as never)
           .eq("id", organizationId);
 

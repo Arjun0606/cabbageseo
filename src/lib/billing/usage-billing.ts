@@ -79,7 +79,7 @@ export async function recordUsageAndBill(
     // Get organization info
     const { data: org } = await supabase
       .from("organizations")
-      .select("id, plan, overage_settings, stripe_subscription_id")
+      .select("id, plan, overage_settings, dodo_subscription_id")
       .eq("id", event.organizationId)
       .single();
 
@@ -97,12 +97,12 @@ export async function recordUsageAndBill(
       id: string;
       plan: string;
       overage_settings: OverageSettings | null;
-      stripe_subscription_id: string | null;
+      dodo_subscription_id: string | null;
     };
 
     const plan = orgData.plan || "starter";
     const overageSettings = orgData.overage_settings || getDefaultOverageSettings();
-    const subscriptionId = orgData.stripe_subscription_id;
+    const subscriptionId = orgData.dodo_subscription_id;
 
     // Get current usage for this billing period
     const period = getCurrentPeriod();

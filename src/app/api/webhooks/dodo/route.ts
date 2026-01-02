@@ -203,8 +203,9 @@ async function handleSubscriptionCreated(
   await supabase
     .from("organizations")
     .update({
-      stripe_subscription_id: subscription.id,
-      stripe_customer_id: subscription.customer_id,
+      dodo_subscription_id: subscription.id,
+      dodo_customer_id: subscription.customer_id,
+      dodo_product_id: subscription.product_id,
       plan: planId,
       billing_interval: interval,
       subscription_status: subscription.status,
@@ -234,7 +235,7 @@ async function handleSubscriptionUpdated(
   const { data: org } = await supabase
     .from("organizations")
     .select("id, plan")
-    .eq("stripe_subscription_id", subscription.id)
+    .eq("dodo_subscription_id", subscription.id)
     .single();
 
   if (!org) {
@@ -277,7 +278,7 @@ async function handleSubscriptionCanceled(
   const { data: org } = await supabase
     .from("organizations")
     .select("id")
-    .eq("stripe_subscription_id", subscription.id)
+    .eq("dodo_subscription_id", subscription.id)
     .single();
 
   if (!org) return;
@@ -310,7 +311,7 @@ async function handleSubscriptionPaused(
   const { data: org } = await supabase
     .from("organizations")
     .select("id")
-    .eq("stripe_subscription_id", subscription.id)
+    .eq("dodo_subscription_id", subscription.id)
     .single();
 
   if (!org) return;
@@ -333,7 +334,7 @@ async function handleSubscriptionResumed(
   const { data: org } = await supabase
     .from("organizations")
     .select("id")
-    .eq("stripe_subscription_id", subscription.id)
+    .eq("dodo_subscription_id", subscription.id)
     .single();
 
   if (!org) return;
@@ -406,7 +407,7 @@ async function handlePaymentFailed(
   const { data: org } = await supabase
     .from("organizations")
     .select("id")
-    .eq("stripe_customer_id", payment.customer_id)
+    .eq("dodo_customer_id", payment.customer_id)
     .single();
 
   if (!org) return;
