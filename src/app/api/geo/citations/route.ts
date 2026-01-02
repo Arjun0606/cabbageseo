@@ -61,6 +61,9 @@ export async function GET(req: NextRequest) {
       googleAio: citations.filter(c => c.platform === "google_aio").length,
     };
 
+    // Get configured platforms
+    const configuredPlatforms = citationTracker.getConfiguredPlatforms();
+
     return NextResponse.json({
       success: true,
       citations: citations || [],
@@ -68,6 +71,7 @@ export async function GET(req: NextRequest) {
         total: totalCitations,
         platforms: platformBreakdown,
       },
+      platformStatus: configuredPlatforms,
     });
   } catch (error) {
     console.error("Citations API error:", error);
@@ -118,17 +122,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Run citation check
+    // Get configured platforms
+    const configuredPlatforms = citationTracker.getConfiguredPlatforms();
+
+    // Run citation check across ALL platforms
     const newCitations = await citationTracker.checkSiteCitations(
       siteId,
       site.domain,
       site.main_topics || []
     );
 
+    // Group citations by platform
+    const citationsByPlatform = {
+      perplexity: newCitations.filter(c => c.platform === "perplexity").length,
+      chatgpt: newCitations.filter(c => c.platform === "chatgpt").length,
+      googleAio: newCitations.filter(c => c.platform === "google_aio").length,
+    };
+
     return NextResponse.json({
       success: true,
       newCitations: newCitations.length,
+      citationsByPlatform,
       citations: newCitations,
+      platformStatus: configuredPlatforms,
+      message: `Checked ${Object.values(configuredPlatforms).filter(Boolean).length} platforms: ${
+        Object.entries(configuredPlatforms)
+          .filter(([_, configured]) => configured)
+          .map(([name]) => name)
+          .join(", ")
+      }`,
     });
   } catch (error) {
     console.error("Citation check error:", error);
