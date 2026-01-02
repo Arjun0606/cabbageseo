@@ -1,101 +1,72 @@
 /**
- * AI Citations Tracking API
+ * GEO Citations API
  * 
- * Track and manage citations of your content by AI platforms.
+ * GET /api/geo/citations?siteId=xxx
+ * 
+ * Returns citations for a site - when AI platforms cite your content.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { requireSubscription } from "@/lib/api/require-subscription";
+import { citationTracker } from "@/lib/geo/citation-tracker";
 
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
-    
     if (!supabase) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Auth check
+    const subscription = await requireSubscription(supabase);
+    if (!subscription.authorized) {
+      return subscription.error!;
     }
 
-    // Get user's organization
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const organizationId = (userData as { organization_id?: string } | null)?.organization_id;
-    if (!organizationId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 400 });
+    const siteId = req.nextUrl.searchParams.get("siteId");
+    if (!siteId) {
+      return NextResponse.json(
+        { error: "siteId is required" },
+        { status: 400 }
+      );
     }
 
-    const { searchParams } = new URL(request.url);
-    const siteId = searchParams.get("siteId");
-    const platform = searchParams.get("platform");
-    const limit = parseInt(searchParams.get("limit") || "50");
-    const offset = parseInt(searchParams.get("offset") || "0");
-
-    // Build query
-    let query = supabase
+    // Get citations from database
+    const { data: citationsRaw, error } = await (supabase as any)
       .from("ai_citations")
-      .select(`
-        *,
-        pages!inner(
-          url,
-          title,
-          sites!inner(organization_id)
-        )
-      `)
-      .eq("pages.sites.organization_id", organizationId)
+      .select("*")
+      .eq("site_id", siteId)
       .order("discovered_at", { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    if (siteId) {
-      query = query.eq("site_id", siteId);
-    }
-
-    if (platform) {
-      query = query.eq("platform", platform);
-    }
-
-    const { data: citations, error, count } = await query;
+      .limit(50);
 
     if (error) {
-      console.error("Citations fetch error:", error);
-      return NextResponse.json({ error: "Failed to fetch citations" }, { status: 500 });
+      console.error("Error fetching citations:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch citations" },
+        { status: 500 }
+      );
     }
 
-    // Get citation stats by platform
-    const { data: statsRaw } = await supabase
-      .from("ai_citations")
-      .select("platform")
-      .eq("site_id", siteId || "");
+    const citations = (citationsRaw || []) as Array<{ platform: string; query: string; snippet: string; discovered_at: string }>;
 
-    const stats = (statsRaw || []) as { platform: string }[];
-
-    const platformCounts: Record<string, number> = {
-      google_aio: 0,
-      chatgpt: 0,
-      perplexity: 0,
-      claude: 0,
-      gemini: 0,
+    // Get citation stats
+    const totalCitations = citations.length;
+    const platformBreakdown = {
+      perplexity: citations.filter(c => c.platform === "perplexity").length,
+      chatgpt: citations.filter(c => c.platform === "chatgpt").length,
+      googleAio: citations.filter(c => c.platform === "google_aio").length,
     };
-
-    for (const row of stats) {
-      if (row.platform in platformCounts) {
-        platformCounts[row.platform]++;
-      }
-    }
 
     return NextResponse.json({
       success: true,
-      data: {
-        citations: citations || [],
-        total: count || 0,
-        platformCounts,
+      citations: citations || [],
+      stats: {
+        total: totalCitations,
+        platforms: platformBreakdown,
       },
     });
   } catch (error) {
@@ -107,160 +78,63 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/**
- * POST - Record a new citation discovery
- */
-export async function POST(request: NextRequest) {
+// POST: Run a citation check now
+export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
-    
     if (!supabase) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const {
-      siteId,
-      pageId,
-      platform,
-      query,
-      citationType = "source_link",
-      snippet,
-      position,
-      confidence = 0.8,
-    } = body;
-
-    if (!siteId || !platform || !query) {
       return NextResponse.json(
-        { error: "siteId, platform, and query are required" },
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
+    // Auth check
+    const subscription = await requireSubscription(supabase);
+    if (!subscription.authorized) {
+      return subscription.error!;
+    }
+
+    const { siteId } = await req.json();
+    if (!siteId) {
+      return NextResponse.json(
+        { error: "siteId is required" },
         { status: 400 }
       );
     }
 
-    // Verify site ownership
-    const { data: userDataPost } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const orgIdPost = (userDataPost as { organization_id?: string } | null)?.organization_id;
-    if (!orgIdPost) {
-      return NextResponse.json({ error: "No organization found" }, { status: 400 });
-    }
-
-    const { data: site } = await supabase
+    // Get site info
+    const { data: siteData } = await (supabase as any)
       .from("sites")
-      .select("id")
+      .select("domain, main_topics")
       .eq("id", siteId)
-      .eq("organization_id", orgIdPost)
       .single();
 
+    const site = siteData as { domain: string; main_topics: string[] } | null;
     if (!site) {
-      return NextResponse.json({ error: "Site not found" }, { status: 404 });
-    }
-
-    // Insert citation
-    const { data: citation, error } = await supabase
-      .from("ai_citations")
-      .upsert({
-        site_id: siteId,
-        page_id: pageId || null,
-        platform,
-        query,
-        citation_type: citationType,
-        snippet,
-        position,
-        confidence,
-        discovered_at: new Date().toISOString(),
-        last_verified_at: new Date().toISOString(),
-      } as never, {
-        onConflict: "site_id,platform,query,page_id",
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Citation insert error:", error);
-      return NextResponse.json({ error: "Failed to record citation" }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: citation,
-    });
-  } catch (error) {
-    console.error("Citations POST error:", error);
-    return NextResponse.json(
-      { error: "Failed to record citation" },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * DELETE - Remove a citation
- */
-export async function DELETE(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    
-    if (!supabase) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { searchParams } = new URL(request.url);
-    const citationId = searchParams.get("id");
-
-    if (!citationId) {
       return NextResponse.json(
-        { error: "Citation ID is required" },
-        { status: 400 }
+        { error: "Site not found" },
+        { status: 404 }
       );
     }
 
-    // Verify ownership through organization
-    const { data: userDataDel } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const orgIdDel = (userDataDel as { organization_id?: string } | null)?.organization_id;
-    if (!orgIdDel) {
-      return NextResponse.json({ error: "No organization found" }, { status: 400 });
-    }
-
-    const { error } = await supabase
-      .from("ai_citations")
-      .delete()
-      .eq("id", citationId);
-
-    if (error) {
-      console.error("Citation delete error:", error);
-      return NextResponse.json({ error: "Failed to delete citation" }, { status: 500 });
-    }
+    // Run citation check
+    const newCitations = await citationTracker.checkSiteCitations(
+      siteId,
+      site.domain,
+      site.main_topics || []
+    );
 
     return NextResponse.json({
       success: true,
-      message: "Citation deleted",
+      newCitations: newCitations.length,
+      citations: newCitations,
     });
   } catch (error) {
-    console.error("Citations DELETE error:", error);
+    console.error("Citation check error:", error);
     return NextResponse.json(
-      { error: "Failed to delete citation" },
+      { error: "Failed to run citation check" },
       { status: 500 }
     );
   }
 }
-

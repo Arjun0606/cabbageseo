@@ -87,9 +87,9 @@ class PerplexityClient {
 
   isConfigured(): boolean {
     return Boolean(this.apiKey);
-  }
+}
 
-  /**
+/**
    * Query Perplexity and check if domain is cited
    */
   async checkCitation(
@@ -446,7 +446,7 @@ Return JSON:
       const check = await this.perplexity.checkCitation(domain, `Tell me about ${domain}`);
       perplexityScore = check.isCited ? 75 : 25;
       perplexityIsReal = true;
-    }
+  }
 
     const prompt = `Quick GEO visibility score for ${url}:
 Return JSON: { "chatgpt": 0-100, "googleAio": 0-100, "topImprovement": "one quick win" }`;

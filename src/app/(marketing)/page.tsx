@@ -226,22 +226,23 @@ export default function LandingPage() {
           {/* Main headline */}
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[1.05]">
             <span className="bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-zinc-400">
-              Get your content
+              Enter your URL.
             </span>
             <br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-emerald-300 to-teal-400">
-              cited by AI
+              We get you cited by AI.
             </span>
           </h1>
 
           {/* Subheadline - honest, direct */}
           <p className="text-xl md:text-2xl text-zinc-400 max-w-3xl mx-auto mb-10 leading-relaxed">
-            Track and improve your visibility across{" "}
+            Autopilot generates GEO-optimized content. We check if{" "}
             <span className="text-white font-medium">ChatGPT</span>,{" "}
             <span className="text-white font-medium">Perplexity</span>, and{" "}
-            <span className="text-white font-medium">Google AI Overviews</span>.
+            <span className="text-white font-medium">Google AI</span>{" "}
+            are citing you.
             <br />
-            <span className="text-lg">Generate content optimized for AI citation.</span>
+            <span className="text-lg text-emerald-400">Set it up once. Get cited automatically.</span>
           </p>
 
           {/* CTA Buttons */}
@@ -387,22 +388,22 @@ export default function LandingPage() {
               {
                 step: "01",
                 icon: Search,
-                title: "Analyze Your Site",
-                description: "Enter your URL. We analyze your content for AI visibility factors across ChatGPT, Perplexity, and Google AI.",
+                title: "Enter Your URL",
+                description: "Just paste your website URL. We instantly analyze your content for GEO factors - entities, quotability, answer structure.",
                 color: "from-blue-500 to-blue-600",
               },
               {
                 step: "02",
-                icon: Lightbulb,
-                title: "Get Recommendations",
-                description: "See specific suggestions: add entities, improve quotability, structure content for AI extraction.",
+                icon: Play,
+                title: "Turn On Autopilot",
+                description: "One click to enable. We automatically generate GEO-optimized articles weekly and publish to your CMS.",
                 color: "from-purple-500 to-purple-600",
               },
               {
                 step: "03",
                 icon: TrendingUp,
-                title: "Improve & Track",
-                description: "Generate optimized content or fix existing pages. Track your visibility score over time.",
+                title: "Get Cited",
+                description: "We check Perplexity, ChatGPT, and Google AI. You see real citation alerts when AI starts quoting you.",
                 color: "from-emerald-500 to-emerald-600",
               },
             ].map((item, i) => (
@@ -439,12 +440,12 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: Bot, title: "AI Visibility Scoring", description: "Scores for ChatGPT, Perplexity, and Google AI visibility" },
-              { icon: FileText, title: "Content Generator", description: "Generate articles optimized for AI citation" },
-              { icon: Target, title: "Keyword Research", description: "AI-powered research focusing on topics AI answers" },
-              { icon: BarChart3, title: "Progress Tracking", description: "Track your visibility improvements over time" },
-              { icon: Globe, title: "Location-Aware", description: "Optimize for different regions and markets" },
-              { icon: Zap, title: "CMS Publishing", description: "Publish to WordPress, Webflow, Shopify & more" },
+              { icon: Bot, title: "Real Citation Checking", description: "We query Perplexity API to verify if you're actually being cited" },
+              { icon: RefreshCw, title: "Weekly Autopilot", description: "Auto-generate and publish GEO-optimized content every week" },
+              { icon: Sparkles, title: "GEO Content Generator", description: "Articles structured for AI extraction - FAQs, entities, quotes" },
+              { icon: TrendingUp, title: "Improvement Tracking", description: "See your GEO score increase over time with real data" },
+              { icon: FileText, title: "DALL-E Images", description: "Every article gets an AI-generated featured image" },
+              { icon: Zap, title: "8 CMS Integrations", description: "WordPress, Webflow, Shopify, Ghost, Notion, HubSpot, Framer, Webhooks" },
             ].map((feature, i) => (
               <div
                 key={i}
