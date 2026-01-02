@@ -26,23 +26,26 @@ const MODEL_COSTS = {
 } as const;
 
 // Model aliases - map semantic names to actual models
+// GPT-5 Series (Jan 2026) - Using GPT-5 Mini as default
 const MODEL_ALIASES: Record<string, keyof typeof MODEL_COSTS> = {
-  // Recommended aliases
+  // Recommended aliases - GPT-5 series
   "fast": "gpt-5-mini",           // Default for most tasks (smart + efficient)
-  "nano": "gpt-4.1-nano",         // Ultra-cheap for bulk/simple tasks
-  "budget": "gpt-4.1-mini",       // Budget option
-  "quality": "gpt-5",             // Premium content
+  "nano": "gpt-5-mini",           // Cost-efficient for bulk tasks
+  "budget": "gpt-5-mini",         // Budget option
+  "quality": "gpt-5",             // Premium content (full GPT-5)
   // Claude-compatible aliases
-  "sonnet": "gpt-5-mini",
-  "haiku": "gpt-4.1-nano",
-  "opus": "gpt-5",
+  "sonnet": "gpt-5-mini",         // Maps to efficient model
+  "haiku": "gpt-5-mini",          // Maps to efficient model  
+  "opus": "gpt-5",                // Maps to premium model
   // Direct model names
   "gpt-5-mini": "gpt-5-mini",
   "gpt-5": "gpt-5",
-  "gpt-4.1-nano": "gpt-4.1-nano",
-  "gpt-4.1-mini": "gpt-4.1-mini",
-  "gpt-4.1": "gpt-4.1",
-  "gpt-4o-mini": "gpt-4o-mini",
+  "gpt-5-nano": "gpt-5-mini",     // Fallback to mini
+  // Legacy fallbacks
+  "gpt-4.1-nano": "gpt-5-mini",
+  "gpt-4.1-mini": "gpt-5-mini",
+  "gpt-4.1": "gpt-5",
+  "gpt-4o-mini": "gpt-4o-mini",   // Keep for backwards compat
   "gpt-4o": "gpt-4o",
 };
 

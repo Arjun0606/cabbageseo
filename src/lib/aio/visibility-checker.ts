@@ -147,7 +147,7 @@ class PerplexityClient {
       // Also check if domain is mentioned in the response
       const mentionedInContent = content.toLowerCase().includes(domainLower);
 
-      return {
+    return {
         isCited: matchingCitations.length > 0 || mentionedInContent,
         citations: matchingCitations,
         snippet: content.slice(0, 200),
@@ -184,7 +184,7 @@ class PerplexityClient {
     let citedCount = 0;
     const allCitations: string[] = [];
 
-    for (const query of queries) {
+      for (const query of queries) {
       const result = await this.checkCitation(domain, query);
       if (result.isCited) {
         citedCount++;
@@ -379,12 +379,12 @@ class ChatGPTClient {
 
     try {
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
+          method: "POST",
+          headers: {
           "Authorization": `Bearer ${this.apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
           model: "gpt-4o-mini",
           messages: [
             {
@@ -397,10 +397,10 @@ class ChatGPTClient {
             },
           ],
           max_tokens: 500,
-        }),
-      });
+          }),
+        });
 
-      if (!response.ok) {
+        if (!response.ok) {
         return { isCited: false, snippet: "", confidence: "low" };
       }
 
