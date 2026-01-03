@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { SiteCrawler } from "@/lib/crawler/site-crawler";
 import { openai } from "@/lib/ai/openai-client";
+import { inngest } from "@/lib/jobs/inngest-client";
 
 interface QuickstartRequest {
   url: string;
@@ -227,6 +228,23 @@ Focus on what makes AI cite content:
             improvement_suggestions: analysis.quickWins,
             analyzed_at: new Date().toISOString(),
           });
+        
+        // 🚀 TRIGGER FIRST ARTICLE GENERATION (SEObot-style autopilot)
+        // This generates the first GEO-optimized article immediately
+        try {
+          await inngest.send({
+            name: "geo/site.added",
+            data: {
+              siteId,
+              organizationId: orgId,
+              domain,
+            },
+          });
+          console.log(`[Quickstart] Triggered first article generation for ${domain}`);
+        } catch (error) {
+          console.warn("[Quickstart] Could not trigger first article:", error);
+          // Non-blocking - site is still set up even if this fails
+        }
       }
     }
 

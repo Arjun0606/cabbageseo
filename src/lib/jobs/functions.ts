@@ -752,22 +752,189 @@ export const scheduledDailyAnalytics = inngest.createFunction(
 
 // ============================================
 // WEEKLY CONTENT GENERATION (SEObot-style autopilot)
+// Uses GEO Autopilot Engine for AI-citation optimized content
 // ============================================
 
 export const scheduledWeeklyContent = inngest.createFunction(
   {
     id: "scheduled-weekly-content",
-    name: "Weekly Content Generation",
+    name: "Weekly GEO Content Generation",
   },
   { cron: "0 9 * * 1" }, // Every Monday at 9 AM
   async ({ step }) => {
-    // Get all sites with autopilot enabled
-    const sites = await step.run("get-autopilot-sites", async () => {
+    // Use the GEO Autopilot engine
+    const { geoAutopilot } = await import("@/lib/geo/autopilot");
+    
+    const results = await step.run("run-geo-autopilot", async () => {
+      return await geoAutopilot.runAutopilot();
+    });
+
+    // Send email notifications for successful generations
+    for (const result of results) {
+      if (result.success && result.articleTitle) {
+        await step.run(`notify-${result.siteId}`, async () => {
+          const { emailService } = await import("@/lib/email");
+          const supabase = createServiceClient();
+          
+          // Get org owner email
+          const { data: site } = await (supabase as any)
+            .from("sites")
+            .select("organization_id")
+            .eq("id", result.siteId)
+            .single();
+          
+          if (site) {
+            const { data: users } = await (supabase as any)
+              .from("users")
+              .select("email")
+              .eq("organization_id", site.organization_id)
+              .limit(1);
+            
+            if (users?.[0]?.email) {
+              await emailService.send(users[0].email, {
+                subject: `🚀 New GEO Article Generated: ${result.articleTitle}`,
+                html: `
+                  <h2>Your Weekly GEO Article is Ready!</h2>
+                  <p>CabbageSEO Autopilot just generated a new article optimized for AI citations:</p>
+                  <p><strong>${result.articleTitle}</strong></p>
+                  <p>GEO Score: ${result.geoScore || "N/A"}/100</p>
+                  <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/content">Review & Publish →</a></p>
+                `,
+                text: `New GEO Article: ${result.articleTitle}. GEO Score: ${result.geoScore || "N/A"}/100. Review at ${process.env.NEXT_PUBLIC_APP_URL}/content`,
+              });
+            }
+          }
+        });
+      }
+    }
+
+    return { 
+      processed: results.length, 
+      generated: results.filter(r => r.success).length,
+      results 
+    };
+  }
+);
+
+// ============================================
+// FIRST ARTICLE GENERATION (Triggered when site added)
+// ============================================
+
+export const generateFirstArticle = inngest.createFunction(
+  {
+    id: "generate-first-article",
+    name: "Generate First GEO Article",
+  },
+  { event: "geo/site.added" },
+  async ({ event, step }) => {
+    const { siteId, organizationId, domain } = event.data;
+    
+    // Wait a bit for site data to be ready
+    await step.sleep("wait-for-data", "5s");
+    
+    // Step 1: Get site topics for keyword research
+    const siteTopics = await step.run("get-site-topics", async () => {
       const supabase = createServiceClient();
       const { data } = await (supabase as any)
         .from("sites")
-        .select("id, organization_id, domain, url")
-        .eq("autopilot_enabled", true)
+        .select("main_topics, topics")
+        .eq("id", siteId)
+        .single();
+      return data?.main_topics || data?.topics || [domain.split(".")[0]];
+    });
+
+    // Step 2: Auto-generate seed keywords from topics
+    await step.run("auto-keyword-research", async () => {
+      const supabase = createServiceClient();
+      
+      // Generate basic keywords from topics
+      const keywords = siteTopics.flatMap((topic: string) => [
+        topic,
+        `what is ${topic}`,
+        `how to ${topic}`,
+        `best ${topic}`,
+        `${topic} guide`,
+        `${topic} tips`,
+      ]);
+
+      // Store as discovered keywords
+      for (const keyword of keywords.slice(0, 20)) {
+        await (supabase as any).from("keywords").upsert({
+          site_id: siteId,
+          organization_id: organizationId,
+          keyword,
+          status: "discovered",
+          source: "auto-research",
+        }, { onConflict: "site_id,keyword" });
+      }
+      
+      return keywords.length;
+    });
+    
+    // Step 3: Generate first article using GEO Autopilot
+    const result = await step.run("generate-article", async () => {
+      const { geoAutopilot } = await import("@/lib/geo/autopilot");
+      return await geoAutopilot.runForSite(siteId);
+    });
+
+    // Step 4: Send welcome email with first article
+    if (result.success) {
+      await step.run("send-welcome-email", async () => {
+        const { emailService } = await import("@/lib/email");
+        const supabase = createServiceClient();
+        
+        const { data: users } = await (supabase as any)
+          .from("users")
+          .select("email")
+          .eq("organization_id", organizationId)
+          .limit(1);
+        
+        if (users?.[0]?.email) {
+          await emailService.send(users[0].email, {
+            subject: `🎉 Your First GEO Article is Ready!`,
+            html: `
+              <h2>Welcome to CabbageSEO!</h2>
+              <p>We've already generated your first AI-optimized article:</p>
+              <p><strong>${result.articleTitle}</strong></p>
+              <p>GEO Score: ${result.geoScore || "N/A"}/100</p>
+              <h3>What's Happening Now?</h3>
+              <ul>
+                <li>✅ Your site has been analyzed</li>
+                <li>✅ Keywords have been researched</li>
+                <li>✅ First article generated</li>
+                <li>⏳ Autopilot will generate new articles every week</li>
+                <li>⏳ We'll track when AI platforms cite your content</li>
+              </ul>
+              <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/geo-dashboard">Go to GEO Dashboard →</a></p>
+            `,
+            text: `Welcome! Your first GEO article is ready: ${result.articleTitle}. GEO Score: ${result.geoScore || "N/A"}/100.`,
+          });
+        }
+      });
+    }
+
+    return result;
+  }
+);
+
+// ============================================
+// DAILY CITATION CHECK
+// ============================================
+
+export const scheduledDailyCitationCheck = inngest.createFunction(
+  {
+    id: "scheduled-daily-citation-check",
+    name: "Daily AI Citation Check",
+  },
+  { cron: "0 10 * * *" }, // Every day at 10 AM
+  async ({ step }) => {
+    const supabase = createServiceClient();
+    
+    // Get all active sites
+    const sites = await step.run("get-sites", async () => {
+      const { data } = await (supabase as any)
+        .from("sites")
+        .select("id, domain, organization_id")
         .eq("status", "active");
       return data || [];
     });
@@ -775,101 +942,24 @@ export const scheduledWeeklyContent = inngest.createFunction(
     const results = [];
 
     for (const site of sites) {
-      // Step 1: Get a keyword to write about
-      const keyword = await step.run(`get-keyword-${site.id}`, async () => {
-        const supabase = createServiceClient();
-        // Get an unused keyword with good potential
-        const { data } = await (supabase as any)
-          .from("keywords")
-          .select("id, keyword, volume, difficulty")
-          .eq("site_id", site.id)
-          .eq("status", "discovered")
-          .order("volume", { ascending: false })
-          .limit(1)
-          .single();
-        return data;
+      const result = await step.run(`check-citations-${site.id}`, async () => {
+        try {
+          const { citationTracker } = await import("@/lib/geo/citation-tracker");
+          const report = await citationTracker.checkSiteCitations(site.id, site.domain);
+          return { siteId: site.id, newCitations: report.newCitations };
+        } catch (error) {
+          console.error(`Citation check failed for ${site.domain}:`, error);
+          return { siteId: site.id, error: true };
+        }
       });
-
-      if (!keyword) {
-        results.push({ siteId: site.id, skipped: true, reason: "No keywords available" });
-        continue;
-      }
-
-      // Step 2: Generate content
-      const content = await step.run(`generate-${site.id}`, async () => {
-        // Use OpenAI to generate content
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey) return null;
-
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            max_tokens: 3000,
-            messages: [
-              {
-                role: "system",
-                content: "You are an SEO content writer. Write comprehensive, well-structured articles that are optimized for both search engines and AI platforms like ChatGPT and Perplexity."
-              },
-              {
-                role: "user",
-                content: `Write a 1500-word article about "${keyword.keyword}" for the website ${site.domain}. Include an introduction, 3-4 main sections with H2 headings, practical tips, and a conclusion. Make it optimized for AI visibility.`
-              }
-            ]
-          }),
-        });
-
-        const data = await response.json();
-        return data.choices?.[0]?.message?.content || null;
-      });
-
-      if (!content) {
-        results.push({ siteId: site.id, skipped: true, reason: "Content generation failed" });
-        continue;
-      }
-
-      // Step 3: Save content to database
-      await step.run(`save-${site.id}`, async () => {
-        const supabase = createServiceClient();
-        
-        // Create content record
-        await (supabase as any).from("content").insert({
-          site_id: site.id,
-          title: `Guide to ${keyword.keyword}`,
-          slug: keyword.keyword.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-          body: content,
-          meta_title: `${keyword.keyword} - Complete Guide`,
-          meta_description: `Learn everything about ${keyword.keyword}. Expert tips and strategies.`,
-          keyword: keyword.keyword,
-          word_count: content.split(/\s+/).length,
-          status: "draft",
-          content_type: "article",
-          aio_optimized: true,
-        });
-
-        // Mark keyword as used
-        await (supabase as any)
-          .from("keywords")
-          .update({ status: "writing" })
-          .eq("id", keyword.id);
-      });
-
-      results.push({ 
-        siteId: site.id, 
-        success: true, 
-        keyword: keyword.keyword,
-        wordCount: content.split(/\s+/).length 
-      });
+      
+      results.push(result);
     }
 
-    return { 
-      processed: sites.length, 
-      generated: results.filter(r => r.success).length,
-      results 
+    return {
+      checked: sites.length,
+      withNewCitations: results.filter(r => r.newCitations > 0).length,
+      results,
     };
   }
 );
@@ -888,6 +978,8 @@ export const functions = [
   runAutopilot,
   scheduledWeeklyCrawl,
   scheduledDailyAnalytics,
-  scheduledWeeklyContent,  // NEW: SEObot-style weekly content
+  scheduledWeeklyContent,      // Weekly GEO content generation
+  generateFirstArticle,        // First article when site added
+  scheduledDailyCitationCheck, // Daily citation monitoring
 ];
 

@@ -14,6 +14,7 @@ export type {
   AutopilotRunEvent,
   AutopilotTask,
   ScheduledJobEvent,
+  GEOSiteAddedEvent,
   CabbageSEOEvents,
 } from "./inngest-client";
 

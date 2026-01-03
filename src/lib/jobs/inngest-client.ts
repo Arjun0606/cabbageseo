@@ -116,6 +116,15 @@ export interface ScheduledJobEvent {
   };
 }
 
+export interface GEOSiteAddedEvent {
+  name: "geo/site.added";
+  data: {
+    siteId: string;
+    organizationId: string;
+    domain: string;
+  };
+}
+
 // Union type for all events
 export type CabbageSEOEvents = 
   | CrawlSiteEvent
@@ -124,5 +133,6 @@ export type CabbageSEOEvents =
   | KeywordResearchEvent
   | AnalyticsSyncEvent
   | AutopilotRunEvent
-  | ScheduledJobEvent;
+  | ScheduledJobEvent
+  | GEOSiteAddedEvent;
 
