@@ -71,11 +71,13 @@ export async function PATCH(
 
     const plan = (org as { plan: string } | null)?.plan || "starter";
     
-    // Only Pro and Pro+ plans can use autopilot
-    if (plan === "starter" && enabled) {
+    // All paid plans can use autopilot (starter, pro, pro_plus)
+    // Only block if no valid subscription
+    const validPlans = ["starter", "pro", "pro_plus"];
+    if (!validPlans.includes(plan) && enabled) {
       return NextResponse.json(
         { 
-          error: "Autopilot requires Pro plan or higher",
+          error: "Autopilot requires an active subscription",
           upgradeRequired: true,
         },
         { status: 403 }
@@ -181,12 +183,16 @@ export async function GET(
     if (userOrgId) {
       const { data: org } = await serviceClient
         .from("organizations")
-        .select("plan")
+        .select("plan, subscription_status")
         .eq("id", userOrgId)
         .single();
       
-      const orgPlan = (org as { plan: string } | null)?.plan;
-      planEligible = orgPlan === "pro" || orgPlan === "pro_plus";
+      const orgData = org as { plan: string; subscription_status: string } | null;
+      // All paid plans with active subscription can use autopilot
+      const validPlans = ["starter", "pro", "pro_plus"];
+      const validStatuses = ["active", "trialing"];
+      planEligible = validPlans.includes(orgData?.plan || "") && 
+                     validStatuses.includes(orgData?.subscription_status || "");
     }
 
     return NextResponse.json({

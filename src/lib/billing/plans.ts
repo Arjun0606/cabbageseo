@@ -89,8 +89,8 @@ export const PLANS: Record<PlanId, Plan> = {
       internalLinking: true,       // Now included!
       contentScoring: true,        // Now included!
       autoSchema: true,            // Now included!
-      scheduledPublishing: false,
-      autopilotEligible: false,
+      scheduledPublishing: true,   // All paid plans!
+      autopilotEligible: true,     // All paid plans!
       gscIntegration: true,        // Now included!
       webflowIntegration: true,
       wordpressIntegration: true,

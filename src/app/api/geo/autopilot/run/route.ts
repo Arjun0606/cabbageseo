@@ -44,14 +44,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("current_organization_id")
+    const { data: userData } = await supabase
+      .from("users")
+      .select("organization_id")
       .eq("id", user.id)
       .single();
 
-    const profile = profileData as { current_organization_id: string } | null;
-    if (!profile?.current_organization_id) {
+    const userOrg = userData as { organization_id: string } | null;
+    if (!userOrg?.organization_id) {
       return NextResponse.json(
         { error: "No organization" },
         { status: 400 }
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       .from("sites")
       .select("id")
       .eq("id", siteId)
-      .eq("organization_id", profile.current_organization_id)
+      .eq("organization_id", userOrg.organization_id)
       .single();
 
     if (!site) {

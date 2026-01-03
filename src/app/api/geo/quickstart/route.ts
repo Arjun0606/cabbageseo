@@ -86,13 +86,13 @@ export async function POST(req: NextRequest) {
       userId = user?.id || null;
       
       if (userId) {
-        // Get org
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("current_organization_id")
+        // Get org from users table
+        const { data: userData } = await supabase
+          .from("users")
+          .select("organization_id")
           .eq("id", userId)
           .single();
-        orgId = (profile as { current_organization_id: string } | null)?.current_organization_id || null;
+        orgId = (userData as { organization_id: string } | null)?.organization_id || null;
       }
     }
 

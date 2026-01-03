@@ -25,19 +25,11 @@ import {
   CheckCircle2,
   Loader2,
   RefreshCw,
-  Clock,
   Eye,
   ArrowRight,
-  Play,
-  Pause,
   Settings,
   ChevronRight,
-  AlertCircle,
-  Crown,
-  Plus,
-  Calendar,
   Quote,
-  ExternalLink,
   Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -545,10 +537,10 @@ function MainDashboard({ data }: { data: DashboardData }) {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-white">Autopilot Mode</h3>
-                      {!plan.features.autopilotEligible && (
-                        <Badge variant="outline" className="border-yellow-500/50 text-yellow-400 text-xs">
-                          <Crown className="w-3 h-3 mr-1" />
-                          Pro
+                      {autopilotEnabled && (
+                        <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-xs">
+                          <Zap className="w-3 h-3 mr-1" />
+                          Active
                         </Badge>
                       )}
                     </div>
@@ -829,8 +821,9 @@ export default function DashboardPage() {
                 sites: 3,
               },
               features: {
-                autopilotEligible: usageData?.plan !== "starter",
-                scheduledPublishing: usageData?.plan !== "starter",
+                // All paid plans get autopilot
+                autopilotEligible: ["starter", "pro", "pro_plus"].includes(usageData?.plan || ""),
+                scheduledPublishing: ["starter", "pro", "pro_plus"].includes(usageData?.plan || ""),
               },
             },
             usage: {
