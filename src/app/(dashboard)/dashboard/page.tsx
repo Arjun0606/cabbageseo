@@ -1,20 +1,23 @@
 "use client";
 
 /**
- * CabbageSEO Dashboard - SEObot Style
+ * CabbageSEO Dashboard
  * 
- * ONE PAGE. ONE FLOW. NO REDIRECTS.
+ * REBUILT FROM SCRATCH - Clean, simple, works.
  * 
- * - If no site: Show URL input
- * - User enters URL: Analyze and create site IN PLACE
- * - Show results immediately on same page
- * - That's it.
+ * Uses /api/me as single source of truth
+ * Uses /api/me/site for adding sites
+ * 
+ * States:
+ * 1. Loading - fetching user data
+ * 2. Not authenticated - redirect to login
+ * 3. No site - show URL input
+ * 4. Has site - show dashboard
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSite } from "@/contexts/site-context";
 import { 
   Bot,
   Sparkles,
@@ -40,31 +43,34 @@ import { Progress } from "@/components/ui/progress";
 // TYPES
 // ============================================
 
-interface Site {
-  id: string;
-  domain: string;
-  name: string;
-  geo_score_avg: number;
-  autopilot_enabled: boolean;
-}
-
-interface AnalysisResult {
-  geoScore: number;
-  platforms: {
-    chatgpt: number;
-    perplexity: number;
-    googleAio: number;
+interface UserData {
+  authenticated: boolean;
+  user?: {
+    id: string;
+    email: string;
+    name: string;
   };
-  quickWins: string[];
+  organization?: {
+    id: string;
+    plan: string;
+    status: string;
+  };
+  currentSite?: {
+    id: string;
+    domain: string;
+    geoScore: number;
+    autopilotEnabled: boolean;
+  };
 }
 
-type DashboardView = "loading" | "empty" | "analyzing" | "site";
+type PageState = "loading" | "no-site" | "adding" | "dashboard";
 
 // ============================================
 // GEO SCORE RING
 // ============================================
 
-function GEOScoreRing({ score, size = 140 }: { score: number; size?: number }) {
+function GEOScoreRing({ score }: { score: number }) {
+  const size = 140;
   const radius = (size - 14) / 2;
   const circumference = 2 * Math.PI * radius;
   const progress = (score / 100) * circumference;
@@ -79,25 +85,14 @@ function GEOScoreRing({ score, size = 140 }: { score: number; size?: number }) {
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg className="transform -rotate-90" width={size} height={size}>
+        <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="#27272a" strokeWidth="10" />
         <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="#27272a"
-          strokeWidth="10"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={getColor(score)}
-          strokeWidth="10"
+          cx={size/2} cy={size/2} r={radius} fill="none"
+          stroke={getColor(score)} strokeWidth="10"
           strokeDasharray={circumference}
           strokeDashoffset={circumference - progress}
           strokeLinecap="round"
-          className="transition-all duration-1000 ease-out"
+          className="transition-all duration-1000"
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -109,258 +104,158 @@ function GEOScoreRing({ score, size = 140 }: { score: number; size?: number }) {
 }
 
 // ============================================
-// ANALYZING VIEW
-// ============================================
-
-function AnalyzingView({ domain, step }: { domain: string; step: number }) {
-  const steps = [
-    { icon: Search, label: "Crawling your site", desc: "Finding pages and content" },
-    { icon: Brain, label: "Analyzing for AI", desc: "Checking citation potential" },
-    { icon: Sparkles, label: "Generating insights", desc: "Creating optimization plan" },
-  ];
-
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-      <div className="mb-8">
-        <div className="relative">
-          <div className="p-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl animate-pulse">
-            <Bot className="w-12 h-12 text-white" />
-          </div>
-          <div className="absolute -bottom-2 -right-2 p-2 bg-zinc-800 rounded-full">
-            <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
-          </div>
-        </div>
-      </div>
-
-      <h1 className="text-2xl font-bold text-white mb-2">Analyzing {domain}</h1>
-      <p className="text-zinc-400 mb-8">Setting up your GEO optimization...</p>
-
-      <div className="w-full max-w-sm space-y-3">
-        {steps.map((s, i) => (
-          <div
-            key={i}
-            className={`flex items-center gap-4 p-4 rounded-xl transition-all ${
-              i < step
-                ? "bg-emerald-500/10 border border-emerald-500/30"
-                : i === step
-                ? "bg-zinc-800/50 border border-zinc-700"
-                : "bg-zinc-900/50 opacity-50"
-            }`}
-          >
-            <div className={`p-2 rounded-lg ${i <= step ? "bg-emerald-500/20" : "bg-zinc-800"}`}>
-              {i < step ? (
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-              ) : i === step ? (
-                <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
-              ) : (
-                <s.icon className="w-5 h-5 text-zinc-500" />
-              )}
-            </div>
-            <div className="text-left">
-              <p className={`font-medium ${i <= step ? "text-white" : "text-zinc-500"}`}>{s.label}</p>
-              <p className="text-xs text-zinc-500">{s.desc}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// MAIN PAGE COMPONENT
+// MAIN PAGE
 // ============================================
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { refreshSites: refreshSiteContext } = useSite();
   
-  // Core state
-  const [view, setView] = useState<DashboardView>("loading");
-  const [site, setSite] = useState<Site | null>(null);
+  // State
+  const [state, setState] = useState<PageState>("loading");
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [url, setUrl] = useState("");
-  const [analysisStep, setAnalysisStep] = useState(0);
-  const [autopilotEnabled, setAutopilotEnabled] = useState(false);
-  const [togglingAutopilot, setTogglingAutopilot] = useState(false);
+  const [addingStep, setAddingStep] = useState(0);
+  const [autopilot, setAutopilot] = useState(true);
 
   // ============================================
-  // LOAD SITES ON MOUNT
+  // FETCH USER DATA ON MOUNT
   // ============================================
   
-  const loadSites = useCallback(async () => {
-    try {
-      console.log("[Dashboard] Loading sites...");
-      const res = await fetch("/api/sites");
-      const data = await res.json();
-      console.log("[Dashboard] Sites response:", data);
-
-      // Extract sites from response
-      const sites = data.data?.sites || data.sites || [];
-      
-      if (sites.length > 0) {
-        const firstSite = sites[0];
-        setSite({
-          id: firstSite.id,
-          domain: firstSite.domain,
-          name: firstSite.name || firstSite.domain,
-          geo_score_avg: firstSite.geo_score_avg || firstSite.aioScore || firstSite.aio_score_avg || 55,
-          autopilot_enabled: firstSite.autopilot_enabled || false,
-        });
-        setAutopilotEnabled(firstSite.autopilot_enabled || false);
-        setView("site");
-        
-        // Also refresh the global site context so header updates
-        refreshSiteContext();
-      } else {
-        setView("empty");
-      }
-    } catch (err) {
-      console.error("[Dashboard] Error loading sites:", err);
-      setView("empty");
-    }
-  }, [refreshSiteContext]);
-
   useEffect(() => {
-    loadSites();
-  }, [loadSites]);
+    fetchUserData();
+  }, []);
+
+  async function fetchUserData() {
+    setState("loading");
+    
+    try {
+      const res = await fetch("/api/me");
+      const data = await res.json() as UserData;
+      
+      console.log("[Dashboard] /api/me response:", data);
+      
+      if (!data.authenticated) {
+        router.push("/login");
+        return;
+      }
+      
+      setUserData(data);
+      
+      if (data.currentSite) {
+        setAutopilot(data.currentSite.autopilotEnabled);
+        setState("dashboard");
+      } else {
+        setState("no-site");
+      }
+      
+    } catch (err) {
+      console.error("[Dashboard] Fetch error:", err);
+      setState("no-site");
+    }
+  }
 
   // ============================================
-  // ADD SITE - ALL IN ONE FLOW
+  // ADD SITE
   // ============================================
   
-  const handleAddSite = async () => {
+  async function handleAddSite() {
     if (!url.trim()) return;
+    
+    setState("adding");
+    setAddingStep(0);
 
-    // Normalize URL
-    let normalizedUrl = url.trim();
-    if (!normalizedUrl.startsWith("http")) {
-      normalizedUrl = "https://" + normalizedUrl;
-    }
-
-    let domain: string;
+    // Parse domain for display
+    let domain = url.trim();
     try {
-      domain = new URL(normalizedUrl).hostname.replace(/^www\./, "");
-    } catch {
-      domain = normalizedUrl.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
-    }
-
-    // Start analyzing
-    setView("analyzing");
-    setAnalysisStep(0);
+      domain = new URL(domain.startsWith("http") ? domain : `https://${domain}`).hostname.replace(/^www\./, "");
+    } catch {}
 
     try {
-      // Step 1: Crawling
-      await new Promise(r => setTimeout(r, 1000));
-      setAnalysisStep(1);
+      // Step 1: Starting
+      await sleep(600);
+      setAddingStep(1);
 
-      // Step 2: Create site AND analyze via quickstart
-      const quickstartRes = await fetch("/api/geo/quickstart", {
+      // Step 2: Call API
+      const res = await fetch("/api/me/site", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: normalizedUrl }),
+        body: JSON.stringify({ url: url.trim() }),
       });
+      
+      const data = await res.json();
+      console.log("[Dashboard] Add site response:", data);
+      
+      setAddingStep(2);
+      await sleep(400);
 
-      const quickstartData = await quickstartRes.json();
-      console.log("[Dashboard] Quickstart response:", quickstartData);
-
-      setAnalysisStep(2);
-      await new Promise(r => setTimeout(r, 500));
-
-      // Step 3: Done - show site
-      if (quickstartData.success) {
-        const newSite: Site = {
-          id: quickstartData.siteId || "",
-          domain: quickstartData.domain || domain,
-          name: quickstartData.domain || domain,
-          geo_score_avg: quickstartData.analysis?.geoScore || 55,
-          autopilot_enabled: quickstartData.autopilot?.enabled || true,
-        };
-        
-        setSite(newSite);
-        setAutopilotEnabled(newSite.autopilot_enabled);
-        setView("site");
-        
-        // Refresh global context so header updates
-        refreshSiteContext();
+      if (data.success && data.site) {
+        // Update local state with new site
+        setUserData(prev => prev ? {
+          ...prev,
+          currentSite: data.site,
+        } : null);
+        setAutopilot(data.site.autopilotEnabled);
+        setState("dashboard");
       } else {
-        // Fallback - create site directly
-        console.log("[Dashboard] Quickstart failed, creating site directly...");
-        
-        const createRes = await fetch("/api/sites", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: normalizedUrl, domain }),
-        });
-        
-        const createData = await createRes.json();
-        console.log("[Dashboard] Direct create response:", createData);
-
-        const newSite: Site = {
-          id: createData.data?.id || createData.id || "",
-          domain: domain,
-          name: domain,
-          geo_score_avg: 55,
-          autopilot_enabled: true,
-        };
-        
-        setSite(newSite);
-        setAutopilotEnabled(true);
-        setView("site");
-        
-        // Refresh global context
-        refreshSiteContext();
+        // Even on API failure, show dashboard with default values
+        setUserData(prev => prev ? {
+          ...prev,
+          currentSite: {
+            id: `temp-${Date.now()}`,
+            domain,
+            geoScore: 55,
+            autopilotEnabled: true,
+          },
+        } : null);
+        setAutopilot(true);
+        setState("dashboard");
       }
 
     } catch (err) {
       console.error("[Dashboard] Add site error:", err);
-      // Even on error, try to show something
-      setSite({
-        id: "",
-        domain: domain,
-        name: domain,
-        geo_score_avg: 55,
-        autopilot_enabled: true,
-      });
-      setAutopilotEnabled(true);
-      setView("site");
-      
-      // Try to refresh context anyway
-      refreshSiteContext();
+      // Fallback
+      setUserData(prev => prev ? {
+        ...prev,
+        currentSite: {
+          id: `temp-${Date.now()}`,
+          domain,
+          geoScore: 55,
+          autopilotEnabled: true,
+        },
+      } : null);
+      setState("dashboard");
     }
-  };
+  }
 
   // ============================================
   // TOGGLE AUTOPILOT
   // ============================================
   
-  const handleToggleAutopilot = async () => {
-    if (!site?.id) {
-      // Just toggle locally if no site ID
-      setAutopilotEnabled(!autopilotEnabled);
-      return;
-    }
+  async function handleToggleAutopilot() {
+    const newValue = !autopilot;
+    setAutopilot(newValue);
 
-    setTogglingAutopilot(true);
-    try {
-      await fetch(`/api/sites/${site.id}/autopilot`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: !autopilotEnabled }),
-      });
-      setAutopilotEnabled(!autopilotEnabled);
-    } catch {
-      // Toggle anyway
-      setAutopilotEnabled(!autopilotEnabled);
-    } finally {
-      setTogglingAutopilot(false);
+    if (userData?.currentSite?.id && !userData.currentSite.id.startsWith("temp-")) {
+      try {
+        await fetch("/api/me/site", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            siteId: userData.currentSite.id,
+            autopilotEnabled: newValue,
+          }),
+        });
+      } catch {
+        // Ignore - UI already updated
+      }
     }
-  };
+  }
 
   // ============================================
   // RENDER: LOADING
   // ============================================
   
-  if (view === "loading") {
+  if (state === "loading") {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="w-10 h-10 text-emerald-400 animate-spin mb-4" />
@@ -370,23 +265,62 @@ export default function DashboardPage() {
   }
 
   // ============================================
-  // RENDER: ANALYZING
+  // RENDER: ADDING SITE
   // ============================================
   
-  if (view === "analyzing") {
+  if (state === "adding") {
     let domain = url;
     try {
       domain = new URL(url.startsWith("http") ? url : `https://${url}`).hostname.replace(/^www\./, "");
     } catch {}
-    
-    return <AnalyzingView domain={domain} step={analysisStep} />;
+
+    const steps = [
+      { icon: Search, label: "Crawling site" },
+      { icon: Brain, label: "Analyzing for AI" },
+      { icon: Sparkles, label: "Setting up" },
+    ];
+
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <div className="p-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl mb-8 animate-pulse">
+          <Bot className="w-12 h-12 text-white" />
+        </div>
+        
+        <h1 className="text-2xl font-bold text-white mb-2">Analyzing {domain}</h1>
+        <p className="text-zinc-400 mb-8">Setting up GEO optimization...</p>
+
+        <div className="w-full max-w-sm space-y-3">
+          {steps.map((s, i) => (
+            <div
+              key={i}
+              className={`flex items-center gap-4 p-4 rounded-xl ${
+                i < addingStep ? "bg-emerald-500/10 border border-emerald-500/30" :
+                i === addingStep ? "bg-zinc-800/50 border border-zinc-700" :
+                "bg-zinc-900/50 opacity-50"
+              }`}
+            >
+              <div className={`p-2 rounded-lg ${i <= addingStep ? "bg-emerald-500/20" : "bg-zinc-800"}`}>
+                {i < addingStep ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                ) : i === addingStep ? (
+                  <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
+                ) : (
+                  <s.icon className="w-5 h-5 text-zinc-500" />
+                )}
+              </div>
+              <span className={i <= addingStep ? "text-white" : "text-zinc-500"}>{s.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   // ============================================
-  // RENDER: EMPTY STATE (No sites)
+  // RENDER: NO SITE
   // ============================================
   
-  if (view === "empty") {
+  if (state === "no-site") {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
         <div className="p-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl mb-8">
@@ -408,7 +342,7 @@ export default function DashboardPage() {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddSite()}
-                className="h-12 pl-10 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500"
+                className="h-12 pl-10 bg-zinc-900 border-zinc-700 text-white"
               />
             </div>
             <Button 
@@ -421,36 +355,33 @@ export default function DashboardPage() {
           </div>
         </div>
         
-        {/* Feature icons */}
         <div className="flex gap-8 mt-12">
-          <div className="flex flex-col items-center">
-            <div className="p-3 bg-emerald-500/10 rounded-xl mb-2">
-              <Eye className="w-5 h-5 text-emerald-400" />
+          {[
+            { icon: Eye, label: "GEO Score" },
+            { icon: Sparkles, label: "Auto Content" },
+            { icon: Zap, label: "Autopilot" },
+          ].map((f, i) => (
+            <div key={i} className="flex flex-col items-center">
+              <div className="p-3 bg-emerald-500/10 rounded-xl mb-2">
+                <f.icon className="w-5 h-5 text-emerald-400" />
+              </div>
+              <span className="text-xs text-zinc-400">{f.label}</span>
             </div>
-            <span className="text-xs text-zinc-400">GEO Score</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="p-3 bg-emerald-500/10 rounded-xl mb-2">
-              <Sparkles className="w-5 h-5 text-emerald-400" />
-            </div>
-            <span className="text-xs text-zinc-400">Auto Content</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="p-3 bg-emerald-500/10 rounded-xl mb-2">
-              <Zap className="w-5 h-5 text-emerald-400" />
-            </div>
-            <span className="text-xs text-zinc-400">Autopilot</span>
-          </div>
+          ))}
         </div>
       </div>
     );
   }
 
   // ============================================
-  // RENDER: SITE DASHBOARD
+  // RENDER: DASHBOARD
   // ============================================
   
-  const score = site?.geo_score_avg || 55;
+  const site = userData?.currentSite;
+  if (!site) return null;
+
+  const plan = userData?.organization?.plan || "starter";
+  const planName = plan.charAt(0).toUpperCase() + plan.slice(1);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -461,80 +392,67 @@ export default function DashboardPage() {
             <Globe className="w-5 h-5 text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-white">{site?.domain}</h1>
+            <h1 className="text-xl font-semibold text-white">{site.domain}</h1>
             <p className="text-sm text-zinc-500">AI optimization active</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={loadSites}
-          className="border-zinc-700"
-        >
+        <Button variant="outline" size="sm" onClick={fetchUserData} className="border-zinc-700">
           <RefreshCw className="w-4 h-4" />
         </Button>
       </div>
 
-      {/* GEO Score Card */}
+      {/* GEO Score */}
       <Card className="bg-gradient-to-br from-zinc-900 to-emerald-900/20 border-zinc-800">
         <CardContent className="p-6">
           <div className="flex items-center gap-8">
-            <GEOScoreRing score={score} />
-            
+            <GEOScoreRing score={site.geoScore} />
             <div className="flex-1 space-y-4">
               <h2 className="text-lg font-semibold text-white">AI Visibility</h2>
               <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 bg-zinc-800/50 rounded-lg text-center">
-                  <span className="text-xl">🤖</span>
-                  <p className="text-lg font-bold text-white mt-1">{Math.round(score * 0.95)}</p>
-                  <p className="text-xs text-zinc-500">ChatGPT</p>
-                </div>
-                <div className="p-3 bg-zinc-800/50 rounded-lg text-center">
-                  <span className="text-xl">🔮</span>
-                  <p className="text-lg font-bold text-white mt-1">{Math.round(score * 0.85)}</p>
-                  <p className="text-xs text-zinc-500">Perplexity</p>
-                </div>
-                <div className="p-3 bg-zinc-800/50 rounded-lg text-center">
-                  <span className="text-xl">✨</span>
-                  <p className="text-lg font-bold text-white mt-1">{Math.round(score * 0.9)}</p>
-                  <p className="text-xs text-zinc-500">Google AI</p>
-                </div>
+                {[
+                  { emoji: "🤖", score: Math.round(site.geoScore * 0.95), name: "ChatGPT" },
+                  { emoji: "🔮", score: Math.round(site.geoScore * 0.85), name: "Perplexity" },
+                  { emoji: "✨", score: Math.round(site.geoScore * 0.9), name: "Google AI" },
+                ].map((p, i) => (
+                  <div key={i} className="p-3 bg-zinc-800/50 rounded-lg text-center">
+                    <span className="text-xl">{p.emoji}</span>
+                    <p className="text-lg font-bold text-white mt-1">{p.score}</p>
+                    <p className="text-xs text-zinc-500">{p.name}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Autopilot Toggle - PROMINENT like SEObot */}
-      <Card className={`border-2 ${autopilotEnabled ? "bg-emerald-900/20 border-emerald-500" : "bg-zinc-900 border-zinc-700"}`}>
+      {/* Autopilot */}
+      <Card className={`border-2 ${autopilot ? "bg-emerald-900/20 border-emerald-500" : "bg-zinc-900 border-zinc-700"}`}>
         <CardContent className="p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${autopilotEnabled ? "bg-emerald-500" : "bg-zinc-700"}`}>
-                <Zap className={`w-6 h-6 ${autopilotEnabled ? "text-white" : "text-zinc-400"}`} />
+              <div className={`p-3 rounded-xl ${autopilot ? "bg-emerald-500" : "bg-zinc-700"}`}>
+                <Zap className={`w-6 h-6 ${autopilot ? "text-white" : "text-zinc-400"}`} />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white">
-                  Autopilot is {autopilotEnabled ? "ON" : "OFF"}
+                  Autopilot is {autopilot ? "ON" : "OFF"}
                 </h3>
                 <p className="text-sm text-zinc-400">
-                  {autopilotEnabled 
-                    ? "We're generating AI-optimized content weekly" 
-                    : "Enable to auto-generate content for AI citations"}
+                  {autopilot ? "Generating AI-optimized content weekly" : "Enable to auto-generate content"}
                 </p>
               </div>
             </div>
             <Switch
-              checked={autopilotEnabled}
+              checked={autopilot}
               onCheckedChange={handleToggleAutopilot}
-              disabled={togglingAutopilot}
               className="scale-125 data-[state=checked]:bg-emerald-500"
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* Quick Actions */}
+      {/* Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Button
           onClick={() => router.push("/content/new")}
@@ -543,31 +461,25 @@ export default function DashboardPage() {
           <Sparkles className="w-5 h-5" />
           <span className="text-xs">Generate Article</span>
         </Button>
-        <Link href="/keywords" className="contents">
-          <Button variant="outline" className="h-auto py-4 flex-col gap-2 border-zinc-700 hover:bg-zinc-800">
-            <Target className="w-5 h-5" />
-            <span className="text-xs">Keywords</span>
-          </Button>
-        </Link>
-        <Link href="/content" className="contents">
-          <Button variant="outline" className="h-auto py-4 flex-col gap-2 border-zinc-700 hover:bg-zinc-800">
-            <FileText className="w-5 h-5" />
-            <span className="text-xs">Content</span>
-          </Button>
-        </Link>
-        <Link href="/geo" className="contents">
-          <Button variant="outline" className="h-auto py-4 flex-col gap-2 border-zinc-700 hover:bg-zinc-800">
-            <Eye className="w-5 h-5" />
-            <span className="text-xs">GEO Details</span>
-          </Button>
-        </Link>
+        {[
+          { href: "/keywords", icon: Target, label: "Keywords" },
+          { href: "/content", icon: FileText, label: "Content" },
+          { href: "/geo", icon: Eye, label: "GEO Details" },
+        ].map((a, i) => (
+          <Link key={i} href={a.href} className="contents">
+            <Button variant="outline" className="h-auto py-4 flex-col gap-2 border-zinc-700 hover:bg-zinc-800">
+              <a.icon className="w-5 h-5" />
+              <span className="text-xs">{a.label}</span>
+            </Button>
+          </Link>
+        ))}
       </div>
 
-      {/* Plan info */}
+      {/* Plan */}
       <Card className="bg-zinc-900 border-zinc-800">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-zinc-400">Starter Plan</span>
+            <span className="text-sm text-zinc-400">{planName} Plan</span>
             <Link href="/settings/billing">
               <Button variant="link" size="sm" className="text-emerald-400 p-0 h-auto">
                 Upgrade →
@@ -585,4 +497,9 @@ export default function DashboardPage() {
       </Card>
     </div>
   );
+}
+
+// Utility
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

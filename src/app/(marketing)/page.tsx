@@ -188,9 +188,9 @@ export default function LandingPage() {
             </div>
             <div className="flex items-center gap-3">
               {isLoggedIn ? (
-                <Link href={hasPaidPlan ? "/dashboard" : "/pricing"}>
+                <Link href="/dashboard">
                   <Button className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-lg shadow-emerald-500/25">
-                    {hasPaidPlan ? "Dashboard" : "Upgrade"}
+                    Dashboard
                     <ArrowRight className="w-4 h-4 ml-1.5" />
                   </Button>
                 </Link>

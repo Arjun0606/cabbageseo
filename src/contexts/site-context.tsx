@@ -1,7 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useSearchParams } from "next/navigation";
+/**
+ * Site Context - Provides site data to the entire app
+ * 
+ * Uses /api/me as single source of truth
+ */
+
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 
 // ============================================
 // TYPES
@@ -36,98 +41,84 @@ const SiteContext = createContext<SiteContextType | undefined>(undefined);
 // ============================================
 
 export function SiteProvider({ children }: { children: ReactNode }) {
-  const searchParams = useSearchParams();
   const [sites, setSites] = useState<Site[]>([]);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch sites on mount
-  useEffect(() => {
-    refreshSites();
-  }, []);
-
-  // Read site from URL query params (priority over localStorage)
-  useEffect(() => {
-    const urlSiteId = searchParams.get("site");
-    if (urlSiteId) {
-      setSelectedSiteId(urlSiteId);
-      localStorage.setItem("selectedSiteId", urlSiteId);
-      return;
-    }
-    
-    // Fallback to localStorage if no URL param
-    const stored = localStorage.getItem("selectedSiteId");
-    if (stored && !selectedSiteId) {
-      setSelectedSiteId(stored);
-    }
-  }, [searchParams, selectedSiteId]);
-
-  // Auto-select first site if none selected, or clear selection if selected site no longer exists
-  useEffect(() => {
-    if (!isLoading) {
-      if (selectedSiteId) {
-        // Check if selected site still exists
-        const siteExists = sites.some(s => s.id === selectedSiteId);
-        if (!siteExists && sites.length > 0) {
-          // Selected site was deleted, switch to first available
-          selectSite(sites[0].id);
-        } else if (!siteExists && sites.length === 0) {
-          // No sites left, clear selection
-          setSelectedSiteId(null);
-          localStorage.removeItem("selectedSiteId");
-        }
-      } else if (sites.length > 0) {
-        // No selection, pick first site
-        selectSite(sites[0].id);
-      }
-    }
-  }, [sites, selectedSiteId, isLoading]);
-
-  async function refreshSites() {
+  // Fetch sites from /api/me
+  const refreshSites = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const res = await fetch("/api/sites");
-      if (!res.ok) {
-        throw new Error("Failed to fetch sites");
-      }
-      
+      const res = await fetch("/api/me");
       const data = await res.json();
-      if (data.success && data.data?.sites) {
-        // API returns camelCase field names
-        const mappedSites: Site[] = data.data.sites.map((s: {
+      
+      if (data.authenticated && data.currentSite) {
+        const site: Site = {
+          id: data.currentSite.id,
+          domain: data.currentSite.domain,
+          seoScore: data.currentSite.geoScore || null,
+          aioScore: data.currentSite.geoScore || null,
+          pagesCount: 0,
+          lastAuditAt: null,
+        };
+        setSites([site]);
+        
+        // Auto-select if no selection
+        if (!selectedSiteId) {
+          setSelectedSiteId(site.id);
+          localStorage.setItem("selectedSiteId", site.id);
+        }
+      } else if (data.authenticated && data.sites && data.sites.length > 0) {
+        const mappedSites: Site[] = data.sites.map((s: {
           id: string;
           domain: string;
-          seoScore?: number;
-          aioScore?: number;
-          pagesCount?: number;
-          lastCrawlAt?: string;
+          geoScore?: number;
         }) => ({
           id: s.id,
           domain: s.domain,
-          seoScore: s.seoScore ?? null,
-          aioScore: s.aioScore ?? null,
-          pagesCount: s.pagesCount ?? 0,
-          lastAuditAt: s.lastCrawlAt ?? null,
+          seoScore: s.geoScore || null,
+          aioScore: s.geoScore || null,
+          pagesCount: 0,
+          lastAuditAt: null,
         }));
         setSites(mappedSites);
+        
+        if (!selectedSiteId && mappedSites.length > 0) {
+          setSelectedSiteId(mappedSites[0].id);
+          localStorage.setItem("selectedSiteId", mappedSites[0].id);
+        }
+      } else {
+        setSites([]);
       }
     } catch (e) {
-      console.error("Failed to fetch sites:", e);
-      setError(e instanceof Error ? e.message : "Failed to load sites");
+      console.error("[SiteContext] Error:", e);
+      setError("Failed to load sites");
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [selectedSiteId]);
 
+  // Load on mount
+  useEffect(() => {
+    // Try to restore selection from localStorage
+    const stored = localStorage.getItem("selectedSiteId");
+    if (stored) {
+      setSelectedSiteId(stored);
+    }
+    
+    refreshSites();
+  }, []);
+
+  // Select site
   function selectSite(siteId: string) {
     setSelectedSiteId(siteId);
     localStorage.setItem("selectedSiteId", siteId);
   }
 
-  const selectedSite = sites.find(s => s.id === selectedSiteId) || null;
+  const selectedSite = sites.find(s => s.id === selectedSiteId) || (sites.length > 0 ? sites[0] : null);
 
   return (
     <SiteContext.Provider
@@ -156,4 +147,3 @@ export function useSite() {
   }
   return context;
 }
-
