@@ -572,7 +572,7 @@ export default function AuditPage() {
         <EmptyState 
           hasSite={!!selectedSite} 
           siteDomain={selectedSite?.domain}
-          siteScore={selectedSite?.seoScore ?? undefined}
+          siteScore={selectedSite?.geoScore ?? undefined}
           isAutoRunning={isAutoRunning || scanMutation.isPending}
           onRunAudit={() => scanMutation.mutate()}
         />
