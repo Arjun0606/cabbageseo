@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { useSite } from "@/contexts/site-context";
+import { useSite } from "@/contexts/app-context";
 
 // ============================================
 // TYPES

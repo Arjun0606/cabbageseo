@@ -29,7 +29,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useSite } from "@/contexts/site-context";
+import { useSite } from "@/contexts/app-context";
 
 // ============================================
 // TYPES

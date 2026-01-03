@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useSite } from "@/contexts/site-context";
+import { useSite } from "@/contexts/app-context";
 import {
   Brain,
   Sparkles,

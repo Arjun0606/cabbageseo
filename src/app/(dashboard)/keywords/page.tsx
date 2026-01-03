@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSite } from "@/contexts/site-context";
+import { useSite } from "@/contexts/app-context";
 import {
   Search,
   TrendingUp,
@@ -376,7 +376,7 @@ export default function KeywordsPage() {
               Add a site to start researching keywords and tracking your rankings.
             </p>
             <Button asChild>
-              <a href="/sites/new">
+              <a href="/dashboard">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Your First Site
               </a>

@@ -15,7 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useSite } from "@/contexts/site-context";
+import { useSite } from "@/contexts/app-context";
 import { cn } from "@/lib/utils";
 
 // ============================================
@@ -112,26 +112,12 @@ export function NextSteps() {
     // Determine steps based on site state
     const siteSteps: Step[] = [];
     
-    // Check if site has issues (low SEO score)
-    if (selectedSite.seoScore !== null && selectedSite.seoScore < 70) {
+    // Check if site has low GEO score
+    if (selectedSite.geoScore !== null && selectedSite.geoScore < 70) {
       siteSteps.push({
-        id: "fix-issues",
-        title: "Fix SEO Issues",
-        description: `Your site scored ${selectedSite.seoScore}/100. Address critical issues to improve rankings.`,
-        href: "/audit",
-        icon: AlertTriangle,
-        priority: "high",
-        completed: false,
-        ctaText: "View Issues",
-      });
-    }
-
-    // Check if site has poor AIO score
-    if (selectedSite.aioScore !== null && selectedSite.aioScore < 50) {
-      siteSteps.push({
-        id: "improve-aio",
+        id: "improve-geo",
         title: "Improve GEO Score",
-        description: `AI platforms aren't citing you (${selectedSite.aioScore}/100). Add structured data & FAQs.`,
+        description: `Your site scored ${selectedSite.geoScore}/100. Optimize to get cited by AI platforms.`,
         href: "/geo",
         icon: Brain,
         priority: "high",

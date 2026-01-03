@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useSite } from "@/contexts/site-context";
+import { useSite } from "@/contexts/app-context";
 import { cn } from "@/lib/utils";
 
 // ============================================
@@ -110,7 +110,7 @@ export function SiteSwitcher() {
             </span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            {selectedSite && <ScoreBadge score={selectedSite.seoScore} />}
+            {selectedSite && <ScoreBadge score={(selectedSite as { seoScore?: number | null }).seoScore || null} />}
             <ChevronDown className="w-4 h-4 text-zinc-400" />
           </div>
         </Button>
@@ -141,12 +141,12 @@ export function SiteSwitcher() {
                 <div>
                   <div className="font-medium">{site.domain}</div>
                   <div className="text-xs text-zinc-400">
-                    {site.pagesCount} pages
+                    GEO optimized
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <ScoreBadge score={site.seoScore} size="md" />
+                <ScoreBadge score={(site as { seoScore?: number | null }).seoScore || null} size="md" />
                 <a 
                   href={`https://${site.domain}`} 
                   target="_blank" 

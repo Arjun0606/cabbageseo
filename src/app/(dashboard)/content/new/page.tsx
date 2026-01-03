@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSite } from "@/contexts/site-context";
+import { useSite } from "@/contexts/app-context";
 
 // ============================================
 // TYPES

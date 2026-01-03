@@ -18,7 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useSite } from "@/contexts/site-context";
+import { useSite } from "@/contexts/app-context";
 
 // ============================================
 // TYPES
