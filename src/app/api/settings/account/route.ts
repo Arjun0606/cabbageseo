@@ -72,13 +72,14 @@ export async function GET() {
       if (existingOrg) {
         orgId = (existingOrg as { id: string }).id;
       } else {
-        // Create org (plan defaults to 'starter' in DB)
+        // Create org with starter plan
         const { data: newOrg, error: orgError } = await serviceClient
           .from("organizations")
           .insert({
             name: `${user.email?.split("@")[0] || "My"}'s Organization`,
             slug: `org-${user.id.slice(0, 8)}-${Date.now()}`,
-            subscription_status: "trialing",
+            plan: "starter",
+            subscription_status: "active",
           } as never)
           .select("id")
           .single();
@@ -139,7 +140,7 @@ export async function GET() {
           id: org.id,
           name: org.name,
           slug: org.slug,
-          plan: org.plan,
+          plan: org.plan || "starter",
           website: orgSettings.website || "",
           timezone: orgSettings.timezone || "UTC",
         } : null,

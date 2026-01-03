@@ -356,18 +356,21 @@ function IntegrationCard({
                     </div>
                   ))}
                   
-                  {/* Quick setup guide */}
+                  {/* Quick setup tip */}
                   <div className="p-3 bg-zinc-800/50 rounded-lg border border-zinc-700">
                     <p className="text-sm text-zinc-400 flex items-center gap-2">
-                      <ExternalLink className="w-4 h-4" />
-                      <a 
-                        href={`https://cabbageseo.com/docs/connect-${integration.type}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-emerald-400 hover:underline"
-                      >
-                        View setup guide →
-                      </a>
+                      <Info className="w-4 h-4 flex-shrink-0" />
+                      <span>
+                        {integration.type === "wordpress" && "Generate an Application Password in WordPress → Users → Your Profile → Application Passwords"}
+                        {integration.type === "webflow" && "Get your API token from Webflow → Account Settings → Integrations → API Access"}
+                        {integration.type === "shopify" && "Create a private app in Shopify Admin → Apps → Develop apps → Create an app"}
+                        {integration.type === "ghost" && "Get your Admin API key from Ghost → Settings → Integrations → Add custom integration"}
+                        {integration.type === "notion" && "Create an integration at notion.so/my-integrations, then share your database with it"}
+                        {integration.type === "hubspot" && "Get API key from HubSpot → Settings → Integrations → Private Apps"}
+                        {integration.type === "framer" && "CMS API is available in Framer Pro. Get token from Site Settings → CMS"}
+                        {integration.type === "webhook" && "We'll send a POST request to your URL with the article content as JSON"}
+                        {!["wordpress", "webflow", "shopify", "ghost", "notion", "hubspot", "framer", "webhook"].includes(integration.type) && "Follow the platform's documentation to get your API credentials"}
+                      </span>
                     </p>
                   </div>
                 </>
