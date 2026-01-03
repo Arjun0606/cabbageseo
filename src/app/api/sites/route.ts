@@ -32,7 +32,7 @@ interface SiteRow {
 // ============================================
 const TESTING_MODE = process.env.TESTING_MODE === "true";
 
-async function getOrgId(supabase: ReturnType<typeof createServiceClient>) {
+async function getOrgId(supabase: ReturnType<typeof createServiceClient>): Promise<string | null> {
   if (TESTING_MODE) {
     const { data: orgs } = await supabase
       .from("organizations")
@@ -56,13 +56,67 @@ async function getOrgId(supabase: ReturnType<typeof createServiceClient>) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: userData } = await supabase
+  // Use service client for database operations (bypass RLS)
+  const serviceClient = createServiceClient();
+
+  // Check if user has an organization
+  const { data: userData } = await serviceClient
     .from("users")
     .select("organization_id")
     .eq("id", user.id)
     .single();
 
-  return (userData as { organization_id?: string } | null)?.organization_id || null;
+  const existingOrgId = (userData as { organization_id?: string } | null)?.organization_id;
+  
+  if (existingOrgId) {
+    return existingOrgId;
+  }
+
+  // User has no org - create one and link them
+  console.log("[Sites API] User has no org, creating one...");
+  
+  const orgSlug = user.email?.split("@")[0]?.replace(/[^a-z0-9]/gi, "") || `org-${Date.now()}`;
+  
+  const { data: newOrg, error: orgError } = await serviceClient
+    .from("organizations")
+    .insert({
+      name: user.user_metadata?.name || user.email?.split("@")[0] || "My Organization",
+      slug: `${orgSlug}-${Date.now()}`,
+      plan: "starter",
+      subscription_status: "active",
+    } as never)
+    .select("id")
+    .single();
+
+  if (orgError || !newOrg) {
+    console.error("[Sites API] Failed to create org:", orgError);
+    return null;
+  }
+
+  const newOrgId = (newOrg as { id: string }).id;
+
+  // Check if user row exists
+  if (!userData) {
+    // Create user row
+    await serviceClient
+      .from("users")
+      .insert({
+        id: user.id,
+        organization_id: newOrgId,
+        email: user.email,
+        name: user.user_metadata?.name || null,
+        role: "owner",
+      } as never);
+  } else {
+    // Update user with org id
+    await serviceClient
+      .from("users")
+      .update({ organization_id: newOrgId } as never)
+      .eq("id", user.id);
+  }
+
+  console.log("[Sites API] Created org and linked user:", newOrgId);
+  return newOrgId;
 }
 
 // GET - List sites OR get single site by ID

@@ -31,20 +31,61 @@ export async function GET() {
     .eq("id", user.id)
     .single();
 
-  const orgId = (profileData as { organization_id: string } | null)?.organization_id || null;
+  let orgId = (profileData as { organization_id: string } | null)?.organization_id || null;
 
   try {
+    // If user has no org, create one
     if (!orgId) {
-      // Return free plan defaults for users without an organization
-      return NextResponse.json({ 
-        success: true,
-        data: {
-          plan: { id: "free", name: "Free", status: "inactive", billingInterval: null, currentPeriodStart: null, currentPeriodEnd: null },
-          usage: { articles: 0, keywords: 0, audits: 0, aioAnalyses: 0, aiCredits: 0 },
-          limits: { articles: 0, keywords: 0, audits: 0, aioAnalyses: 0, aiCredits: 0 },
-          percentages: { articles: 0, keywords: 0, audits: 0, aioAnalyses: 0, aiCredits: 0 },
-        }
-      });
+      console.log("[Billing Usage] User has no org, creating one...");
+      
+      const orgSlug = user.email?.split("@")[0]?.replace(/[^a-z0-9]/gi, "") || `org-${Date.now()}`;
+      
+      const { data: newOrg, error: orgError } = await serviceClient
+        .from("organizations")
+        .insert({
+          name: user.user_metadata?.name || user.email?.split("@")[0] || "My Organization",
+          slug: `${orgSlug}-${Date.now()}`,
+          plan: "starter",
+          subscription_status: "active",
+        } as never)
+        .select("id")
+        .single();
+
+      if (orgError || !newOrg) {
+        console.error("[Billing Usage] Failed to create org:", orgError);
+        // Return starter plan defaults
+        return NextResponse.json({ 
+          success: true,
+          data: {
+            plan: { id: "starter", name: "Starter", status: "active", billingInterval: "monthly", currentPeriodStart: null, currentPeriodEnd: null },
+            usage: { articles: 0, keywords: 0, audits: 0, aioAnalyses: 0, aiCredits: 0 },
+            limits: { articles: 50, keywords: 500, audits: 15, aioAnalyses: 100, aiCredits: 5000 },
+            percentages: { articles: 0, keywords: 0, audits: 0, aioAnalyses: 0, aiCredits: 0 },
+          }
+        });
+      }
+
+      orgId = (newOrg as { id: string }).id;
+
+      // Link user to org
+      if (!profileData) {
+        await serviceClient
+          .from("users")
+          .insert({
+            id: user.id,
+            organization_id: orgId,
+            email: user.email,
+            name: user.user_metadata?.name || null,
+            role: "owner",
+          } as never);
+      } else {
+        await serviceClient
+          .from("users")
+          .update({ organization_id: orgId } as never)
+          .eq("id", user.id);
+      }
+      
+      console.log("[Billing Usage] Created org:", orgId);
     }
 
     // Get organization (using service client to bypass RLS)
