@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getSubscriptionInfo, type PlanId } from "@/lib/billing";
+import { createServiceClient } from "@/lib/supabase/server";
 
 // ============================================
 // 🔓 TESTING MODE - SUBSCRIPTION CHECKS DISABLED
@@ -81,22 +82,62 @@ export async function requireSubscription(
     };
   }
 
-  // Get user's organization
-  const { data: userData } = await supabase
+  // Get user's organization - use service client to bypass RLS
+  let serviceClient;
+  try {
+    serviceClient = createServiceClient();
+  } catch {
+    serviceClient = supabase;
+  }
+  
+  const { data: userData } = await serviceClient
     .from("users")
     .select("organization_id")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
-  const organizationId = (userData as { organization_id?: string } | null)?.organization_id;
+  let organizationId = (userData as { organization_id?: string } | null)?.organization_id;
+
+  // Auto-create organization if missing (like /api/me does)
+  if (!organizationId) {
+    const slug = (user.email?.split("@")[0]?.replace(/[^a-z0-9]/gi, "") || "user") + "-" + Date.now();
+    
+    const { data: newOrg } = await serviceClient
+      .from("organizations")
+      .insert({
+        name: user.user_metadata?.name || user.email?.split("@")[0] || "My Organization",
+        slug,
+        plan: "starter",
+        subscription_status: "active",
+      })
+      .select("id")
+      .single();
+
+    if (newOrg) {
+      organizationId = newOrg.id;
+
+      // Create or update user record
+      if (!userData) {
+        await serviceClient.from("users").insert({
+          id: user.id,
+          organization_id: organizationId,
+          email: user.email || "",
+          name: user.user_metadata?.name || null,
+          role: "owner",
+        });
+      } else {
+        await serviceClient.from("users").update({ organization_id: organizationId }).eq("id", user.id);
+      }
+    }
+  }
 
   if (!organizationId) {
     return {
       authorized: false,
       userId: user.id,
       error: NextResponse.json(
-        { error: "No organization found. Please complete onboarding." },
-        { status: 403 }
+        { error: "Failed to create organization. Please try again." },
+        { status: 500 }
       ),
     };
   }

@@ -52,22 +52,24 @@ export async function GET(request: NextRequest) {
   } else {
     // Keywords require paid subscription
     const authCheck = await requireSubscription(supabase);
-    if (!authCheck.authorized || !authCheck.userId) {
+    if (!authCheck.authorized) {
       return authCheck.error!;
     }
 
-    // Get user's organization
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", authCheck.userId)
-      .single();
-
-    orgId = (userData as { organization_id?: string } | null)?.organization_id || null;
+    // Use org from auth check (it auto-creates if missing)
+    orgId = authCheck.organizationId || null;
   }
 
   if (!orgId) {
-    return NextResponse.json({ success: true, data: { keywords: [], clusters: [], total: 0 } });
+    // Return empty data instead of error for better UX
+    return NextResponse.json({ 
+      success: true, 
+      data: { 
+        keywords: [], 
+        clusters: [], 
+        stats: { total: 0, top10: 0, quickWins: 0, clusterCount: 0 } 
+      } 
+    });
   }
 
   try {
