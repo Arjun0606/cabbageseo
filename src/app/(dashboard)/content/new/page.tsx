@@ -183,6 +183,38 @@ function NewContentPageContent() {
 
   // Use global site context - skip site selection if site is already selected
   useEffect(() => {
+    // First, try to load from localStorage as immediate fallback
+    try {
+      const storedSite = localStorage.getItem("cabbageseo_site");
+      const storedSites = localStorage.getItem("cabbageseo_sites");
+      
+      if (storedSite) {
+        const site = JSON.parse(storedSite);
+        setSites([{ id: site.id, domain: site.domain, name: site.domain }]);
+        setSelectedSite(site.id);
+        setStep("input");
+        return; // Use localStorage data, skip context
+      }
+      
+      if (storedSites) {
+        const parsedSites = JSON.parse(storedSites);
+        if (parsedSites.length > 0) {
+          const mappedSites = parsedSites.map((s: { id: string; domain: string }) => ({
+            id: s.id,
+            domain: s.domain,
+            name: s.domain,
+          }));
+          setSites(mappedSites);
+          setSelectedSite(parsedSites[0].id);
+          setStep("input");
+          return;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load sites from localStorage:", e);
+    }
+    
+    // Fall back to context data
     if (!isLoadingSites && contextSites.length > 0) {
       // Map sites to local format
       const mappedSites = contextSites.map(s => ({

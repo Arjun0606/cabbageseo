@@ -52,13 +52,34 @@ interface UserData {
 }
 
 // ============================================
-// STORAGE
+// STORAGE - Uses same keys as useSite() hook
 // ============================================
 
 const SITE_KEY = "cabbageseo_site";
+const SITES_KEY = "cabbageseo_sites";
 
 function saveSite(site: SiteData) {
+  // Save current site
   localStorage.setItem(SITE_KEY, JSON.stringify(site));
+  
+  // Also save to sites array (for other pages that use useSite())
+  try {
+    const existingSites = localStorage.getItem(SITES_KEY);
+    let sites: SiteData[] = existingSites ? JSON.parse(existingSites) : [];
+    
+    // Add or update the site in the array
+    const index = sites.findIndex(s => s.id === site.id);
+    if (index >= 0) {
+      sites[index] = site;
+    } else {
+      sites = [site, ...sites];
+    }
+    
+    localStorage.setItem(SITES_KEY, JSON.stringify(sites));
+  } catch (e) {
+    // If parsing fails, just set the new site as the only site
+    localStorage.setItem(SITES_KEY, JSON.stringify([site]));
+  }
 }
 
 function loadSite(): SiteData | null {

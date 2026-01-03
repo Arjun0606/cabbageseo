@@ -245,7 +245,23 @@ function EmptyState() {
 
 export default function ContentPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { selectedSite } = useSite();
+  const { selectedSite: contextSite } = useSite();
+  
+  // Use localStorage as fallback for site data
+  const [localSite] = useState<{ id: string; domain: string } | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("cabbageseo_site");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return { id: parsed.id, domain: parsed.domain };
+        }
+      } catch {}
+    }
+    return null;
+  });
+  
+  const selectedSite = contextSite || localSite;
 
   // Fetch content data for selected site
   const { data, isLoading, error, refetch } = useQuery<ContentData>({

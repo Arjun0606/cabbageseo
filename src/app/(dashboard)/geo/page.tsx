@@ -311,7 +311,23 @@ function CitationsPanel({ siteId }: { siteId: string | null }) {
 }
 
 export default function GEODashboardPage() {
-  const { selectedSite, sites } = useSite();
+  const { selectedSite: contextSite, sites } = useSite();
+  
+  // Use localStorage as fallback for site data
+  const [localSite, setLocalSite] = useState<{ id: string; domain: string; geoScore?: number } | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("cabbageseo_site");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return { id: parsed.id, domain: parsed.domain, geoScore: parsed.geoScore };
+        }
+      } catch {}
+    }
+    return null;
+  });
+  
+  const selectedSite = contextSite || localSite;
   const activeSiteId = selectedSite?.id;
 
   // Fetch GEO data for the selected site

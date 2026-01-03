@@ -358,7 +358,23 @@ export default function AuditPage() {
   const [isAutoRunning, setIsAutoRunning] = useState(false);
   const hasAutoRun = useRef(false);
   const queryClient = useQueryClient();
-  const { selectedSite, isLoading: siteLoading } = useSite();
+  const { selectedSite: contextSite, isLoading: siteLoading } = useSite();
+  
+  // Use localStorage as fallback for site data
+  const [localSite] = useState<{ id: string; domain: string; geoScore?: number | null } | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("cabbageseo_site");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return { id: parsed.id, domain: parsed.domain, geoScore: parsed.geoScore };
+        }
+      } catch {}
+    }
+    return null;
+  });
+  
+  const selectedSite = contextSite || localSite;
 
   // Fetch audit data for selected site
   const { data, isLoading, error, refetch } = useQuery<AuditData>({

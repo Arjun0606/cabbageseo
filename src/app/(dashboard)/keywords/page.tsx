@@ -293,7 +293,25 @@ export default function KeywordsPage() {
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
   const [needsUpgrade, setNeedsUpgrade] = useState(false);
   const queryClient = useQueryClient();
-  const { selectedSite } = useSite();
+  const { selectedSite: contextSite, isLoading: siteLoading } = useSite();
+  
+  // Use localStorage as fallback for site data
+  const [localSite, setLocalSite] = useState<{ id: string; domain: string } | null>(() => {
+    // Initialize from localStorage synchronously
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("cabbageseo_site");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return { id: parsed.id, domain: parsed.domain };
+        }
+      } catch {}
+    }
+    return null;
+  });
+  
+  // Use context site or localStorage site
+  const selectedSite = contextSite || localSite;
 
   // Fetch keywords data for selected site
   const { data, isLoading, error, refetch } = useQuery<KeywordsData>({
