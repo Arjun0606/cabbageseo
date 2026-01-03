@@ -293,7 +293,7 @@ export default function AccountSettingsPage() {
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Plan</span>
-            <Badge variant="outline">{data?.organization?.plan || "free"}</Badge>
+            <Badge variant="outline" className="capitalize">{data?.organization?.plan || "starter"}</Badge>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Member since</span>
