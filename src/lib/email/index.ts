@@ -479,6 +479,13 @@ async function sendEmail(to: string, template: EmailTemplate): Promise<SendEmail
 
 export const emailService = {
   /**
+   * Generic send method for custom emails
+   */
+  async send(to: string, template: EmailTemplate): Promise<SendEmailResult> {
+    return sendEmail(to, template);
+  },
+
+  /**
    * Send welcome email to new users
    */
   async sendWelcome(to: string, name?: string): Promise<SendEmailResult> {
