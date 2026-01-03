@@ -86,11 +86,11 @@ export function SiteSwitcher() {
       <Button 
         variant="outline" 
         size="sm" 
-        onClick={() => router.push("/sites/new")}
+        onClick={() => router.push("/dashboard")}
         className="border-emerald-600 text-emerald-400 hover:bg-emerald-600/10"
       >
         <Plus className="w-4 h-4 mr-2" />
-        Add Your First Site
+        Add Site
       </Button>
     );
   }
@@ -177,7 +177,7 @@ export function SiteSwitcher() {
         
         <DropdownMenuItem
           onClick={() => {
-            router.push("/sites/new");
+            router.push("/dashboard");
             setOpen(false);
           }}
           className="cursor-pointer hover:bg-zinc-800 focus:bg-zinc-800 text-emerald-400"

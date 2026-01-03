@@ -174,6 +174,12 @@ export async function GET(request: NextRequest) {
       id: site.id,
       domain: site.domain,
       name: site.name,
+      // CamelCase for SiteContext compatibility
+      seoScore: site.seo_score || 0,
+      aioScore: site.geo_score_avg || site.aio_score_avg || 55,
+      pagesCount: 0,
+      lastCrawlAt: site.last_crawl_at,
+      // Snake case for dashboard
       geo_score_avg: site.geo_score_avg || site.aio_score_avg || 55,
       seo_score: site.seo_score || 0,
       autopilot_enabled: site.autopilot_enabled || false,
