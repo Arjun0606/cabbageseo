@@ -959,7 +959,7 @@ export const scheduledDailyCitationCheck = inngest.createFunction(
 
     return {
       checked: sites.length,
-      withNewCitations: results.filter(r => r.newCitations > 0).length,
+      withNewCitations: results.filter(r => 'newCitations' in r && r.newCitations > 0).length,
       results,
     };
   }
