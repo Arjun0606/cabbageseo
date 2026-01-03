@@ -6,45 +6,32 @@
  */
 
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getPlan, getPlanLimits } from "@/lib/billing/plans";
 
-// ============================================
-// 🔓 TESTING MODE - AUTH BYPASS
-// Set TESTING_MODE=true in .env for local testing
-// ============================================
-const TESTING_MODE = process.env.TESTING_MODE === "true";
-
 export async function GET() {
+  // Use regular client for auth
   const supabase = await createClient();
   if (!supabase) {
     return NextResponse.json({ error: "Not configured" }, { status: 500 });
   }
 
-  let orgId: string | null = null;
-
-  if (TESTING_MODE) {
-    // Get first org for testing
-    const { data: testOrg } = await supabase
-      .from("organizations")
-      .select("id")
-      .limit(1)
-      .single();
-    orgId = (testOrg as { id: string } | null)?.id || null;
-  } else {
+  // Get current user
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-    const { data: profileData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
+  // Use service client to bypass RLS for reading user/org data
+  const serviceClient = createServiceClient();
+  
+  const { data: profileData } = await serviceClient
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
 
-    orgId = (profileData as { organization_id: string } | null)?.organization_id || null;
-  }
+  const orgId = (profileData as { organization_id: string } | null)?.organization_id || null;
 
   try {
     if (!orgId) {
@@ -60,8 +47,8 @@ export async function GET() {
       });
     }
 
-    // Get organization
-    const { data: orgData } = await supabase
+    // Get organization (using service client to bypass RLS)
+    const { data: orgData } = await serviceClient
       .from("organizations")
       .select("plan, billing_interval, subscription_status, current_period_start, current_period_end")
       .eq("id", orgId)
@@ -92,8 +79,8 @@ export async function GET() {
     const now = new Date();
     const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-    // Get usage for current period
-    const { data: usageData } = await supabase
+    // Get usage for current period (using service client to bypass RLS)
+    const { data: usageData } = await serviceClient
       .from("usage")
       .select("*")
       .eq("organization_id", orgId)

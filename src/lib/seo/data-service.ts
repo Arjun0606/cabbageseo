@@ -129,10 +129,10 @@ export class SEODataService {
     this.trackCost("keywordSuggestions");
 
     const aiKeywords = await keywordIntelligence.getSuggestions(
-      seedKeyword,
+          seedKeyword,
       options.limit || 30
-    );
-
+        );
+        
     const volumeMap: Record<string, number> = { high: 5000, medium: 1000, low: 200 };
     const difficultyMap: Record<string, number> = { easy: 25, medium: 50, hard: 75 };
 
@@ -144,10 +144,10 @@ export class SEODataService {
       geoOpportunity: k.geoOpportunity,
       questions: k.questions || [],
       entities: k.entities || [],
-    }));
-
-    setCache(cacheKey, result);
-    return result;
+        }));
+        
+        setCache(cacheKey, result);
+        return result;
   }
 
   /**
@@ -174,8 +174,8 @@ export class SEODataService {
         domain: options.location ? `site in ${options.location}` : undefined,
       },
       limit: options.limit || 30,
-    });
-
+        });
+        
     const volumeMap: Record<string, number> = { high: 5000, medium: 1000, low: 200 };
     const difficultyMap: Record<string, number> = { easy: 25, medium: 50, hard: 75 };
 
@@ -188,7 +188,7 @@ export class SEODataService {
       questions: k.questions || [],
       entities: k.entities || [],
     }));
-
+        
     const clusters = result.clusters.map(c => ({
       name: c.name,
       pillarKeyword: c.pillarKeyword,
