@@ -930,11 +930,11 @@ export const scheduledDailyCitationCheck = inngest.createFunction(
   async ({ step }) => {
     const supabase = createServiceClient();
     
-    // Get all active sites
+    // Get all active sites with their topics
     const sites = await step.run("get-sites", async () => {
       const { data } = await (supabase as any)
         .from("sites")
-        .select("id, domain, organization_id")
+        .select("id, domain, organization_id, topics, main_topics")
         .eq("status", "active");
       return data || [];
     });
@@ -945,8 +945,9 @@ export const scheduledDailyCitationCheck = inngest.createFunction(
       const result = await step.run(`check-citations-${site.id}`, async () => {
         try {
           const { citationTracker } = await import("@/lib/geo/citation-tracker");
-          const report = await citationTracker.checkSiteCitations(site.id, site.domain);
-          return { siteId: site.id, newCitations: report.newCitations };
+          const topics = site.topics || site.main_topics || [site.domain.split('.')[0]];
+          const citations = await citationTracker.checkSiteCitations(site.id, site.domain, topics);
+          return { siteId: site.id, newCitations: citations.length };
         } catch (error) {
           console.error(`Citation check failed for ${site.domain}:`, error);
           return { siteId: site.id, error: true };
