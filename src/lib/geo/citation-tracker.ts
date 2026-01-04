@@ -88,7 +88,7 @@ export class ChatGPTCitationChecker {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "gpt-4o-mini",
+            model: "gpt-5-mini",  // Using GPT-5 Mini for ChatGPT simulation
             messages: [
               {
                 role: "system",

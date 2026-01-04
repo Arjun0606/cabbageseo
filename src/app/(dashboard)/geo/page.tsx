@@ -2,11 +2,8 @@
 
 /**
  * ============================================
- * GEO PAGE - REBUILT FROM SCRATCH
+ * GEO PAGE - FIXED VERSION
  * ============================================
- * 
- * Uses real data from the site analysis.
- * No mock data. Full cohesion with dashboard and free analyzer.
  */
 
 import { useState, useEffect } from "react";
@@ -35,16 +32,14 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
 // ============================================
-// TYPES
+// TYPES - No React nodes in state!
 // ============================================
 
 interface Platform {
+  id: string;
   name: string;
   score: number;
-  icon: React.ReactNode;
-  color: string;
   status: "cited" | "possible" | "not_cited";
-  tips: string[];
 }
 
 interface Factor {
@@ -52,30 +47,6 @@ interface Factor {
   status: "pass" | "warning" | "fail";
   impact: "high" | "medium" | "low";
   tip: string;
-}
-
-interface AnalysisResult {
-  url: string;
-  title: string;
-  seo?: { 
-    score?: number;
-    recommendations?: string[];
-  };
-  aio?: { 
-    score?: number;
-    recommendations?: string[];
-    platforms?: Array<{
-      name: string;
-      score: number;
-    }>;
-    factors?: Array<{
-      name: string;
-      status: string;
-    }>;
-  };
-  combined?: {
-    score: number;
-  };
 }
 
 // ============================================
@@ -95,7 +66,7 @@ function loadSite(): { id: string; domain: string } | null {
   }
 }
 
-function loadAnalysis(): AnalysisResult | null {
+function loadAnalysis(): Record<string, unknown> | null {
   if (typeof window === "undefined") return null;
   try {
     const data = localStorage.getItem(ANALYSIS_KEY);
@@ -106,7 +77,26 @@ function loadAnalysis(): AnalysisResult | null {
 }
 
 // ============================================
-// SCORE RING COMPONENT
+// PLATFORM ICON COMPONENT
+// ============================================
+
+function PlatformIcon({ id }: { id: string }) {
+  switch (id) {
+    case "chatgpt":
+      return <Bot className="w-5 h-5 text-green-400" />;
+    case "perplexity":
+      return <Search className="w-5 h-5 text-purple-400" />;
+    case "google":
+      return <Globe className="w-5 h-5 text-blue-400" />;
+    case "bing":
+      return <MessageSquare className="w-5 h-5 text-cyan-400" />;
+    default:
+      return <Target className="w-5 h-5 text-zinc-400" />;
+  }
+}
+
+// ============================================
+// SCORE RING
 // ============================================
 
 function ScoreRing({ score, size = 120, label, sublabel }: {
@@ -158,6 +148,26 @@ function ScoreRing({ score, size = 120, label, sublabel }: {
 }
 
 // ============================================
+// DEFAULT DATA
+// ============================================
+
+const DEFAULT_PLATFORMS: Platform[] = [
+  { id: "chatgpt", name: "ChatGPT / SearchGPT", score: 45, status: "possible" },
+  { id: "perplexity", name: "Perplexity", score: 55, status: "possible" },
+  { id: "google", name: "Google AI Overviews", score: 50, status: "possible" },
+  { id: "bing", name: "Bing Copilot", score: 42, status: "possible" },
+];
+
+const DEFAULT_FACTORS: Factor[] = [
+  { name: "Entity Coverage", status: "pass", impact: "high", tip: "Good entity coverage" },
+  { name: "Quotable Passages", status: "warning", impact: "high", tip: "Add more quotable statements" },
+  { name: "Structured Data", status: "fail", impact: "medium", tip: "Add schema markup" },
+  { name: "Expert Attribution", status: "warning", impact: "high", tip: "Add author credentials" },
+  { name: "Source Citations", status: "pass", impact: "medium", tip: "Good source linking" },
+  { name: "Freshness Signals", status: "pass", impact: "low", tip: "Content is recent" },
+];
+
+// ============================================
 // MAIN PAGE
 // ============================================
 
@@ -165,15 +175,16 @@ export default function GEOPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [site, setSite] = useState<{ id: string; domain: string } | null>(null);
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
-  const [platforms, setPlatforms] = useState<Platform[]>([]);
-  const [factors, setFactors] = useState<Factor[]>([]);
+  const [geoScore, setGeoScore] = useState(50);
+  const [seoScore, setSeoScore] = useState(50);
+  const [platforms, setPlatforms] = useState<Platform[]>(DEFAULT_PLATFORMS);
+  const [factors, setFactors] = useState<Factor[]>(DEFAULT_FACTORS);
   const [citations, setCitations] = useState({ total: 0, chatgpt: 0, perplexity: 0, google: 0 });
+  const [recommendations, setRecommendations] = useState<string[]>([]);
 
   // Load on mount
   useEffect(() => {
     const cachedSite = loadSite();
-    const cachedAnalysis = loadAnalysis();
     
     if (!cachedSite) {
       router.push("/dashboard");
@@ -181,57 +192,40 @@ export default function GEOPage() {
     }
     
     setSite(cachedSite);
-    setAnalysis(cachedAnalysis);
     
-    // Build platforms from analysis
-    if (cachedAnalysis?.aio?.platforms) {
-      const platformData: Platform[] = cachedAnalysis.aio.platforms.map(p => ({
-        name: p.name,
-        score: p.score,
-        icon: getPlatformIcon(p.name),
-        color: getPlatformColor(p.name),
-        status: p.score >= 60 ? "possible" : p.score >= 40 ? "possible" : "not_cited",
-        tips: getPlatformTips(p.name, p.score),
-      }));
-      setPlatforms(platformData);
-    } else {
-      // Default platforms if not in analysis
-      setPlatforms([
-        { name: "ChatGPT / SearchGPT", score: 45, icon: <Bot className="w-5 h-5" />, color: "text-green-400", status: "possible", tips: ["Add expert quotes", "Use structured data"] },
-        { name: "Perplexity", score: 55, icon: <Search className="w-5 h-5" />, color: "text-purple-400", status: "possible", tips: ["Add source citations", "Include statistics"] },
-        { name: "Google AI Overviews", score: 50, icon: <Globe className="w-5 h-5" />, color: "text-blue-400", status: "possible", tips: ["Optimize for featured snippets", "Add FAQ schema"] },
-        { name: "Bing Copilot", score: 42, icon: <MessageSquare className="w-5 h-5" />, color: "text-cyan-400", status: "possible", tips: ["Improve structured data", "Add author credentials"] },
-      ]);
+    // Load analysis
+    const cachedAnalysis = loadAnalysis();
+    if (cachedAnalysis) {
+      // Extract scores
+      const aio = cachedAnalysis.aio as { score?: number; recommendations?: string[]; platforms?: Array<{ name: string; score: number }> } | undefined;
+      const seo = cachedAnalysis.seo as { score?: number } | undefined;
+      
+      if (aio?.score) setGeoScore(aio.score);
+      if (seo?.score) setSeoScore(seo.score);
+      if (aio?.recommendations) setRecommendations(aio.recommendations);
+      
+      // Extract platforms if available
+      if (aio?.platforms && Array.isArray(aio.platforms)) {
+        const platformData: Platform[] = aio.platforms.map((p: { name: string; score: number }) => ({
+          id: p.name.toLowerCase().includes("chatgpt") ? "chatgpt" :
+              p.name.toLowerCase().includes("perplexity") ? "perplexity" :
+              p.name.toLowerCase().includes("google") ? "google" : "bing",
+          name: p.name,
+          score: p.score,
+          status: p.score >= 60 ? "possible" : "not_cited" as const,
+        }));
+        if (platformData.length > 0) {
+          setPlatforms(platformData);
+        }
+      }
     }
     
-    // Build factors from analysis
-    if (cachedAnalysis?.aio?.factors) {
-      const factorData: Factor[] = cachedAnalysis.aio.factors.map(f => ({
-        name: f.name,
-        status: f.status === "pass" ? "pass" : f.status === "warning" ? "warning" : "fail",
-        impact: getFactorImpact(f.name),
-        tip: getFactorTip(f.name, f.status),
-      }));
-      setFactors(factorData);
-    } else {
-      // Default factors
-      setFactors([
-        { name: "Entity Coverage", status: "pass", impact: "high", tip: "Good entity coverage" },
-        { name: "Quotable Passages", status: "warning", impact: "high", tip: "Add more quotable statements" },
-        { name: "Structured Data", status: "fail", impact: "medium", tip: "Add schema markup" },
-        { name: "Expert Attribution", status: "warning", impact: "high", tip: "Add author credentials" },
-        { name: "Source Citations", status: "pass", impact: "medium", tip: "Good source linking" },
-        { name: "Freshness Signals", status: "pass", impact: "low", tip: "Content is recent" },
-      ]);
-    }
-    
-    // Fetch real citations
+    // Fetch citations
     fetchCitations(cachedSite.id);
     
     setLoading(false);
   }, [router]);
 
-  // Fetch citations
   async function fetchCitations(siteId: string) {
     try {
       const res = await fetch(`/api/aio/citations?siteId=${siteId}`);
@@ -247,45 +241,8 @@ export default function GEOPage() {
     } catch {}
   }
 
-  // Helper functions
-  function getPlatformIcon(name: string) {
-    if (name.toLowerCase().includes("chatgpt")) return <Bot className="w-5 h-5" />;
-    if (name.toLowerCase().includes("perplexity")) return <Search className="w-5 h-5" />;
-    if (name.toLowerCase().includes("google")) return <Globe className="w-5 h-5" />;
-    return <MessageSquare className="w-5 h-5" />;
-  }
+  const combinedScore = Math.round((geoScore + seoScore) / 2);
 
-  function getPlatformColor(name: string) {
-    if (name.toLowerCase().includes("chatgpt")) return "text-green-400";
-    if (name.toLowerCase().includes("perplexity")) return "text-purple-400";
-    if (name.toLowerCase().includes("google")) return "text-blue-400";
-    return "text-cyan-400";
-  }
-
-  function getPlatformTips(name: string, score: number): string[] {
-    if (score >= 70) return ["Great visibility!", "Keep content fresh"];
-    if (score >= 50) return ["Add expert quotes", "Include statistics"];
-    return ["Improve content structure", "Add more citations"];
-  }
-
-  function getFactorImpact(name: string): "high" | "medium" | "low" {
-    if (name.toLowerCase().includes("entity") || name.toLowerCase().includes("expert")) return "high";
-    if (name.toLowerCase().includes("structured") || name.toLowerCase().includes("citation")) return "medium";
-    return "low";
-  }
-
-  function getFactorTip(name: string, status: string): string {
-    if (status === "pass") return `${name} is well optimized`;
-    if (status === "warning") return `Consider improving ${name.toLowerCase()}`;
-    return `Critical: Fix ${name.toLowerCase()}`;
-  }
-
-  // Scores
-  const geoScore = analysis?.aio?.score || 50;
-  const seoScore = analysis?.seo?.score || 50;
-  const combinedScore = analysis?.combined?.score || Math.round((geoScore + seoScore) / 2);
-
-  // Loading
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -350,11 +307,11 @@ export default function GEOPage() {
           <CardDescription>How likely each AI platform is to cite your content</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {platforms.map((platform, i) => (
-            <div key={i} className="space-y-2">
+          {platforms.map((platform) => (
+            <div key={platform.id} className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className={platform.color}>{platform.icon}</span>
+                  <PlatformIcon id={platform.id} />
                   <span className="text-white font-medium">{platform.name}</span>
                   {platform.status === "cited" && (
                     <Badge className="bg-emerald-500/20 text-emerald-400">Cited!</Badge>
@@ -369,13 +326,6 @@ export default function GEOPage() {
                 </span>
               </div>
               <Progress value={platform.score} className="h-2" />
-              <div className="flex gap-2 flex-wrap">
-                {platform.tips.map((tip, j) => (
-                  <Badge key={j} variant="outline" className="text-xs text-zinc-400">
-                    {tip}
-                  </Badge>
-                ))}
-              </div>
             </div>
           ))}
         </CardContent>
@@ -417,7 +367,7 @@ export default function GEOPage() {
       </Card>
 
       {/* Recommendations */}
-      {(analysis?.aio?.recommendations?.length ?? 0) > 0 && (
+      {recommendations.length > 0 && (
         <Card className="bg-zinc-900 border-zinc-800">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -427,7 +377,7 @@ export default function GEOPage() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
-              {analysis?.aio?.recommendations?.slice(0, 5).map((rec, i) => (
+              {recommendations.slice(0, 5).map((rec, i) => (
                 <li key={i} className="flex items-start gap-2 text-zinc-300">
                   <ArrowRight className="w-4 h-4 text-emerald-400 mt-1 shrink-0" />
                   <span>{rec}</span>

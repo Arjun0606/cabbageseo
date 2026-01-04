@@ -966,6 +966,121 @@ export const scheduledDailyCitationCheck = inngest.createFunction(
 );
 
 // ============================================
+// WEEKLY PROGRESS REPORT EMAIL
+// Sends beautiful weekly reports to all users
+// ============================================
+
+export const scheduledWeeklyProgressReport = inngest.createFunction(
+  {
+    id: "scheduled-weekly-progress-report",
+    name: "Weekly Progress Report",
+  },
+  { cron: "0 10 * * 1" }, // Every Monday at 10 AM (after content generation)
+  async ({ step }) => {
+    // Get all organizations with active sites
+    const orgs = await step.run("get-active-orgs", async () => {
+      const supabase = createServiceClient();
+      const { data } = await (supabase as any)
+        .from("sites")
+        .select("organization_id, domain")
+        .eq("autopilot_enabled", true);
+      
+      // Get unique org IDs
+      const orgIds = [...new Set(data?.map((s: { organization_id: string }) => s.organization_id) || [])];
+      return orgIds;
+    });
+
+    let reportsSent = 0;
+
+    for (const orgId of orgs as string[]) {
+      await step.run(`send-report-${orgId}`, async () => {
+        const supabase = createServiceClient();
+        
+        // Get org data
+        const { data: sites } = await (supabase as any)
+          .from("sites")
+          .select("id, domain")
+          .eq("organization_id", orgId);
+        
+        if (!sites || sites.length === 0) return;
+        
+        const primarySite = sites[0];
+        
+        // Get user email
+        const { data: users } = await (supabase as any)
+          .from("users")
+          .select("email")
+          .eq("organization_id", orgId)
+          .limit(1);
+        
+        if (!users?.[0]?.email) return;
+        
+        // Get citation count for the week
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        
+        const { data: citations } = await (supabase as any)
+          .from("ai_citations")
+          .select("id")
+          .eq("site_id", primarySite.id)
+          .gte("cited_at", oneWeekAgo.toISOString());
+        
+        const citationsThisWeek = citations?.length || 0;
+        
+        // Get articles generated this week
+        const { data: articles } = await (supabase as any)
+          .from("content")
+          .select("id")
+          .eq("site_id", primarySite.id)
+          .gte("created_at", oneWeekAgo.toISOString());
+        
+        const articlesThisWeek = articles?.length || 0;
+        
+        // Get current GEO score
+        const { data: analysis } = await (supabase as any)
+          .from("aio_analyses")
+          .select("combined_score")
+          .eq("site_id", primarySite.id)
+          .order("analyzed_at", { ascending: false })
+          .limit(1);
+        
+        const geoScore = analysis?.[0]?.combined_score || 0;
+        
+        // Get keywords
+        const { data: keywords } = await (supabase as any)
+          .from("keywords")
+          .select("word")
+          .eq("site_id", primarySite.id)
+          .limit(5);
+        
+        const topKeywords = keywords?.map((k: { word: string }) => k.word) || [];
+        
+        // Send email
+        const { emailService } = await import("@/lib/email");
+        await emailService.sendWeeklyReport(
+          users[0].email,
+          primarySite.domain,
+          geoScore,
+          0, // Change from last week (could be calculated)
+          citationsThisWeek,
+          citationsThisWeek, // New this week
+          articlesThisWeek,
+          topKeywords
+        );
+        
+        reportsSent++;
+      });
+    }
+
+    return { 
+      success: true, 
+      reportsSent,
+      organizations: (orgs as string[]).length,
+    };
+  }
+);
+
+// ============================================
 // EXPORT ALL FUNCTIONS
 // ============================================
 
@@ -979,8 +1094,9 @@ export const functions = [
   runAutopilot,
   scheduledWeeklyCrawl,
   scheduledDailyAnalytics,
-  scheduledWeeklyContent,      // Weekly GEO content generation
-  generateFirstArticle,        // First article when site added
-  scheduledDailyCitationCheck, // Daily citation monitoring
+  scheduledWeeklyContent,           // Weekly GEO content generation
+  generateFirstArticle,             // First article when site added
+  scheduledDailyCitationCheck,      // Daily citation monitoring
+  scheduledWeeklyProgressReport,    // Weekly progress report emails
 ];
 

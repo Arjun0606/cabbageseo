@@ -35,6 +35,7 @@ import {
   Target,
   Plus,
   Rocket,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -383,40 +384,107 @@ export default function DashboardPage() {
     }
   };
 
-  // Extract keywords from analysis
+  // Extract keywords from REAL analysis - no mock data
   const extractKeywords = (data: AnalysisResult): string[] => {
     const kws: string[] = [];
+    const seen = new Set<string>();
+    const stopWords = ["with", "from", "your", "that", "this", "about", "home", "page", "welcome", "the", "and", "for"];
     
-    // From title
-    if (data.title) {
-      const words = data.title.toLowerCase().split(/\s+/).filter(w => w.length > 4 && !["with", "from", "your", "that", "this", "about"].includes(w));
-      kws.push(...words.slice(0, 3));
+    // Get brand/domain name first
+    const domain = data.url.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0].split(".")[0];
+    if (domain && domain.length > 2) {
+      kws.push(domain);
+      seen.add(domain.toLowerCase());
     }
     
-    // From recommendations (quoted keywords)
+    // Extract meaningful words from page title
+    if (data.title) {
+      const titleWords = data.title.toLowerCase()
+        .split(/[\s\-|:,]+/)
+        .filter(w => w.length > 3 && !stopWords.includes(w) && !seen.has(w));
+      
+      titleWords.slice(0, 4).forEach(word => {
+        if (!seen.has(word)) {
+          kws.push(word);
+          seen.add(word);
+        }
+      });
+    }
+    
+    // Extract keywords mentioned in recommendations (these are highly relevant)
     [...(data.seo?.recommendations || []), ...(data.aio?.recommendations || [])].forEach(rec => {
       const match = rec.match(/"([^"]+)"/);
-      if (match) kws.push(match[1].toLowerCase());
+      if (match && !seen.has(match[1].toLowerCase())) {
+        kws.push(match[1].toLowerCase());
+        seen.add(match[1].toLowerCase());
+      }
     });
     
-    // Add GEO-focused keywords
-    const domain = data.url.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0].split(".")[0];
-    kws.push(`${domain} guide`, `what is ${domain}`, `${domain} tips`, "ai seo", "get cited by chatgpt");
+    // Add "how to use [brand]" and "[brand] benefits" type keywords
+    if (domain && kws.length < 8) {
+      const brandKeywords = [`${domain} guide`, `how to use ${domain}`, `${domain} benefits`];
+      brandKeywords.forEach(bk => {
+        if (!seen.has(bk) && kws.length < 10) {
+          kws.push(bk);
+          seen.add(bk);
+        }
+      });
+    }
     
-    return [...new Set(kws)].slice(0, 10);
+    return kws.slice(0, 10);
   };
 
-  // Generate content ideas from keywords
-  const generateContentIdeas = (kws: string[]): Array<{ title: string; keyword: string }> => {
-    const templates = [
-      (k: string) => ({ title: `Complete Guide to ${k.charAt(0).toUpperCase() + k.slice(1)}`, keyword: k }),
-      (k: string) => ({ title: `How to Master ${k.charAt(0).toUpperCase() + k.slice(1)} in 2025`, keyword: k }),
-      (k: string) => ({ title: `${k.charAt(0).toUpperCase() + k.slice(1)}: Everything You Need to Know`, keyword: k }),
-      (k: string) => ({ title: `10 Best ${k.charAt(0).toUpperCase() + k.slice(1)} Tips for Beginners`, keyword: k }),
-      (k: string) => ({ title: `Why ${k.charAt(0).toUpperCase() + k.slice(1)} Matters (Expert Guide)`, keyword: k }),
-    ];
-    
-    return kws.slice(0, 5).map((k, i) => templates[i % templates.length](k));
+  // Generate content ideas using REAL AI API (calls GPT-5-mini after crawling the site)
+  const [generatingIdeas, setGeneratingIdeas] = useState(false);
+  
+  const fetchAIContentIdeas = async (targetDomain: string): Promise<Array<{ title: string; keyword: string }>> => {
+    try {
+      setGeneratingIdeas(true);
+      console.log("[Dashboard] Fetching AI content ideas for:", targetDomain);
+      
+      const res = await fetch("/api/content/ideas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: targetDomain, siteId }),
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ideas && Array.isArray(data.ideas)) {
+          console.log("[Dashboard] AI generated", data.ideas.length, "ideas");
+          return data.ideas.map((idea: { title: string; keyword: string }) => ({
+            title: idea.title,
+            keyword: idea.keyword,
+          }));
+        }
+      }
+      
+      // Fallback to keyword-based ideas if AI fails
+      console.warn("[Dashboard] AI ideas failed, using fallback");
+      return [];
+    } catch (e) {
+      console.error("[Dashboard] Content ideas error:", e);
+      return [];
+    } finally {
+      setGeneratingIdeas(false);
+    }
+  };
+  
+  // Fallback content ideas generator (only used if AI API fails)
+  const generateFallbackIdeas = (kws: string[]): Array<{ title: string; keyword: string }> => {
+    const ideas: Array<{ title: string; keyword: string }> = [];
+    kws.slice(0, 5).forEach((kw, i) => {
+      const formattedKw = kw.charAt(0).toUpperCase() + kw.slice(1);
+      const templates = [
+        { title: `The Complete Guide to ${formattedKw}`, keyword: kw },
+        { title: `How to Get Started with ${formattedKw}`, keyword: kw },
+        { title: `${formattedKw} Best Practices for 2025`, keyword: kw },
+        { title: `What is ${formattedKw}? A Deep Dive`, keyword: kw },
+        { title: `FAQ: ${formattedKw} Explained`, keyword: kw },
+      ];
+      ideas.push(templates[i % templates.length]);
+    });
+    return ideas;
   };
 
   // Load on mount
@@ -431,9 +499,18 @@ export default function DashboardPage() {
         setDomain(cachedSite.domain);
         setSiteId(cachedSite.id);
         setAnalysis(cachedAnalysis);
-        setKeywords(extractKeywords(cachedAnalysis));
-        setContentIdeas(generateContentIdeas(extractKeywords(cachedAnalysis)));
+        const extractedKws = extractKeywords(cachedAnalysis);
+        setKeywords(extractedKws);
+        // Start with fallback ideas, then fetch real AI ideas
+        setContentIdeas(generateFallbackIdeas(extractedKws));
         setPhase("ready");
+        
+        // Fetch AI-generated ideas in background
+        fetchAIContentIdeas(cachedSite.domain).then((aiIdeas) => {
+          if (aiIdeas.length > 0) {
+            setContentIdeas(aiIdeas);
+          }
+        });
       }
 
       try {
@@ -516,12 +593,22 @@ export default function DashboardPage() {
       const cleanDomain = targetDomain.replace(/^https?:\/\//, "").replace(/^www\./, "");
       setDomain(cleanDomain);
       
-      // Extract keywords and generate content ideas
+      // Extract keywords from analysis
       const extractedKws = extractKeywords(analysisData);
       setKeywords(extractedKws);
-      setContentIdeas(generateContentIdeas(extractedKws));
       
+      // Generate content ideas using REAL AI API (async)
       setPhase("ready");
+      
+      // Fetch AI-generated ideas in background
+      fetchAIContentIdeas(cleanDomain).then((aiIdeas) => {
+        if (aiIdeas.length > 0) {
+          setContentIdeas(aiIdeas);
+        } else {
+          // Fallback only if AI fails
+          setContentIdeas(generateFallbackIdeas(extractedKws));
+        }
+      });
     } catch (e) {
       console.error("Analysis error:", e);
       setError(e instanceof Error ? e.message : "Analysis failed");
@@ -696,6 +783,52 @@ export default function DashboardPage() {
           Refresh
         </Button>
       </div>
+
+      {/* FIRST CITATION CELEBRATION 🎉 */}
+      {citations.total === 1 && (
+        <Card className="bg-gradient-to-r from-purple-900/40 via-pink-900/30 to-orange-900/40 border-purple-500/40 animate-pulse">
+          <CardContent className="py-6">
+            <div className="flex items-center justify-center gap-4 text-center">
+              <div className="space-y-2">
+                <div className="text-4xl">🎉</div>
+                <h3 className="text-xl font-bold text-white">Congratulations! You Got Your First AI Citation!</h3>
+                <p className="text-purple-300">
+                  Your content is now being cited by AI search engines. This is the beginning of your GEO success!
+                </p>
+                <p className="text-sm text-zinc-400">
+                  Keep publishing quality content to increase your citation count.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* VALUE DELIVERED BANNER */}
+      {(citations.total > 1 || usage.articles > 0) && (
+        <Card className="bg-gradient-to-r from-emerald-900/30 via-emerald-800/20 to-teal-900/30 border-emerald-500/30">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold">CabbageSEO is working for you</h3>
+                  <p className="text-emerald-400 text-sm">
+                    {citations.total > 1 && `🎉 ${citations.total} AI citations found! `}
+                    {usage.articles > 0 && `${usage.articles} article${usage.articles > 1 ? "s" : ""} generated.`}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right hidden sm:block">
+                <p className="text-2xl font-bold text-white">{analysis.combinedScore}<span className="text-lg text-zinc-400">/100</span></p>
+                <p className="text-xs text-zinc-400">Overall Score</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* SCORE CARDS + CITATIONS */}
       <div className="grid md:grid-cols-4 gap-4">

@@ -20,6 +20,7 @@ async function callOpenAI(prompt: string, systemPrompt: string): Promise<string>
   const timeoutId = setTimeout(() => controller.abort(), 55000); // 55s timeout (allow 5s buffer)
 
   try {
+    console.log("[OpenAI] Calling GPT-5-mini for content generation...");
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -27,8 +28,8 @@ async function callOpenAI(prompt: string, systemPrompt: string): Promise<string>
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        max_tokens: 4096, // Increased for longer, more detailed content
+        model: "gpt-5-mini", // Using GPT-5 Mini for best quality + efficiency
+        max_tokens: 4096,
         temperature: 0.7,
         messages: [
           { role: "system", content: systemPrompt },
@@ -160,82 +161,77 @@ export async function POST(request: NextRequest) {
     const articleTitle = title || `The Complete Guide to ${keyword}`;
     console.log("[Content Generate] Generating for:", articleTitle);
 
-    // Enhanced system prompt for GEO-optimized, detailed content
-    const systemPrompt = `You are an expert content strategist specializing in GEO (Generative Engine Optimization). Create comprehensive, authoritative content that:
+    // Enhanced system prompt for professional, human-readable content
+    const systemPrompt = `You are an expert content writer creating professional blog articles. Your writing style is:
 
-1. Is optimized for AI citation (ChatGPT, Perplexity, Google AI Overviews)
-2. Provides DETAILED, actionable information (${targetWordCount}+ words)
-3. Uses clear definitions ("X is...", "X refers to...")
-4. Contains quotable snippets (50-150 words each) that AI can extract
-5. Includes FAQ sections with schema-ready Q&A
-6. Has a "Key Takeaways" summary section
-7. Cites statistics with sources
-8. Uses proper heading hierarchy (H2, H3)
-9. Includes comparison tables where relevant
-10. Provides step-by-step instructions when applicable
+1. NATURAL AND HUMAN - Write like a professional journalist, NOT like AI
+2. NO excessive formatting - Minimal use of headers, no hashtags, no bullet-heavy content
+3. FLOWING PROSE - Use paragraphs, not lists, as the primary format
+4. ENGAGING - Start with a hook, tell stories, use examples
+5. AUTHORITATIVE - Include expert insights and real statistics
+6. READABLE - Short sentences, active voice, conversational tone
+7. SEO-FRIENDLY - Naturally incorporate the keyword without stuffing
 
-Write content that would be cited as THE authoritative source on this topic.
+CRITICAL: Do NOT produce content that looks like AI/markdown:
+- NO ### or #### headers everywhere
+- NO excessive bullet points and numbered lists
+- NO "In this article, we will..."
+- NO "Let's dive in" or similar clichés
+- NO walls of bullet points
+
+Write like a premium publication (The Atlantic, Wired, HBR).
 Always respond with valid JSON only, no markdown code blocks.`;
 
-    const userPrompt = `Write a comprehensive, detailed article titled "${articleTitle}" about "${keyword}".
+    const userPrompt = `Write a professional blog article titled "${articleTitle}" about "${keyword}".
 
 ${siteContext}
 ${customInstructions ? `Additional instructions: ${customInstructions}` : ""}
 
-IMPORTANT - Content must be:
-- At least ${targetWordCount} words (this is CRITICAL - be thorough and detailed)
-- Structured with clear H2/H3 headings
-- Include a "Key Takeaways" section at the beginning
-- Start EVERY section with a direct, quotable answer
-- Include at least 8-10 FAQs with detailed 100+ word answers
-- Add comparison tables where relevant
-- Include step-by-step guides where applicable
-- Cite real statistics with year and source
+REQUIREMENTS:
+- Write ${targetWordCount}+ words of FLOWING, professional prose
+- Sound like a human expert, NOT like AI
+- Use storytelling and real examples
+- Include 2-3 section headings (H2 only), but mostly paragraphs
+- Weave in 3-5 FAQs naturally at the end (not a huge list)
+- Include 1-2 relevant statistics with sources
+- Make every paragraph quotable and informative
 
-OPTIMIZATION MODE: ${optimizationMode === "geo" ? "Heavily optimize for AI citation - every paragraph should be quotable" : "Balance traditional SEO and AI optimization"}
+STYLE GUIDE:
+- Open with a compelling hook (story, question, or surprising fact)
+- Use short paragraphs (2-4 sentences each)
+- Include real-world examples and case studies
+- Write like The Atlantic or Wired - sophisticated but accessible
+- End with a strong conclusion that provides actionable next steps
 
-Structure your article like this:
-1. Key Takeaways (bullet points)
-2. Introduction with direct answer to "What is ${keyword}?"
-3. Why ${keyword} Matters (with statistics)
-4. How to [Get Started/Implement/Use] ${keyword} (step-by-step)
-5. Best Practices and Tips
-6. Common Mistakes to Avoid
-7. ${keyword} vs Alternatives (comparison if relevant)
-8. Future Trends
-9. FAQ Section (8-10 questions)
-10. Conclusion
+DO NOT:
+- Use excessive bullet points or numbered lists
+- Start paragraphs with "Additionally," "Furthermore," "Moreover"
+- Use clichés like "In today's digital age" or "Let's dive in"
+- Create walls of headers with ### everywhere
+- Sound robotic or templated
 
-Respond with ONLY this JSON structure:
+OPTIMIZATION: ${optimizationMode === "geo" ? "Include clear, quotable definitions that AI can extract" : "Balance readability and SEO"}
+
+Respond with ONLY this JSON:
 {
   "title": "${articleTitle}",
-  "metaTitle": "compelling 50-60 char title with keyword",
-  "metaDescription": "engaging 150-155 char description with clear value proposition",
-  "content": "Full article in markdown. Use ## for H2, ### for H3. Use **bold** for key terms. Use bullet points and numbered lists. Include tables with | syntax.",
+  "metaTitle": "compelling SEO title, 50-60 chars",
+  "metaDescription": "engaging description that makes people want to read, 150-155 chars",
+  "content": "Full article as clean HTML with <h2>, <p>, <strong>, <em> tags. NO markdown. NO excessive headers. Mostly flowing paragraphs.",
   "faqs": [
-    {"question": "What is ${keyword}?", "answer": "Detailed 100+ word answer..."},
-    {"question": "Why is ${keyword} important in 2024?", "answer": "Detailed answer with statistics..."},
-    {"question": "How do I get started with ${keyword}?", "answer": "Step-by-step answer..."},
-    {"question": "What are the benefits of ${keyword}?", "answer": "List of benefits with explanations..."},
-    {"question": "What are common ${keyword} mistakes?", "answer": "Common pitfalls and how to avoid..."},
-    {"question": "How much does ${keyword} cost?", "answer": "Pricing information if relevant..."},
-    {"question": "What tools are best for ${keyword}?", "answer": "Tool recommendations..."},
-    {"question": "How long does it take to see results from ${keyword}?", "answer": "Timeline expectations..."}
+    {"question": "Clear question about ${keyword}?", "answer": "Detailed, helpful 50-100 word answer."},
+    {"question": "Another relevant question?", "answer": "Another detailed answer."},
+    {"question": "Third practical question?", "answer": "Practical, actionable answer."}
   ],
   "keyTakeaways": [
-    "Actionable takeaway 1 (one sentence)",
-    "Actionable takeaway 2 (one sentence)",
-    "Actionable takeaway 3 (one sentence)",
-    "Actionable takeaway 4 (one sentence)",
-    "Actionable takeaway 5 (one sentence)",
-    "Actionable takeaway 6 (one sentence)",
-    "Actionable takeaway 7 (one sentence)"
+    "One key insight from the article",
+    "Another important takeaway",
+    "Third actionable point"
   ],
   "statistics": [
-    {"stat": "XX% of businesses...", "source": "Industry Report, 2024"},
-    {"stat": "Companies using X see...", "source": "Research Study, 2024"}
+    {"stat": "Specific statistic with number", "source": "Credible Source, Year"}
   ],
-  "sources": ["Source 1 with URL if possible", "Source 2", "Source 3"]
+  "sources": ["Source name and URL if available"]
 }`;
 
     console.log("[Content Generate] Calling OpenAI...");

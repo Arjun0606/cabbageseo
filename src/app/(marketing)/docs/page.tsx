@@ -580,13 +580,13 @@ export default function DocsPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-6" />
-              <span className="text-sm text-zinc-400">© 2025 CabbageSEO</span>
+              <span className="text-sm text-zinc-400">© 2026 CabbageSEO - The Ultimate GEO Machine</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-zinc-400">
               <Link href="/pricing" className="hover:text-white">Pricing</Link>
               <Link href="/docs" className="hover:text-white">Docs</Link>
-              <Link href="mailto:arjun@cabbageseo.com" className="hover:text-white">Contact</Link>
-              <a href="https://x.com/Arjun06061" target="_blank" rel="noopener noreferrer" className="hover:text-white">𝕏 Twitter</a>
+              <Link href="/feedback" className="hover:text-emerald-400 text-emerald-400/70">Feedback</Link>
+              <a href="https://x.com/ArzBusiness" target="_blank" rel="noopener noreferrer" className="hover:text-white">𝕏 @ArzBusiness</a>
             </div>
           </div>
         </div>

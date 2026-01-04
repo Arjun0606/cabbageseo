@@ -50,6 +50,7 @@ interface GeneratedArticle {
   content: string;
   wordCount: number;
   geoScore: number;
+  featuredImage: string | null;
 }
 
 // ============================================
@@ -81,57 +82,98 @@ function loadAnalysis(): { title?: string; url?: string; aio?: { recommendations
 
 // ============================================
 // GENERATE CONTENT IDEAS FROM ANALYSIS
+// Uses real data from site analysis to suggest relevant topics
 // ============================================
 
 function generateContentIdeas(domain: string, analysis: ReturnType<typeof loadAnalysis>): ContentIdea[] {
+  const brandName = domain.split(".")[0].charAt(0).toUpperCase() + domain.split(".")[0].slice(1);
   const ideas: ContentIdea[] = [];
   
-  // Extract keywords from analysis
-  const keywords: string[] = [];
+  // Extract topics from the actual site title
+  const siteTitle = analysis?.title || brandName;
+  const titleWords = siteTitle.split(/[\s\-|:,]+/).filter((w: string) => w.length > 3);
   
-  if (analysis?.title) {
-    const words = analysis.title.toLowerCase().split(/\s+/).filter(w => w.length > 4);
-    keywords.push(...words.slice(0, 3));
+  // 1. Always include the main brand guide
+  ideas.push({
+    title: `The Complete Guide to ${brandName}: What It Is and How It Works`,
+    keyword: brandName.toLowerCase(),
+    type: "guide",
+    estimatedTime: "8-10 min",
+    geoScore: 92,
+  });
+  
+  // 2. Extract keywords from SEO recommendations and create targeted content
+  const seoRecs = analysis?.seo?.recommendations || [];
+  const aioRecs = analysis?.aio?.recommendations || [];
+  const allRecs = [...seoRecs, ...aioRecs];
+  
+  // Find quoted keywords in recommendations
+  allRecs.forEach((rec: string) => {
+    const match = rec.match(/"([^"]+)"/);
+    if (match && ideas.length < 5) {
+      const keyword = match[1];
+      ideas.push({
+        title: `How to Improve Your ${keyword.charAt(0).toUpperCase() + keyword.slice(1)}: A Step-by-Step Guide`,
+        keyword: keyword.toLowerCase(),
+        type: "howto",
+        estimatedTime: "5-6 min",
+        geoScore: 85 + Math.floor(Math.random() * 10),
+      });
+    }
+  });
+  
+  // 3. Generate ideas based on title words (what the business actually does)
+  const meaningfulWords = titleWords.filter((w: string) => 
+    !["the", "and", "for", "with", "your", "best", "free", "home", "page"].includes(w.toLowerCase())
+  );
+  
+  meaningfulWords.slice(0, 2).forEach((word: string, i: number) => {
+    if (ideas.length < 5) {
+      const templates = [
+        { title: `What is ${word}? Everything You Need to Know in 2025`, type: "guide" as const },
+        { title: `${word} Best Practices: Expert Tips for Success`, type: "listicle" as const },
+        { title: `How to Get Started with ${word}: A Beginner's Guide`, type: "tutorial" as const },
+        { title: `${word} vs Alternatives: Which One Should You Choose?`, type: "comparison" as const },
+      ];
+      const template = templates[i % templates.length];
+      ideas.push({
+        title: template.title,
+        keyword: word.toLowerCase(),
+        type: template.type,
+        estimatedTime: "5-7 min",
+        geoScore: 80 + Math.floor(Math.random() * 15),
+      });
+    }
+  });
+  
+  // 4. Add FAQ-style content (great for AI citations)
+  if (ideas.length < 5) {
+    ideas.push({
+      title: `Frequently Asked Questions About ${brandName}`,
+      keyword: `${brandName.toLowerCase()} faq`,
+      type: "guide",
+      estimatedTime: "4-5 min",
+      geoScore: 88,
+    });
   }
   
-  // Extract from recommendations
-  [...(analysis?.seo?.recommendations || []), ...(analysis?.aio?.recommendations || [])].forEach(rec => {
-    const match = rec.match(/"([^"]+)"/);
-    if (match) keywords.push(match[1].toLowerCase());
-  });
-  
-  // Add domain-based keywords
-  const domainWord = domain.split(".")[0];
-  keywords.push(domainWord, `${domainWord} guide`, `how to use ${domainWord}`);
-  
-  // Generate ideas from keywords
-  const templates: Array<{ 
-    prefix: string; 
-    type: ContentIdea["type"]; 
-    time: string; 
-    score: number 
-  }> = [
-    { prefix: "Complete Guide to", type: "guide", time: "3-4 min", score: 85 },
-    { prefix: "How to Master", type: "howto", time: "2-3 min", score: 80 },
-    { prefix: "10 Best Tips for", type: "listicle", time: "2 min", score: 75 },
-    { prefix: "Everything You Need to Know About", type: "guide", time: "4-5 min", score: 88 },
-    { prefix: "Step-by-Step Tutorial:", type: "tutorial", time: "3 min", score: 82 },
-  ];
-  
-  const uniqueKeywords = [...new Set(keywords)].slice(0, 5);
-  
-  uniqueKeywords.forEach((kw, i) => {
-    const template = templates[i % templates.length];
+  // 5. Add "How we help" style content
+  if (ideas.length < 5) {
     ideas.push({
-      title: `${template.prefix} ${kw.charAt(0).toUpperCase() + kw.slice(1)}`,
-      keyword: kw,
-      type: template.type,
-      estimatedTime: template.time,
-      geoScore: template.score + Math.floor(Math.random() * 10),
+      title: `How ${brandName} Can Help You Achieve Your Goals`,
+      keyword: brandName.toLowerCase(),
+      type: "howto",
+      estimatedTime: "6-7 min",
+      geoScore: 86,
     });
-  });
+  }
   
-  return ideas;
+  // Return unique ideas (up to 5)
+  const uniqueIdeas = ideas.filter((idea, index, self) => 
+    index === self.findIndex(t => t.keyword === idea.keyword)
+  );
+  
+  return uniqueIdeas.slice(0, 5);
 }
 
 // ============================================
@@ -221,12 +263,30 @@ export default function ContentNewPage() {
       setProgress(100);
       setProgressText("Complete!");
       
+      // Convert markdown to clean HTML if needed
+      let articleContent = data.data?.body || data.data?.content || "";
+      
+      // Simple markdown to HTML conversion
+      articleContent = articleContent
+        .replace(/^## (.+)$/gm, '<h2 class="text-2xl font-bold mt-8 mb-4">$1</h2>')
+        .replace(/^### (.+)$/gm, '<h3 class="text-xl font-semibold mt-6 mb-3">$1</h3>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/^- (.+)$/gm, '<li class="ml-4">$1</li>')
+        .replace(/\n\n/g, '</p><p class="mb-4 text-zinc-300 leading-relaxed">')
+        .replace(/\n/g, ' ');
+      
+      if (!articleContent.startsWith('<')) {
+        articleContent = '<p class="mb-4 text-zinc-300 leading-relaxed">' + articleContent + '</p>';
+      }
+      
       setGeneratedArticle({
         id: data.data?.id || "generated-" + Date.now(),
         title: data.data?.title || idea.title,
-        content: data.data?.body || data.data?.content || "",
+        content: articleContent,
         wordCount: data.data?.wordCount || 1500,
         geoScore: data.data?.aioScore || idea.geoScore,
+        featuredImage: data.data?.featuredImage?.url || null,
       });
       
       await new Promise(r => setTimeout(r, 500));
@@ -241,12 +301,49 @@ export default function ContentNewPage() {
     }
   };
 
-  // Regenerate ideas
-  const handleRefreshIdeas = () => {
-    const cachedAnalysis = loadAnalysis();
-    if (site) {
-      const newIdeas = generateContentIdeas(site.domain, cachedAnalysis);
-      setIdeas(newIdeas);
+  // Regenerate ideas using REAL AI API
+  const [refreshing, setRefreshing] = useState(false);
+  
+  const handleRefreshIdeas = async () => {
+    if (!site) return;
+    setRefreshing(true);
+    
+    try {
+      // Call AI-powered content ideas API
+      const res = await fetch("/api/content/ideas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          siteId: site.id,
+          domain: site.domain,
+        }),
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ideas && Array.isArray(data.ideas)) {
+          const aiIdeas: ContentIdea[] = data.ideas.map((idea: { title: string; keyword: string; type?: string; estimatedTime?: string; geoScore?: number }) => ({
+            title: idea.title,
+            keyword: idea.keyword,
+            type: (idea.type as ContentIdea["type"]) || "guide",
+            estimatedTime: idea.estimatedTime || "5-7 min",
+            geoScore: idea.geoScore || 85,
+          }));
+          setIdeas(aiIdeas);
+          return;
+        }
+      }
+      
+      // Fallback to local generation if API fails
+      const cachedAnalysis = loadAnalysis();
+      setIdeas(generateContentIdeas(site.domain, cachedAnalysis));
+    } catch (e) {
+      console.error("Failed to refresh ideas:", e);
+      // Fallback to local generation
+      const cachedAnalysis = loadAnalysis();
+      setIdeas(generateContentIdeas(site.domain, cachedAnalysis));
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -326,18 +423,33 @@ export default function ContentNewPage() {
           </CardContent>
         </Card>
         
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-zinc-900 border-zinc-800 overflow-hidden">
+          {/* Featured Image */}
+          {generatedArticle.featuredImage && (
+            <div className="relative w-full h-64 bg-zinc-800">
+              <img 
+                src={generatedArticle.featuredImage} 
+                alt={generatedArticle.title}
+                className="w-full h-full object-cover"
+              />
+              <Badge className="absolute top-4 right-4 bg-emerald-500/80">DALL-E 3</Badge>
+            </div>
+          )}
+          
           <CardHeader>
-            <CardTitle>{generatedArticle.title}</CardTitle>
+            <CardTitle className="text-2xl">{generatedArticle.title}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-invert max-w-none">
+            <article className="prose prose-lg prose-invert max-w-none">
               {generatedArticle.content ? (
-                <div dangerouslySetInnerHTML={{ __html: generatedArticle.content.replace(/\n/g, "<br/>") }} />
+                <div 
+                  dangerouslySetInnerHTML={{ __html: generatedArticle.content }} 
+                  className="[&>p]:mb-4 [&>p]:text-zinc-300 [&>p]:leading-relaxed [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-4 [&>h2]:text-white [&>h3]:text-xl [&>h3]:font-semibold [&>h3]:mt-6 [&>h3]:mb-3 [&>h3]:text-white [&>ul]:list-disc [&>ul]:ml-6 [&>ul]:my-4 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol]:my-4 [&>li]:mb-2 [&>li]:text-zinc-300 [&>strong]:text-white [&>blockquote]:border-l-4 [&>blockquote]:border-emerald-500 [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:text-zinc-400"
+                />
               ) : (
                 <p className="text-zinc-400">Article content will appear here. Check the Content page for the full article.</p>
               )}
-            </div>
+            </article>
           </CardContent>
         </Card>
       </div>
@@ -358,9 +470,13 @@ export default function ContentNewPage() {
           </h1>
           <p className="text-zinc-400 mt-1">AI-generated content ideas for {site?.domain}</p>
         </div>
-        <Button variant="outline" onClick={handleRefreshIdeas} className="border-zinc-700">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          New Ideas
+        <Button variant="outline" onClick={handleRefreshIdeas} disabled={refreshing} className="border-zinc-700">
+          {refreshing ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4 mr-2" />
+          )}
+          {refreshing ? "Generating..." : "New Ideas"}
         </Button>
       </div>
 

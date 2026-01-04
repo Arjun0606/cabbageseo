@@ -195,7 +195,7 @@ export default function FeaturesPage() {
                 </ul>
                 <div className="mt-4 p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
                   <p className="text-xs text-emerald-500">
-                    <strong>✓ REAL Citation Checking:</strong> We query Perplexity&apos;s API 
+                    <strong>✓ REAL Citation Checking:</strong> We check Perplexity 
                     directly to see if they&apos;re citing your content.
                   </p>
                 </div>
@@ -233,8 +233,8 @@ export default function FeaturesPage() {
                 </ul>
                 <div className="mt-4 p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
                   <p className="text-xs text-emerald-500">
-                    <strong>✓ REAL Citation Checking:</strong> We use Google Gemini API 
-                    with search grounding to verify citations.
+                    <strong>✓ REAL Citation Checking:</strong> We check Google AI 
+                    directly to verify your citations.
                   </p>
                 </div>
               </CardContent>
@@ -377,9 +377,9 @@ export default function FeaturesPage() {
               />
               <FeatureCard
                 icon={ImageIcon}
-                title="DALL-E Images"
-                description="AI-generated featured images for every article, with auto alt text."
-                howItHelps="Unique images that match your content. No stock photos needed."
+                title="AI-Generated Images"
+                description="Unique featured images for every article, with auto alt text."
+                howItHelps="Custom images that match your content. No stock photos needed."
               />
               <FeatureCard
                 icon={Code}

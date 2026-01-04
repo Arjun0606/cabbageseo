@@ -385,7 +385,7 @@ class ChatGPTClient {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-          model: "gpt-4o-mini",
+          model: "gpt-5-mini",  // Using GPT-5 Mini for accurate simulation
           messages: [
             {
               role: "system",

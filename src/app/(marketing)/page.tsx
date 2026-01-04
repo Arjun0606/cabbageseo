@@ -176,14 +176,17 @@ export default function LandingPage() {
               <span className="font-bold text-lg tracking-tight">CabbageSEO</span>
             </Link>
             <div className="hidden md:flex items-center gap-8">
-              <Link href="#how-it-works" className="text-sm text-zinc-400 hover:text-white transition-colors">
+              <Link href="/how-it-works" className="text-sm text-zinc-400 hover:text-white transition-colors">
                 How it Works
               </Link>
-              <Link href="#pricing" className="text-sm text-zinc-400 hover:text-white transition-colors">
+              <Link href="/pricing" className="text-sm text-zinc-400 hover:text-white transition-colors">
                 Pricing
               </Link>
               <Link href="/docs" className="text-sm text-zinc-400 hover:text-white transition-colors">
                 Docs
+              </Link>
+              <Link href="/feedback" className="text-sm text-emerald-400/70 hover:text-emerald-400 transition-colors">
+                Feedback
               </Link>
             </div>
             <div className="flex items-center gap-3">
@@ -440,11 +443,11 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: Bot, title: "Real Citation Checking", description: "We query Perplexity API to verify if you're actually being cited" },
+              { icon: Bot, title: "Real Citation Checking", description: "We check actual AI platforms to verify you're being cited" },
               { icon: RefreshCw, title: "Weekly Autopilot", description: "Auto-generate and publish GEO-optimized content every week" },
               { icon: Sparkles, title: "GEO Content Generator", description: "Articles structured for AI extraction - FAQs, entities, quotes" },
               { icon: TrendingUp, title: "Improvement Tracking", description: "See your GEO score increase over time with real data" },
-              { icon: FileText, title: "DALL-E Images", description: "Every article gets an AI-generated featured image" },
+              { icon: FileText, title: "Auto-Generated Images", description: "Every article gets a unique AI-generated featured image" },
               { icon: Zap, title: "8 CMS Integrations", description: "WordPress, Webflow, Shopify, Ghost, Notion, HubSpot, Framer, Webhooks" },
             ].map((feature, i) => (
               <div
@@ -627,7 +630,7 @@ export default function LandingPage() {
                 alt="CabbageSEO" 
                 className="w-8 h-8"
               />
-              <span className="text-sm text-zinc-400">© 2026 CabbageSEO</span>
+              <span className="text-sm text-zinc-400">© 2026 CabbageSEO - The Ultimate GEO Machine</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-zinc-400 flex-wrap justify-center">
               <Link href="/features" className="hover:text-white transition-colors">Features</Link>
@@ -635,10 +638,10 @@ export default function LandingPage() {
               <Link href="/about" className="hover:text-white transition-colors">About</Link>
               <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
               <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
+              <Link href="/feedback" className="hover:text-emerald-400 text-emerald-400/70 transition-colors">Feedback</Link>
               <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
               <a href="mailto:arjun@cabbageseo.com" className="hover:text-white transition-colors">Contact</a>
-              <a href="https://x.com/Arjun06061" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">𝕏</a>
+              <a href="https://x.com/ArzBusiness" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">𝕏 @ArzBusiness</a>
             </div>
           </div>
         </div>

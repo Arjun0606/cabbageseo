@@ -18,6 +18,7 @@ import {
   HelpCircle,
   Check,
   Loader2,
+  Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -285,6 +286,20 @@ export function Header({ className, onCommandPaletteOpen }: HeaderProps) {
     error: "bg-red-500",
   };
 
+  // Get current site from localStorage
+  const [currentSite, setCurrentSite] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const siteData = localStorage.getItem("cabbageseo_site");
+        if (siteData) {
+          const site = JSON.parse(siteData);
+          setCurrentSite(site.domain || null);
+        }
+      } catch {}
+    }
+  }, [pathname]);
+
   return (
     <header
       className={cn(
@@ -292,10 +307,24 @@ export function Header({ className, onCommandPaletteOpen }: HeaderProps) {
         className
       )}
     >
-      {/* Left: Page Title */}
+      {/* Left: Home Button + Page Title + Current Site */}
       <div className="flex items-center gap-4">
+        {/* Home Button */}
+        <Link href="/">
+          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary hover:bg-emerald-500/10">
+            <Home className="h-5 w-5" />
+          </Button>
+        </Link>
+        
         <div>
-          <h1 className="text-lg font-semibold tracking-tight">{pageInfo.title}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold tracking-tight">{pageInfo.title}</h1>
+            {currentSite && (
+              <Badge variant="outline" className="text-xs font-normal border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
+                {currentSite}
+              </Badge>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">{pageInfo.description}</p>
         </div>
       </div>

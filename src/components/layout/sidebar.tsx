@@ -24,6 +24,8 @@ import {
   Target,
   Shield,
   Crown,
+  Plug,
+  Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -76,6 +78,12 @@ const navItems: NavItemType[] = [
     href: "/audit",
     icon: Shield,
     description: "Technical health",
+  },
+  {
+    name: "Integrations",
+    href: "/settings/integrations",
+    icon: Plug,
+    description: "Connect your CMS",
   },
 ];
 

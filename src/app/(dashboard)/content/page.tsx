@@ -243,22 +243,29 @@ export default function ContentPage() {
 
       {/* Content List */}
       {filteredContent.length === 0 ? (
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-gradient-to-br from-zinc-900 to-zinc-800 border-zinc-700">
           <CardContent className="py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mx-auto mb-4">
-              <FileText className="w-8 h-8 text-zinc-500" />
+            <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-6">
+              <Sparkles className="w-10 h-10 text-emerald-400" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">No content yet</h3>
-            <p className="text-zinc-400 mb-6">
-              {searchQuery ? "No articles match your search" : "Generate your first AI-optimized article"}
+            <h3 className="text-2xl font-bold text-white mb-3">Ready to Create AI-Optimized Content</h3>
+            <p className="text-zinc-400 mb-8 max-w-md mx-auto">
+              {searchQuery 
+                ? "No articles match your search. Try a different term." 
+                : "Generate your first article optimized for ChatGPT, Perplexity, and Google AI Overviews."}
             </p>
             {!searchQuery && (
-              <Link href="/content/new">
-                <Button className="bg-emerald-600 hover:bg-emerald-500">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate First Article
-                </Button>
-              </Link>
+              <div className="space-y-4">
+                <Link href="/content/new">
+                  <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500">
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Generate Your First Article
+                  </Button>
+                </Link>
+                <p className="text-xs text-zinc-500">
+                  ✨ Articles are optimized to be cited by AI search engines
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>

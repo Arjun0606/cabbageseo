@@ -48,7 +48,7 @@ interface Issue {
 
 interface Category {
   name: string;
-  icon: React.ReactNode;
+  iconType: "shield" | "file" | "image" | "link" | "zap" | "globe";
   score: number;
   issues: Issue[];
 }
@@ -154,7 +154,7 @@ function buildCategories(analysis: AnalysisResult | null): Category[] {
   if (analysis?.seo?.categories) {
     return analysis.seo.categories.map(cat => ({
       name: cat.name,
-      icon: getCategoryIcon(cat.name),
+      iconType: getCategoryIconType(cat.name),
       score: cat.score,
       issues: cat.items.filter(i => i.status !== "pass").map(i => ({
         title: i.name,
@@ -168,23 +168,35 @@ function buildCategories(analysis: AnalysisResult | null): Category[] {
   
   // Default categories
   return [
-    { name: "Technical SEO", icon: <Shield className="w-5 h-5" />, score: 75, issues: [] },
-    { name: "Content", icon: <FileText className="w-5 h-5" />, score: 80, issues: [] },
-    { name: "Images", icon: <Image className="w-5 h-5" />, score: 65, issues: [] },
-    { name: "Links", icon: <LinkIcon className="w-5 h-5" />, score: 70, issues: [] },
-    { name: "Performance", icon: <Zap className="w-5 h-5" />, score: 85, issues: [] },
-    { name: "Mobile", icon: <Globe className="w-5 h-5" />, score: 90, issues: [] },
+    { name: "Technical SEO", iconType: "shield", score: 75, issues: [] },
+    { name: "Content", iconType: "file", score: 80, issues: [] },
+    { name: "Images", iconType: "image", score: 65, issues: [] },
+    { name: "Links", iconType: "link", score: 70, issues: [] },
+    { name: "Performance", iconType: "zap", score: 85, issues: [] },
+    { name: "Mobile", iconType: "globe", score: 90, issues: [] },
   ];
 }
 
-function getCategoryIcon(name: string) {
-  if (name.toLowerCase().includes("technical")) return <Shield className="w-5 h-5" />;
-  if (name.toLowerCase().includes("content")) return <FileText className="w-5 h-5" />;
-  if (name.toLowerCase().includes("image")) return <Image className="w-5 h-5" />;
-  if (name.toLowerCase().includes("link")) return <LinkIcon className="w-5 h-5" />;
-  if (name.toLowerCase().includes("performance")) return <Zap className="w-5 h-5" />;
-  if (name.toLowerCase().includes("mobile")) return <Globe className="w-5 h-5" />;
-  return <FileText className="w-5 h-5" />;
+function getCategoryIconType(name: string): Category["iconType"] {
+  if (name.toLowerCase().includes("technical")) return "shield";
+  if (name.toLowerCase().includes("content")) return "file";
+  if (name.toLowerCase().includes("image")) return "image";
+  if (name.toLowerCase().includes("link")) return "link";
+  if (name.toLowerCase().includes("performance")) return "zap";
+  if (name.toLowerCase().includes("mobile")) return "globe";
+  return "file";
+}
+
+function CategoryIcon({ type }: { type: Category["iconType"] }) {
+  switch (type) {
+    case "shield": return <Shield className="w-5 h-5" />;
+    case "file": return <FileText className="w-5 h-5" />;
+    case "image": return <Image className="w-5 h-5" />;
+    case "link": return <LinkIcon className="w-5 h-5" />;
+    case "zap": return <Zap className="w-5 h-5" />;
+    case "globe": return <Globe className="w-5 h-5" />;
+    default: return <FileText className="w-5 h-5" />;
+  }
 }
 
 // ============================================
@@ -362,7 +374,7 @@ export default function AuditPage() {
                   cat.score >= 50 ? "text-yellow-400" :
                   "text-red-400"
                 }`}>
-                  {cat.icon}
+                  <CategoryIcon type={cat.iconType} />
                 </div>
                 <p className="text-white font-medium text-sm">{cat.name}</p>
                 <p className={`text-lg font-bold ${

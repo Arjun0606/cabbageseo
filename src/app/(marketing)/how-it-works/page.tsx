@@ -278,6 +278,74 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
+      {/* WHAT YOU GET */}
+      <section className="py-20 px-4 bg-zinc-900/50">
+        <div className="container mx-auto max-w-5xl">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+              Real Results
+            </Badge>
+            <h2 className="text-3xl font-bold text-white mb-4">
+              What Makes CabbageSEO Different
+            </h2>
+            <p className="text-zinc-400 max-w-2xl mx-auto">
+              We don't just analyze your site—we actively help you get cited by AI.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-4 gap-6">
+            <Card className="bg-zinc-900 border-zinc-800 text-center">
+              <CardContent className="pt-6">
+                <div className="w-14 h-14 mx-auto rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
+                  <Brain className="w-7 h-7 text-emerald-400" />
+                </div>
+                <h3 className="font-bold text-white mb-2">AI-Ready Content</h3>
+                <p className="text-sm text-zinc-400">Content structured specifically for AI platforms to quote and cite</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-zinc-900 border-zinc-800 text-center">
+              <CardContent className="pt-6">
+                <div className="w-14 h-14 mx-auto rounded-xl bg-blue-500/20 flex items-center justify-center mb-4">
+                  <Sparkles className="w-7 h-7 text-blue-400" />
+                </div>
+                <h3 className="font-bold text-white mb-2">Original Images</h3>
+                <p className="text-sm text-zinc-400">Unique featured images generated for every article you create</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-zinc-900 border-zinc-800 text-center">
+              <CardContent className="pt-6">
+                <div className="w-14 h-14 mx-auto rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
+                  <Search className="w-7 h-7 text-purple-400" />
+                </div>
+                <h3 className="font-bold text-white mb-2">Real Citations</h3>
+                <p className="text-sm text-zinc-400">We check actual AI platforms to verify when you're being cited</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-zinc-900 border-zinc-800 text-center">
+              <CardContent className="pt-6">
+                <div className="w-14 h-14 mx-auto rounded-xl bg-orange-500/20 flex items-center justify-center mb-4">
+                  <Zap className="w-7 h-7 text-orange-400" />
+                </div>
+                <h3 className="font-bold text-white mb-2">Full Autopilot</h3>
+                <p className="text-sm text-zinc-400">Set it once, and we handle content creation and publishing weekly</p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="mt-12 text-center">
+            <p className="text-zinc-500 text-sm">
+              Have questions or feedback? We'd love to hear from you. 
+              <Link href="/feedback" className="text-emerald-400 hover:underline ml-1">
+                Reach out directly →
+              </Link>
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-3xl">
@@ -299,7 +367,7 @@ export default function HowItWorksPage() {
               },
               {
                 q: "How do you track AI citations?",
-                a: "We use official APIs where available (Perplexity, Google Gemini) and AI-powered detection for others (ChatGPT, Bing). You get email alerts when new citations are found.",
+                a: "We directly check AI search platforms to see if they're citing your content. When we find new citations, you get email alerts immediately.",
               },
               {
                 q: "What's the difference between SEO and GEO?",
@@ -343,12 +411,13 @@ export default function HowItWorksPage() {
       {/* Footer */}
       <footer className="border-t border-zinc-800 py-8 px-4">
         <div className="container mx-auto max-w-6xl flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-zinc-500">© 2026 CabbageSEO. The AI-Native SEO OS.</p>
+          <p className="text-sm text-zinc-500">© 2026 CabbageSEO. The Ultimate GEO Machine.</p>
           <div className="flex items-center gap-6 text-sm text-zinc-500">
             <Link href="/about" className="hover:text-white transition-colors">About</Link>
             <Link href="/features" className="hover:text-white transition-colors">Features</Link>
             <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
             <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
+            <Link href="/feedback" className="hover:text-emerald-400 transition-colors text-emerald-400/70">Feedback</Link>
           </div>
         </div>
       </footer>
