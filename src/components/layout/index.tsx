@@ -71,7 +71,7 @@ const mainNav = [
     href: "/analyze", 
     label: "Analyzer", 
     icon: Search,
-    description: "Check any page"
+    description: "Check any domain"
   },
 ];
 
