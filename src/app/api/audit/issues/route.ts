@@ -54,7 +54,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: userData } = await supabase
+    // Get user's organization (use service client to bypass RLS)
+    let serviceClient;
+    try {
+      serviceClient = createServiceClient();
+    } catch {
+      serviceClient = supabase;
+    }
+    
+    const { data: userData } = await serviceClient
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
@@ -196,7 +204,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: userData } = await supabase
+    // Get user's organization (use service client to bypass RLS)
+    let serviceClient;
+    try {
+      serviceClient = createServiceClient();
+    } catch {
+      serviceClient = supabase;
+    }
+    
+    const { data: userData } = await serviceClient
       .from("users")
       .select("organization_id")
       .eq("id", user.id)

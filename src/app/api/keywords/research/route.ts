@@ -50,7 +50,16 @@ export async function POST(request: NextRequest) {
       if (!user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
-      const { data: userData } = await supabase
+      
+      // Get user's organization (use service client to bypass RLS)
+      let serviceClient;
+      try {
+        serviceClient = createServiceClient();
+      } catch {
+        serviceClient = supabase;
+      }
+      
+      const { data: userData } = await serviceClient
         .from("users")
         .select("organization_id")
         .eq("id", user.id)
@@ -62,8 +71,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No organization found" }, { status: 400 });
     }
 
-    // Get user's plan for usage limits
-    const { data: orgData } = await supabase
+    // Get user's plan for usage limits (reuse serviceClient if available)
+    let planClient;
+    try {
+      planClient = createServiceClient();
+    } catch {
+      planClient = supabase;
+    }
+    
+    const { data: orgData } = await planClient
       .from("organizations")
       .select("plan")
       .eq("id", orgId)

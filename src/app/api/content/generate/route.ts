@@ -97,8 +97,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No organization found" }, { status: 400 });
   }
 
-  // Get user's plan for usage limits
-  const { data: orgData } = await supabase
+  // Get user's plan for usage limits (use service client to bypass RLS)
+  let serviceClient;
+  try {
+    serviceClient = createServiceClient();
+  } catch {
+    serviceClient = supabase;
+  }
+  
+  const { data: orgData } = await serviceClient
     .from("organizations")
     .select("plan")
     .eq("id", organizationId)

@@ -142,8 +142,8 @@ export async function requireSubscription(
     };
   }
 
-  // Get organization subscription info
-  const { data: org } = await supabase
+  // Get organization subscription info (use serviceClient to bypass RLS)
+  const { data: org } = await serviceClient
     .from("organizations")
     .select("plan, subscription_status, current_period_end")
     .eq("id", organizationId)

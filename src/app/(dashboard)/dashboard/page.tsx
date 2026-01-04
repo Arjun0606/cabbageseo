@@ -694,21 +694,23 @@ export default function DashboardPage() {
   // Run full analysis - SAME API as free analyzer
   const runFullAnalysis = async (domain: string) => {
     try {
-      const res = await fetch("/api/analyze", {
+      const res = await fetch("/api/public/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: `https://${domain}` }),
       });
       
       if (res.ok) {
-        const data = await res.json();
+        const response = await res.json();
+        // API returns { success: true, data: {...} } - extract the data
+        const analysisData = response.data || response;
         
         // Extract keywords from analysis
-        const extractedKeywords = extractKeywords(data);
+        const extractedKeywords = extractKeywords(analysisData);
         const contentIdeas = generateContentIdeas(extractedKeywords, domain);
         
         const fullAnalysis: AnalysisResult = {
-          ...data,
+          ...analysisData,
           keywords: extractedKeywords,
           contentIdeas,
         };
@@ -839,19 +841,21 @@ export default function DashboardPage() {
       let normalizedUrl = url.trim();
       if (!normalizedUrl.startsWith("http")) normalizedUrl = "https://" + normalizedUrl;
 
-      const analysisRes = await fetch("/api/analyze", {
+      const analysisRes = await fetch("/api/public/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: normalizedUrl }),
       });
 
       if (analysisRes.ok) {
-        const data = await analysisRes.json();
-        const extractedKeywords = extractKeywords(data);
+        const response = await analysisRes.json();
+        // API returns { success: true, data: {...} } - extract the data
+        const analysisData = response.data || response;
+        const extractedKeywords = extractKeywords(analysisData);
         const contentIdeas = generateContentIdeas(extractedKeywords, newSite.domain);
         
         const fullAnalysis: AnalysisResult = {
-          ...data,
+          ...analysisData,
           keywords: extractedKeywords,
           contentIdeas,
         };

@@ -61,8 +61,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user's organization
-    const { data: userData } = await supabase
+    // Get user's organization (use service client to bypass RLS)
+    let serviceClient;
+    try {
+      serviceClient = createServiceClient();
+    } catch {
+      serviceClient = supabase;
+    }
+    
+    const { data: userData } = await serviceClient
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
