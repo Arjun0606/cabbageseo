@@ -1,5 +1,5 @@
 /**
- * Sites API - Completely Rewritten for Reliability
+ * Sites API - Citation Intelligence
  * 
  * GET /api/sites - List all sites
  * POST /api/sites - Create a new site
@@ -8,305 +8,219 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
+
+// Helper to get typed service client (bypasses Supabase generated types for new schema)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getDb = () => createServiceClient() as any;
 
 // ============================================
-// HELPER: Get service client safely
+// GET: List all sites for user's org
 // ============================================
-function getServiceClient(): SupabaseClient | null {
-  try {
-    return createServiceClient();
-  } catch {
-    console.warn("[Sites API] Service client not available - missing SUPABASE_SERVICE_ROLE_KEY");
-    return null;
-  }
-}
 
-// ============================================
-// HELPER: Get or create organization for user
-// ============================================
-async function ensureUserHasOrg(
-  userId: string, 
-  email: string | undefined,
-  name: string | undefined,
-  client: SupabaseClient
-): Promise<string | null> {
-  // First check if user already has an org
-  const { data: userData, error: userError } = await client
-    .from("users")
-    .select("organization_id")
-    .eq("id", userId)
-    .maybeSingle();
-
-  if (userData?.organization_id) {
-    return userData.organization_id;
-  }
-
-  // No org found - create one
-  console.log("[Sites API] Creating organization for user:", email);
-
-  const orgSlug = (email?.split("@")[0]?.replace(/[^a-z0-9]/gi, "") || "user") + "-" + Date.now();
-  
-  const { data: newOrg, error: orgError } = await client
-    .from("organizations")
-    .insert({
-      name: name || email?.split("@")[0] || "My Organization",
-      slug: orgSlug,
-      plan: "starter",
-      subscription_status: "active",
-    })
-    .select("id")
-    .single();
-
-  if (orgError || !newOrg) {
-    console.error("[Sites API] Failed to create organization:", orgError);
-    return null;
-  }
-
-  const orgId = newOrg.id;
-
-  // Link user to org
-  if (userError || !userData) {
-    // User row doesn't exist - create it
-    await client.from("users").insert({
-      id: userId,
-      organization_id: orgId,
-      email: email || "",
-      name: name || null,
-      role: "owner",
-    });
-  } else {
-    // User exists but no org - update
-    await client.from("users").update({ organization_id: orgId }).eq("id", userId);
-  }
-
-  console.log("[Sites API] Created org:", orgId);
-  return orgId;
-}
-
-// ============================================
-// GET - List sites
-// ============================================
 export async function GET(request: NextRequest) {
   try {
-    // Create auth client
-    const supabase = await createClient();
-    if (!supabase) {
-      return NextResponse.json({ 
-        success: true, 
-        data: { sites: [], stats: { total: 0 } },
-        message: "Database not configured" 
-      });
-    }
-
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ 
-        success: true, 
-        data: { sites: [], stats: { total: 0 } },
-        message: "Not authenticated" 
-      });
-    }
-
-    // Use service client for DB operations (bypasses RLS)
-    const dbClient = getServiceClient() || supabase;
-
-    // Ensure user has an organization
-    const orgId = await ensureUserHasOrg(user.id, user.email, user.user_metadata?.name, dbClient);
-    
-    if (!orgId) {
-      return NextResponse.json({ 
-        success: true, 
-        data: { sites: [], stats: { total: 0 } },
-        message: "No organization" 
-      });
-    }
-
-    // Check if requesting a single site
-    const { searchParams } = new URL(request.url);
-    const siteId = searchParams.get("id");
-
-    if (siteId) {
-      // Get single site
-      const { data: site, error } = await dbClient
-        .from("sites")
-        .select("*")
-        .eq("id", siteId)
-        .eq("organization_id", orgId)
-        .single();
-
-      if (error || !site) {
-        return NextResponse.json({ error: "Site not found" }, { status: 404 });
-      }
-
-      return NextResponse.json({
-        success: true,
-        data: {
-          id: site.id,
-          domain: site.domain,
-          name: site.name,
-          geo_score_avg: site.geo_score_avg || site.aio_score_avg || 55,
-          seo_score: site.seo_score || 0,
-          autopilot_enabled: site.autopilot_enabled || false,
-          last_crawl_at: site.last_crawl_at,
-        },
-      });
-    }
-
-    // List all sites
-    const { data: sites, error } = await dbClient
-      .from("sites")
-      .select("id, domain, name, geo_score_avg, aio_score_avg, seo_score, autopilot_enabled, last_crawl_at, created_at")
-      .eq("organization_id", orgId)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("[Sites API] Query error:", error);
-      return NextResponse.json({ 
-        success: true, 
-        data: { sites: [], stats: { total: 0 } },
-        message: error.message 
-      });
-    }
-
-    const formattedSites = (sites || []).map(site => ({
-      id: site.id,
-      domain: site.domain,
-      name: site.name,
-      // CamelCase for SiteContext compatibility
-      seoScore: site.seo_score || 0,
-      aioScore: site.geo_score_avg || site.aio_score_avg || 55,
-      pagesCount: 0,
-      lastCrawlAt: site.last_crawl_at,
-      // Snake case for dashboard
-      geo_score_avg: site.geo_score_avg || site.aio_score_avg || 55,
-      seo_score: site.seo_score || 0,
-      autopilot_enabled: site.autopilot_enabled || false,
-      last_crawl_at: site.last_crawl_at,
-    }));
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        sites: formattedSites,
-        stats: { total: formattedSites.length },
-      },
-    });
-
-  } catch (error) {
-    console.error("[Sites API GET] Error:", error);
-    return NextResponse.json({ 
-      success: true, 
-      data: { sites: [], stats: { total: 0 } },
-      message: error instanceof Error ? error.message : "Unknown error"
-    });
-  }
-}
-
-// ============================================
-// POST - Create site
-// ============================================
-export async function POST(request: NextRequest) {
-  try {
-    // Create auth client
     const supabase = await createClient();
     if (!supabase) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }
 
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Use service client for DB operations
-    const dbClient = getServiceClient() || supabase;
+    const db = getDb();
 
-    // Ensure user has an organization
-    const orgId = await ensureUserHasOrg(user.id, user.email, user.user_metadata?.name, dbClient);
-    
-    if (!orgId) {
-      return NextResponse.json({ error: "Failed to create organization" }, { status: 500 });
-    }
-
-    // Parse request body
-    const body = await request.json();
-    const { url, domain: rawDomain, name } = body;
-
-    // Get domain from URL or use provided domain
-    let domain = rawDomain || "";
-    if (url && !domain) {
-      try {
-        const urlObj = new URL(url.startsWith("http") ? url : `https://${url}`);
-        domain = urlObj.hostname.replace(/^www\./, "");
-      } catch {
-        domain = url.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
-      }
-    }
-
-    if (!domain) {
-      return NextResponse.json({ error: "Domain is required" }, { status: 400 });
-    }
-
-    // Clean domain
-    domain = domain.replace(/^https?:\/\//, "").replace(/\/$/, "").replace(/^www\./, "");
-
-    // Check for duplicate
-    const { data: existing } = await dbClient
-      .from("sites")
-      .select("id")
-      .eq("organization_id", orgId)
-      .eq("domain", domain)
-      .maybeSingle();
-
-    if (existing) {
-      return NextResponse.json({ 
-        success: true,
-        data: existing,
-        message: "Site already exists",
-        existingSiteId: existing.id,
-      });
-    }
-
-    // Create site
-    const { data: newSite, error } = await dbClient
-      .from("sites")
-      .insert({
-        organization_id: orgId,
-        domain,
-        name: name || domain,
-        is_active: true,
-        autopilot_enabled: true,
-        geo_score_avg: 55, // Default score
-      })
-      .select()
+    // Get user's org
+    const { data: userData } = await db
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
       .single();
 
-    if (error) {
-      console.error("[Sites API] Insert error:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (!userData?.organization_id) {
+      return NextResponse.json({ sites: [] });
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      data: newSite,
-      id: newSite.id,
-    });
+    // Get sites
+    const { data: sites, error } = await db
+      .from("sites")
+      .select("*")
+      .eq("organization_id", userData.organization_id)
+      .order("created_at", { ascending: false });
 
+    if (error) {
+      console.error("[Sites API] Error fetching sites:", error);
+      return NextResponse.json({ error: "Failed to fetch sites" }, { status: 500 });
+    }
+
+    return NextResponse.json({ sites: sites || [] });
   } catch (error) {
-    console.error("[Sites API POST] Error:", error);
+    console.error("[Sites API] GET error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create site" },
+      { error: error instanceof Error ? error.message : "Server error" },
       { status: 500 }
     );
   }
 }
 
 // ============================================
-// DELETE - Delete site
+// POST: Create a new site
 // ============================================
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    let { domain } = body;
+
+    if (!domain) {
+      return NextResponse.json({ error: "Domain required" }, { status: 400 });
+    }
+
+    // Clean domain
+    domain = domain.trim().toLowerCase();
+    domain = domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+
+    const db = getDb();
+
+    // Get or create user's org
+    let { data: userData } = await db
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    let orgId = userData?.organization_id;
+
+    if (!orgId) {
+      // Create organization
+      const { data: newOrg, error: orgError } = await db
+        .from("organizations")
+        .insert({
+          name: user.email?.split("@")[0] || "My Organization",
+          plan: "free",
+          subscription_status: "active",
+        })
+        .select("id")
+        .single();
+
+      if (orgError || !newOrg) {
+        console.error("[Sites API] Failed to create org:", orgError);
+        return NextResponse.json({ error: "Failed to create organization" }, { status: 500 });
+      }
+
+      orgId = newOrg.id;
+
+      // Check if user exists
+      const { data: existingUser } = await db
+        .from("users")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+
+      if (existingUser) {
+        await db
+          .from("users")
+          .update({ organization_id: orgId })
+          .eq("id", user.id);
+      } else {
+        await db
+          .from("users")
+          .insert({
+            id: user.id,
+            email: user.email || "",
+            name: user.user_metadata?.name || null,
+            organization_id: orgId,
+            role: "owner",
+          });
+      }
+    }
+
+    // Check site limit based on plan
+    const { data: org } = await db
+      .from("organizations")
+      .select("plan")
+      .eq("id", orgId)
+      .single();
+
+    const plan = org?.plan || "free";
+    const siteLimit = plan === "agency" ? 50 : plan === "pro" ? 10 : plan === "starter" ? 3 : 1;
+
+    const { count: siteCount } = await db
+      .from("sites")
+      .select("*", { count: "exact", head: true })
+      .eq("organization_id", orgId);
+
+    if ((siteCount || 0) >= siteLimit) {
+      return NextResponse.json(
+        { error: `Site limit reached (${siteLimit}). Upgrade to add more sites.` },
+        { status: 403 }
+      );
+    }
+
+    // Check if site already exists
+    const { data: existingSite } = await db
+      .from("sites")
+      .select("id, domain")
+      .eq("organization_id", orgId)
+      .eq("domain", domain)
+      .single();
+
+    if (existingSite) {
+      return NextResponse.json({
+        success: true,
+        site: existingSite,
+        message: "Site already exists",
+      });
+    }
+
+    // Create site
+    const { data: site, error: siteError } = await db
+      .from("sites")
+      .insert({
+        organization_id: orgId,
+        domain: domain,
+        name: domain,
+        status: "active",
+        total_citations: 0,
+        citations_this_week: 0,
+        citations_last_week: 0,
+      })
+      .select()
+      .single();
+
+    if (siteError) {
+      console.error("[Sites API] Failed to create site:", siteError);
+      return NextResponse.json({ error: "Failed to create site" }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      site: site,
+    });
+  } catch (error) {
+    console.error("[Sites API] POST error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// ============================================
+// DELETE: Remove a site
+// ============================================
+
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -316,35 +230,48 @@ export async function DELETE(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const dbClient = getServiceClient() || supabase;
-    const orgId = await ensureUserHasOrg(user.id, user.email, user.user_metadata?.name, dbClient);
-
-    if (!orgId) {
-      return NextResponse.json({ error: "No organization" }, { status: 400 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const siteId = searchParams.get("id");
 
     if (!siteId) {
-      return NextResponse.json({ error: "Site ID is required" }, { status: 400 });
+      return NextResponse.json({ error: "Site ID required" }, { status: 400 });
     }
 
-    await dbClient
+    const db = getDb();
+
+    // Verify ownership
+    const { data: userData } = await db
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!userData?.organization_id) {
+      return NextResponse.json({ error: "No organization" }, { status: 403 });
+    }
+
+    const { data: site } = await db
       .from("sites")
-      .delete()
+      .select("id")
       .eq("id", siteId)
-      .eq("organization_id", orgId);
+      .eq("organization_id", userData.organization_id)
+      .single();
+
+    if (!site) {
+      return NextResponse.json({ error: "Site not found" }, { status: 404 });
+    }
+
+    // Delete site (cascades to citations and competitors)
+    await db.from("sites").delete().eq("id", siteId);
 
     return NextResponse.json({ success: true });
-
   } catch (error) {
-    console.error("[Sites API DELETE] Error:", error);
+    console.error("[Sites API] DELETE error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to delete site" },
+      { error: error instanceof Error ? error.message : "Server error" },
       { status: 500 }
     );
   }

@@ -5,17 +5,18 @@ import Link from "next/link";
 import {
   Check,
   X,
-  Sparkles,
+  Eye,
   Zap,
   Building2,
   ArrowRight,
-  Bot,
-  Rocket,
+  Crown,
+  Target,
+  Bell,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import {
   Accordion,
   AccordionContent,
@@ -25,25 +26,42 @@ import {
 import { createClient } from "@/lib/supabase/client";
 
 // ============================================
-// PRICING DATA
+// PRICING DATA - CITATION INTELLIGENCE
 // ============================================
 
 const plans = [
   {
+    id: "free",
+    name: "Free",
+    description: "Try citation tracking",
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    icon: Eye,
+    features: [
+      { text: "1 website", included: true },
+      { text: "3 citation checks/day", included: true },
+      { text: "7-day history", included: true },
+      { text: "Basic email alerts", included: true },
+      { text: "Competitor tracking", included: false },
+      { text: "API access", included: false },
+    ],
+    cta: "Start Free",
+    popular: false,
+  },
+  {
     id: "starter",
     name: "Starter",
-    description: "5x more value than competitors",
+    description: "For solopreneurs",
     monthlyPrice: 29,
     yearlyPrice: 24,
-    icon: Rocket,
+    icon: Target,
     features: [
       { text: "3 websites", included: true },
-      { text: "50 AI articles/month + images", included: true, highlight: true },
-      { text: "500 keywords tracked", included: true },
-      { text: "100 GEO visibility checks", included: true, highlight: true },
-      { text: "15 SEO audits/month", included: true },
-      { text: "All CMS integrations", included: true },
-      { text: "AI-generated featured images", included: true, highlight: true },
+      { text: "100 checks/month", included: true, highlight: true },
+      { text: "30-day history", included: true },
+      { text: "Real-time alerts", included: true, highlight: true },
+      { text: "2 competitors", included: true },
+      { text: "CSV export", included: true },
       { text: "Email support", included: true },
     ],
     cta: "Get Started",
@@ -52,302 +70,235 @@ const plans = [
   {
     id: "pro",
     name: "Pro",
-    description: "Best value for growing sites",
+    description: "For growing businesses",
     monthlyPrice: 79,
     yearlyPrice: 66,
     icon: Zap,
     features: [
       { text: "10 websites", included: true },
-      { text: "150 AI articles/month + images", included: true, highlight: true },
-      { text: "2,000 keywords tracked", included: true },
-      { text: "300 GEO visibility checks", included: true, highlight: true },
-      { text: "50 SEO audits/month", included: true },
-      { text: "Autopilot mode", included: true, highlight: true },
-      { text: "Priority queue", included: true },
+      { text: "Unlimited checks", included: true, highlight: true },
+      { text: "Unlimited history", included: true },
+      { text: "Hourly monitoring", included: true, highlight: true },
+      { text: "10 competitors", included: true, highlight: true },
+      { text: "API access", included: true },
       { text: "Priority support", included: true },
     ],
     cta: "Go Pro",
     popular: true,
   },
   {
-    id: "pro_plus",
+    id: "agency",
     name: "Agency",
-    description: "Unlimited power for agencies",
+    description: "For agencies & teams",
     monthlyPrice: 199,
     yearlyPrice: 166,
     icon: Building2,
     features: [
       { text: "50 websites", included: true },
-      { text: "500 AI articles/month + images", included: true, highlight: true },
-      { text: "10,000 keywords tracked", included: true },
-      { text: "1,000 GEO visibility checks", included: true, highlight: true },
-      { text: "200 SEO audits/month", included: true },
-      { text: "API access", included: true },
-      { text: "White-label reports", included: true },
-      { text: "Dedicated support + SLA", included: true },
+      { text: "Unlimited everything", included: true, highlight: true },
+      { text: "Unlimited competitors", included: true },
+      { text: "White-label reports", included: true, highlight: true },
+      { text: "Custom integrations", included: true },
+      { text: "Dedicated support", included: true },
+      { text: "SLA guarantee", included: true },
     ],
-    cta: "Go Agency",
+    cta: "Contact Sales",
     popular: false,
   },
 ];
 
 const faqs = [
   {
-    question: "1. What is GEO (Generative Engine Optimization)?",
-    answer: "GEO is the practice of optimizing your content to be cited by AI platforms like ChatGPT, Perplexity, and Google AI Overviews. Unlike traditional SEO which focuses on Google rankings, GEO focuses on making your content the go-to source for AI responses. This includes structured data, FAQ sections, direct answers, and citation-worthy content.",
+    question: "What is citation tracking?",
+    answer: "Citation tracking monitors when AI platforms like ChatGPT, Perplexity, and Google AI mention or reference your website in their responses. We check these platforms regularly and alert you when you're cited.",
   },
   {
-    question: "2. Is CabbageSEO fully automated?",
-    answer: "Yes! Everything is automated. Enter your URL, and CabbageSEO will research your site, analyze your audience, find keywords, create a content plan, and start generating articles weekly. You can moderate articles if you want, but it runs 100% on autopilot by default.",
+    question: "Which AI platforms do you monitor?",
+    answer: "We monitor Perplexity (real API with citations), Google AI Overviews (via Gemini with search grounding), and ChatGPT/SearchGPT. Each platform is checked with relevant queries about your domain and industry.",
   },
   {
-    question: "3. Does it work in languages other than English?",
-    answer: "Yes! We support multiple languages for content generation. The AI can create quality GEO-optimized articles in most major languages including Spanish, French, German, Portuguese, and more.",
+    question: "How often are citations checked?",
+    answer: "Free users get 3 manual checks per day. Starter gets 100 checks/month. Pro users get hourly automated monitoring. Agency users get continuous monitoring with custom frequency options.",
   },
   {
-    question: "4. How do I get started?",
-    answer: "Simply enter your website URL in our free analyzer to get your GEO score. Then sign up for a plan and we'll automatically research your site, audience, and keywords to start generating optimized content.",
+    question: "What's included in competitor tracking?",
+    answer: "You can add competitor domains and we'll track their AI citations alongside yours. See how you compare, get alerts when they get cited, and identify opportunities they're missing.",
   },
   {
-    question: "5. Can I moderate articles before publishing?",
-    answer: "Absolutely! You can review, edit, or reject any article before it goes live. You're in complete control. We can also notify you via email whenever new articles are ready for review.",
+    question: "Can I export my citation data?",
+    answer: "Yes! Starter and above can export to CSV. Agency users get white-label PDF reports for client presentations.",
   },
   {
-    question: "6. How good are the AI-generated articles?",
-    answer: "Our articles are specifically optimized for AI citation - they include FAQ sections, source citations, structured headings, and quotable paragraphs. Quality varies by topic, but our fact-checking system and citation requirements ensure accuracy. We continuously improve to meet or exceed human-level writing.",
-  },
-  {
-    question: "7. What CMS platforms do you support?",
-    answer: "We support WordPress, Webflow, Shopify, Ghost, HubSpot, Notion, Framer, and custom integrations via REST API or Webhooks. One-click publishing to any connected platform.",
-  },
-  {
-    question: "8. Can I edit articles?",
-    answer: "Yes! You can edit any article inside CabbageSEO before publishing. Make changes, add your own insights, or adjust the tone to match your brand voice.",
-  },
-  {
-    question: "9. How does internal linking work?",
-    answer: "CabbageSEO automatically scans your content to identify relevant anchor text opportunities and intelligently links to your most important pages. As your content library grows, it continuously updates and optimizes these connections.",
-  },
-  {
-    question: "10. What's the 'Export to Cursor' feature?",
-    answer: "This generates a structured markdown report of all your SEO/GEO issues that you can paste directly into any AI coding assistant. The AI can then help implement the fixes in your codebase. Perfect for developers!",
-  },
-  {
-    question: "11. What makes GEO different from SEO?",
-    answer: "SEO optimizes for Google search rankings. GEO optimizes for AI citations. AI platforms like ChatGPT value different things: clear definitions, FAQ sections, authoritative sources, and quotable paragraphs. We optimize for what AI actually uses when answering questions.",
-  },
-  {
-    question: "12. Can I try before I buy?",
-    answer: "Our URL analyzer is completely free - no signup required. You can analyze any website to see its GEO score. For the full dashboard with content generation, keyword tracking, and audits, you'll need a paid plan starting at $29/month.",
-  },
-  {
-    question: "13. Can I cancel my subscription?",
-    answer: "Yes, you can cancel your subscription at any time from your account settings. Your access will continue until the end of your current billing period.",
-  },
-  {
-    question: "14. Do you offer an API?",
-    answer: "Yes! Agency plans include full API access for custom integrations. You can programmatically generate content, check GEO scores, and publish to any platform.",
-  },
-  {
-    question: "15. How is GEO score calculated?",
-    answer: "We analyze your content across multiple factors: FAQ presence, schema markup, quotability, entity density, content freshness, source citations, and direct answer structure. We then test visibility on ChatGPT, Perplexity, and Google AI Overviews.",
+    question: "Is there a free trial?",
+    answer: "The Free plan is always free with limited features. We also offer a 14-day money-back guarantee on all paid plans if you're not satisfied.",
   },
 ];
 
-// ============================================
-// PRICING PAGE
-// ============================================
-
 export default function PricingPage() {
-  const [isYearly, setIsYearly] = useState(true);
+  const [isYearly, setIsYearly] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = createClient();
       if (supabase) {
         const { data: { user } } = await supabase.auth.getUser();
-        if (user) setIsLoggedIn(true);
+        if (user) {
+          setIsLoggedIn(true);
+          const { data: userData } = await supabase
+            .from("users")
+            .select("organization_id")
+            .eq("id", user.id)
+            .single();
+          const orgId = (userData as { organization_id?: string } | null)?.organization_id;
+          if (orgId) {
+            const { data: orgData } = await supabase
+              .from("organizations")
+              .select("plan")
+              .eq("id", orgId)
+              .single();
+            setCurrentPlan((orgData as { plan?: string } | null)?.plan || null);
+          }
+        }
       }
     };
     checkAuth();
   }, []);
 
-  const handleCheckout = async (planId: string) => {
-    setLoadingPlan(planId);
-    const billingPeriod = isYearly ? "yearly" : "monthly";
-    
-    // If not logged in, redirect to signup with plan info
-    if (!isLoggedIn) {
-      window.location.href = `/signup?plan=${planId}&billing=${billingPeriod}`;
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, interval: billingPeriod }),
-      });
-      const data = await response.json();
-      
-      if (data.success && data.data?.checkoutUrl) {
-        window.location.href = data.data.checkoutUrl;
-      } else if (data.error) {
-        console.error("Checkout error:", data.error);
-        alert(data.error);
-      }
-    } catch (error) {
-      console.error("Checkout error:", error);
-      alert("Failed to start checkout. Please try again.");
-    } finally {
-      setLoadingPlan(null);
+  const handleSelectPlan = (planId: string) => {
+    if (planId === "free") {
+      window.location.href = "/signup";
+    } else if (planId === "agency") {
+      window.location.href = "mailto:arjun@cabbageseo.com?subject=Agency Plan Inquiry";
+    } else {
+      window.location.href = `/api/billing/checkout?plan=${planId}&interval=${isYearly ? "year" : "month"}`;
     }
   };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-sm border-b border-zinc-800/50">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex items-center justify-between h-16">
+      {/* Header */}
+      <header className="border-b border-zinc-800">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-              <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-8 w-auto" />
-              <span className="font-bold text-lg">CabbageSEO</span>
-            </Link>
-            <div className="hidden md:flex items-center gap-8">
-              <Link href="/analyze" className="text-sm text-zinc-400 hover:text-white transition-colors">
-                Free Analysis
-              </Link>
-              <Link href="/pricing" className="text-sm text-white font-medium">
-                Pricing
-              </Link>
-            </div>
-            <div className="flex items-center gap-3">
+            <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-10 w-auto" />
+            <span className="font-bold text-xl tracking-tight text-white">CabbageSEO</span>
+          </Link>
+          <div className="flex items-center gap-3">
             {isLoggedIn ? (
               <Link href="/dashboard">
-                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                    Dashboard
-                  </Button>
+                <Button className="bg-emerald-600 hover:bg-emerald-500">Dashboard</Button>
               </Link>
             ) : (
               <>
                 <Link href="/login">
-                    <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">
-                      Log in
-                    </Button>
+                  <Button variant="ghost" className="text-zinc-400">Log in</Button>
                 </Link>
                 <Link href="/signup">
-                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                      Get Started
-                    </Button>
+                  <Button className="bg-emerald-600 hover:bg-emerald-500">Start Free</Button>
                 </Link>
               </>
             )}
           </div>
         </div>
-        </div>
-      </nav>
+      </header>
 
       {/* Hero */}
-      <section className="pt-32 pb-16 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
-            Simple, transparent pricing
-          </h1>
-          <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
-            Try our free URL analyzer. Choose a plan for the full dashboard.
-          </p>
+      <section className="py-16 px-4 text-center">
+        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          Simple, Transparent Pricing
+        </h1>
+        <p className="text-xl text-zinc-400 mb-8">
+          Start free. Upgrade when you need more citations tracked.
+        </p>
 
-          {/* Billing Toggle */}
-          <div className="flex items-center justify-center gap-4 mb-12">
-            <span className={`text-sm ${!isYearly ? "text-white" : "text-zinc-400"}`}>Monthly</span>
-            <Switch
-              checked={isYearly}
-              onCheckedChange={setIsYearly}
-              className="data-[state=checked]:bg-emerald-600"
-            />
-            <span className={`text-sm ${isYearly ? "text-white" : "text-zinc-400"}`}>
-              Yearly
-              <Badge className="ml-2 bg-emerald-500/20 text-emerald-400 border-0 text-xs">
-                Save 17%
-              </Badge>
-              </span>
-          </div>
+        {/* Billing Toggle */}
+        <div className="flex items-center justify-center gap-3 mb-12">
+          <span className={`text-sm ${!isYearly ? "text-white font-medium" : "text-zinc-500"}`}>
+            Monthly
+          </span>
+          <button
+            onClick={() => setIsYearly(!isYearly)}
+            className={`w-12 h-6 rounded-full p-1 transition-colors ${isYearly ? "bg-emerald-600" : "bg-zinc-700"}`}
+          >
+            <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isYearly ? "translate-x-6" : ""}`} />
+          </button>
+          <span className={`text-sm ${isYearly ? "text-white font-medium" : "text-zinc-500"}`}>
+            Yearly
+            <Badge className="bg-emerald-500/20 text-emerald-400 ml-2">Save 20%</Badge>
+          </span>
         </div>
       </section>
 
       {/* Pricing Cards */}
-      <section className="pb-20 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-6">
+      <section className="pb-20 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {plans.map((plan) => {
               const Icon = plan.icon;
-              const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
-              const yearlySavings = (plan.monthlyPrice - plan.yearlyPrice) * 12;
-
+              const isCurrentPlan = currentPlan === plan.id;
+              
               return (
                 <Card
                   key={plan.id}
-                  className={`relative overflow-hidden transition-all duration-300 ${
-                    plan.popular
-                      ? "bg-gradient-to-b from-emerald-900/30 to-zinc-900 border-emerald-500/50 scale-105 shadow-xl shadow-emerald-500/10"
-                      : "bg-zinc-900 border-zinc-800 hover:border-zinc-700"
+                  className={`bg-zinc-900 border-zinc-800 relative ${
+                    plan.popular ? "border-emerald-500 ring-1 ring-emerald-500" : ""
                   }`}
                 >
                   {plan.popular && (
-                    <div className="absolute top-0 left-0 right-0 bg-emerald-600 text-white text-center text-xs py-1 font-medium">
-                      MOST POPULAR
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-emerald-500 text-white">Most Popular</Badge>
                     </div>
                   )}
-                  
-                  <CardContent className={`p-6 ${plan.popular ? "pt-10" : ""}`}>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`p-2 rounded-lg ${plan.popular ? "bg-emerald-500/20" : "bg-zinc-800"}`}>
-                        <Icon className={`w-5 h-5 ${plan.popular ? "text-emerald-400" : "text-zinc-400"}`} />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-                        <p className="text-sm text-zinc-400">{plan.description}</p>
-                      </div>
-                  </div>
-                  
-                  <div className="mb-6">
-                      <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-white">${price}</span>
-                        <span className="text-zinc-400">/mo</span>
-                      </div>
-                    {isYearly && (
-                      <p className="text-sm text-emerald-400 mt-1">
-                        Save ${yearlySavings}/year
-                      </p>
-                    )}
-                  </div>
-                  
-                  <Button
-                    onClick={() => handleCheckout(plan.id)}
-                    disabled={loadingPlan === plan.id}
-                    className={`w-full mb-6 ${
+                  <CardContent className="pt-8">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Icon className="w-5 h-5 text-emerald-400" />
+                      <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+                    </div>
+                    <p className="text-zinc-500 text-sm mb-4">{plan.description}</p>
+
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold text-white">
+                        ${isYearly ? plan.yearlyPrice : plan.monthlyPrice}
+                      </span>
+                      {plan.monthlyPrice > 0 && (
+                        <span className="text-zinc-500">/month</span>
+                      )}
+                      {isYearly && plan.monthlyPrice > 0 && (
+                        <p className="text-xs text-zinc-500 mt-1">
+                          Billed ${plan.yearlyPrice * 12}/year
+                        </p>
+                      )}
+                    </div>
+
+                    <ul className="space-y-3 mb-6">
+                      {plan.features.map((feature, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          {feature.included ? (
+                            <Check className={`w-4 h-4 shrink-0 ${feature.highlight ? "text-emerald-400" : "text-zinc-500"}`} />
+                          ) : (
+                            <X className="w-4 h-4 text-zinc-600 shrink-0" />
+                          )}
+                          <span className={`text-sm ${feature.included ? (feature.highlight ? "text-white" : "text-zinc-300") : "text-zinc-600"}`}>
+                            {feature.text}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Button
+                      onClick={() => handleSelectPlan(plan.id)}
+                      disabled={isCurrentPlan}
+                      className={`w-full ${
                         plan.popular
-                        ? "bg-emerald-600 hover:bg-emerald-500 text-white"
-                          : "bg-zinc-800 hover:bg-zinc-700 text-white"
+                          ? "bg-emerald-600 hover:bg-emerald-500"
+                          : "bg-zinc-800 hover:bg-zinc-700"
                       }`}
                     >
-                      {loadingPlan === plan.id ? "Loading..." : plan.cta}
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                  
-                  <ul className="space-y-3">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm">
-                          <Check className={`w-4 h-4 mt-0.5 shrink-0 ${feature.highlight ? "text-emerald-400" : "text-zinc-400"}`} />
-                          <span className={feature.highlight ? "text-white font-medium" : "text-zinc-400"}>
-                          {feature.text}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                      {isCurrentPlan ? "Current Plan" : plan.cta}
+                      {!isCurrentPlan && <ArrowRight className="w-4 h-4 ml-2" />}
+                    </Button>
                   </CardContent>
                 </Card>
               );
@@ -356,93 +307,123 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Free Tier */}
-      <section className="py-16 px-6 bg-zinc-900/30 border-y border-zinc-800/50">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Try it free first</h2>
-          <p className="text-zinc-400 mb-8">
-            Our URL analyzer is completely free. Paste any URL to see its AI visibility score, 
-            SEO issues, and recommendations — no signup required.
-          </p>
-          <Link href="/analyze">
-            <Button size="lg" variant="outline" className="border-zinc-600 text-white hover:bg-zinc-800">
-              Try Free Analysis
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
+      {/* Comparison Table */}
+      <section className="py-16 px-4 bg-zinc-900/50">
+        <div className="container mx-auto max-w-4xl">
+          <h2 className="text-2xl font-bold text-white text-center mb-8">Compare Plans</h2>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-zinc-800">
+                  <th className="text-left py-4 px-4 text-zinc-400 font-medium">Feature</th>
+                  <th className="text-center py-4 px-4 text-zinc-400 font-medium">Free</th>
+                  <th className="text-center py-4 px-4 text-zinc-400 font-medium">Starter</th>
+                  <th className="text-center py-4 px-4 text-emerald-400 font-medium">Pro</th>
+                  <th className="text-center py-4 px-4 text-zinc-400 font-medium">Agency</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-zinc-800/50">
+                  <td className="py-3 px-4 text-zinc-300">Websites</td>
+                  <td className="text-center py-3 px-4 text-zinc-400">1</td>
+                  <td className="text-center py-3 px-4 text-zinc-400">3</td>
+                  <td className="text-center py-3 px-4 text-white font-medium">10</td>
+                  <td className="text-center py-3 px-4 text-zinc-400">50</td>
+                </tr>
+                <tr className="border-b border-zinc-800/50">
+                  <td className="py-3 px-4 text-zinc-300">Citation Checks</td>
+                  <td className="text-center py-3 px-4 text-zinc-400">3/day</td>
+                  <td className="text-center py-3 px-4 text-zinc-400">100/mo</td>
+                  <td className="text-center py-3 px-4 text-emerald-400 font-medium">Unlimited</td>
+                  <td className="text-center py-3 px-4 text-zinc-400">Unlimited</td>
+                </tr>
+                <tr className="border-b border-zinc-800/50">
+                  <td className="py-3 px-4 text-zinc-300">Competitors</td>
+                  <td className="text-center py-3 px-4 text-zinc-600">—</td>
+                  <td className="text-center py-3 px-4 text-zinc-400">2</td>
+                  <td className="text-center py-3 px-4 text-white font-medium">10</td>
+                  <td className="text-center py-3 px-4 text-zinc-400">Unlimited</td>
+                </tr>
+                <tr className="border-b border-zinc-800/50">
+                  <td className="py-3 px-4 text-zinc-300">Check Frequency</td>
+                  <td className="text-center py-3 px-4 text-zinc-400">Manual</td>
+                  <td className="text-center py-3 px-4 text-zinc-400">Daily</td>
+                  <td className="text-center py-3 px-4 text-emerald-400 font-medium">Hourly</td>
+                  <td className="text-center py-3 px-4 text-zinc-400">Custom</td>
+                </tr>
+                <tr className="border-b border-zinc-800/50">
+                  <td className="py-3 px-4 text-zinc-300">History</td>
+                  <td className="text-center py-3 px-4 text-zinc-400">7 days</td>
+                  <td className="text-center py-3 px-4 text-zinc-400">30 days</td>
+                  <td className="text-center py-3 px-4 text-white font-medium">Unlimited</td>
+                  <td className="text-center py-3 px-4 text-zinc-400">Unlimited</td>
+                </tr>
+                <tr className="border-b border-zinc-800/50">
+                  <td className="py-3 px-4 text-zinc-300">API Access</td>
+                  <td className="text-center py-3 px-4 text-zinc-600">—</td>
+                  <td className="text-center py-3 px-4 text-zinc-600">—</td>
+                  <td className="text-center py-3 px-4"><Check className="w-4 h-4 text-emerald-400 mx-auto" /></td>
+                  <td className="text-center py-3 px-4"><Check className="w-4 h-4 text-zinc-400 mx-auto" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
       {/* FAQs */}
-      <section className="py-20 px-6">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Questions?</h2>
-          </div>
-            <Accordion type="single" collapsible className="w-full">
-              {faqs.map((faq, i) => (
-                <AccordionItem key={i} value={`faq-${i}`} className="border-zinc-800">
-                  <AccordionTrigger className="text-left text-zinc-100 hover:text-white">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-zinc-400">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-3xl">
+          <h2 className="text-2xl font-bold text-white text-center mb-8">
+            Frequently Asked Questions
+          </h2>
+          
+          <Accordion type="single" collapsible className="space-y-2">
+            {faqs.map((faq, i) => (
+              <AccordionItem key={i} value={`faq-${i}`} className="border border-zinc-800 rounded-lg px-4 bg-zinc-900">
+                <AccordionTrigger className="text-white hover:no-underline py-4">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-zinc-400 pb-4">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-20 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="p-8 bg-gradient-to-br from-emerald-900/30 to-zinc-900 rounded-2xl border border-emerald-500/30">
-            <Bot className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
-            <h2 className="text-3xl font-bold text-white mb-4">
-              Ready to get cited by AI?
-          </h2>
-            <p className="text-zinc-400 mb-8">
-              Start with a free analysis, then upgrade when you&apos;re ready.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              className="bg-emerald-600 hover:bg-emerald-500 text-white"
-              onClick={() => handleCheckout("starter")}
-              disabled={loadingPlan !== null}
-            >
-                Get Started — $29/mo
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-            <Link href="/analyze">
-              <Button size="lg" variant="outline" className="border-zinc-600 text-white hover:bg-zinc-800">
-                  Try Free Analysis
-              </Button>
-            </Link>
-            </div>
-            <p className="text-xs text-zinc-400 mt-4">
-              Plans start at $29/month
-            </p>
-          </div>
-        </div>
+      {/* CTA */}
+      <section className="py-16 px-4 text-center">
+        <h2 className="text-2xl font-bold text-white mb-4">
+          Ready to Track Your AI Citations?
+        </h2>
+        <p className="text-zinc-400 mb-6">
+          Start free. See if AI knows about your website.
+        </p>
+        <Link href="/signup">
+          <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500">
+            <Eye className="w-5 h-5 mr-2" />
+            Start Free
+          </Button>
+        </Link>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-800 py-8">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-              <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-6 w-auto" />
-              <span className="text-sm text-zinc-400">© 2025 CabbageSEO</span>
-            </div>
-            <div className="flex gap-6 text-sm text-zinc-400">
+      <footer className="border-t border-zinc-800 py-8 px-4">
+        <div className="container mx-auto max-w-5xl flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-8 w-auto" />
+            <span className="font-bold text-white">CabbageSEO</span>
+          </div>
+          <nav className="flex items-center gap-6 text-sm text-zinc-500">
+            <Link href="/docs" className="hover:text-white">Docs</Link>
+            <Link href="/feedback" className="hover:text-white">Feedback</Link>
             <Link href="/privacy" className="hover:text-white">Privacy</Link>
             <Link href="/terms" className="hover:text-white">Terms</Link>
-              <a href="mailto:arjun@cabbageseo.com" className="hover:text-white">Contact</a>
-              <a href="https://x.com/Arjun06061" target="_blank" rel="noopener noreferrer" className="hover:text-white">𝕏 Twitter</a>
-            </div>
-          </div>
+            <a href="https://x.com/Arjun06061" target="_blank" rel="noopener noreferrer" className="hover:text-white">𝕏 Twitter</a>
+          </nav>
         </div>
       </footer>
     </div>

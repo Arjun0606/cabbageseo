@@ -91,7 +91,7 @@ export default function FeedbackPage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="https://x.com/ArzBusiness"
+              href="https://x.com/Arjun06061"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -105,7 +105,7 @@ export default function FeedbackPage() {
             </a>
             
             <a href="mailto:arjun@cabbageseo.com">
-              <Button size="lg" variant="outline" className="border-zinc-700 w-full sm:w-auto">
+              <Button size="lg" className="bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-600 w-full sm:w-auto">
                 <Mail className="w-5 h-5 mr-2" />
                 Email: arjun@cabbageseo.com
               </Button>
@@ -244,7 +244,7 @@ export default function FeedbackPage() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="https://x.com/ArzBusiness"
+              href="https://x.com/Arjun06061"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -252,13 +252,13 @@ export default function FeedbackPage() {
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                 </svg>
-                DM @ArzBusiness
+                DM @Arjun06061
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </a>
             
             <Link href="/dashboard">
-              <Button size="lg" variant="outline" className="border-zinc-700 w-full sm:w-auto">
+              <Button size="lg" className="bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-600 w-full sm:w-auto">
                 Back to Dashboard
               </Button>
             </Link>

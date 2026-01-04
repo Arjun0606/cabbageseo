@@ -102,27 +102,29 @@ export async function GET() {
       orgData = org as { plan: string; subscription_status: string } | null;
     }
 
-    // Get sites
+    // Get sites with citation data
     let sites: Array<{
       id: string;
       domain: string;
-      geoScore: number;
-      autopilotEnabled: boolean;
+      totalCitations: number;
+      citationsThisWeek: number;
+      lastCheckedAt: string | null;
     }> = [];
 
     if (orgId) {
       const { data: sitesData } = await db
         .from("sites")
-        .select("id, domain, name, geo_score_avg, aio_score_avg, seo_score, autopilot_enabled")
+        .select("id, domain, name, total_citations, citations_this_week, last_checked_at")
         .eq("organization_id", orgId)
         .order("created_at", { ascending: false });
 
       if (sitesData) {
-        sites = sitesData.map(s => ({
+        sites = sitesData.map((s: { id: string; domain: string; total_citations?: number; citations_this_week?: number; last_checked_at?: string }) => ({
           id: s.id,
           domain: s.domain,
-          geoScore: s.geo_score_avg || s.aio_score_avg || 55,
-          autopilotEnabled: s.autopilot_enabled ?? true,
+          totalCitations: s.total_citations || 0,
+          citationsThisWeek: s.citations_this_week || 0,
+          lastCheckedAt: s.last_checked_at || null,
         }));
       }
     }

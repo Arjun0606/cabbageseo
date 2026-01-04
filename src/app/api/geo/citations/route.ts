@@ -1,161 +1,133 @@
 /**
- * GEO Citations API
+ * Citations API
+ * GET /api/geo/citations - Get all citations for a site
  * 
- * GET /api/geo/citations?siteId=xxx
- * 
- * Returns citations for a site - when AI platforms cite your content.
+ * Query params:
+ * - siteId: required
+ * - all: if true, returns all citations (not just summary)
+ * - platform: filter by platform
+ * - limit: max results (default 50)
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { requireSubscription } from "@/lib/api/require-subscription";
-import { citationTracker } from "@/lib/geo/citation-tracker";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     if (!supabase) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Database not configured" }, { status: 503 });
     }
 
-    // Auth check
-    const subscription = await requireSubscription(supabase);
-    if (!subscription.authorized) {
-      return subscription.error!;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const siteId = req.nextUrl.searchParams.get("siteId");
+    const { searchParams } = new URL(request.url);
+    const siteId = searchParams.get("siteId");
+    const all = searchParams.get("all") === "true";
+    const platform = searchParams.get("platform");
+    const limit = parseInt(searchParams.get("limit") || "50");
+
     if (!siteId) {
-      return NextResponse.json(
-        { error: "siteId is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "siteId required" }, { status: 400 });
     }
 
-    // Get citations from database
-    const { data: citationsRaw, error } = await (supabase as any)
-      .from("ai_citations")
-      .select("*")
-      .eq("site_id", siteId)
-      .order("discovered_at", { ascending: false })
-      .limit(50);
+    // Use service client to bypass RLS for complex queries
+    // Cast to any because Supabase types don't include the new Citation Intelligence schema yet
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = createServiceClient() as any;
 
-    if (error) {
-      console.error("Error fetching citations:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch citations" },
-        { status: 500 }
-      );
-    }
-
-    const citations = (citationsRaw || []) as Array<{ platform: string; query: string; snippet: string; discovered_at: string }>;
-
-    // Get citation stats
-    const totalCitations = citations.length;
-    const platformBreakdown = {
-      perplexity: citations.filter(c => c.platform === "perplexity").length,
-      chatgpt: citations.filter(c => c.platform === "chatgpt").length,
-      googleAio: citations.filter(c => c.platform === "google_aio").length,
-    };
-
-    // Get configured platforms
-    const configuredPlatforms = citationTracker.getConfiguredPlatforms();
-
-    return NextResponse.json({
-      success: true,
-      citations: citations || [],
-      stats: {
-        total: totalCitations,
-        platforms: platformBreakdown,
-      },
-      platformStatus: configuredPlatforms,
-    });
-  } catch (error) {
-    console.error("Citations API error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch citations" },
-      { status: 500 }
-    );
-  }
-}
-
-// POST: Run a citation check now
-export async function POST(req: NextRequest) {
-  try {
-    const supabase = await createClient();
-    if (!supabase) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
-    }
-
-    // Auth check
-    const subscription = await requireSubscription(supabase);
-    if (!subscription.authorized) {
-      return subscription.error!;
-    }
-
-    const { siteId } = await req.json();
-    if (!siteId) {
-      return NextResponse.json(
-        { error: "siteId is required" },
-        { status: 400 }
-      );
-    }
-
-    // Get site info
-    const { data: siteData } = await (supabase as any)
-      .from("sites")
-      .select("domain, main_topics")
-      .eq("id", siteId)
+    // Verify site belongs to user's org
+    const { data: userData } = await db
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
       .single();
 
-    const site = siteData as { domain: string; main_topics: string[] } | null;
-    if (!site) {
-      return NextResponse.json(
-        { error: "Site not found" },
-        { status: 404 }
-      );
+    if (!userData?.organization_id) {
+      return NextResponse.json({ error: "No organization" }, { status: 403 });
     }
 
-    // Get configured platforms
-    const configuredPlatforms = citationTracker.getConfiguredPlatforms();
+    const { data: site } = await db
+      .from("sites")
+      .select("id, domain, organization_id, total_citations, citations_this_week, citations_last_week")
+      .eq("id", siteId)
+      .eq("organization_id", userData.organization_id)
+      .single();
 
-    // Run citation check across ALL platforms
-    const newCitations = await citationTracker.checkSiteCitations(
-      siteId,
-      site.domain,
-      site.main_topics || []
-    );
+    if (!site) {
+      return NextResponse.json({ error: "Site not found" }, { status: 404 });
+    }
 
-    // Group citations by platform
-    const citationsByPlatform = {
-      perplexity: newCitations.filter(c => c.platform === "perplexity").length,
-      chatgpt: newCitations.filter(c => c.platform === "chatgpt").length,
-      googleAio: newCitations.filter(c => c.platform === "google_aio").length,
+    // Build citations query
+    let query = db
+      .from("citations")
+      .select("id, site_id, platform, query, snippet, page_url, confidence, cited_at, last_checked_at, created_at")
+      .eq("site_id", siteId)
+      .order("cited_at", { ascending: false });
+
+    if (platform) {
+      query = query.eq("platform", platform);
+    }
+
+    query = query.limit(limit);
+
+    const { data: citations, error: citationsError } = await query;
+
+    if (citationsError) {
+      console.error("Citations query error:", citationsError);
+      return NextResponse.json({ error: "Failed to fetch citations" }, { status: 500 });
+    }
+
+    // Type assertion for citations
+    type CitationRow = { id: string; platform: string; query: string; snippet: string; page_url: string; confidence: string; cited_at: string; last_checked_at: string };
+    const citationsList = (citations || []) as CitationRow[];
+
+    // Platform breakdown
+    const byPlatform = {
+      perplexity: citationsList.filter(c => c.platform === "perplexity").length,
+      google_aio: citationsList.filter(c => c.platform === "google_aio").length,
+      chatgpt: citationsList.filter(c => c.platform === "chatgpt").length,
     };
 
-    return NextResponse.json({
-      success: true,
-      newCitations: newCitations.length,
-      citationsByPlatform,
-      citations: newCitations,
-      platformStatus: configuredPlatforms,
-      message: `Checked ${Object.values(configuredPlatforms).filter(Boolean).length} platforms: ${
-        Object.entries(configuredPlatforms)
-          .filter(([_, configured]) => configured)
-          .map(([name]) => name)
-          .join(", ")
-      }`,
-    });
+    // Calculate change percentage
+    const lastWeek = site.citations_last_week || 0;
+    const thisWeek = site.citations_this_week || 0;
+    const change = lastWeek > 0 ? Math.round(((thisWeek - lastWeek) / lastWeek) * 100) : (thisWeek > 0 ? 100 : 0);
+
+    if (all) {
+      // Return full citations list
+      return NextResponse.json({
+        success: true,
+        data: {
+          total: site.total_citations || citationsList.length,
+          thisWeek,
+          lastWeek,
+          change,
+          byPlatform,
+          citations: citationsList,
+        },
+      });
+    } else {
+      // Return summary with recent citations
+      return NextResponse.json({
+        success: true,
+        data: {
+          total: site.total_citations || citationsList.length,
+          thisWeek,
+          lastWeek,
+          change,
+          byPlatform,
+          recent: citationsList.slice(0, 5),
+        },
+      });
+    }
   } catch (error) {
-    console.error("Citation check error:", error);
+    console.error("[Citations API] Error:", error);
     return NextResponse.json(
-      { error: "Failed to run citation check" },
+      { error: error instanceof Error ? error.message : "Server error" },
       { status: 500 }
     );
   }

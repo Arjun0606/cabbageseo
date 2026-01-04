@@ -2,11 +2,11 @@
 
 /**
  * ============================================
- * LAYOUT SIDEBAR - REBUILT
+ * CITATION INTELLIGENCE SIDEBAR
  * ============================================
  * 
- * Clean, simple navigation.
- * No references to deleted pages.
+ * Navigation for the new Citation Intelligence product.
+ * Focused, simple, citation-centric.
  */
 
 import { useState, useEffect } from "react";
@@ -15,17 +15,16 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Search,
-  FileText,
+  Eye,
+  Target,
+  Bell,
   Settings,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
-  Target,
-  Shield,
   Crown,
-  Plug,
-  Home,
+  BarChart3,
+  Search,
+  HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -53,37 +52,31 @@ const navItems: NavItemType[] = [
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    description: "Overview & analysis",
+    description: "Citation overview",
   },
   {
-    name: "Content",
-    href: "/content",
-    icon: FileText,
-    description: "AI-generated articles",
+    name: "Citations",
+    href: "/citations",
+    icon: Eye,
+    description: "All your citations",
   },
   {
-    name: "Keywords",
-    href: "/keywords",
-    icon: Search,
-    description: "Keyword opportunities",
-  },
-  {
-    name: "GEO",
-    href: "/geo",
+    name: "Competitors",
+    href: "/competitors",
     icon: Target,
-    description: "AI visibility scores",
+    description: "Track competitors",
   },
   {
-    name: "SEO Audit",
-    href: "/audit",
-    icon: Shield,
-    description: "Technical health",
+    name: "Alerts",
+    href: "/settings/notifications",
+    icon: Bell,
+    description: "Citation alerts",
   },
   {
-    name: "Integrations",
-    href: "/settings/integrations",
-    icon: Plug,
-    description: "Connect your CMS",
+    name: "Analyzer",
+    href: "/analyze",
+    icon: Search,
+    description: "Check any page",
   },
 ];
 
@@ -99,14 +92,14 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [plan, setPlan] = useState("starter");
-  const [usage, setUsage] = useState({ articles: 0, limit: 50 });
+  const [usage, setUsage] = useState({ checks: 0, limit: 100 });
 
   // Fetch plan and usage
   useEffect(() => {
     fetch("/api/me", { credentials: "include" })
       .then(res => res.json())
       .then(data => {
-        setPlan(data.organization?.plan || "starter");
+        setPlan(data.organization?.plan || "free");
       })
       .catch(() => {});
       
@@ -114,8 +107,8 @@ export function Sidebar({ className }: SidebarProps) {
       .then(res => res.json())
       .then(data => {
         setUsage({
-          articles: data.data?.usage?.articlesUsed || 0,
-          limit: data.data?.limits?.articles || 50,
+          checks: data.data?.usage?.checksUsed || 0,
+          limit: data.data?.limits?.checks || 100,
         });
       })
       .catch(() => {});
@@ -191,22 +184,22 @@ export function Sidebar({ className }: SidebarProps) {
           </Link>
         </div>
 
-        {/* Generate Article CTA */}
+        {/* Check Now CTA */}
         <div className={cn("p-3 border-b border-zinc-800", collapsed && "px-2")}>
-          <Link href="/content/new">
+          <Link href="/dashboard">
             {collapsed ? (
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
                   <Button size="icon" className="w-full bg-emerald-600 hover:bg-emerald-500">
-                    <Sparkles className="h-4 w-4" />
+                    <Eye className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="right">Generate Article</TooltipContent>
+                <TooltipContent side="right">Check Citations</TooltipContent>
               </Tooltip>
             ) : (
               <Button className="w-full gap-2 bg-emerald-600 hover:bg-emerald-500 text-white">
-                <Sparkles className="h-4 w-4" />
-                Generate Article
+                <Eye className="h-4 w-4" />
+                Check Citations
               </Button>
             )}
           </Link>
@@ -225,11 +218,11 @@ export function Sidebar({ className }: SidebarProps) {
           {!collapsed && (
             <div className="space-y-2 px-2 pb-2">
               <div className="flex justify-between text-xs">
-                <span className="text-zinc-500">Articles</span>
-                <span className="text-zinc-400">{usage.articles}/{usage.limit}</span>
+                <span className="text-zinc-500">Checks</span>
+                <span className="text-zinc-400">{usage.checks}/{usage.limit}</span>
               </div>
               <Progress 
-                value={Math.min(100, (usage.articles / usage.limit) * 100)} 
+                value={Math.min(100, (usage.checks / usage.limit) * 100)} 
                 className="h-1.5"
               />
             </div>
@@ -243,7 +236,7 @@ export function Sidebar({ className }: SidebarProps) {
                   <Crown className="h-4 w-4 text-emerald-400" />
                   <span className="text-sm font-medium text-white">Upgrade to Pro</span>
                 </div>
-                <p className="text-xs text-zinc-400">Unlimited articles</p>
+                <p className="text-xs text-zinc-400">Unlimited checks + competitors</p>
               </div>
             </Link>
           )}
@@ -258,11 +251,21 @@ export function Sidebar({ className }: SidebarProps) {
             }}
           />
 
+          {/* Help */}
+          <NavItem
+            item={{
+              name: "Help",
+              href: "/docs",
+              icon: HelpCircle,
+              description: "Documentation",
+            }}
+          />
+
           {/* Collapse Toggle */}
           <div className="flex items-center justify-between pt-2">
             {!collapsed && (
-              <Badge variant="outline" className="text-xs text-zinc-400 border-zinc-700">
-                {plan.charAt(0).toUpperCase() + plan.slice(1)}
+              <Badge variant="outline" className="text-xs text-zinc-400 border-zinc-700 capitalize">
+                {plan}
               </Badge>
             )}
             <Button

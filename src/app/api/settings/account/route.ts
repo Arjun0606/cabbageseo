@@ -291,7 +291,7 @@ export async function DELETE() {
         // Delete all site-related data
         await serviceClient.from("aio_analyses").delete().in("site_id", siteIds);
         await serviceClient.from("entities").delete().in("site_id", siteIds);
-        await serviceClient.from("ai_citations").delete().in("site_id", siteIds);
+        await serviceClient.from("citations").delete().in("site_id", siteIds);
         await serviceClient.from("content").delete().in("site_id", siteIds);
         await serviceClient.from("keywords").delete().in("site_id", siteIds);
         await serviceClient.from("issues").delete().in("site_id", siteIds);

@@ -1020,7 +1020,7 @@ export const scheduledWeeklyProgressReport = inngest.createFunction(
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
         
         const { data: citations } = await (supabase as any)
-          .from("ai_citations")
+          .from("citations")
           .select("id")
           .eq("site_id", primarySite.id)
           .gte("cited_at", oneWeekAgo.toISOString());
@@ -1081,6 +1081,130 @@ export const scheduledWeeklyProgressReport = inngest.createFunction(
 );
 
 // ============================================
+// HOURLY CITATION CHECK (PRO USERS)
+// ============================================
+
+export const scheduledHourlyCitationCheck = inngest.createFunction(
+  {
+    id: "scheduled-hourly-citation-check",
+    name: "Hourly AI Citation Check (Pro)",
+  },
+  { cron: "0 * * * *" }, // Every hour
+  async ({ step }) => {
+    const supabase = createServiceClient();
+    
+    // Get Pro and Agency organizations
+    const proOrgs = await step.run("get-pro-orgs", async () => {
+      const { data } = await (supabase as any)
+        .from("organizations")
+        .select("id")
+        .in("plan", ["pro", "pro-plus"]);
+      return data?.map((o: { id: string }) => o.id) || [];
+    });
+
+    if (proOrgs.length === 0) {
+      return { checked: 0, message: "No Pro users" };
+    }
+
+    // Get sites for Pro orgs
+    const sites = await step.run("get-pro-sites", async () => {
+      const { data } = await (supabase as any)
+        .from("sites")
+        .select("id, domain, organization_id")
+        .in("organization_id", proOrgs)
+        .eq("status", "active");
+      return data || [];
+    });
+
+    const results = [];
+
+    for (const site of sites) {
+      const result = await step.run(`hourly-check-${site.id}`, async () => {
+        try {
+          // Call the citation check API internally
+          const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/geo/citations/check`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              siteId: site.id, 
+              domain: site.domain,
+              internal: true 
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            return { siteId: site.id, ...data };
+          }
+          return { siteId: site.id, error: "API failed" };
+        } catch (error) {
+          console.error(`Hourly check failed for ${site.domain}:`, error);
+          return { siteId: site.id, error: true };
+        }
+      });
+      
+      results.push(result);
+    }
+
+    return {
+      checked: sites.length,
+      proOrgs: proOrgs.length,
+      results,
+    };
+  }
+);
+
+// ============================================
+// CITATION ALERT SENDER
+// Triggered when new citation is found
+// ============================================
+
+export const sendCitationAlert = inngest.createFunction(
+  {
+    id: "send-citation-alert",
+    name: "Send Citation Alert Email",
+  },
+  { event: "citation/new.found" },
+  async ({ event, step }) => {
+    const { siteId, domain, platform, query, snippet } = event.data;
+
+    await step.run("send-alert-email", async () => {
+      const supabase = createServiceClient();
+      
+      // Get site owner email
+      const { data: site } = await (supabase as any)
+        .from("sites")
+        .select("organization_id")
+        .eq("id", siteId)
+        .single();
+      
+      if (!site) return;
+
+      const { data: users } = await (supabase as any)
+        .from("users")
+        .select("email")
+        .eq("organization_id", site.organization_id)
+        .limit(1);
+      
+      if (!users?.[0]?.email) return;
+
+      // Send email using the dedicated citation alert method
+      const { emailService } = await import("@/lib/email");
+      await emailService.sendCitationAlert(
+        users[0].email,
+        domain,
+        platform,
+        query,
+        snippet || "",
+        1  // totalCitations - we don't have this info here, just show 1
+      );
+    });
+
+    return { success: true };
+  }
+);
+
+// ============================================
 // EXPORT ALL FUNCTIONS
 // ============================================
 
@@ -1096,7 +1220,9 @@ export const functions = [
   scheduledDailyAnalytics,
   scheduledWeeklyContent,           // Weekly GEO content generation
   generateFirstArticle,             // First article when site added
-  scheduledDailyCitationCheck,      // Daily citation monitoring
+  scheduledDailyCitationCheck,      // Daily citation monitoring (all users)
+  scheduledHourlyCitationCheck,     // Hourly citation monitoring (Pro)
   scheduledWeeklyProgressReport,    // Weekly progress report emails
+  sendCitationAlert,                // Email when new citation found
 ];
 

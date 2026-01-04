@@ -441,7 +441,7 @@ export class CitationTracker {
     for (const citation of citations) {
       // Check if citation already exists (avoid duplicates)
       const { data: existing } = await supabase
-        .from("ai_citations")
+        .from("citations")
         .select("id")
         .eq("site_id", siteId)
         .eq("query", citation.query)
@@ -451,7 +451,7 @@ export class CitationTracker {
 
       if (existing) continue;
 
-      await (supabase as any).from("ai_citations").insert({
+      await (supabase as any).from("citations").insert({
         site_id: siteId,
         platform: citation.platform,
         query: citation.query,
@@ -505,7 +505,7 @@ export class CitationTracker {
 
       // Get total citation count
       const { count } = await (supabase as any)
-        .from("ai_citations")
+        .from("citations")
         .select("id", { count: "exact" })
         .eq("site_id", siteId);
 
@@ -556,7 +556,7 @@ export class CitationTracker {
 
     // Get citations
     const { data: citationsRaw } = await (supabase as any)
-      .from("ai_citations")
+      .from("citations")
       .select("*")
       .eq("site_id", siteId)
       .gte("discovered_at", startDate.toISOString())
@@ -568,7 +568,7 @@ export class CitationTracker {
     // Get previous period for comparison
     const prevStartDate = new Date(startDate.getTime() - days * 24 * 60 * 60 * 1000);
     const { data: prevCitations } = await (supabase as any)
-      .from("ai_citations")
+      .from("citations")
       .select("id")
       .eq("site_id", siteId)
       .gte("discovered_at", prevStartDate.toISOString())
