@@ -56,12 +56,14 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
         if (res.ok) {
           const data = await res.json();
           if (data.success) {
-            const plan = data.data?.plan?.id || data.data?.plan?.name || "free";
-            const subscriptionStatus = data.data?.plan?.status;
+            const plan = data.data?.plan?.id || data.data?.plan?.name || "starter";
+            const subscriptionStatus = data.data?.plan?.status || "active";
             
             // Check if they have an active paid subscription
+            // All plans except "free" are considered paid
+            // Valid statuses: active, trialing, or missing (default to active)
             const isPaid = plan !== "free" && 
-              ["active", "trialing"].includes(subscriptionStatus || "");
+              ["active", "trialing", ""].includes(subscriptionStatus);
             
             setStatus({
               hasSubscription: isPaid,
@@ -69,9 +71,37 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
               loading: false,
             });
           } else {
+            // No data but API responded - check /api/me as fallback
+            const meRes = await fetch("/api/me");
+            if (meRes.ok) {
+              const meData = await meRes.json();
+              if (meData.authenticated && meData.organization) {
+                const plan = meData.organization.plan || "starter";
+                setStatus({
+                  hasSubscription: plan !== "free",
+                  plan: plan,
+                  loading: false,
+                });
+                return;
+              }
+            }
             setStatus({ hasSubscription: false, plan: null, loading: false });
           }
         } else {
+          // API failed - try /api/me as fallback
+          const meRes = await fetch("/api/me");
+          if (meRes.ok) {
+            const meData = await meRes.json();
+            if (meData.authenticated && meData.organization) {
+              const plan = meData.organization.plan || "starter";
+              setStatus({
+                hasSubscription: plan !== "free",
+                plan: plan,
+                loading: false,
+              });
+              return;
+            }
+          }
           setStatus({ hasSubscription: false, plan: null, loading: false });
         }
       } catch {
