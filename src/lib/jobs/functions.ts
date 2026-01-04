@@ -905,7 +905,7 @@ export const generateFirstArticle = inngest.createFunction(
                 <li>⏳ Autopilot will generate new articles every week</li>
                 <li>⏳ We'll track when AI platforms cite your content</li>
               </ul>
-              <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/geo-dashboard">Go to GEO Dashboard →</a></p>
+              <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard">Go to GEO Dashboard →</a></p>
             `,
             text: `Welcome! Your first GEO article is ready: ${result.articleTitle}. GEO Score: ${result.geoScore || "N/A"}/100.`,
           });

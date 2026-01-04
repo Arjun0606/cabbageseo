@@ -219,7 +219,7 @@ function EmptyState() {
       <p className="text-zinc-400 mb-4">
         Add a task above or use the command palette (⌘K) to start automating your SEO
       </p>
-      <Link href="/onboarding">
+      <Link href="/dashboard">
         <Button variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white">
           <Sparkles className="w-4 h-4 mr-2" />
           Analyze a Site

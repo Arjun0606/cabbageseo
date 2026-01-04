@@ -338,7 +338,7 @@ function getCitationAlertTemplate(
     </div>
     
     <p style="text-align: center;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL}/geo-dashboard" class="cta">View All Citations →</a>
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" class="cta">View All Citations →</a>
     </p>
     
     <p style="text-align: center; color: #666; font-size: 14px;">
@@ -363,7 +363,7 @@ ${snippet}...
 
 Total AI citations found: ${totalCitations}
 
-View all citations: ${process.env.NEXT_PUBLIC_APP_URL}/geo-dashboard
+View all citations: ${process.env.NEXT_PUBLIC_APP_URL}/dashboard
 
 Keep publishing GEO-optimized content to get more citations!
 

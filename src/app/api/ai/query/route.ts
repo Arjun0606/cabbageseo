@@ -85,7 +85,7 @@ const intentPatterns: Array<{ pattern: RegExp; intent: QueryIntent }> = [
     pattern: /^(add|connect|new).*(site|website|domain)/i,
     intent: {
       action: "add-site",
-      route: "/sites/new",
+      route: "/dashboard",
       response: "Let's add a new site...",
     },
   },

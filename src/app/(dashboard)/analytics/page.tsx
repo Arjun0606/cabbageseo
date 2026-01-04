@@ -207,7 +207,7 @@ function EmptyState() {
           Analytics will appear here once you have data.
         </p>
         <div className="flex gap-3 justify-center">
-          <Link href="/onboarding">
+          <Link href="/dashboard">
             <Button>Add Your First Site</Button>
           </Link>
           <Link href="/settings/integrations">

@@ -1,30 +1,33 @@
 "use client";
 
+/**
+ * ============================================
+ * LAYOUT SIDEBAR - REBUILT
+ * ============================================
+ * 
+ * Clean, simple navigation.
+ * No references to deleted pages.
+ */
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Globe,
   Search,
   FileText,
-  Link2,
-  Gauge,
-  BarChart3,
   Settings,
-  Zap,
   ChevronLeft,
   ChevronRight,
   Sparkles,
   Target,
-  BookOpen,
-  Bot,
-  Brain,
+  Shield,
+  Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -41,47 +44,14 @@ interface NavItemType {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   description: string;
-  badge?: string;
 }
 
-const mainNavItems: NavItemType[] = [
+const navItems: NavItemType[] = [
   {
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    description: "Mission control",
-  },
-  {
-    name: "Sites",
-    href: "/sites",
-    icon: Globe,
-    description: "Manage your websites",
-  },
-];
-
-// GEO items - THE MAIN DIFFERENTIATOR (Generative Engine Optimization)
-const geoNavItems: NavItemType[] = [
-  {
-    name: "GEO Dashboard",
-    href: "/geo-dashboard",
-    icon: Brain,
-    description: "AI citations & autopilot",
-    badge: "NEW",
-  },
-  {
-    name: "GEO Analysis",
-    href: "/geo",
-    icon: Target,
-    description: "Detailed platform scores",
-  },
-];
-
-const seoNavItems: NavItemType[] = [
-  {
-    name: "Keywords",
-    href: "/keywords",
-    icon: Search,
-    description: "Research & track rankings",
+    description: "Overview & analysis",
   },
   {
     name: "Content",
@@ -90,15 +60,24 @@ const seoNavItems: NavItemType[] = [
     description: "AI-generated articles",
   },
   {
+    name: "Keywords",
+    href: "/keywords",
+    icon: Search,
+    description: "Keyword opportunities",
+  },
+  {
+    name: "GEO",
+    href: "/geo",
+    icon: Target,
+    description: "AI visibility scores",
+  },
+  {
     name: "SEO Audit",
     href: "/audit",
-    icon: Gauge,
-    description: "Technical health check",
+    icon: Shield,
+    description: "Technical health",
   },
 ];
-
-// V2: Additional tools (hidden for now)
-const toolsNavItems: NavItemType[] = [];
 
 // ============================================
 // SIDEBAR COMPONENT
@@ -108,48 +87,33 @@ interface SidebarProps {
   className?: string;
 }
 
-// Usage stats type
-interface UsageStats {
-  articles: { used: number; limit: number };
-  keywords: { used: number; limit: number };
-  audits: { used: number; limit: number };
-}
-
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const [usage, setUsage] = useState<UsageStats | null>(null);
+  const [plan, setPlan] = useState("starter");
+  const [usage, setUsage] = useState({ articles: 0, limit: 50 });
 
-  // Fetch usage stats
+  // Fetch plan and usage
   useEffect(() => {
-    async function fetchUsage() {
-      try {
-        const res = await fetch("/api/billing/usage");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.data) {
-            setUsage({
-              articles: { 
-                used: data.data.usage?.articles || 0, 
-                limit: data.data.limits?.articles || 10 
-              },
-              keywords: { 
-                used: data.data.usage?.keywords || 0, 
-                limit: data.data.limits?.keywords || 100 
-              },
-              audits: { 
-                used: data.data.usage?.audits || 0, 
-                limit: data.data.limits?.audits || 5 
-              },
-            });
-          }
-        }
-      } catch {
-        // Silently fail - usage display is non-critical
-      }
-    }
-    fetchUsage();
-  }, [pathname]); // Refetch when navigating
+    fetch("/api/me", { credentials: "include" })
+      .then(res => res.json())
+      .then(data => {
+        setPlan(data.organization?.plan || "starter");
+      })
+      .catch(() => {});
+      
+    fetch("/api/billing/usage", { credentials: "include" })
+      .then(res => res.json())
+      .then(data => {
+        setUsage({
+          articles: data.data?.usage?.articlesUsed || 0,
+          limit: data.data?.limits?.articles || 50,
+        });
+      })
+      .catch(() => {});
+  }, [pathname]);
+
+  const isPro = plan === "pro" || plan === "pro-plus";
 
   const NavItem = ({ item }: { item: NavItemType }) => {
     const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -160,29 +124,20 @@ export function Sidebar({ className }: SidebarProps) {
         href={item.href}
         className={cn(
           "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-          "hover:bg-primary/10 hover:text-primary",
+          "hover:bg-emerald-500/10 hover:text-emerald-400",
           isActive
-            ? "bg-primary/15 text-primary shadow-sm"
-            : "text-muted-foreground",
+            ? "bg-emerald-500/15 text-emerald-400"
+            : "text-zinc-400",
           collapsed && "justify-center px-2"
         )}
       >
         <Icon
           className={cn(
             "h-5 w-5 shrink-0 transition-colors",
-            isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+            isActive ? "text-emerald-400" : "text-zinc-500 group-hover:text-emerald-400"
           )}
         />
-        {!collapsed && (
-          <>
-            <span className="truncate">{item.name}</span>
-            {item.badge && (
-              <span className="ml-auto rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
-                {item.badge}
-              </span>
-            )}
-          </>
-        )}
+        {!collapsed && <span className="truncate">{item.name}</span>}
       </Link>
     );
 
@@ -190,14 +145,7 @@ export function Sidebar({ className }: SidebarProps) {
       return (
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>{content}</TooltipTrigger>
-          <TooltipContent side="right" className="flex items-center gap-2">
-            {item.name}
-            {item.badge && (
-              <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
-                {item.badge}
-              </span>
-            )}
-          </TooltipContent>
+          <TooltipContent side="right">{item.name}</TooltipContent>
         </Tooltip>
       );
     }
@@ -205,30 +153,11 @@ export function Sidebar({ className }: SidebarProps) {
     return content;
   };
 
-  const NavSection = ({
-    title,
-    items,
-  }: {
-    title: string;
-    items: NavItemType[];
-  }) => (
-    <div className="space-y-1">
-      {!collapsed && (
-        <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
-          {title}
-        </h3>
-      )}
-      {items.map((item) => (
-        <NavItem key={item.href} item={item} />
-      ))}
-    </div>
-  );
-
   return (
     <TooltipProvider>
       <aside
         className={cn(
-          "flex h-screen flex-col border-r bg-card transition-all duration-300",
+          "flex h-screen flex-col border-r border-zinc-800 bg-zinc-950 transition-all duration-300",
           collapsed ? "w-[68px]" : "w-64",
           className
         )}
@@ -236,7 +165,7 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Logo */}
         <div
           className={cn(
-            "flex h-16 items-center border-b px-4",
+            "flex h-16 items-center border-b border-zinc-800 px-4",
             collapsed && "justify-center px-2"
           )}
         >
@@ -247,29 +176,27 @@ export function Sidebar({ className }: SidebarProps) {
               className="h-9 w-auto"
             />
             {!collapsed && (
-              <span className="text-lg font-bold tracking-tight">
-                Cabbage<span className="text-primary">SEO</span>
+              <span className="text-lg font-bold tracking-tight text-white">
+                Cabbage<span className="text-emerald-400">SEO</span>
               </span>
             )}
           </Link>
         </div>
 
         {/* Generate Article CTA */}
-        <div className={cn("p-3 border-b", collapsed && "px-2")}>
+        <div className={cn("p-3 border-b border-zinc-800", collapsed && "px-2")}>
           <Link href="/content/new">
             {collapsed ? (
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
-                  <Button size="icon" className="w-full bg-primary hover:bg-primary/90">
+                  <Button size="icon" className="w-full bg-emerald-600 hover:bg-emerald-500">
                     <Sparkles className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="right">
-                  Generate Article
-                </TooltipContent>
+                <TooltipContent side="right">Generate Article</TooltipContent>
               </Tooltip>
             ) : (
-              <Button className="w-full gap-2 bg-primary hover:bg-primary/90">
+              <Button className="w-full gap-2 bg-emerald-600 hover:bg-emerald-500 text-white">
                 <Sparkles className="h-4 w-4" />
                 Generate Article
               </Button>
@@ -278,34 +205,39 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-6 overflow-y-auto p-3">
-          <NavSection title="Overview" items={mainNavItems} />
-          <NavSection title="GEO" items={geoNavItems} />
-          <NavSection title="SEO Tools" items={seoNavItems} />
-          <NavSection title="More" items={toolsNavItems} />
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          {navItems.map((item) => (
+            <NavItem key={item.href} item={item} />
+          ))}
         </nav>
 
         {/* Bottom Section */}
-        <div className="border-t p-3 space-y-3">
+        <div className="border-t border-zinc-800 p-3 space-y-3">
           {/* Usage Stats */}
-          {!collapsed && usage && (
+          {!collapsed && (
             <div className="space-y-2 px-2 pb-2">
-              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Usage
+              <div className="flex justify-between text-xs">
+                <span className="text-zinc-500">Articles</span>
+                <span className="text-zinc-400">{usage.articles}/{usage.limit}</span>
               </div>
-              <div className="space-y-2">
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Articles</span>
-                    <span className="font-medium">{usage.articles.used}/{usage.articles.limit}</span>
-                  </div>
-                  <Progress 
-                    value={Math.min(100, (usage.articles.used / usage.articles.limit) * 100)} 
-                    className="h-1.5"
-                  />
-                </div>
-              </div>
+              <Progress 
+                value={Math.min(100, (usage.articles / usage.limit) * 100)} 
+                className="h-1.5"
+              />
             </div>
+          )}
+
+          {/* Upgrade CTA */}
+          {!collapsed && !isPro && (
+            <Link href="/pricing">
+              <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border border-emerald-500/20 cursor-pointer hover:border-emerald-500/40 transition-colors mb-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <Crown className="h-4 w-4 text-emerald-400" />
+                  <span className="text-sm font-medium text-white">Upgrade to Pro</span>
+                </div>
+                <p className="text-xs text-zinc-400">Unlimited articles</p>
+              </div>
+            </Link>
           )}
 
           {/* Settings */}
@@ -319,27 +251,30 @@ export function Sidebar({ className }: SidebarProps) {
           />
 
           {/* Collapse Toggle */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "mt-2 w-full justify-center text-muted-foreground hover:text-foreground",
-              !collapsed && "justify-start"
+          <div className="flex items-center justify-between pt-2">
+            {!collapsed && (
+              <Badge variant="outline" className="text-xs text-zinc-400 border-zinc-700">
+                {plan.charAt(0).toUpperCase() + plan.slice(1)}
+              </Badge>
             )}
-            onClick={() => setCollapsed(!collapsed)}
-          >
-            {collapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <>
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                <span>Collapse</span>
-              </>
-            )}
-          </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "text-zinc-500 hover:text-zinc-300",
+                collapsed && "w-full"
+              )}
+              onClick={() => setCollapsed(!collapsed)}
+            >
+              {collapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
       </aside>
     </TooltipProvider>
   );
 }
-

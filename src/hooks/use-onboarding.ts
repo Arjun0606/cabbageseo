@@ -75,7 +75,7 @@ export function useOnboarding(options: { redirect?: boolean } = {}): OnboardingS
           });
           
           if (redirect) {
-            router.push("/onboarding");
+            router.push("/dashboard");
           }
           return;
         }
@@ -98,7 +98,7 @@ export function useOnboarding(options: { redirect?: boolean } = {}): OnboardingS
         });
 
         if (redirect && !hasSites) {
-          router.push("/onboarding");
+          router.push("/dashboard");
         }
 
       } catch (error) {

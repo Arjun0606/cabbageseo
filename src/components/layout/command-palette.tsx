@@ -217,7 +217,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     // Handle different actions
     switch (action) {
       case "add-site":
-        router.push("/sites/new");
+        router.push("/dashboard");
         break;
       case "generate-ideas":
         router.push("/content?action=generate-ideas");

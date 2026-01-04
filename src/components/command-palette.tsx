@@ -382,7 +382,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           if (selectedSite) {
             router.push(`/sites/${selectedSite.id}/strategy`);
           } else {
-            router.push("/sites");
+            router.push("/dashboard");
           }
         },
         keywords: ["download", "markdown", "cursor", "claude"],
