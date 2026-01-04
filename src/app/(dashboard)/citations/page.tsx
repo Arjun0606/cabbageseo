@@ -5,9 +5,8 @@
  * CITATIONS PAGE
  * ============================================
  * 
- * View all your AI citations in one place.
- * Filter by platform, date, query.
- * Export for reporting.
+ * Browse all your AI citations.
+ * Filter, search, export.
  */
 
 import { useState, useEffect } from "react";
@@ -20,15 +19,15 @@ import {
   Bot,
   Sparkles,
   Globe,
-  Calendar,
-  Filter,
   Download,
   RefreshCw,
   ExternalLink,
-  ArrowLeft,
+  Filter,
+  X,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
@@ -44,38 +43,35 @@ interface Citation {
   pageUrl?: string;
   confidence: "high" | "medium" | "low";
   citedAt: string;
-  lastCheckedAt: string;
 }
 
 // ============================================
-// HELPERS
+// PLATFORM CONFIG
 // ============================================
 
-function PlatformIcon({ platform }: { platform: string }) {
-  switch (platform) {
-    case "perplexity":
-      return <Search className="w-4 h-4 text-purple-400" />;
-    case "google_aio":
-      return <Sparkles className="w-4 h-4 text-blue-400" />;
-    case "chatgpt":
-      return <Bot className="w-4 h-4 text-green-400" />;
-    default:
-      return <Globe className="w-4 h-4 text-zinc-400" />;
-  }
-}
-
-function PlatformName({ platform }: { platform: string }) {
-  switch (platform) {
-    case "perplexity":
-      return "Perplexity";
-    case "google_aio":
-      return "Google AI";
-    case "chatgpt":
-      return "ChatGPT";
-    default:
-      return platform;
-  }
-}
+const platformConfig = {
+  perplexity: {
+    name: "Perplexity",
+    icon: Search,
+    color: "text-violet-400",
+    bg: "bg-violet-500/10",
+    activeBg: "bg-violet-500",
+  },
+  google_aio: {
+    name: "Google AI",
+    icon: Sparkles,
+    color: "text-blue-400",
+    bg: "bg-blue-500/10",
+    activeBg: "bg-blue-500",
+  },
+  chatgpt: {
+    name: "ChatGPT",
+    icon: Bot,
+    color: "text-emerald-400",
+    bg: "bg-emerald-500/10",
+    activeBg: "bg-emerald-500",
+  },
+};
 
 // ============================================
 // STORAGE
@@ -129,7 +125,6 @@ export default function CitationsPage() {
             page_url?: string;
             confidence: string;
             cited_at: string;
-            last_checked_at: string;
           }) => ({
             id: c.id,
             platform: c.platform,
@@ -138,7 +133,6 @@ export default function CitationsPage() {
             pageUrl: c.page_url,
             confidence: c.confidence,
             citedAt: c.cited_at,
-            lastCheckedAt: c.last_checked_at,
           })));
         }
       }
@@ -149,8 +143,8 @@ export default function CitationsPage() {
     }
   };
 
-  // Filter citations
-  const filteredCitations = citations.filter(c => {
+  // Filter
+  const filtered = citations.filter(c => {
     if (platformFilter !== "all" && c.platform !== platformFilter) return false;
     if (searchQuery && !c.query.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
@@ -164,13 +158,13 @@ export default function CitationsPage() {
     chatgpt: citations.filter(c => c.platform === "chatgpt").length,
   };
 
-  // Export to CSV
+  // Export
   const exportCSV = () => {
-    const headers = ["Platform", "Query", "Snippet", "Confidence", "First Seen"];
-    const rows = filteredCitations.map(c => [
-      PlatformName({ platform: c.platform }),
-      c.query,
-      c.snippet.replace(/,/g, ";"),
+    const headers = ["Platform", "Query", "Snippet", "Confidence", "Date"];
+    const rows = filtered.map(c => [
+      platformConfig[c.platform]?.name || c.platform,
+      `"${c.query.replace(/"/g, '""')}"`,
+      `"${(c.snippet || "").replace(/"/g, '""')}"`,
       c.confidence,
       new Date(c.citedAt).toLocaleDateString(),
     ]);
@@ -186,196 +180,186 @@ export default function CitationsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+      <div className="min-h-[60vh] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
-        
-        {/* HEADER */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Eye className="h-6 w-6 text-emerald-500" />
-              <h1 className="text-2xl font-bold text-white">All Citations</h1>
-            </div>
-            <p className="text-zinc-400">
-              Every time AI mentioned <span className="text-emerald-400">{site?.domain}</span>
-            </p>
-          </div>
-          
+    <div className="space-y-6">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
           <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              onClick={exportCSV}
-              className="border-zinc-700"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
-            </Button>
-            <Button
-              onClick={() => site && fetchCitations(site.id)}
-              className="bg-emerald-600 hover:bg-emerald-500"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400/20 to-emerald-600/20 flex items-center justify-center border border-emerald-500/20">
+              <Eye className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white">All Citations</h1>
+              <p className="text-sm text-zinc-500">
+                AI mentions of <span className="text-emerald-400">{site?.domain}</span>
+              </p>
+            </div>
           </div>
         </div>
-
-        {/* STATS */}
-        <div className="grid grid-cols-4 gap-4">
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardContent className="pt-6">
-              <p className="text-sm text-zinc-400">Total</p>
-              <p className="text-3xl font-bold text-white">{stats.total}</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardContent className="pt-6 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-purple-400">Perplexity</p>
-                <p className="text-3xl font-bold text-white">{stats.perplexity}</p>
-              </div>
-              <Search className="h-8 w-8 text-purple-400/30" />
-            </CardContent>
-          </Card>
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardContent className="pt-6 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-400">Google AI</p>
-                <p className="text-3xl font-bold text-white">{stats.googleAio}</p>
-              </div>
-              <Sparkles className="h-8 w-8 text-blue-400/30" />
-            </CardContent>
-          </Card>
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardContent className="pt-6 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-green-400">ChatGPT</p>
-                <p className="text-3xl font-bold text-white">{stats.chatgpt}</p>
-              </div>
-              <Bot className="h-8 w-8 text-green-400/30" />
-            </CardContent>
-          </Card>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportCSV}
+            className="border-white/10 text-zinc-400 hover:text-white hover:bg-white/5"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => site && fetchCitations(site.id)}
+            className="bg-emerald-600 hover:bg-emerald-500"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
+      </div>
 
-        {/* FILTERS */}
-        <div className="flex items-center gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-            <Input
-              placeholder="Search queries..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-zinc-900 border-zinc-700"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant={platformFilter === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setPlatformFilter("all")}
-              className={platformFilter === "all" ? "bg-emerald-600" : "border-zinc-700"}
+      {/* STATS */}
+      <div className="grid grid-cols-4 gap-3">
+        <button
+          onClick={() => setPlatformFilter("all")}
+          className={`p-4 rounded-xl border transition-all text-left ${
+            platformFilter === "all"
+              ? "bg-emerald-500/10 border-emerald-500/30"
+              : "bg-[#0a0a0f] border-white/5 hover:border-white/10"
+          }`}
+        >
+          <p className="text-xs text-zinc-500 mb-1">Total</p>
+          <p className="text-2xl font-bold text-white font-mono">{stats.total}</p>
+        </button>
+        
+        {(["perplexity", "google_aio", "chatgpt"] as const).map((platform) => {
+          const config = platformConfig[platform];
+          const Icon = config.icon;
+          const count = platform === "perplexity" ? stats.perplexity : platform === "google_aio" ? stats.googleAio : stats.chatgpt;
+          
+          return (
+            <button
+              key={platform}
+              onClick={() => setPlatformFilter(platformFilter === platform ? "all" : platform)}
+              className={`p-4 rounded-xl border transition-all text-left ${
+                platformFilter === platform
+                  ? `${config.bg} border-white/20`
+                  : "bg-[#0a0a0f] border-white/5 hover:border-white/10"
+              }`}
             >
-              All
-            </Button>
-            <Button
-              variant={platformFilter === "perplexity" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setPlatformFilter("perplexity")}
-              className={platformFilter === "perplexity" ? "bg-purple-600" : "border-zinc-700"}
+              <p className={`text-xs ${config.color} flex items-center gap-1 mb-1`}>
+                <Icon className="w-3 h-3" /> {config.name}
+              </p>
+              <p className="text-2xl font-bold text-white font-mono">{count}</p>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* SEARCH */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+          <Input
+            placeholder="Search queries..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-[#0a0a0f] border-white/10 focus:border-emerald-500/50 h-11"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
             >
-              <Search className="h-3 w-3 mr-1" /> Perplexity
-            </Button>
-            <Button
-              variant={platformFilter === "google_aio" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setPlatformFilter("google_aio")}
-              className={platformFilter === "google_aio" ? "bg-blue-600" : "border-zinc-700"}
-            >
-              <Sparkles className="h-3 w-3 mr-1" /> Google AI
-            </Button>
-            <Button
-              variant={platformFilter === "chatgpt" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setPlatformFilter("chatgpt")}
-              className={platformFilter === "chatgpt" ? "bg-green-600" : "border-zinc-700"}
-            >
-              <Bot className="h-3 w-3 mr-1" /> ChatGPT
-            </Button>
-          </div>
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
+      </div>
 
-        {/* CITATIONS LIST */}
-        <Card className="bg-zinc-900 border-zinc-800">
-          <CardContent className="p-0">
-            {filteredCitations.length === 0 ? (
-              <div className="text-center py-16">
-                <Eye className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-                <p className="text-zinc-400 mb-2">No citations found</p>
-                <p className="text-sm text-zinc-500">
-                  {citations.length === 0 
-                    ? "Run a citation check from the dashboard to start tracking."
-                    : "Try adjusting your filters."}
-                </p>
+      {/* CITATIONS LIST */}
+      <Card className="bg-[#0a0a0f] border-white/5 overflow-hidden">
+        <CardContent className="p-0">
+          {filtered.length === 0 ? (
+            <div className="text-center py-20">
+              <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
+                <Eye className="w-8 h-8 text-zinc-700" />
               </div>
-            ) : (
-              <div className="divide-y divide-zinc-800">
-                {filteredCitations.map((citation) => (
-                  <div key={citation.id} className="p-4 hover:bg-zinc-800/50 transition-colors">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">
-                        <PlatformIcon platform={citation.platform} />
+              <h3 className="text-lg font-medium text-white mb-2">No citations found</h3>
+              <p className="text-zinc-500 max-w-sm mx-auto">
+                {citations.length === 0 
+                  ? "Run a citation check from the dashboard to start tracking."
+                  : "Try adjusting your search or filters."}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {filtered.map((citation) => {
+                const config = platformConfig[citation.platform];
+                const Icon = config.icon;
+                
+                return (
+                  <div key={citation.id} className="p-5 hover:bg-white/[0.02] transition-colors">
+                    <div className="flex gap-4">
+                      <div className={`w-10 h-10 rounded-xl ${config.bg} flex items-center justify-center shrink-0`}>
+                        <Icon className={`w-5 h-5 ${config.color}`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-white font-medium">
-                            <PlatformName platform={citation.platform} />
+                        <div className="flex items-center gap-2 flex-wrap mb-2">
+                          <span className={`text-sm font-medium ${config.color}`}>
+                            {config.name}
                           </span>
                           <Badge
+                            variant="outline"
                             className={
                               citation.confidence === "high"
-                                ? "bg-green-500/20 text-green-400"
+                                ? "border-emerald-500/30 text-emerald-400 text-[10px]"
                                 : citation.confidence === "medium"
-                                ? "bg-yellow-500/20 text-yellow-400"
-                                : "bg-zinc-500/20 text-zinc-400"
+                                ? "border-amber-500/30 text-amber-400 text-[10px]"
+                                : "border-zinc-500/30 text-zinc-400 text-[10px]"
                             }
                           >
                             {citation.confidence}
                           </Badge>
-                          <span className="text-xs text-zinc-500">
+                          <span className="text-xs text-zinc-600 ml-auto">
                             {new Date(citation.citedAt).toLocaleDateString()}
                           </span>
                         </div>
-                        <p className="text-zinc-300 mb-2">
-                          Query: "<span className="text-emerald-400">{citation.query}</span>"
+                        <p className="text-white mb-2">
+                          "{citation.query}"
                         </p>
                         {citation.snippet && (
-                          <p className="text-sm text-zinc-500 italic">
-                            "{citation.snippet.slice(0, 200)}..."
+                          <p className="text-sm text-zinc-500 italic line-clamp-2">
+                            {citation.snippet}
                           </p>
+                        )}
+                        {citation.pageUrl && (
+                          <a 
+                            href={citation.pageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 mt-2"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            View source
+                          </a>
                         )}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* BACK LINK */}
-        <Link href="/dashboard" className="text-zinc-500 hover:text-white flex items-center gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
-        </Link>
-      </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
-
