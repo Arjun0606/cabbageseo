@@ -283,6 +283,45 @@ function PlatformBar({ name, score, icon }: { name: string; score: number; icon:
 }
 
 // ============================================
+// STORAGE - PERSIST SITE DATA
+// ============================================
+
+const SITE_KEY = "cabbageseo_site";
+const ANALYSIS_KEY = "cabbageseo_analysis";
+
+function saveSite(site: { id: string; domain: string }) {
+  try {
+    localStorage.setItem(SITE_KEY, JSON.stringify(site));
+  } catch {}
+}
+
+function loadSite(): { id: string; domain: string } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const data = localStorage.getItem(SITE_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveAnalysis(analysis: AnalysisResult) {
+  try {
+    localStorage.setItem(ANALYSIS_KEY, JSON.stringify(analysis));
+  } catch {}
+}
+
+function loadAnalysis(): AnalysisResult | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const data = localStorage.getItem(ANALYSIS_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch {
+    return null;
+  }
+}
+
+// ============================================
 // MAIN DASHBOARD
 // ============================================
 
@@ -383,6 +422,20 @@ export default function DashboardPage() {
   // Load on mount
   useEffect(() => {
     async function init() {
+      // First check localStorage for cached site and analysis
+      const cachedSite = loadSite();
+      const cachedAnalysis = loadAnalysis();
+      
+      // If we have cached data, show it immediately while we refresh
+      if (cachedSite && cachedAnalysis) {
+        setDomain(cachedSite.domain);
+        setSiteId(cachedSite.id);
+        setAnalysis(cachedAnalysis);
+        setKeywords(extractKeywords(cachedAnalysis));
+        setContentIdeas(generateContentIdeas(extractKeywords(cachedAnalysis)));
+        setPhase("ready");
+      }
+
       try {
         // Check auth
         const res = await fetch("/api/me", { credentials: "include" });
@@ -395,26 +448,41 @@ export default function DashboardPage() {
 
         setPlan(data.organization?.plan || "starter");
 
-        // Check if we have a site
+        // Check if we have a site from API
         if (data.currentSite || (data.sites && data.sites.length > 0)) {
           const site = data.currentSite || data.sites[0];
           setDomain(site.domain);
           setSiteId(site.id);
           setAutopilotEnabled(site.autopilotEnabled || false);
           
+          // Save to localStorage for persistence
+          saveSite({ id: site.id, domain: site.domain });
+          
           // Load real dashboard data
           await loadDashboardData(site.id);
           
-          // Run fresh analysis
+          // Run fresh analysis (in background if we already showed cached)
           await runAnalysis(site.domain);
           return;
         }
 
-        // No site - show onboarding
+        // Check localStorage as fallback
+        if (cachedSite) {
+          await loadDashboardData(cachedSite.id);
+          if (!cachedAnalysis) {
+            await runAnalysis(cachedSite.domain);
+          }
+          return;
+        }
+
+        // No site anywhere - show onboarding
         setPhase("onboarding");
       } catch (e) {
         console.error("Init error:", e);
-        setPhase("onboarding");
+        // If we have cached data, stay on ready, otherwise onboarding
+        if (!cachedSite) {
+          setPhase("onboarding");
+        }
       }
     }
     init();
@@ -443,7 +511,10 @@ export default function DashboardPage() {
       const analysisData = response.data || response;
 
       setAnalysis(analysisData);
-      setDomain(targetDomain.replace(/^https?:\/\//, "").replace(/^www\./, ""));
+      saveAnalysis(analysisData); // Persist to localStorage
+      
+      const cleanDomain = targetDomain.replace(/^https?:\/\//, "").replace(/^www\./, "");
+      setDomain(cleanDomain);
       
       // Extract keywords and generate content ideas
       const extractedKws = extractKeywords(analysisData);
@@ -476,7 +547,7 @@ export default function DashboardPage() {
       targetDomain = targetUrl.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
     }
 
-    // Save site
+    // Save site to API and localStorage
     try {
       const siteRes = await fetch("/api/me/site", {
         method: "POST",
@@ -487,11 +558,15 @@ export default function DashboardPage() {
         const siteData = await siteRes.json();
         if (siteData.site?.id) {
           setSiteId(siteData.site.id);
+          // PERSIST to localStorage so it never asks again
+          saveSite({ id: siteData.site.id, domain: targetDomain });
           await loadDashboardData(siteData.site.id);
         }
       }
     } catch (e) {
       console.error("Failed to save site:", e);
+      // Still save to localStorage even if API fails
+      saveSite({ id: "local-" + Date.now(), domain: targetDomain });
     }
 
     // Run analysis

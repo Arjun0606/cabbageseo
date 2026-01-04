@@ -2,12 +2,11 @@
 
 /**
  * ============================================
- * SIMPLE SITE HOOK - Uses localStorage
+ * APP CONTEXT - SIMPLIFIED
  * ============================================
  * 
- * This provides site data to pages that need it.
- * Fetches directly from /api/me and localStorage.
- * NO context, NO provider, just a hook.
+ * Provides a simple hook for site data.
+ * Uses localStorage as primary source.
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -19,21 +18,16 @@ import { useState, useEffect, useCallback } from "react";
 export interface Site {
   id: string;
   domain: string;
-  name: string;
-  url: string;
-  geoScore: number | null;
-  autopilotEnabled: boolean;
-  lastCrawlAt: string | null;
-  createdAt: string;
+  geoScore?: number;
+  autopilotEnabled?: boolean;
 }
 
-interface SiteHookResult {
-  selectedSite: Site | null;
+interface SiteContextValue {
   sites: Site[];
-  isLoading: boolean;
+  selectedSite: Site | null;
   selectSite: (siteId: string) => void;
-  addSite: (url: string) => Promise<{ success: boolean; site?: Site; error?: string }>;
   refreshSites: () => Promise<void>;
+  isLoading: boolean;
 }
 
 // ============================================
@@ -41,15 +35,9 @@ interface SiteHookResult {
 // ============================================
 
 const SITE_KEY = "cabbageseo_site";
-const SITES_KEY = "cabbageseo_sites";
-
-function saveSiteToStorage(site: Site) {
-  try {
-    localStorage.setItem(SITE_KEY, JSON.stringify(site));
-  } catch {}
-}
 
 function loadSiteFromStorage(): Site | null {
+  if (typeof window === "undefined") return null;
   try {
     const data = localStorage.getItem(SITE_KEY);
     return data ? JSON.parse(data) : null;
@@ -58,99 +46,53 @@ function loadSiteFromStorage(): Site | null {
   }
 }
 
-function saveSitesToStorage(sites: Site[]) {
+function saveSiteToStorage(site: Site) {
   try {
-    localStorage.setItem(SITES_KEY, JSON.stringify(sites));
+    localStorage.setItem(SITE_KEY, JSON.stringify(site));
   } catch {}
 }
 
-function loadSitesFromStorage(): Site[] {
-  try {
-    const data = localStorage.getItem(SITES_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
-}
-
 // ============================================
-// THE HOOK
+// HOOK
 // ============================================
 
-export function useSite(): SiteHookResult {
-  const [selectedSite, setSelectedSite] = useState<Site | null>(null);
+export function useSite(): SiteContextValue {
   const [sites, setSites] = useState<Site[]>([]);
+  const [selectedSite, setSelectedSite] = useState<Site | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch from API
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    
-    try {
-      const res = await fetch("/api/me", { credentials: "include" });
-      const data = await res.json();
-      
-      if (data.authenticated && data.sites && data.sites.length > 0) {
-        // Map API response to Site type
-        const mappedSites: Site[] = data.sites.map((s: {
-          id: string;
-          domain: string;
-          name?: string;
-          url?: string;
-          geoScore?: number;
-          autopilotEnabled?: boolean;
-        }) => ({
-          id: s.id,
-          domain: s.domain,
-          name: s.name || s.domain,
-          url: s.url || `https://${s.domain}`,
-          geoScore: s.geoScore || null,
-          autopilotEnabled: s.autopilotEnabled ?? false,
-          lastCrawlAt: null,
-          createdAt: new Date().toISOString(),
-        }));
-        
-        setSites(mappedSites);
-        saveSitesToStorage(mappedSites);
-        
-        // Set current site
-        const cachedSite = loadSiteFromStorage();
-        const currentSite = cachedSite 
-          ? mappedSites.find(s => s.id === cachedSite.id) || mappedSites[0]
-          : mappedSites[0];
-        
-        setSelectedSite(currentSite);
-        saveSiteToStorage(currentSite);
-      } else {
-        // Try localStorage
-        const cachedSites = loadSitesFromStorage();
-        const cachedSite = loadSiteFromStorage();
-        
-        if (cachedSites.length > 0) {
-          setSites(cachedSites);
-          setSelectedSite(cachedSite || cachedSites[0]);
-        }
-      }
-    } catch (err) {
-      console.error("[useSite] Fetch error:", err);
-      
-      // Fallback to localStorage
-      const cachedSites = loadSitesFromStorage();
-      const cachedSite = loadSiteFromStorage();
-      
-      if (cachedSites.length > 0) {
-        setSites(cachedSites);
-        setSelectedSite(cachedSite || cachedSites[0]);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
   // Load on mount
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    // First try localStorage
+    const cachedSite = loadSiteFromStorage();
+    if (cachedSite) {
+      setSelectedSite(cachedSite);
+      setSites([cachedSite]);
+    }
+
+    // Then fetch from API
+    fetch("/api/me", { credentials: "include" })
+      .then(res => res.json())
+      .then(data => {
+        if (data.sites && data.sites.length > 0) {
+          const apiSites: Site[] = data.sites.map((s: Record<string, unknown>) => ({
+            id: s.id as string,
+            domain: s.domain as string,
+            geoScore: s.geoScore as number | undefined,
+            autopilotEnabled: s.autopilotEnabled as boolean | undefined,
+          }));
+          setSites(apiSites);
+          
+          // If no cached site, use first from API
+          if (!cachedSite && apiSites.length > 0) {
+            setSelectedSite(apiSites[0]);
+            saveSiteToStorage(apiSites[0]);
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
 
   // Select site
   const selectSite = useCallback((siteId: string) => {
@@ -161,82 +103,28 @@ export function useSite(): SiteHookResult {
     }
   }, [sites]);
 
-  // Add site
-  const addSite = useCallback(async (url: string): Promise<{ success: boolean; site?: Site; error?: string }> => {
+  // Refresh sites
+  const refreshSites = useCallback(async () => {
     try {
-      const res = await fetch("/api/me/site", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-        credentials: "include",
-      });
-      
+      const res = await fetch("/api/me", { credentials: "include" });
       const data = await res.json();
-      
-      if (data.success && data.site) {
-        const newSite: Site = {
-          id: data.site.id,
-          domain: data.site.domain,
-          name: data.site.name || data.site.domain,
-          url: data.site.url || `https://${data.site.domain}`,
-          geoScore: data.site.geoScore || null,
-          autopilotEnabled: data.site.autopilotEnabled ?? false,
-          lastCrawlAt: null,
-          createdAt: new Date().toISOString(),
-        };
-        
-        const updatedSites = [newSite, ...sites];
-        setSites(updatedSites);
-        setSelectedSite(newSite);
-        saveSitesToStorage(updatedSites);
-        saveSiteToStorage(newSite);
-        
-        return { success: true, site: newSite };
+      if (data.sites) {
+        const apiSites: Site[] = data.sites.map((s: Record<string, unknown>) => ({
+          id: s.id as string,
+          domain: s.domain as string,
+          geoScore: s.geoScore as number | undefined,
+          autopilotEnabled: s.autopilotEnabled as boolean | undefined,
+        }));
+        setSites(apiSites);
       }
-      
-      return { success: false, error: data.error || "Failed to add site" };
-    } catch (err) {
-      return { success: false, error: "Network error" };
-    }
-  }, [sites]);
+    } catch {}
+  }, []);
 
   return {
-    selectedSite,
     sites,
-    isLoading,
+    selectedSite,
     selectSite,
-    addSite,
-    refreshSites: fetchData,
+    refreshSites,
+    isLoading,
   };
-}
-
-// ============================================
-// BACKWARDS COMPATIBILITY - useApp
-// ============================================
-
-export function useApp() {
-  const siteHook = useSite();
-  return {
-    currentSite: siteHook.selectedSite,
-    sites: siteHook.sites,
-    isLoading: siteHook.isLoading,
-    isInitialized: !siteHook.isLoading,
-    user: null,
-    organization: null,
-    error: null,
-    selectSite: siteHook.selectSite,
-    addSite: siteHook.addSite,
-    updateSiteAutopilot: async () => {},
-    refreshData: siteHook.refreshSites,
-  };
-}
-
-// ============================================
-// DUMMY PROVIDER (for backwards compatibility)
-// ============================================
-
-import { ReactNode } from "react";
-
-export function AppProvider({ children }: { children: ReactNode }) {
-  return <>{children}</>;
 }
