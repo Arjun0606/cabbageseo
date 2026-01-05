@@ -173,7 +173,7 @@ CREATE INDEX "idx_sites_org" ON "sites"("organization_id");
 CREATE INDEX "idx_sites_domain" ON "sites"("domain");
 CREATE INDEX "idx_citations_site" ON "citations"("site_id");
 CREATE INDEX "idx_citations_platform" ON "citations"("platform");
-CREATE INDEX "idx_citations_discovered" ON "citations"("discovered_at" DESC);
+CREATE INDEX "idx_citations_cited_at" ON "citations"("cited_at" DESC);
 CREATE INDEX "idx_competitors_site" ON "competitors"("site_id");
 CREATE INDEX "idx_usage_org_period" ON "usage"("organization_id", "period");
 CREATE INDEX "idx_geo_analyses_site" ON "geo_analyses"("site_id");
