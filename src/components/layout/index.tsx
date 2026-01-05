@@ -30,6 +30,7 @@ import {
   LogOut,
   User,
   Zap,
+  Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +61,12 @@ const mainNav = [
     label: "Citations", 
     icon: Eye,
     description: "All AI mentions"
+  },
+  { 
+    href: "/intelligence", 
+    label: "Intelligence", 
+    icon: Brain,
+    description: "GEO Score & Tips"
   },
   { 
     href: "/competitors", 
