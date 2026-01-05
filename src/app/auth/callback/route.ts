@@ -73,9 +73,8 @@ export async function GET(request: NextRequest) {
 
             if (orgError) {
               console.error("[Auth Callback] Org creation error:", orgError);
-              // If org creation failed, redirect to onboarding anyway
-              // The onboarding flow will create org if needed
-              return NextResponse.redirect(`${redirectBase}/onboarding`);
+              // If org creation failed, redirect to dashboard anyway
+              return NextResponse.redirect(`${redirectBase}/dashboard`);
             }
             
             if (newOrg) {
@@ -98,8 +97,8 @@ export async function GET(request: NextRequest) {
                 console.error("[Auth Callback] User creation error:", userError);
               }
               
-              // Redirect to onboarding for new users
-              return NextResponse.redirect(`${redirectBase}/onboarding`);
+              // Redirect to dashboard for new users (dashboard has onboarding flow built-in)
+              return NextResponse.redirect(`${redirectBase}/dashboard`);
             }
           } else {
             // User exists, check if they have any sites (for onboarding check)
@@ -112,9 +111,9 @@ export async function GET(request: NextRequest) {
                 .eq("organization_id", orgId)
                 .limit(1);
               
-              // If no sites, redirect to onboarding
+              // If no sites, redirect to dashboard (has onboarding built-in)
               if (!sites || sites.length === 0) {
-                return NextResponse.redirect(`${redirectBase}/onboarding`);
+                return NextResponse.redirect(`${redirectBase}/dashboard`);
               }
             }
           }

@@ -170,12 +170,8 @@ export default function LandingPage() {
     
     setIsChecking(true);
     
-    // Clean URL
-    let domain = url.trim().toLowerCase();
-    domain = domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-    
-    // Redirect to analyze page
-    router.push(`/analyze?url=${encodeURIComponent(domain)}`);
+    // Redirect to signup - they can try for free from dashboard
+    router.push(`/signup`);
   };
 
   return (
