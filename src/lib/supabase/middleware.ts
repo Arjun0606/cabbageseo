@@ -73,12 +73,9 @@ export async function updateSession(request: NextRequest) {
   ];
   
   // Define public API route prefixes (these handle their own auth)
+  // ALL /api routes should handle their own auth and return JSON responses
   const publicApiPrefixes = [
-    "/api/webhooks",
-    "/api/billing/webhooks",  // Dodo payment webhooks
-    "/api/auth",
-    "/api/public",  // Public free tools (no auth required)
-    "/api/leads",   // Lead capture for visitors
+    "/api/",  // All API routes handle their own auth - return JSON, not redirects
   ];
   
   const isPublicRoute = publicRoutes.some(
