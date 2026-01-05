@@ -31,11 +31,12 @@ interface GEOAnalysis {
   score: {
     overall: number;
     breakdown: {
-      clarity: number;
-      authority: number;
-      structure: number;
+      contentClarity: number;
+      authoritySignals: number;
+      structuredData: number;
       citability: number;
       freshness: number;
+      topicalDepth: number;
     };
     grade: string;
     summary: string;
@@ -52,7 +53,7 @@ interface GEOAnalysis {
     query: string;
     searchVolume: string;
     yourPosition: string;
-    isOpportunity: boolean;
+    opportunity: boolean;
   }>;
 }
 
@@ -74,8 +75,12 @@ export default function IntelligencePage() {
       try {
         const res = await fetch(`/api/geo/intelligence?siteId=${currentSite.id}`);
         const result = await res.json();
-        if (result.analysis) {
-          setAnalysis(result.analysis);
+        if (result.data?.score) {
+          setAnalysis({
+            score: result.data.score,
+            tips: result.data.tips || [],
+            queries: result.data.queries || [],
+          });
         }
       } catch (err) {
         console.error("Failed to fetch analysis:", err);
@@ -99,8 +104,12 @@ export default function IntelligencePage() {
         body: JSON.stringify({ siteId: currentSite.id }),
       });
       const result = await res.json();
-      if (result.analysis) {
-        setAnalysis(result.analysis);
+      if (result.data?.score) {
+        setAnalysis({
+          score: result.data.score,
+          tips: result.data.tips || [],
+          queries: result.data.queries || [],
+        });
       }
     } catch (err) {
       console.error("Analysis failed:", err);
@@ -253,24 +262,32 @@ export default function IntelligencePage() {
                 {/* Breakdown */}
                 <div className="space-y-4">
                   <h4 className="font-semibold text-white mb-4">Score Breakdown</h4>
-                  {Object.entries(analysis.score.breakdown).map(([key, value]) => (
-                    <div key={key}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm text-zinc-400 capitalize">{key}</span>
-                        <span className={`text-sm font-medium ${getScoreColor(value)}`}>
-                          {value}/100
-                        </span>
+                  {Object.entries(analysis.score.breakdown).map(([key, value]) => {
+                    // Format camelCase keys to readable text
+                    const formatKey = (k: string) => k
+                      .replace(/([A-Z])/g, ' $1')
+                      .replace(/^./, (str) => str.toUpperCase())
+                      .trim();
+                    
+                    return (
+                      <div key={key}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-zinc-400">{formatKey(key)}</span>
+                          <span className={`text-sm font-medium ${getScoreColor(value)}`}>
+                            {value}/100
+                          </span>
+                        </div>
+                        <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full ${
+                              value >= 60 ? "bg-emerald-500" : "bg-amber-500"
+                            }`}
+                            style={{ width: `${value}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full ${
-                            value >= 60 ? "bg-emerald-500" : "bg-amber-500"
-                          }`}
-                          style={{ width: `${value}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </CardContent>
@@ -361,7 +378,7 @@ export default function IntelligencePage() {
                           <span className="text-xs text-zinc-500">
                             Volume: {query.searchVolume}
                           </span>
-                          {query.isOpportunity && (
+                          {query.opportunity && (
                             <Badge className="bg-emerald-500/20 text-emerald-400 text-xs">
                               Opportunity
                             </Badge>

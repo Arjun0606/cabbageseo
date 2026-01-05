@@ -48,10 +48,12 @@ export default function CitationsPage() {
     const fetchCitations = async () => {
       setLoadingCitations(true);
       try {
-        const res = await fetch(`/api/geo/citations?siteId=${currentSite.id}`);
+        const res = await fetch(`/api/geo/citations?siteId=${currentSite.id}&full=true`);
         const result = await res.json();
-        if (result.citations) {
-          setCitations(result.citations);
+        if (result.data?.citations) {
+          setCitations(result.data.citations);
+        } else if (result.data?.recent) {
+          setCitations(result.data.recent);
         }
       } catch (err) {
         console.error("Failed to fetch citations:", err);

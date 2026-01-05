@@ -80,14 +80,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to fetch citations" }, { status: 500 });
     }
 
-    // Format citations
+    // Helper to convert confidence string to number
+    const confidenceToNumber = (conf: string | null): number => {
+      if (conf === "high") return 0.9;
+      if (conf === "medium") return 0.7;
+      if (conf === "low") return 0.5;
+      return 0.7;
+    };
+
+    // Format citations - use camelCase for frontend
     const formattedCitations = (citations || []).map((c: {
       id: string;
       platform: string;
       query: string;
       snippet?: string;
       page_url?: string;
-      confidence?: number;
+      confidence?: string;
       cited_at: string;
       created_at: string;
     }) => ({
@@ -95,9 +103,9 @@ export async function GET(request: NextRequest) {
       platform: c.platform,
       query: c.query,
       snippet: c.snippet || "",
-      page_url: c.page_url,
-      confidence: c.confidence || 0.7,
-      discovered_at: c.cited_at || c.created_at,
+      pageUrl: c.page_url,
+      confidence: confidenceToNumber(c.confidence || null),
+      discoveredAt: c.cited_at || c.created_at,
     }));
 
     // Calculate platform breakdown
