@@ -43,17 +43,17 @@ const pricingPlans = [
     id: "free",
     name: "Free",
     price: 0,
-    description: "Try it out",
+    description: "Get started",
     popular: false,
     features: [
       "1 website",
-      "3 citation checks/day",
-      "7-day history",
-      "Basic alerts",
+      "3 checks/day",
+      "7-day history only",
+      "Email alerts",
     ],
     limitations: [
       "No competitor tracking",
-      "No API access",
+      "Data deleted after 7 days",
     ],
     cta: "Start Free",
   },
@@ -181,7 +181,9 @@ export default function LandingPage() {
       <header className="border-b border-zinc-800">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-10 w-auto" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+              <Eye className="w-5 h-5 text-white" />
+            </div>
             <span className="font-bold text-xl tracking-tight text-white">CabbageSEO</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6">
@@ -245,7 +247,7 @@ export default function LandingPage() {
               </Button>
             </div>
             <p className="text-xs text-zinc-500 mt-2">
-              Free check • No signup required
+              Start free • No credit card required
             </p>
           </div>
 
@@ -425,7 +427,9 @@ export default function LandingPage() {
         <div className="container mx-auto max-w-5xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-8 w-auto" />
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                <Eye className="w-4 h-4 text-white" />
+              </div>
               <span className="font-bold text-white">CabbageSEO</span>
             </div>
             <nav className="flex items-center gap-6 text-sm text-zinc-500">
