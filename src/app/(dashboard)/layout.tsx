@@ -62,9 +62,11 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
       <div className="p-4 border-b border-zinc-800">
         <div className="flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">🥬</span>
-            </div>
+            <img 
+              src="/apple-touch-icon.png" 
+              alt="CabbageSEO" 
+              className="w-9 h-9 rounded-xl"
+            />
             <div>
               <span className="font-bold text-white">CabbageSEO</span>
               <p className="text-[10px] text-emerald-400 uppercase tracking-wider">AI Intel</p>

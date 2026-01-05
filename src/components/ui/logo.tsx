@@ -22,9 +22,10 @@ export function Logo({ size = "md", className, showText = true }: LogoProps) {
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <img
-        src="/cabbageseo_logo.png"
+        src="/apple-touch-icon.png"
         alt="CabbageSEO"
         style={{ height: `${height}px`, width: 'auto' }}
+        className="rounded-lg"
       />
       {showText && (
         <span className={cn("font-bold tracking-tight", text)}>
@@ -40,10 +41,10 @@ export function LogoIcon({ size = "md", className }: Omit<LogoProps, "showText">
 
   return (
     <img
-      src="/cabbageseo_logo.png"
+      src="/apple-touch-icon.png"
       alt="CabbageSEO"
       style={{ height: `${height}px`, width: 'auto' }}
-      className={cn("", className)}
+      className={cn("rounded-lg", className)}
     />
   );
 }

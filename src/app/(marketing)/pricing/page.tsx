@@ -307,9 +307,11 @@ export default function PricingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-                <span className="text-white font-bold text-xl">🥬</span>
-              </div>
+              <img 
+                src="/apple-touch-icon.png" 
+                alt="CabbageSEO" 
+                className="w-10 h-10 rounded-xl"
+              />
               <div>
                 <span className="font-bold text-white text-lg">CabbageSEO</span>
                 <p className="text-xs text-zinc-500">AI Brand Intelligence</p>

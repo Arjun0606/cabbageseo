@@ -330,8 +330,8 @@ function DashboardContent() {
           <Card className="bg-zinc-900 border-zinc-800">
             <CardHeader>
           <CardTitle className="text-white">Platform Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
+            </CardHeader>
+            <CardContent>
           <div className="grid md:grid-cols-3 gap-4">
             {[
               { name: "Perplexity", color: "emerald", icon: Search },
