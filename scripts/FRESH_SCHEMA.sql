@@ -20,6 +20,7 @@
 -- ============================================
 
 -- Must drop in correct order (children first)
+DROP TABLE IF EXISTS "public"."geo_analyses" CASCADE;
 DROP TABLE IF EXISTS "public"."notifications" CASCADE;
 DROP TABLE IF EXISTS "public"."usage" CASCADE;
 DROP TABLE IF EXISTS "public"."competitors" CASCADE;
