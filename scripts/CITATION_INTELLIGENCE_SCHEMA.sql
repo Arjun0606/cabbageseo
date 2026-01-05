@@ -1,14 +1,26 @@
 -- ============================================
--- CabbageSEO: CITATION INTELLIGENCE
--- MIGRATION (PRESERVES YOUR BILLING!)
+-- CabbageSEO: CITATION INTELLIGENCE SCHEMA
+-- ⚠️  FULL RESET - FOR FRESH INSTALLS ONLY
 -- ============================================
 -- 
--- This keeps your:
--- ✅ Organization (subscription, $29 plan)
+-- ⚠️  WARNING: This script DROPS ALL CITATION DATA!
+-- 
+-- Use this ONLY for:
+-- - Fresh database setup
+-- - Complete reset (you will lose all citations)
+-- 
+-- Preserves:
+-- ✅ Organization (subscription, plan)
 -- ✅ User account
 -- ✅ Dodo payment data
 --
--- And creates the new citation tables.
+-- DELETES:
+-- ❌ All existing citations
+-- ❌ All existing competitors
+-- ❌ All existing sites
+--
+-- For MIGRATIONS that preserve citation data,
+-- use CITATION_INTELLIGENCE_MIGRATION.sql instead.
 -- ============================================
 
 -- ============================================

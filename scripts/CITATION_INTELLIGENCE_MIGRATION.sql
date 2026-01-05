@@ -1,12 +1,23 @@
 -- ============================================
 -- CabbageSEO: CITATION INTELLIGENCE MIGRATION
+-- ✅ SAFE MIGRATION - PRESERVES CITATION DATA
 -- ============================================
 -- 
--- This migrates from the old GEO/SEO schema to the new
--- simplified Citation Intelligence schema.
+-- Use this script to migrate from old GEO/SEO schema
+-- to the new Citation Intelligence schema.
 --
--- Run this in Supabase SQL Editor.
--- ⚠️  This DROPS old tables and creates new ones!
+-- Preserves:
+-- ✅ Organizations (with billing data)
+-- ✅ User accounts
+-- ✅ Existing citations table (if any)
+-- ✅ Dodo payment data
+-- 
+-- Drops (old unused tables):
+-- - aio_analyses, ai_citations, entities, rankings
+-- - issues, audits, tasks, pages, content, keywords
+--
+-- For FRESH INSTALL (drops everything), use
+-- CITATION_INTELLIGENCE_SCHEMA.sql instead.
 -- ============================================
 
 -- ============================================
