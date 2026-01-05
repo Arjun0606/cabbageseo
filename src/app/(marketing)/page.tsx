@@ -1,484 +1,362 @@
-"use client";
+/**
+ * Landing Page - HONEST VERSION
+ * 
+ * Positioning: AI Brand Intelligence (not SEO tool)
+ * Target: Companies with brands, not bloggers
+ * 
+ * Key message: "See when ChatGPT, Perplexity, and Google AI 
+ * recommend your company instead of your competitors."
+ */
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
+import { 
+  Search, 
+  Bell, 
+  BarChart3, 
+  Users, 
+  Zap, 
   ArrowRight,
-  Eye,
-  Search,
-  Bot,
-  Sparkles,
-  Check,
-  Bell,
-  Target,
-  TrendingUp,
-  BarChart3,
-  Brain,
-  Zap,
-  Shield,
+  CheckCircle2,
   Globe,
-  Play,
-  ChevronRight,
-  Star,
+  TrendingUp,
+  Shield
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/client";
+import { TRIAL_DAYS } from "@/lib/billing/citation-plans";
 
-// ============================================
-// CABBAGESEO - GEO PLATFORM LANDING PAGE
-// Clean, modern design inspired by top SaaS
-// ============================================
-
-export default function LandingPage() {
-  const router = useRouter();
-  const [url, setUrl] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isYearly, setIsYearly] = useState(true);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = createClient();
-      if (supabase) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) setIsLoggedIn(true);
-      }
-    };
-    checkAuth();
-  }, []);
-
-  const handleGetStarted = () => {
-    router.push("/signup");
-  };
-
+export default function HomePage() {
   return (
-    <div className="min-h-screen bg-[#09090b] text-white overflow-hidden">
-      
-      {/* ============================================ */}
-      {/* HEADER */}
-      {/* ============================================ */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#09090b]/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-              <Eye className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-semibold text-lg">CabbageSEO</span>
-          </Link>
-          
-          <nav className="hidden md:flex items-center gap-8">
-            <Link href="#features" className="text-sm text-zinc-400 hover:text-white transition-colors">Features</Link>
-            <Link href="#how-it-works" className="text-sm text-zinc-400 hover:text-white transition-colors">How it works</Link>
-            <Link href="/pricing" className="text-sm text-zinc-400 hover:text-white transition-colors">Pricing</Link>
-            <Link href="/docs" className="text-sm text-zinc-400 hover:text-white transition-colors">Docs</Link>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            {isLoggedIn ? (
-              <Link href="/dashboard">
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                  Dashboard
-                </Button>
-              </Link>
-            ) : (
-              <>
-                <Link href="/login">
-                  <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">
-                    Log in
-                  </Button>
-                </Link>
-                <Link href="/signup">
-                  <Button size="sm" className="bg-white text-black hover:bg-zinc-200">
-                    Get Started
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* ============================================ */}
-      {/* HERO SECTION */}
-      {/* ============================================ */}
-      <section className="relative pt-32 pb-20 px-6">
+    <main className="min-h-screen bg-zinc-950">
+      {/* Hero */}
+      <section className="relative pt-24 pb-20 px-6 overflow-hidden">
         {/* Background gradient */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-emerald-500/20 rounded-full blur-[120px] opacity-50" />
-          <div className="absolute top-20 right-1/4 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px]" />
-        </div>
-
-        <div className="relative max-w-5xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-8">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-sm text-zinc-400">The GEO Platform for AI Search</span>
+        <div className="absolute inset-0 bg-gradient-to-b from-emerald-950/20 via-transparent to-transparent" />
+        
+        <div className="relative max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 mb-8">
+            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+            <span className="text-emerald-400 text-sm font-medium">
+              AI Brand Intelligence
+            </span>
           </div>
-
-          {/* Headline */}
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-            <span className="text-white">Win </span>
-            <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">AI Search</span>
+          
+          <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight">
+            See when AI recommends
+            <span className="block text-emerald-400">you or your competitors</span>
           </h1>
-
-          <p className="text-xl md:text-2xl text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Track when ChatGPT, Perplexity, and Google AI cite your website.
-            <br className="hidden md:block" />
-            Get insights to grow your AI visibility.
+          
+          <p className="mt-6 text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto">
+            Track when ChatGPT, Perplexity, and Google AI mention your company.
+            Know instantly if they&apos;re sending traffic to you—or your competition.
           </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-            <Button 
-              onClick={handleGetStarted}
-              size="lg" 
-              className="bg-white text-black hover:bg-zinc-200 h-12 px-8 text-base font-medium"
+          
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/signup"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-8 py-4 rounded-xl transition-colors"
             >
-              Start 10-Day Free Trial
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-            <Link href="#how-it-works">
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="border-white/20 text-white hover:bg-white/5 h-12 px-8 text-base"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                See how it works
-              </Button>
+              Start {TRIAL_DAYS}-Day Free Trial
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link
+              href="/pricing"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white font-medium px-8 py-4 rounded-xl transition-colors"
+            >
+              View Pricing
             </Link>
           </div>
-
-          {/* Trust indicators */}
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm text-zinc-500">
-            <div className="flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-500" />
-              10-day free trial
-            </div>
-            <div className="flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-500" />
-              No credit card required
-            </div>
-            <div className="flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-500" />
-              Real AI platform APIs
-            </div>
-          </div>
+          
+          <p className="mt-4 text-sm text-zinc-500">
+            No credit card required • Setup in 30 seconds
+          </p>
         </div>
+      </section>
 
-        {/* Platform logos */}
-        <div className="max-w-3xl mx-auto mt-16">
-          <p className="text-center text-sm text-zinc-600 mb-6">Tracking citations across</p>
-          <div className="flex items-center justify-center gap-12">
-            <div className="flex items-center gap-2 text-zinc-400">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                <Search className="w-5 h-5 text-purple-400" />
-              </div>
-              <span className="font-medium">Perplexity</span>
+      {/* Social proof / Stats */}
+      <section className="py-12 px-6 border-y border-zinc-800/50">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-3 gap-8 text-center">
+            <div>
+              <div className="text-3xl font-bold text-white">3</div>
+              <div className="text-sm text-zinc-500">AI Platforms Tracked</div>
             </div>
-            <div className="flex items-center gap-2 text-zinc-400">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-blue-400" />
-              </div>
-              <span className="font-medium">Google AI</span>
+            <div>
+              <div className="text-3xl font-bold text-white">Real-time</div>
+              <div className="text-sm text-zinc-500">Citation Alerts</div>
             </div>
-            <div className="flex items-center gap-2 text-zinc-400">
-              <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
-                <Bot className="w-5 h-5 text-green-400" />
-              </div>
-              <span className="font-medium">ChatGPT</span>
+            <div>
+              <div className="text-3xl font-bold text-white">Daily</div>
+              <div className="text-sm text-zinc-500">Automated Checks</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ============================================ */}
-      {/* PRODUCT SHOWCASE */}
-      {/* ============================================ */}
+      {/* Problem / Solution */}
       <section className="py-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          {/* Mock Dashboard Preview */}
-          <div className="relative rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-transparent p-1 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-transparent to-transparent z-10 pointer-events-none" />
-            <div className="rounded-xl bg-[#0a0a0f] p-6 md:p-8">
-              {/* Fake dashboard header */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-white">Citation Dashboard</h3>
-                  <p className="text-sm text-zinc-500">yoursite.com</p>
-                </div>
-                <Badge className="bg-emerald-500/10 text-emerald-400 border-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2" />
-                  Live tracking
-                </Badge>
+        <div className="max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl font-bold text-white mb-6">
+                AI is the new search.
+                <span className="block text-zinc-500">Do you know what it says about you?</span>
+              </h2>
+              <div className="space-y-4">
+                <p className="text-zinc-400">
+                  Millions of people now ask ChatGPT, Perplexity, and Google AI for 
+                  recommendations instead of searching Google.
+                </p>
+                <p className="text-zinc-400">
+                  When someone asks <em>&quot;What&apos;s the best [your category]?&quot;</em>—is 
+                  AI recommending you, or sending them to your competitors?
+                </p>
+                <p className="text-emerald-400 font-medium">
+                  CabbageSEO tells you exactly what AI says about your brand.
+                </p>
               </div>
-              
-              {/* Stats row */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                {[
-                  { label: "Total Citations", value: "47", change: "+12 this week" },
-                  { label: "GEO Score", value: "78", change: "Grade B" },
-                  { label: "Platforms", value: "3", change: "Active" },
-                  { label: "Competitors", value: "5", change: "Tracking" },
-                ].map((stat, i) => (
-                  <div key={i} className="p-4 rounded-xl bg-white/5">
-                    <p className="text-2xl font-bold text-white">{stat.value}</p>
-                    <p className="text-sm text-zinc-500">{stat.label}</p>
-                    <p className="text-xs text-emerald-400 mt-1">{stat.change}</p>
-                  </div>
-                ))}
+            </div>
+            
+            <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                <div className="w-3 h-3 rounded-full bg-green-500" />
               </div>
-
-              {/* Fake citation feed */}
-              <div className="space-y-3">
-                {[
-                  { platform: "Perplexity", query: "best project management tools", time: "2 min ago" },
-                  { platform: "ChatGPT", query: "how to improve team productivity", time: "15 min ago" },
-                  { platform: "Google AI", query: "software for remote teams", time: "1 hour ago" },
-                ].map((citation, i) => (
-                  <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-white/[0.02] border border-white/5">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      citation.platform === "Perplexity" ? "bg-purple-500/10" :
-                      citation.platform === "ChatGPT" ? "bg-green-500/10" :
-                      "bg-blue-500/10"
-                    }`}>
-                      {citation.platform === "Perplexity" ? <Search className="w-4 h-4 text-purple-400" /> :
-                       citation.platform === "ChatGPT" ? <Bot className="w-4 h-4 text-green-400" /> :
-                       <Sparkles className="w-4 h-4 text-blue-400" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white truncate">"{citation.query}"</p>
-                      <p className="text-xs text-zinc-500">{citation.platform} • {citation.time}</p>
-                    </div>
-                    <Badge variant="outline" className="text-emerald-400 border-emerald-500/30">Cited</Badge>
-                  </div>
-                ))}
+              <div className="font-mono text-sm space-y-2">
+                <p className="text-zinc-500">$ Checking AI platforms...</p>
+                <p className="text-emerald-400">✓ Perplexity: yoursite.com cited</p>
+                <p className="text-emerald-400">✓ Google AI: yoursite.com mentioned</p>
+                <p className="text-yellow-400">○ ChatGPT: competitor.com cited</p>
+                <p className="text-zinc-500 mt-4">→ Alert sent to your inbox</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ============================================ */}
-      {/* HOW IT WORKS */}
-      {/* ============================================ */}
-      <section id="how-it-works" className="py-20 px-6 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent">
+      {/* Features - Only what's built */}
+      <section className="py-20 px-6 bg-zinc-900/50">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <Badge className="bg-emerald-500/10 text-emerald-400 border-0 mb-4">How it works</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Three steps to AI visibility
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white">
+              Everything you need to track AI visibility
             </h2>
-            <p className="text-lg text-zinc-400">
-              From zero to citation tracking in under 2 minutes
+            <p className="mt-4 text-zinc-400">
+              Simple tools that actually work. No fluff.
             </p>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
+          
+          <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                step: "01",
-                icon: Globe,
-                title: "Add your website",
-                description: "Enter your domain. We start monitoring immediately.",
-              },
-              {
-                step: "02",
                 icon: Search,
-                title: "We check AI platforms",
-                description: "Daily or hourly queries to Perplexity, Google AI, and ChatGPT.",
-              },
-              {
-                step: "03",
-                icon: Bell,
-                title: "Get notified",
-                description: "Instant alerts when AI starts citing your website.",
-              },
-            ].map((item, i) => (
-              <div key={i} className="relative">
-                {i < 2 && (
-                  <div className="hidden md:block absolute top-12 left-full w-full h-px bg-gradient-to-r from-white/20 to-transparent -translate-x-4" />
-                )}
-                <div className="text-6xl font-bold text-white/5 mb-4">{item.step}</div>
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4">
-                  <item.icon className="w-6 h-6 text-emerald-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-                <p className="text-zinc-400">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================ */}
-      {/* FEATURES */}
-      {/* ============================================ */}
-      <section id="features" className="py-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <Badge className="bg-white/5 text-zinc-400 border-white/10 mb-4">Features</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Everything you need to win AI search
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                icon: Eye,
                 title: "Citation Tracking",
-                description: "Real-time monitoring across ChatGPT, Perplexity, and Google AI Overviews.",
+                description: "We query Perplexity, Google AI, and ChatGPT for your brand and detect when they cite you.",
+                color: "emerald",
               },
               {
-                icon: Brain,
-                title: "GEO Score",
-                description: "AI analyzes your content and scores it for AI-friendliness (0-100).",
+                icon: Users,
+                title: "Competitor Monitoring",
+                description: "See when AI recommends your competitors. Know exactly who's winning the AI visibility game.",
+                color: "blue",
               },
               {
-                icon: Target,
-                title: "Competitor Intel",
-                description: "See when competitors get cited. Find gaps in your coverage.",
-              },
-              {
-                icon: Zap,
+                icon: Bell,
                 title: "Instant Alerts",
-                description: "Email notifications the moment AI starts talking about you.",
+                description: "Get notified the moment AI starts (or stops) citing your website. Never miss a change.",
+                color: "violet",
               },
               {
                 icon: BarChart3,
-                title: "Query Intelligence",
-                description: "Discover what questions AI answers in your niche.",
+                title: "GEO Score",
+                description: "A simple 0-100 score showing how AI-friendly your content is. Track it over time.",
+                color: "amber",
               },
               {
                 icon: TrendingUp,
-                title: "Historical Trends",
-                description: "Track your AI visibility growth over time with charts and exports.",
+                title: "Weekly Reports",
+                description: "Automated email reports with your citations vs competitors. No login required.",
+                color: "rose",
               },
-            ].map((feature, i) => (
-              <Card key={i} className="bg-white/[0.02] border-white/5 hover:border-white/10 transition-colors">
-                <CardContent className="p-6">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-4">
-                    <feature.icon className="w-5 h-5 text-emerald-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
-                  <p className="text-sm text-zinc-400">{feature.description}</p>
-                </CardContent>
-              </Card>
+              {
+                icon: Globe,
+                title: "Multi-Site Support",
+                description: "Track multiple domains from one dashboard. Perfect for brands with multiple properties.",
+                color: "cyan",
+              },
+            ].map((feature, idx) => (
+              <div 
+                key={idx}
+                className="bg-zinc-900 rounded-xl p-6 border border-zinc-800 hover:border-zinc-700 transition-colors"
+              >
+                <feature.icon className={`w-10 h-10 mb-4 ${
+                  feature.color === "emerald" ? "text-emerald-400" :
+                  feature.color === "blue" ? "text-blue-400" :
+                  feature.color === "violet" ? "text-violet-400" :
+                  feature.color === "amber" ? "text-amber-400" :
+                  feature.color === "rose" ? "text-rose-400" :
+                  "text-cyan-400"
+                }`} />
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  {feature.description}
+                </p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ============================================ */}
-      {/* PRICING PREVIEW */}
-      {/* ============================================ */}
-      <section className="py-20 px-6 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent">
-        <div className="max-w-4xl mx-auto text-center">
-          <Badge className="bg-amber-500/10 text-amber-400 border-0 mb-4">10-Day Free Trial</Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Try free, then pick a plan
-          </h2>
-          <p className="text-lg text-zinc-400 mb-8">
-            Full access for 10 days. No credit card required.
-          </p>
+      {/* How it works - Honest */}
+      <section className="py-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white">
+              How it works
+            </h2>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                step: "1",
+                title: "Add your domain",
+                description: "Enter your website URL. We'll start tracking it across AI platforms immediately.",
+              },
+              {
+                step: "2",
+                title: "We query AI platforms",
+                description: "Our system asks Perplexity, Google AI, and ChatGPT relevant queries about your niche.",
+              },
+              {
+                step: "3",
+                title: "Get notified",
+                description: "See your citations in the dashboard. Get email alerts when AI mentions you or competitors.",
+              },
+            ].map((item, idx) => (
+              <div key={idx} className="text-center">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-emerald-400 font-bold text-lg">{item.step}</span>
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  {item.title}
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          {/* Quick pricing cards */}
-          <div className="grid sm:grid-cols-3 gap-4 mb-8">
-            <div className="p-6 rounded-xl bg-amber-500/10 border border-amber-500/30 border-dashed relative">
-              <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-amber-500 text-white">Free Trial</Badge>
-              <div className="text-2xl font-bold text-white mb-1">$0</div>
-              <div className="text-sm text-amber-300 mb-3">10 days free</div>
-              <div className="text-xs text-zinc-400">Full access • Then upgrade</div>
+      {/* Trust / Transparency */}
+      <section className="py-16 px-6 border-t border-zinc-800">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-zinc-900/50 rounded-2xl p-8 border border-zinc-800">
+            <div className="flex items-center gap-3 mb-6">
+              <Shield className="w-6 h-6 text-emerald-400" />
+              <h3 className="text-lg font-semibold text-white">Honest about how we work</h3>
             </div>
-            <div className="p-6 rounded-xl bg-emerald-500/10 border border-emerald-500/30 relative">
-              <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-emerald-500 text-white">Popular</Badge>
-              <div className="text-2xl font-bold text-white mb-1">$29<span className="text-sm font-normal text-zinc-400">/mo</span></div>
-              <div className="text-sm text-zinc-300 mb-3">Starter</div>
-              <div className="text-xs text-zinc-400">3 sites • 100 checks/mo</div>
-            </div>
-            <div className="p-6 rounded-xl bg-white/[0.02] border border-white/5">
-              <div className="text-2xl font-bold text-white mb-1">$79<span className="text-sm font-normal text-zinc-400">/mo</span></div>
-              <div className="text-sm text-zinc-500 mb-3">Pro</div>
-              <div className="text-xs text-zinc-400">10 sites • Unlimited</div>
+            
+            <div className="space-y-4 text-sm text-zinc-400">
+              <p>
+                <strong className="text-white">Perplexity:</strong> We use their official API 
+                and check the citations array. High confidence detection.
+              </p>
+              <p>
+                <strong className="text-white">Google AI:</strong> We use Gemini with search 
+                grounding and analyze the grounding metadata for your domain.
+              </p>
+              <p>
+                <strong className="text-white">ChatGPT:</strong> We query GPT-4 and check if it 
+                knows about your brand from training data. No live web access—this is knowledge 
+                detection, not citation telemetry.
+              </p>
+              <p className="pt-2 text-zinc-500">
+                We don&apos;t have access to internal citation indexes. We detect mentions through 
+                response analysis. This is not official platform data.
+              </p>
             </div>
           </div>
+        </div>
+      </section>
 
-          <Link href="/pricing">
-            <Button variant="outline" className="border-white/20 text-white hover:bg-white/5">
-              View all plans
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
+      {/* Who it's for */}
+      <section className="py-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white">
+              Built for companies with brands
+            </h2>
+            <p className="mt-4 text-zinc-400">
+              If people search for your category, you need to know what AI tells them.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            {[
+              { title: "SaaS Companies", desc: "Know if AI recommends you when users ask for tools in your category." },
+              { title: "E-commerce Brands", desc: "See if AI suggests your products when shoppers ask for recommendations." },
+              { title: "Service Businesses", desc: "Track if AI refers potential clients to you or your competitors." },
+              { title: "Digital Agencies", desc: "Monitor AI visibility for your clients. Report on a new channel." },
+            ].map((item, idx) => (
+              <div 
+                key={idx}
+                className="flex items-start gap-4 bg-zinc-900/50 rounded-xl p-6 border border-zinc-800"
+              >
+                <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-white">{item.title}</h3>
+                  <p className="text-sm text-zinc-400 mt-1">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-20 px-6 bg-gradient-to-b from-zinc-900/50 to-zinc-950">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+            Find out what AI says about you
+          </h2>
+          <p className="text-lg text-zinc-400 mb-8">
+            Start your {TRIAL_DAYS}-day free trial. No credit card. Cancel anytime.
+          </p>
+          <Link
+            href="/signup"
+            className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-8 py-4 rounded-xl transition-colors"
+          >
+            Start Free Trial
+            <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
       </section>
 
-      {/* ============================================ */}
-      {/* FINAL CTA */}
-      {/* ============================================ */}
-      <section className="py-20 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Start your 10-day free trial
-          </h2>
-          <p className="text-lg text-zinc-400 mb-8">
-            Full access for 10 days. See if AI knows about your website.
-          </p>
-          <Button 
-            onClick={handleGetStarted}
-            size="lg" 
-            className="bg-emerald-600 hover:bg-emerald-500 h-12 px-8 text-base font-medium"
-          >
-            Start Free Trial
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-          <p className="text-sm text-zinc-600 mt-4">
-            No credit card required • Setup in 60 seconds
-          </p>
-        </div>
-      </section>
-
-      {/* ============================================ */}
-      {/* FOOTER */}
-      {/* ============================================ */}
-      <footer className="border-t border-white/5 py-12 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-                <Eye className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-semibold">CabbageSEO</span>
+      {/* Footer */}
+      <footer className="py-12 px-6 border-t border-zinc-800">
+        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
+              <span className="text-black font-bold text-lg">C</span>
             </div>
-            
-            <nav className="flex flex-wrap items-center justify-center gap-6 text-sm text-zinc-500">
-              <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-              <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
-              <Link href="/feedback" className="hover:text-white transition-colors">Feedback</Link>
-              <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-            </nav>
-
-            <a 
-              href="https://x.com/Arjun06061" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-sm text-zinc-500 hover:text-white transition-colors"
-            >
-              Built by @Arjun06061
-            </a>
+            <span className="font-semibold text-white">CabbageSEO</span>
           </div>
           
-          <div className="mt-8 pt-8 border-t border-white/5 text-center">
-            <p className="text-xs text-zinc-600">
-              © {new Date().getFullYear()} CabbageSEO. The GEO Platform.
-            </p>
+          <div className="flex items-center gap-6 text-sm text-zinc-500">
+            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+            <Link href="/login" className="hover:text-white transition-colors">Login</Link>
+            <a href="mailto:hello@cabbageseo.com" className="hover:text-white transition-colors">Contact</a>
           </div>
+          
+          <p className="text-sm text-zinc-600">
+            © {new Date().getFullYear()} CabbageSEO
+          </p>
         </div>
       </footer>
-    </div>
+    </main>
   );
 }

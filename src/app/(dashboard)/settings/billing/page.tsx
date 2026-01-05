@@ -163,12 +163,12 @@ function BillingContent() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
-                currentPlan === "agency" ? "bg-violet-500/10" :
+                currentPlan === "pro" ? "bg-violet-500/10" :
                 currentPlan === "pro" ? "bg-emerald-500/10" :
                 currentPlan === "starter" ? "bg-blue-500/10" :
                 "bg-zinc-800"
               }`}>
-                {currentPlan === "agency" ? <Building2 className="w-7 h-7 text-violet-400" /> :
+                {currentPlan === "pro" ? <Building2 className="w-7 h-7 text-violet-400" /> :
                  currentPlan === "pro" ? <Zap className="w-7 h-7 text-emerald-400" /> :
                  currentPlan === "starter" ? <Crown className="w-7 h-7 text-blue-400" /> :
                  <CreditCard className="w-7 h-7 text-zinc-500" />}
@@ -232,7 +232,7 @@ function BillingContent() {
       </Card>
 
       {/* Upgrade Options */}
-      {currentPlan !== "agency" && (
+      {currentPlan !== "pro" && (
         <Card className="bg-zinc-900/50 border-zinc-800">
         <CardHeader>
             <CardTitle className="text-white">Upgrade</CardTitle>
@@ -240,9 +240,9 @@ function BillingContent() {
         </CardHeader>
         <CardContent>
             <div className="grid sm:grid-cols-2 gap-4">
-              {(["starter", "pro", "agency"] as const)
+              {(["starter", "pro"] as const)
                 .filter(p => {
-                  const planOrder = ["free", "starter", "pro", "agency"];
+                  const planOrder = ["free", "starter", "pro"];
                   return planOrder.indexOf(p) > planOrder.indexOf(currentPlan);
                 })
                 .map((planId) => {

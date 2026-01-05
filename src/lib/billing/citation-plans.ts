@@ -1,29 +1,22 @@
 /**
  * Citation Intelligence Pricing Plans
  * 
- * 10-DAY FREE TRIAL MODEL
- * - Free users get 10 days of full access
- * - After 10 days, must upgrade to continue
- * - No "free forever" tier
+ * HONEST PRICING - Only what's actually built
  * 
- * Cost Analysis (per check across 3 platforms):
- * - Perplexity API: ~$0.01-0.02 per query
- * - Google AI (Gemini): ~$0.005 per query with grounding
- * - OpenAI (ChatGPT sim): ~$0.005 per query
- * - Total per check: ~$0.02-0.03
+ * Free: Demo tier (10-day trial, very limited)
+ * Starter: Entry paid tier ($29/mo)
+ * Pro: Main revenue tier ($79/mo)
+ * 
+ * Agency: REMOVED until we actually build:
+ * - White-label reports
+ * - Custom integrations
+ * - Team seats
+ * - SLA
  */
 
-// ============================================
-// TRIAL CONFIGURATION
-// ============================================
+export const TRIAL_DAYS = 10;
 
-export const TRIAL_DAYS = 10;  // Free trial period
-
-// ============================================
-// PLAN DEFINITIONS
-// ============================================
-
-export type CitationPlanId = "free" | "starter" | "pro" | "agency";
+export type CitationPlanId = "free" | "starter" | "pro";
 
 export interface CitationPlanLimits {
   sites: number;
@@ -35,14 +28,21 @@ export interface CitationPlanLimits {
 }
 
 export interface CitationPlanFeatures {
-  realtimeAlerts: boolean;
+  // What's ACTUALLY built
+  manualChecks: boolean;
+  dailyAutoCheck: boolean;
+  hourlyAutoCheck: boolean;
+  emailAlerts: boolean;
+  weeklyReport: boolean;
   csvExport: boolean;
-  apiAccess: boolean;
-  whiteLabel: boolean;
-  slackIntegration: boolean;
-  hourlyMonitoring: boolean;
-  prioritySupport: boolean;
-  customIntegrations: boolean;
+  competitorTracking: boolean;
+  geoScore: boolean;
+  geoTips: boolean;
+  // NOT built yet - don't promise
+  // apiAccess: boolean;
+  // slackIntegration: boolean;
+  // whiteLabel: boolean;
+  // customIntegrations: boolean;
 }
 
 export interface CitationPlan {
@@ -53,44 +53,43 @@ export interface CitationPlan {
   yearlyPrice: number;
   limits: CitationPlanLimits;
   features: CitationPlanFeatures;
-  checkFrequency: "manual" | "daily" | "hourly" | "realtime";
-  isTrial?: boolean;  // True for free plan
+  isTrial?: boolean;
 }
 
 export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
   free: {
     id: "free",
     name: "Free Trial",
-    description: `${TRIAL_DAYS}-day free trial, then upgrade`,
+    description: `${TRIAL_DAYS}-day trial to test the platform`,
     monthlyPrice: 0,
     yearlyPrice: 0,
     isTrial: true,
     limits: {
       sites: 1,
-      checksPerDay: 5,          // Generous during trial
-      checksPerMonth: 50,
-      competitors: 1,           // Let them try competitor tracking
-      historyDays: 10,          // Match trial period
+      checksPerDay: 3,
+      checksPerMonth: 30,
+      competitors: 0,        // No competitors on free
+      historyDays: 7,        // Only 7 days
       teamMembers: 1,
     },
     features: {
-      realtimeAlerts: true,     // Full features during trial
-      csvExport: false,
-      apiAccess: false,
-      whiteLabel: false,
-      slackIntegration: false,
-      hourlyMonitoring: false,
-      prioritySupport: false,
-      customIntegrations: false,
+      manualChecks: true,
+      dailyAutoCheck: false,  // No automation on free
+      hourlyAutoCheck: false,
+      emailAlerts: false,     // No alerts on free
+      weeklyReport: false,    // No reports on free
+      csvExport: false,       // No export on free
+      competitorTracking: false,
+      geoScore: true,         // Let them see the score
+      geoTips: false,         // Tips are paid
     },
-    checkFrequency: "manual",
   },
   starter: {
     id: "starter",
     name: "Starter",
-    description: "For creators & solopreneurs",
+    description: "For individuals & small sites",
     monthlyPrice: 29,
-    yearlyPrice: 24,
+    yearlyPrice: 24, // ~17% discount
     limits: {
       sites: 3,
       checksPerDay: 10,
@@ -100,68 +99,42 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       teamMembers: 1,
     },
     features: {
-      realtimeAlerts: true,
-      csvExport: true,
-      apiAccess: false,
-      whiteLabel: false,
-      slackIntegration: false,
-      hourlyMonitoring: false,
-      prioritySupport: false,
-      customIntegrations: false,
+      manualChecks: true,
+      dailyAutoCheck: true,   // Daily automation
+      hourlyAutoCheck: false,
+      emailAlerts: true,      // Unlock alerts
+      weeklyReport: true,     // Unlock reports
+      csvExport: true,        // Unlock export
+      competitorTracking: true,
+      geoScore: true,
+      geoTips: true,          // Unlock tips
     },
-    checkFrequency: "daily",
   },
   pro: {
     id: "pro",
     name: "Pro",
-    description: "For growing businesses",
+    description: "For brands & growing companies",
     monthlyPrice: 79,
-    yearlyPrice: 66,
+    yearlyPrice: 66, // ~17% discount
     limits: {
       sites: 10,
-      checksPerDay: 100,
-      checksPerMonth: 999999,
+      checksPerDay: 50,
+      checksPerMonth: 500,
       competitors: 10,
-      historyDays: 99999,
-      teamMembers: 5,
+      historyDays: 365,       // 1 year history
+      teamMembers: 1,         // No team seats yet
     },
     features: {
-      realtimeAlerts: true,
+      manualChecks: true,
+      dailyAutoCheck: true,
+      hourlyAutoCheck: true,  // Hourly for Pro
+      emailAlerts: true,
+      weeklyReport: true,
       csvExport: true,
-      apiAccess: true,
-      whiteLabel: false,
-      slackIntegration: true,
-      hourlyMonitoring: true,
-      prioritySupport: true,
-      customIntegrations: false,
+      competitorTracking: true,
+      geoScore: true,
+      geoTips: true,
     },
-    checkFrequency: "hourly",
-  },
-  agency: {
-    id: "agency",
-    name: "Agency",
-    description: "For agencies & large teams",
-    monthlyPrice: 199,
-    yearlyPrice: 166,
-    limits: {
-      sites: 50,
-      checksPerDay: 999999,
-      checksPerMonth: 999999,
-      competitors: 999999,
-      historyDays: 99999,
-      teamMembers: 20,
-    },
-    features: {
-      realtimeAlerts: true,
-      csvExport: true,
-      apiAccess: true,
-      whiteLabel: true,
-      slackIntegration: true,
-      hourlyMonitoring: true,
-      prioritySupport: true,
-      customIntegrations: true,
-    },
-    checkFrequency: "realtime",
   },
 };
 
@@ -169,11 +142,6 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
 // TRIAL HELPERS
 // ============================================
 
-/**
- * Check if a user's trial has expired
- * @param createdAt - When the user/org was created
- * @returns Object with expired status and days remaining
- */
 export function checkTrialStatus(createdAt: string | Date): {
   expired: boolean;
   daysRemaining: number;
@@ -192,26 +160,20 @@ export function checkTrialStatus(createdAt: string | Date): {
   };
 }
 
-/**
- * Check if user can access the product
- * Free users with expired trial cannot access
- */
 export function canAccessProduct(
   planId: CitationPlanId | string,
   createdAt: string | Date
 ): { allowed: boolean; reason?: string; upgradeRequired?: boolean } {
-  // Paid plans always have access
   if (planId !== "free") {
     return { allowed: true };
   }
   
-  // Check trial status for free users
   const trial = checkTrialStatus(createdAt);
   
   if (trial.expired) {
     return {
       allowed: false,
-      reason: `Your ${TRIAL_DAYS}-day free trial has ended. Upgrade to continue tracking AI citations.`,
+      reason: `Your ${TRIAL_DAYS}-day free trial has ended. Upgrade to continue.`,
       upgradeRequired: true,
     };
   }
@@ -241,7 +203,6 @@ export function canCheckCitations(
   checksThisMonth: number,
   createdAt?: string | Date
 ): { allowed: boolean; reason?: string } {
-  // First check trial status for free users
   if (planId === "free" && createdAt) {
     const access = canAccessProduct(planId, createdAt);
     if (!access.allowed) {
@@ -254,8 +215,8 @@ export function canCheckCitations(
   if (checksToday >= plan.limits.checksPerDay) {
     return {
       allowed: false,
-      reason: `Daily limit reached (${plan.limits.checksPerDay} checks/day). ${
-        planId === "free" ? "Upgrade for more checks!" : "Try again tomorrow."
+      reason: `Daily limit reached (${plan.limits.checksPerDay}/day). ${
+        planId === "free" ? "Upgrade for more." : "Try again tomorrow."
       }`,
     };
   }
@@ -263,7 +224,7 @@ export function canCheckCitations(
   if (checksThisMonth >= plan.limits.checksPerMonth) {
     return {
       allowed: false,
-      reason: `Monthly limit reached. Upgrade for more checks.`,
+      reason: "Monthly limit reached. Upgrade for more.",
     };
   }
   
@@ -279,7 +240,9 @@ export function canAddCompetitor(
   if (currentCompetitors >= plan.limits.competitors) {
     return {
       allowed: false,
-      reason: `Competitor limit reached (${plan.limits.competitors}). Upgrade for more.`,
+      reason: planId === "free" 
+        ? "Competitor tracking requires Starter plan." 
+        : `Limit reached (${plan.limits.competitors}). Upgrade for more.`,
     };
   }
   
@@ -295,7 +258,7 @@ export function canAddSite(
   if (currentSites >= plan.limits.sites) {
     return {
       allowed: false,
-      reason: `Site limit reached (${plan.limits.sites}). Upgrade for more sites.`,
+      reason: `Site limit reached (${plan.limits.sites}). Upgrade for more.`,
     };
   }
   
@@ -306,10 +269,6 @@ export function getHistoryRetentionDays(planId: CitationPlanId | string): number
   return getCitationPlan(planId).limits.historyDays;
 }
 
-export function isUnlimited(value: number): boolean {
-  return value >= 999999;
-}
-
 export function formatLimit(value: number): string {
-  return isUnlimited(value) ? "Unlimited" : value.toString();
+  return value >= 999 ? "Unlimited" : value.toString();
 }
