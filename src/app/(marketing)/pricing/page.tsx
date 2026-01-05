@@ -15,9 +15,26 @@ export const metadata = {
 };
 
 export default function PricingPage() {
-  const plans = [
+  const plans: Array<{
+    id: string;
+    name: string;
+    description: string;
+    monthlyPrice: number;
+    yearlyPrice: number;
+    icon: typeof Zap;
+    color: string;
+    cta: string;
+    ctaHref: string;
+    badge?: string;
+    popular?: boolean;
+    features: Array<{ text: string; included: boolean; highlight?: boolean }>;
+  }> = [
     {
-      ...CITATION_PLANS.free,
+      id: CITATION_PLANS.free.id,
+      name: CITATION_PLANS.free.name,
+      description: CITATION_PLANS.free.description,
+      monthlyPrice: CITATION_PLANS.free.monthlyPrice,
+      yearlyPrice: CITATION_PLANS.free.yearlyPrice,
       icon: Zap,
       color: "gray",
       cta: "Start Free Trial",
@@ -35,7 +52,11 @@ export default function PricingPage() {
       ],
     },
     {
-      ...CITATION_PLANS.starter,
+      id: CITATION_PLANS.starter.id,
+      name: CITATION_PLANS.starter.name,
+      description: CITATION_PLANS.starter.description,
+      monthlyPrice: CITATION_PLANS.starter.monthlyPrice,
+      yearlyPrice: CITATION_PLANS.starter.yearlyPrice,
       icon: Rocket,
       color: "emerald",
       cta: "Get Started",
@@ -54,7 +75,11 @@ export default function PricingPage() {
       ],
     },
     {
-      ...CITATION_PLANS.pro,
+      id: CITATION_PLANS.pro.id,
+      name: CITATION_PLANS.pro.name,
+      description: CITATION_PLANS.pro.description,
+      monthlyPrice: CITATION_PLANS.pro.monthlyPrice,
+      yearlyPrice: CITATION_PLANS.pro.yearlyPrice,
       icon: Building2,
       color: "violet",
       cta: "Go Pro",
