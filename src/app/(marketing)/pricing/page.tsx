@@ -1,18 +1,16 @@
 /**
- * Pricing Page - HONEST VERSION
+ * Pricing Page - WITH MONTHLY/YEARLY TOGGLE
  * 
  * Auto-checks DON'T count against limits (they're included)
  * Manual checks = on-demand checks users trigger
  */
 
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Check, X, Zap, Building2, Rocket } from "lucide-react";
 import { CITATION_PLANS, TRIAL_DAYS } from "@/lib/billing/citation-plans";
-
-export const metadata = {
-  title: "Pricing | CabbageSEO",
-  description: "Simple, honest pricing for AI brand intelligence",
-};
 
 export default function PricingPage() {
   return (
@@ -52,6 +50,8 @@ export default function PricingPage() {
 }
 
 function PricingContent() {
+  const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
+  
   const plans: Array<{
     id: string;
     name: string;
@@ -96,7 +96,7 @@ function PricingContent() {
       icon: Rocket,
       color: "emerald",
       cta: "Get Started",
-      ctaHref: "/signup?plan=starter",
+      ctaHref: `/signup?plan=starter&interval=${billingInterval}`,
       popular: true,
       features: [
         { text: "3 websites", included: true },
@@ -119,7 +119,7 @@ function PricingContent() {
       icon: Building2,
       color: "violet",
       cta: "Go Pro",
-      ctaHref: "/signup?plan=pro",
+      ctaHref: `/signup?plan=pro&interval=${billingInterval}`,
       features: [
         { text: "10 websites", included: true },
         { text: "Unlimited manual checks", included: true },
@@ -149,6 +149,33 @@ function PricingContent() {
             Track citations across ChatGPT, Perplexity, and Google AI. 
             See who AI recommends—you or your competitors.
           </p>
+          
+          {/* Monthly/Yearly Toggle */}
+          <div className="mt-8 inline-flex items-center gap-2 bg-zinc-800 rounded-lg p-1">
+            <button
+              onClick={() => setBillingInterval("monthly")}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                billingInterval === "monthly"
+                  ? "bg-emerald-500 text-black"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingInterval("yearly")}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                billingInterval === "yearly"
+                  ? "bg-emerald-500 text-black"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              Yearly
+              <span className="ml-1.5 text-xs bg-emerald-600 text-white px-1.5 py-0.5 rounded">
+                Save 17%
+              </span>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -156,96 +183,105 @@ function PricingContent() {
       <section className="pb-24 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-3 gap-6">
-            {plans.map((plan) => (
-              <div
-                key={plan.id}
-                className={`relative rounded-2xl p-6 ${
-                  plan.popular
-                    ? "bg-emerald-950/50 border-2 border-emerald-500/50 shadow-lg shadow-emerald-500/10"
-                    : "bg-zinc-900 border border-zinc-800"
-                }`}
-              >
-                {/* Popular badge */}
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-emerald-500 text-black text-xs font-bold px-3 py-1 rounded-full">
-                      MOST POPULAR
-                    </span>
-                  </div>
-                )}
-
-                {/* Trial badge */}
-                {plan.badge && !plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-zinc-700 text-white text-xs font-medium px-3 py-1 rounded-full">
-                      {plan.badge}
-                    </span>
-                  </div>
-                )}
-
-                {/* Plan header */}
-                <div className="text-center mb-6 pt-2">
-                  <plan.icon className={`w-10 h-10 mx-auto mb-3 ${
-                    plan.color === "emerald" ? "text-emerald-400" :
-                    plan.color === "violet" ? "text-violet-400" :
-                    "text-zinc-400"
-                  }`} />
-                  <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-                  <p className="text-sm text-zinc-500 mt-1">{plan.description}</p>
-                </div>
-
-                {/* Price */}
-                <div className="text-center mb-6">
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold text-white">
-                      ${plan.monthlyPrice}
-                    </span>
-                    {plan.monthlyPrice > 0 && (
-                      <span className="text-zinc-500">/mo</span>
-                    )}
-                  </div>
-                  {plan.yearlyPrice > 0 && plan.yearlyPrice < plan.monthlyPrice && (
-                    <p className="text-sm text-emerald-400 mt-1">
-                      ${plan.yearlyPrice}/mo billed yearly
-                    </p>
-                  )}
-                </div>
-
-                {/* CTA */}
-                <Link
-                  href={plan.ctaHref}
-                  className={`block w-full py-3 px-4 rounded-lg text-center font-medium transition-colors ${
+            {plans.map((plan) => {
+              const price = billingInterval === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
+              
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative rounded-2xl p-6 ${
                     plan.popular
-                      ? "bg-emerald-500 hover:bg-emerald-400 text-black"
-                      : "bg-zinc-800 hover:bg-zinc-700 text-white"
+                      ? "bg-emerald-950/50 border-2 border-emerald-500/50 shadow-lg shadow-emerald-500/10"
+                      : "bg-zinc-900 border border-zinc-800"
                   }`}
                 >
-                  {plan.cta}
-                </Link>
-
-                {/* Features */}
-                <ul className="mt-6 space-y-3">
-                  {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      {feature.included ? (
-                        <Check className={`w-5 h-5 shrink-0 ${
-                          feature.highlight 
-                            ? "text-violet-400" 
-                            : "text-emerald-400"
-                        }`} />
-                      ) : (
-                        <X className="w-5 h-5 text-zinc-600 shrink-0" />
-                      )}
-                      <span className={`text-sm ${
-                        feature.included ? "text-zinc-300" : "text-zinc-600"
-                      }`}>
-                        {feature.text}
+                  {/* Popular badge */}
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <span className="bg-emerald-500 text-black text-xs font-bold px-3 py-1 rounded-full">
+                        MOST POPULAR
                       </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+                    </div>
+                  )}
+
+                  {/* Trial badge */}
+                  {plan.badge && !plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <span className="bg-zinc-700 text-white text-xs font-medium px-3 py-1 rounded-full">
+                        {plan.badge}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Plan header */}
+                  <div className="text-center mb-6 pt-2">
+                    <plan.icon className={`w-10 h-10 mx-auto mb-3 ${
+                      plan.color === "emerald" ? "text-emerald-400" :
+                      plan.color === "violet" ? "text-violet-400" :
+                      "text-zinc-400"
+                    }`} />
+                    <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+                    <p className="text-sm text-zinc-500 mt-1">{plan.description}</p>
+                  </div>
+
+                  {/* Price */}
+                  <div className="text-center mb-6">
+                    <div className="flex items-baseline justify-center gap-1">
+                      <span className="text-4xl font-bold text-white">
+                        ${price}
+                      </span>
+                      {price > 0 && (
+                        <span className="text-zinc-500">/mo</span>
+                      )}
+                    </div>
+                    {billingInterval === "yearly" && plan.monthlyPrice > 0 && (
+                      <p className="text-sm text-emerald-400 mt-1">
+                        ${plan.monthlyPrice * 12 * 0.83 | 0}/year (billed annually)
+                      </p>
+                    )}
+                    {billingInterval === "monthly" && plan.yearlyPrice > 0 && (
+                      <p className="text-sm text-zinc-500 mt-1">
+                        ${plan.yearlyPrice}/mo billed yearly
+                      </p>
+                    )}
+                  </div>
+
+                  {/* CTA */}
+                  <Link
+                    href={plan.ctaHref}
+                    className={`block w-full py-3 px-4 rounded-lg text-center font-medium transition-colors ${
+                      plan.popular
+                        ? "bg-emerald-500 hover:bg-emerald-400 text-black"
+                        : "bg-zinc-800 hover:bg-zinc-700 text-white"
+                    }`}
+                  >
+                    {plan.cta}
+                  </Link>
+
+                  {/* Features */}
+                  <ul className="mt-6 space-y-3">
+                    {plan.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        {feature.included ? (
+                          <Check className={`w-5 h-5 shrink-0 ${
+                            feature.highlight 
+                              ? "text-violet-400" 
+                              : "text-emerald-400"
+                          }`} />
+                        ) : (
+                          <X className="w-5 h-5 text-zinc-600 shrink-0" />
+                        )}
+                        <span className={`text-sm ${
+                          feature.included ? "text-zinc-300" : "text-zinc-600"
+                        }`}>
+                          {feature.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

@@ -34,12 +34,13 @@ function BillingContent() {
   
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("yearly");
+  const [error, setError] = useState<string | null>(null);
 
   const currentPlan = organization?.plan || "free";
   const selectedPlan = searchParams.get("plan");
-  const interval = searchParams.get("interval") || "yearly";
 
-  // Auto-redirect to checkout if plan selected
+  // Auto-redirect to checkout if plan selected from URL
   useEffect(() => {
     if (selectedPlan && selectedPlan !== currentPlan) {
       handleUpgrade(selectedPlan);
@@ -48,6 +49,7 @@ function BillingContent() {
 
   const handleUpgrade = async (planId: string) => {
     setUpgrading(planId);
+    setError(null);
     
     try {
       const res = await fetch("/api/billing/checkout", {
@@ -55,38 +57,51 @@ function BillingContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           planId, 
-          interval,
-          successUrl: `${window.location.origin}/settings/billing?success=true`,
-          cancelUrl: `${window.location.origin}/settings/billing`,
+          interval: billingInterval,
         }),
       });
       
       const data = await res.json();
       
-      if (data.url) {
-        window.location.href = data.url;
+      // Handle both response formats
+      const checkoutUrl = data.data?.checkoutUrl || data.url || data.checkoutUrl;
+      
+      if (checkoutUrl) {
+        console.log("[Billing] Redirecting to checkout:", checkoutUrl);
+        window.location.href = checkoutUrl;
+      } else if (data.error) {
+        console.error("[Billing] Checkout error:", data.error);
+        setError(data.error);
+        setUpgrading(null);
       } else {
-        console.error("No checkout URL returned");
+        console.error("[Billing] No checkout URL in response:", data);
+        setError("Failed to create checkout session. Please try again.");
         setUpgrading(null);
       }
     } catch (err) {
-      console.error("Checkout failed:", err);
+      console.error("[Billing] Checkout failed:", err);
+      setError("Network error. Please check your connection and try again.");
       setUpgrading(null);
     }
   };
 
   const handleManageBilling = async () => {
     setPortalLoading(true);
+    setError(null);
     
     try {
       const res = await fetch("/api/billing/portal", { method: "POST" });
       const data = await res.json();
       
-      if (data.url) {
-        window.location.href = data.url;
+      const portalUrl = data.url || data.data?.url;
+      if (portalUrl) {
+        window.location.href = portalUrl;
+      } else if (data.error) {
+        setError(data.error);
       }
     } catch (err) {
-      console.error("Portal access failed:", err);
+      console.error("[Billing] Portal access failed:", err);
+      setError("Failed to access billing portal.");
     } finally {
       setPortalLoading(false);
     }
@@ -111,11 +126,31 @@ function BillingContent() {
             <ChevronLeft className="w-5 h-5" />
           </Button>
         </Link>
-            <div>
+        <div>
           <h1 className="text-2xl font-bold text-white">Billing</h1>
           <p className="text-zinc-500 text-sm">Manage your subscription</p>
         </div>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <Card className="bg-red-500/10 border-red-500/30">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+              <p className="text-red-400">{error}</p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setError(null)}
+                className="ml-auto text-red-400 hover:text-red-300"
+              >
+                Dismiss
+              </Button>
             </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Trial Warning */}
       {trial.isTrialUser && (
@@ -156,20 +191,18 @@ function BillingContent() {
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <CreditCard className="w-5 h-5 text-zinc-400" />
-                Current Plan
-              </CardTitle>
+            Current Plan
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
                 currentPlan === "pro" ? "bg-violet-500/10" :
-                currentPlan === "pro" ? "bg-emerald-500/10" :
                 currentPlan === "starter" ? "bg-blue-500/10" :
                 "bg-zinc-800"
               }`}>
                 {currentPlan === "pro" ? <Building2 className="w-7 h-7 text-violet-400" /> :
-                 currentPlan === "pro" ? <Zap className="w-7 h-7 text-emerald-400" /> :
                  currentPlan === "starter" ? <Crown className="w-7 h-7 text-blue-400" /> :
                  <CreditCard className="w-7 h-7 text-zinc-500" />}
               </div>
@@ -234,11 +267,39 @@ function BillingContent() {
       {/* Upgrade Options */}
       {currentPlan !== "pro" && (
         <Card className="bg-zinc-900/50 border-zinc-800">
-        <CardHeader>
-            <CardTitle className="text-white">Upgrade</CardTitle>
-            <CardDescription>Get more features and limits</CardDescription>
-        </CardHeader>
-        <CardContent>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-white">Upgrade</CardTitle>
+                <CardDescription>Get more features and limits</CardDescription>
+              </div>
+              {/* Monthly/Yearly Toggle */}
+              <div className="flex items-center gap-2 bg-zinc-800 rounded-lg p-1">
+                <button
+                  onClick={() => setBillingInterval("monthly")}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    billingInterval === "monthly"
+                      ? "bg-emerald-500 text-black"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBillingInterval("yearly")}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    billingInterval === "yearly"
+                      ? "bg-emerald-500 text-black"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  Yearly
+                  <span className="ml-1 text-xs opacity-75">(-17%)</span>
+                </button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
             <div className="grid sm:grid-cols-2 gap-4">
               {(["starter", "pro"] as const)
                 .filter(p => {
@@ -247,7 +308,9 @@ function BillingContent() {
                 })
                 .map((planId) => {
                   const planData = CITATION_PLANS[planId];
-              return (
+                  const price = billingInterval === "yearly" ? planData.yearlyPrice : planData.monthlyPrice;
+                  
+                  return (
                     <div
                       key={planId}
                       className={`p-4 rounded-xl border ${
@@ -261,11 +324,14 @@ function BillingContent() {
                         {planId === "pro" && (
                           <Badge className="bg-emerald-500 text-white text-xs">Popular</Badge>
                         )}
-                    </div>
+                      </div>
                       <div className="mb-3">
-                        <span className="text-2xl font-bold text-white">${planData.yearlyPrice}</span>
+                        <span className="text-2xl font-bold text-white">${price}</span>
                         <span className="text-zinc-500">/mo</span>
-                  </div>
+                        {billingInterval === "yearly" && (
+                          <span className="ml-2 text-xs text-emerald-400">billed yearly</span>
+                        )}
+                      </div>
                       <ul className="space-y-2 text-sm text-zinc-400 mb-4">
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400" />
@@ -278,6 +344,14 @@ function BillingContent() {
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400" />
                           {planData.limits.competitors} competitors
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="w-4 h-4 text-emerald-400" />
+                          {planData.features.dailyAutoCheck && planData.features.hourlyAutoCheck 
+                            ? "Hourly auto-checks"
+                            : planData.features.dailyAutoCheck 
+                            ? "Daily auto-checks"
+                            : "Manual checks only"}
                         </li>
                       </ul>
                       <Button
@@ -295,12 +369,12 @@ function BillingContent() {
                           `Upgrade to ${planData.name}`
                         )}
                       </Button>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+                    </div>
+                  );
+                })}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Back Link */}
@@ -308,7 +382,7 @@ function BillingContent() {
         <Button variant="ghost" className="text-zinc-400">
           <ChevronLeft className="w-4 h-4 mr-2" />
           Back to Settings
-            </Button>
+        </Button>
       </Link>
     </div>
   );

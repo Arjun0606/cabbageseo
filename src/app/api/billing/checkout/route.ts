@@ -224,8 +224,10 @@ export async function POST(request: NextRequest) {
 
     console.log("[Checkout] Created session:", session.session_id);
 
+    // Return both formats for backward compatibility
     return NextResponse.json({
       success: true,
+      url: session.checkout_url, // Primary format for frontend
       data: {
         checkoutUrl: session.checkout_url,
         sessionId: session.session_id,
