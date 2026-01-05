@@ -1,48 +1,36 @@
 /**
  * Citation Intelligence Pricing Plans
  * 
- * Simple, transparent pricing for AI citation tracking
+ * 10-DAY FREE TRIAL MODEL
+ * - Free users get 10 days of full access
+ * - After 10 days, must upgrade to continue
+ * - No "free forever" tier
  * 
  * Cost Analysis (per check across 3 platforms):
  * - Perplexity API: ~$0.01-0.02 per query
  * - Google AI (Gemini): ~$0.005 per query with grounding
  * - OpenAI (ChatGPT sim): ~$0.005 per query
  * - Total per check: ~$0.02-0.03
- * 
- * Free Plan:
- * - 3 checks/day = ~90 checks/month = ~$2.70/month cost
- * - 7-day history limit keeps storage minimal
- * - No competitor tracking (saves significant costs)
- * 
- * Starter Plan ($29/mo):
- * - 100 checks/month = ~$3/month cost
- * - 2 competitors = 3x queries = ~$9/month total
- * - 30-day history
- * - Margin: ~$17-20/month (60-70%)
- * 
- * Pro Plan ($79/mo):
- * - Unlimited checks (cap at ~500/month) = ~$15/month
- * - 10 competitors = significant query load
- * - Hourly monitoring = more queries
- * - Margin: ~$40-50/month (50-65%)
- * 
- * Agency Plan ($199/mo):
- * - 50 sites, unlimited competitors
- * - High query volume but excellent margins at scale
  */
 
 // ============================================
-// CITATION PLAN DEFINITIONS
+// TRIAL CONFIGURATION
+// ============================================
+
+export const TRIAL_DAYS = 10;  // Free trial period
+
+// ============================================
+// PLAN DEFINITIONS
 // ============================================
 
 export type CitationPlanId = "free" | "starter" | "pro" | "agency";
 
 export interface CitationPlanLimits {
   sites: number;
-  checksPerDay: number;       // Manual checks allowed per day
-  checksPerMonth: number;     // Total automated + manual checks
+  checksPerDay: number;
+  checksPerMonth: number;
   competitors: number;
-  historyDays: number;        // How long we keep citation data
+  historyDays: number;
   teamMembers: number;
 }
 
@@ -66,25 +54,27 @@ export interface CitationPlan {
   limits: CitationPlanLimits;
   features: CitationPlanFeatures;
   checkFrequency: "manual" | "daily" | "hourly" | "realtime";
+  isTrial?: boolean;  // True for free plan
 }
 
 export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
   free: {
     id: "free",
-    name: "Free",
-    description: "Get started with citation tracking",
+    name: "Free Trial",
+    description: `${TRIAL_DAYS}-day free trial, then upgrade`,
     monthlyPrice: 0,
     yearlyPrice: 0,
+    isTrial: true,
     limits: {
       sites: 1,
-      checksPerDay: 3,
-      checksPerMonth: 90,  // 3/day * 30
-      competitors: 0,
-      historyDays: 7,      // Data deleted after 7 days!
+      checksPerDay: 5,          // Generous during trial
+      checksPerMonth: 50,
+      competitors: 1,           // Let them try competitor tracking
+      historyDays: 10,          // Match trial period
       teamMembers: 1,
     },
     features: {
-      realtimeAlerts: false,
+      realtimeAlerts: true,     // Full features during trial
       csvExport: false,
       apiAccess: false,
       whiteLabel: false,
@@ -130,9 +120,9 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     limits: {
       sites: 10,
       checksPerDay: 100,
-      checksPerMonth: 999999, // "Unlimited"
+      checksPerMonth: 999999,
       competitors: 10,
-      historyDays: 99999,    // "Forever"
+      historyDays: 99999,
       teamMembers: 5,
     },
     features: {
@@ -157,8 +147,8 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       sites: 50,
       checksPerDay: 999999,
       checksPerMonth: 999999,
-      competitors: 999999,   // "Unlimited"
-      historyDays: 99999,    // "Forever"
+      competitors: 999999,
+      historyDays: 99999,
       teamMembers: 20,
     },
     features: {
@@ -176,7 +166,61 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
 };
 
 // ============================================
-// HELPERS
+// TRIAL HELPERS
+// ============================================
+
+/**
+ * Check if a user's trial has expired
+ * @param createdAt - When the user/org was created
+ * @returns Object with expired status and days remaining
+ */
+export function checkTrialStatus(createdAt: string | Date): {
+  expired: boolean;
+  daysRemaining: number;
+  daysUsed: number;
+} {
+  const created = new Date(createdAt);
+  const now = new Date();
+  const diffMs = now.getTime() - created.getTime();
+  const daysUsed = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const daysRemaining = Math.max(0, TRIAL_DAYS - daysUsed);
+  
+  return {
+    expired: daysUsed >= TRIAL_DAYS,
+    daysRemaining,
+    daysUsed,
+  };
+}
+
+/**
+ * Check if user can access the product
+ * Free users with expired trial cannot access
+ */
+export function canAccessProduct(
+  planId: CitationPlanId | string,
+  createdAt: string | Date
+): { allowed: boolean; reason?: string; upgradeRequired?: boolean } {
+  // Paid plans always have access
+  if (planId !== "free") {
+    return { allowed: true };
+  }
+  
+  // Check trial status for free users
+  const trial = checkTrialStatus(createdAt);
+  
+  if (trial.expired) {
+    return {
+      allowed: false,
+      reason: `Your ${TRIAL_DAYS}-day free trial has ended. Upgrade to continue tracking AI citations.`,
+      upgradeRequired: true,
+    };
+  }
+  
+  return { allowed: true };
+}
+
+// ============================================
+// PLAN HELPERS
 // ============================================
 
 export function getCitationPlan(planId: CitationPlanId | string): CitationPlan {
@@ -194,8 +238,17 @@ export function getCitationPlanFeatures(planId: CitationPlanId | string): Citati
 export function canCheckCitations(
   planId: CitationPlanId | string,
   checksToday: number,
-  checksThisMonth: number
+  checksThisMonth: number,
+  createdAt?: string | Date
 ): { allowed: boolean; reason?: string } {
+  // First check trial status for free users
+  if (planId === "free" && createdAt) {
+    const access = canAccessProduct(planId, createdAt);
+    if (!access.allowed) {
+      return { allowed: false, reason: access.reason };
+    }
+  }
+  
   const plan = getCitationPlan(planId);
   
   if (checksToday >= plan.limits.checksPerDay) {
@@ -210,9 +263,7 @@ export function canCheckCitations(
   if (checksThisMonth >= plan.limits.checksPerMonth) {
     return {
       allowed: false,
-      reason: `Monthly limit reached. ${
-        planId === "free" ? "Upgrade for more checks!" : "Contact support for additional checks."
-      }`,
+      reason: `Monthly limit reached. Upgrade for more checks.`,
     };
   }
   
@@ -228,9 +279,7 @@ export function canAddCompetitor(
   if (currentCompetitors >= plan.limits.competitors) {
     return {
       allowed: false,
-      reason: planId === "free" 
-        ? "Competitor tracking requires a paid plan." 
-        : `Competitor limit reached (${plan.limits.competitors}). Upgrade for more.`,
+      reason: `Competitor limit reached (${plan.limits.competitors}). Upgrade for more.`,
     };
   }
   
@@ -264,4 +313,3 @@ export function isUnlimited(value: number): boolean {
 export function formatLimit(value: number): string {
   return isUnlimited(value) ? "Unlimited" : value.toString();
 }
-

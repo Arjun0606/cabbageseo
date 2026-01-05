@@ -137,7 +137,7 @@ export default function LandingPage() {
               size="lg" 
               className="bg-white text-black hover:bg-zinc-200 h-12 px-8 text-base font-medium"
             >
-              Start Free
+              Start 10-Day Free Trial
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
             <Link href="#how-it-works">
@@ -156,15 +156,15 @@ export default function LandingPage() {
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm text-zinc-500">
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-emerald-500" />
+              10-day free trial
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
               No credit card required
             </div>
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-emerald-500" />
               Real AI platform APIs
-            </div>
-            <div className="flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-500" />
-              Results in seconds
             </div>
           </div>
         </div>
@@ -378,20 +378,21 @@ export default function LandingPage() {
       {/* ============================================ */}
       <section className="py-20 px-6 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent">
         <div className="max-w-4xl mx-auto text-center">
-          <Badge className="bg-emerald-500/10 text-emerald-400 border-0 mb-4">Pricing</Badge>
+          <Badge className="bg-amber-500/10 text-amber-400 border-0 mb-4">10-Day Free Trial</Badge>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Start free, scale as you grow
+            Try free, then pick a plan
           </h2>
           <p className="text-lg text-zinc-400 mb-8">
-            From solo creators to agencies. Fair, transparent pricing.
+            Full access for 10 days. No credit card required.
           </p>
 
           {/* Quick pricing cards */}
           <div className="grid sm:grid-cols-3 gap-4 mb-8">
-            <div className="p-6 rounded-xl bg-white/[0.02] border border-white/5">
+            <div className="p-6 rounded-xl bg-amber-500/10 border border-amber-500/30 border-dashed relative">
+              <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-amber-500 text-white">Free Trial</Badge>
               <div className="text-2xl font-bold text-white mb-1">$0</div>
-              <div className="text-sm text-zinc-500 mb-3">Free forever</div>
-              <div className="text-xs text-zinc-400">1 site • 3 checks/day</div>
+              <div className="text-sm text-amber-300 mb-3">10 days free</div>
+              <div className="text-xs text-zinc-400">Full access • Then upgrade</div>
             </div>
             <div className="p-6 rounded-xl bg-emerald-500/10 border border-emerald-500/30 relative">
               <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-emerald-500 text-white">Popular</Badge>
@@ -421,17 +422,17 @@ export default function LandingPage() {
       <section className="py-20 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Ready to win AI search?
+            Start your 10-day free trial
           </h2>
           <p className="text-lg text-zinc-400 mb-8">
-            Join today and see if AI knows about your website.
+            Full access for 10 days. See if AI knows about your website.
           </p>
           <Button 
             onClick={handleGetStarted}
             size="lg" 
             className="bg-emerald-600 hover:bg-emerald-500 h-12 px-8 text-base font-medium"
           >
-            Start Free
+            Start Free Trial
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
           <p className="text-sm text-zinc-600 mt-4">
