@@ -752,6 +752,36 @@ export interface Database {
           date?: string;
         };
       };
+      // Citation Intelligence usage table
+      usage: {
+        Row: {
+          id: string;
+          organization_id: string;
+          period: string;
+          checks_used: number;
+          sites_used: number;
+          competitors_used: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          period: string;
+          checks_used?: number;
+          sites_used?: number;
+          competitors_used?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          checks_used?: number;
+          sites_used?: number;
+          competitors_used?: number;
+          updated_at?: string;
+        };
+      };
+      // Legacy usage_records (keeping for compatibility)
       usage_records: {
         Row: {
           id: string;

@@ -196,20 +196,17 @@ CREATE TABLE "public"."competitors" (
   UNIQUE("site_id", "domain")
 );
 
--- Usage tracking
+-- Usage tracking (per billing period, format: YYYY-MM)
 CREATE TABLE "public"."usage" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   "organization_id" uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  "period_start" timestamptz NOT NULL,
-  "period_end" timestamptz NOT NULL,
+  "period" text NOT NULL,
   "checks_used" integer DEFAULT 0,
-  "checks_limit" integer DEFAULT 100,
   "sites_used" integer DEFAULT 0,
-  "sites_limit" integer DEFAULT 3,
   "competitors_used" integer DEFAULT 0,
-  "competitors_limit" integer DEFAULT 2,
   "created_at" timestamptz NOT NULL DEFAULT now(),
-  "updated_at" timestamptz NOT NULL DEFAULT now()
+  "updated_at" timestamptz NOT NULL DEFAULT now(),
+  UNIQUE("organization_id", "period")
 );
 
 -- Notification settings
@@ -235,7 +232,7 @@ CREATE INDEX "idx_citations_site" ON "citations"("site_id");
 CREATE INDEX "idx_citations_platform" ON "citations"("platform");
 CREATE INDEX "idx_citations_cited_at" ON "citations"("cited_at" DESC);
 CREATE INDEX "idx_competitors_site" ON "competitors"("site_id");
-CREATE INDEX "idx_usage_org_period" ON "usage"("organization_id", "period_start");
+CREATE INDEX "idx_usage_org_period" ON "usage"("organization_id", "period");
 CREATE INDEX "idx_users_org" ON "users"("organization_id");
 
 -- ============================================
