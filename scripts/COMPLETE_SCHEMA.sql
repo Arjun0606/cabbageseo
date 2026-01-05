@@ -97,8 +97,8 @@ CREATE TABLE "citations" (
   "query" text NOT NULL,
   "snippet" text,
   "page_url" text,
-  "confidence" real DEFAULT 0.7,
-  "discovered_at" timestamptz NOT NULL DEFAULT now(),
+  "confidence" citation_confidence DEFAULT 'medium',
+  "cited_at" timestamptz NOT NULL DEFAULT now(),
   "last_checked_at" timestamptz NOT NULL DEFAULT now(),
   "created_at" timestamptz NOT NULL DEFAULT now()
 );

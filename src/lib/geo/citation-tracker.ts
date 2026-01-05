@@ -446,7 +446,7 @@ export class CitationTracker {
         .eq("site_id", siteId)
         .eq("query", citation.query)
         .eq("platform", citation.platform)
-        .gte("discovered_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .gte("cited_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
         .single();
 
       if (existing) continue;
@@ -457,8 +457,8 @@ export class CitationTracker {
         query: citation.query,
         snippet: citation.snippet,
         citation_type: "direct",
-        confidence: citation.confidence === "high" ? 0.9 : citation.confidence === "medium" ? 0.7 : 0.5,
-        discovered_at: citation.citedAt.toISOString(),
+        confidence: citation.confidence || "medium",
+        cited_at: citation.citedAt.toISOString(),
       });
 
       newCitations.push(citation);
@@ -559,8 +559,8 @@ export class CitationTracker {
       .from("citations")
       .select("*")
       .eq("site_id", siteId)
-      .gte("discovered_at", startDate.toISOString())
-      .order("discovered_at", { ascending: false });
+      .gte("cited_at", startDate.toISOString())
+      .order("cited_at", { ascending: false });
 
     type CitationRow = { platform: string; page_url?: string; query: string };
     const citations = (citationsRaw || []) as CitationRow[];
@@ -571,8 +571,8 @@ export class CitationTracker {
       .from("citations")
       .select("id")
       .eq("site_id", siteId)
-      .gte("discovered_at", prevStartDate.toISOString())
-      .lt("discovered_at", startDate.toISOString());
+      .gte("cited_at", prevStartDate.toISOString())
+      .lt("cited_at", startDate.toISOString());
 
     // Calculate metrics
     const platformBreakdown = {
