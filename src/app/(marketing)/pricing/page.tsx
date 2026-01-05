@@ -15,6 +15,43 @@ export const metadata = {
 };
 
 export default function PricingPage() {
+  return (
+    <main className="min-h-screen bg-zinc-950">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <img 
+              src="/apple-touch-icon.png" 
+              alt="CabbageSEO" 
+              className="w-9 h-9 rounded-xl"
+            />
+            <span className="font-bold text-white text-lg">CabbageSEO</span>
+          </Link>
+          
+          <nav className="flex items-center gap-6">
+            <Link href="/pricing" className="text-emerald-400 font-medium">
+              Pricing
+            </Link>
+            <Link href="/login" className="text-zinc-400 hover:text-white transition-colors">
+              Login
+            </Link>
+            <Link
+              href="/signup"
+              className="bg-emerald-500 hover:bg-emerald-400 text-black font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              Start Free Trial
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      <PricingContent />
+    </main>
+  );
+}
+
+function PricingContent() {
   const plans: Array<{
     id: string;
     name: string;
@@ -98,9 +135,9 @@ export default function PricingPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-zinc-950">
+    <>
       {/* Header */}
-      <section className="pt-24 pb-16 px-6">
+      <section className="pt-32 pb-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <span className="text-emerald-400 text-sm font-medium tracking-wide uppercase">
             Simple Pricing
@@ -367,6 +404,6 @@ export default function PricingPage() {
           </div>
         </div>
       </footer>
-    </main>
+    </>
   );
 }
