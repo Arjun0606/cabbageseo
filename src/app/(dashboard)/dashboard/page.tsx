@@ -52,9 +52,34 @@ function DashboardContent() {
     results: Array<{ platform: string; cited: boolean; snippet?: string; error?: string }>;
     summary: { citedCount: number; apisCalled: number };
   } | null>(null);
+  const [platformBreakdown, setPlatformBreakdown] = useState({
+    perplexity: 0,
+    google_aio: 0,
+    chatgpt: 0,
+  });
 
   // Show success message if just signed up
   const justSignedUp = searchParams.get("welcome") === "true";
+
+  // Fetch citation data with platform breakdown
+  useEffect(() => {
+    if (!currentSite) return;
+    
+    const fetchCitationData = async () => {
+      try {
+        const res = await fetch(`/api/geo/citations?siteId=${currentSite.id}`);
+        const data = await res.json();
+        
+        if (data.success && data.data?.byPlatform) {
+          setPlatformBreakdown(data.data.byPlatform);
+        }
+      } catch (err) {
+        console.error("Failed to fetch citation data:", err);
+      }
+    };
+    
+    fetchCitationData();
+  }, [currentSite]);
 
   // Check trial status
   const isTrialExpired = organization?.plan === "free" && trial?.expired;
@@ -334,16 +359,18 @@ function DashboardContent() {
             <CardContent>
           <div className="grid md:grid-cols-3 gap-4">
             {[
-              { name: "Perplexity", color: "emerald", icon: Search },
-              { name: "Google AI", color: "blue", icon: Zap },
-              { name: "ChatGPT", color: "violet", icon: TrendingUp },
+              { name: "Perplexity", key: "perplexity", color: "emerald", icon: Search },
+              { name: "Google AI", key: "google_aio", color: "blue", icon: Zap },
+              { name: "ChatGPT", key: "chatgpt", color: "violet", icon: TrendingUp },
             ].map((platform) => (
               <div 
                 key={platform.name}
                 className={`p-4 rounded-xl bg-${platform.color}-500/5 border border-${platform.color}-500/20`}
               >
                 <platform.icon className={`w-5 h-5 text-${platform.color}-400 mb-2`} />
-                <div className="text-2xl font-bold text-white">0</div>
+                <div className="text-2xl font-bold text-white">
+                  {platformBreakdown[platform.key as keyof typeof platformBreakdown]}
+                </div>
                 <p className="text-sm text-zinc-500">{platform.name}</p>
                     </div>
                   ))}

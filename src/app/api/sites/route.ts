@@ -45,10 +45,10 @@ export async function GET() {
       return NextResponse.json({ sites: [] });
     }
 
-    // Get sites
+    // Get sites with geo_score_avg
     const { data: sites, error } = await db
       .from("sites")
-      .select("id, domain, name, total_citations, citations_this_week, citations_last_week, last_checked_at, created_at")
+      .select("id, domain, name, total_citations, citations_this_week, citations_last_week, last_checked_at, geo_score_avg, created_at")
       .eq("organization_id", userData.organization_id)
       .order("created_at", { ascending: false });
 

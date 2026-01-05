@@ -80,11 +80,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to fetch citations" }, { status: 500 });
     }
 
-    // Helper to convert confidence string to number
-    const confidenceToNumber = (conf: string | null): number => {
-      if (conf === "high") return 0.9;
-      if (conf === "medium") return 0.7;
-      if (conf === "low") return 0.5;
+    // Helper to convert confidence (string or number) to normalized number
+    const confidenceToNumber = (conf: string | number | null | undefined): number => {
+      if (conf === null || conf === undefined) return 0.7;
+      
+      // Handle numeric values
+      if (typeof conf === "number") {
+        if (conf > 1) return conf / 100; // Convert 0-100 range to 0-1
+        return conf;
+      }
+      
+      // Handle string values
+      const confStr = String(conf).toLowerCase();
+      if (confStr === "high") return 0.9;
+      if (confStr === "medium") return 0.7;
+      if (confStr === "low") return 0.5;
+      
+      // Try parsing as number
+      const parsed = parseFloat(confStr);
+      if (!isNaN(parsed)) {
+        return parsed > 1 ? parsed / 100 : parsed;
+      }
+      
       return 0.7;
     };
 
