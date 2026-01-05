@@ -109,6 +109,7 @@ export async function GET() {
       citations_this_week?: number;
       citations_last_week?: number;
       last_checked_at?: string;
+      geo_score_avg?: number;
     }
 
     interface SiteResponse {
@@ -119,6 +120,7 @@ export async function GET() {
       citationsThisWeek: number;
       citationsLastWeek: number;
       lastCheckedAt: string | null;
+      geoScore: number | null;
     }
 
     let sites: SiteResponse[] = [];
@@ -126,7 +128,7 @@ export async function GET() {
     if (orgId) {
       const { data: sitesData } = await db
         .from("sites")
-        .select("id, domain, name, total_citations, citations_this_week, citations_last_week, last_checked_at")
+        .select("id, domain, name, total_citations, citations_this_week, citations_last_week, last_checked_at, geo_score_avg")
         .eq("organization_id", orgId)
         .order("created_at", { ascending: false });
 
@@ -139,6 +141,7 @@ export async function GET() {
           citationsThisWeek: s.citations_this_week || 0,
           citationsLastWeek: s.citations_last_week || 0,
           lastCheckedAt: s.last_checked_at || null,
+          geoScore: s.geo_score_avg ?? null,
         }));
       }
     }

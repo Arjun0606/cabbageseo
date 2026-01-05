@@ -26,7 +26,7 @@ interface Site {
   citationsThisWeek: number;
   citationsLastWeek: number;
   lastCheckedAt: string | null;
-  geoScore?: number;
+  geoScore: number | null;
 }
 
 interface User {

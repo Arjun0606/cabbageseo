@@ -426,17 +426,25 @@ export const resetWeeklyCounts = inngest.createFunction(
   {
     id: "reset-weekly-counts",
     name: "Reset Weekly Citation Counts",
+    retries: 2,
   },
   { cron: "0 0 * * 0" },
   async ({ step }) => {
     const supabase = createServiceClient();
 
-    await step.run("reset-counts", async () => {
+    const result = await step.run("reset-counts", async () => {
       // Call the SQL function that properly moves this_week -> last_week
-      await supabase.rpc("reset_weekly_citations");
+      const { error } = await supabase.rpc("reset_weekly_citations");
+      
+      if (error) {
+        console.error("Failed to reset weekly citations:", error);
+        throw new Error(`Weekly reset failed: ${error.message}`);
+      }
+      
+      return { success: true };
     });
 
-    return { reset: true };
+    return { reset: result.success, timestamp: new Date().toISOString() };
   }
 );
 
