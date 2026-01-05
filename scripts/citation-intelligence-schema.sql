@@ -23,6 +23,7 @@
 SET session_replication_role = 'replica';
 
 -- Drop all old tables (if migrating)
+DROP TABLE IF EXISTS "citations" CASCADE;
 DROP TABLE IF EXISTS "ai_citations" CASCADE;
 DROP TABLE IF EXISTS "aio_analyses" CASCADE;
 DROP TABLE IF EXISTS "competitors" CASCADE;
