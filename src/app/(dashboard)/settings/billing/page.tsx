@@ -261,11 +261,11 @@ function BillingContent() {
                         {planId === "pro" && (
                           <Badge className="bg-emerald-500 text-white text-xs">Popular</Badge>
                         )}
-                      </div>
+                    </div>
                       <div className="mb-3">
                         <span className="text-2xl font-bold text-white">${planData.yearlyPrice}</span>
                         <span className="text-zinc-500">/mo</span>
-                      </div>
+                  </div>
                       <ul className="space-y-2 text-sm text-zinc-400 mb-4">
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400" />
@@ -273,11 +273,11 @@ function BillingContent() {
                         </li>
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400" />
-                          {planData.limits.checksPerMonth === 999999 ? "Unlimited" : planData.limits.checksPerMonth} checks/mo
+                          {planData.limits.manualChecksPerDay === -1 ? "Unlimited" : planData.limits.manualChecksPerDay + "/day"} manual checks
                         </li>
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400" />
-                          {planData.limits.competitors === 999999 ? "Unlimited" : planData.limits.competitors} competitors
+                          {planData.limits.competitors} competitors
                         </li>
                       </ul>
                       <Button
@@ -308,7 +308,7 @@ function BillingContent() {
         <Button variant="ghost" className="text-zinc-400">
           <ChevronLeft className="w-4 h-4 mr-2" />
           Back to Settings
-        </Button>
+            </Button>
       </Link>
     </div>
   );

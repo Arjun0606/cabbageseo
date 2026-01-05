@@ -1,17 +1,14 @@
 /**
  * Citation Intelligence Pricing Plans
  * 
- * HONEST PRICING - Only what's actually built
+ * HONEST PRICING - Sensible limits
  * 
- * Free: Demo tier (10-day trial, very limited)
- * Starter: Entry paid tier ($29/mo)
- * Pro: Main revenue tier ($79/mo)
+ * AUTO-CHECKS: Run automatically via Inngest - DON'T count against limits
+ * MANUAL CHECKS: On-demand checks users trigger - these have limits on Free
  * 
- * Agency: REMOVED until we actually build:
- * - White-label reports
- * - Custom integrations
- * - Team seats
- * - SLA
+ * Free: 10-day trial, limited manual checks
+ * Starter: $29/mo - Unlimited manual + daily auto
+ * Pro: $79/mo - Unlimited manual + hourly auto
  */
 
 export const TRIAL_DAYS = 10;
@@ -20,29 +17,22 @@ export type CitationPlanId = "free" | "starter" | "pro";
 
 export interface CitationPlanLimits {
   sites: number;
-  checksPerDay: number;
-  checksPerMonth: number;
+  manualChecksPerDay: number;  // On-demand checks user triggers
   competitors: number;
   historyDays: number;
   teamMembers: number;
 }
 
 export interface CitationPlanFeatures {
-  // What's ACTUALLY built
   manualChecks: boolean;
-  dailyAutoCheck: boolean;
-  hourlyAutoCheck: boolean;
+  dailyAutoCheck: boolean;      // Inngest cron - daily
+  hourlyAutoCheck: boolean;     // Inngest cron - hourly (Pro only)
   emailAlerts: boolean;
   weeklyReport: boolean;
   csvExport: boolean;
   competitorTracking: boolean;
   geoScore: boolean;
   geoTips: boolean;
-  // NOT built yet - don't promise
-  // apiAccess: boolean;
-  // slackIntegration: boolean;
-  // whiteLabel: boolean;
-  // customIntegrations: boolean;
 }
 
 export interface CitationPlan {
@@ -60,54 +50,52 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
   free: {
     id: "free",
     name: "Free Trial",
-    description: `${TRIAL_DAYS}-day trial to test the platform`,
+    description: `${TRIAL_DAYS}-day trial to explore`,
     monthlyPrice: 0,
     yearlyPrice: 0,
     isTrial: true,
     limits: {
       sites: 1,
-      checksPerDay: 3,
-      checksPerMonth: 30,
-      competitors: 0,        // No competitors on free
-      historyDays: 7,        // Only 7 days
+      manualChecksPerDay: 3,     // 3 on-demand checks per day
+      competitors: 0,
+      historyDays: 7,
       teamMembers: 1,
     },
     features: {
       manualChecks: true,
-      dailyAutoCheck: false,  // No automation on free
+      dailyAutoCheck: false,     // No automation on free
       hourlyAutoCheck: false,
-      emailAlerts: false,     // No alerts on free
-      weeklyReport: false,    // No reports on free
-      csvExport: false,       // No export on free
+      emailAlerts: false,
+      weeklyReport: false,
+      csvExport: false,
       competitorTracking: false,
-      geoScore: true,         // Let them see the score
-      geoTips: false,         // Tips are paid
+      geoScore: true,
+      geoTips: false,
     },
   },
   starter: {
     id: "starter",
     name: "Starter",
-    description: "For individuals & small sites",
+    description: "For individuals & small brands",
     monthlyPrice: 29,
-    yearlyPrice: 24, // ~17% discount
+    yearlyPrice: 24,
     limits: {
       sites: 3,
-      checksPerDay: 10,
-      checksPerMonth: 100,
+      manualChecksPerDay: -1,    // Unlimited manual checks
       competitors: 2,
       historyDays: 30,
       teamMembers: 1,
     },
     features: {
       manualChecks: true,
-      dailyAutoCheck: true,   // Daily automation
+      dailyAutoCheck: true,      // Daily automation included
       hourlyAutoCheck: false,
-      emailAlerts: true,      // Unlock alerts
-      weeklyReport: true,     // Unlock reports
-      csvExport: true,        // Unlock export
+      emailAlerts: true,
+      weeklyReport: true,
+      csvExport: true,
       competitorTracking: true,
       geoScore: true,
-      geoTips: true,          // Unlock tips
+      geoTips: true,
     },
   },
   pro: {
@@ -115,19 +103,18 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     name: "Pro",
     description: "For brands & growing companies",
     monthlyPrice: 79,
-    yearlyPrice: 66, // ~17% discount
+    yearlyPrice: 66,
     limits: {
       sites: 10,
-      checksPerDay: 50,
-      checksPerMonth: 500,
+      manualChecksPerDay: -1,    // Unlimited manual checks
       competitors: 10,
-      historyDays: 365,       // 1 year history
-      teamMembers: 1,         // No team seats yet
+      historyDays: 365,
+      teamMembers: 1,
     },
     features: {
       manualChecks: true,
       dailyAutoCheck: true,
-      hourlyAutoCheck: true,  // Hourly for Pro
+      hourlyAutoCheck: true,     // Hourly automation for Pro
       emailAlerts: true,
       weeklyReport: true,
       csvExport: true,
@@ -197,12 +184,12 @@ export function getCitationPlanFeatures(planId: CitationPlanId | string): Citati
   return getCitationPlan(planId).features;
 }
 
-export function canCheckCitations(
+export function canRunManualCheck(
   planId: CitationPlanId | string,
   checksToday: number,
-  checksThisMonth: number,
   createdAt?: string | Date
 ): { allowed: boolean; reason?: string } {
+  // Check trial expiration for free users
   if (planId === "free" && createdAt) {
     const access = canAccessProduct(planId, createdAt);
     if (!access.allowed) {
@@ -212,19 +199,15 @@ export function canCheckCitations(
   
   const plan = getCitationPlan(planId);
   
-  if (checksToday >= plan.limits.checksPerDay) {
-    return {
-      allowed: false,
-      reason: `Daily limit reached (${plan.limits.checksPerDay}/day). ${
-        planId === "free" ? "Upgrade for more." : "Try again tomorrow."
-      }`,
-    };
+  // Unlimited for paid plans
+  if (plan.limits.manualChecksPerDay === -1) {
+    return { allowed: true };
   }
   
-  if (checksThisMonth >= plan.limits.checksPerMonth) {
+  if (checksToday >= plan.limits.manualChecksPerDay) {
     return {
       allowed: false,
-      reason: "Monthly limit reached. Upgrade for more.",
+      reason: `Daily limit reached (${plan.limits.manualChecksPerDay}/day). Upgrade for unlimited.`,
     };
   }
   
@@ -265,10 +248,6 @@ export function canAddSite(
   return { allowed: true };
 }
 
-export function getHistoryRetentionDays(planId: CitationPlanId | string): number {
-  return getCitationPlan(planId).limits.historyDays;
-}
-
 export function formatLimit(value: number): string {
-  return value >= 999 ? "Unlimited" : value.toString();
+  return value === -1 ? "Unlimited" : value.toString();
 }

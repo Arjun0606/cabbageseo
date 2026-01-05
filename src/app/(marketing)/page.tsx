@@ -1,11 +1,8 @@
 /**
- * Landing Page - HONEST VERSION
+ * Landing Page
  * 
- * Positioning: AI Brand Intelligence (not SEO tool)
- * Target: Companies with brands, not bloggers
- * 
- * Key message: "See when ChatGPT, Perplexity, and Google AI 
- * recommend your company instead of your competitors."
+ * Positioning: AI Brand Intelligence
+ * Contact: arjun@cabbageseo.com, X: @Arjun06061
  */
 
 import Link from "next/link";
@@ -14,12 +11,12 @@ import {
   Bell, 
   BarChart3, 
   Users, 
-  Zap, 
   ArrowRight,
   CheckCircle2,
   Globe,
   TrendingUp,
-  Shield
+  Shield,
+  Zap
 } from "lucide-react";
 import { TRIAL_DAYS } from "@/lib/billing/citation-plans";
 
@@ -28,7 +25,6 @@ export default function HomePage() {
     <main className="min-h-screen bg-zinc-950">
       {/* Hero */}
       <section className="relative pt-24 pb-20 px-6 overflow-hidden">
-        {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-950/20 via-transparent to-transparent" />
         
         <div className="relative max-w-4xl mx-auto text-center">
@@ -71,21 +67,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Social proof / Stats */}
+      {/* Stats */}
       <section className="py-12 px-6 border-y border-zinc-800/50">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-3 gap-8 text-center">
             <div>
               <div className="text-3xl font-bold text-white">3</div>
-              <div className="text-sm text-zinc-500">AI Platforms Tracked</div>
+              <div className="text-sm text-zinc-500">AI Platforms</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-white">Real-time</div>
-              <div className="text-sm text-zinc-500">Citation Alerts</div>
+              <div className="text-3xl font-bold text-emerald-400">Real-time</div>
+              <div className="text-sm text-zinc-500">Alerts</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-white">Daily</div>
-              <div className="text-sm text-zinc-500">Automated Checks</div>
+              <div className="text-3xl font-bold text-white">Auto</div>
+              <div className="text-sm text-zinc-500">Monitoring</div>
             </div>
           </div>
         </div>
@@ -102,15 +98,14 @@ export default function HomePage() {
               </h2>
               <div className="space-y-4">
                 <p className="text-zinc-400">
-                  Millions of people now ask ChatGPT, Perplexity, and Google AI for 
-                  recommendations instead of searching Google.
+                  Millions ask ChatGPT and Perplexity for recommendations instead of Googling.
                 </p>
                 <p className="text-zinc-400">
                   When someone asks <em>&quot;What&apos;s the best [your category]?&quot;</em>—is 
-                  AI recommending you, or sending them to your competitors?
+                  AI recommending you, or your competitors?
                 </p>
                 <p className="text-emerald-400 font-medium">
-                  CabbageSEO tells you exactly what AI says about your brand.
+                  CabbageSEO monitors this automatically.
                 </p>
               </div>
             </div>
@@ -122,26 +117,26 @@ export default function HomePage() {
                 <div className="w-3 h-3 rounded-full bg-green-500" />
               </div>
               <div className="font-mono text-sm space-y-2">
-                <p className="text-zinc-500">$ Checking AI platforms...</p>
+                <p className="text-zinc-500">$ Auto-checking AI platforms...</p>
                 <p className="text-emerald-400">✓ Perplexity: yoursite.com cited</p>
                 <p className="text-emerald-400">✓ Google AI: yoursite.com mentioned</p>
                 <p className="text-yellow-400">○ ChatGPT: competitor.com cited</p>
-                <p className="text-zinc-500 mt-4">→ Alert sent to your inbox</p>
+                <p className="text-zinc-500 mt-4">→ Email alert sent</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features - Only what's built */}
+      {/* Features */}
       <section className="py-20 px-6 bg-zinc-900/50">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white">
-              Everything you need to track AI visibility
+              Everything you need
             </h2>
             <p className="mt-4 text-zinc-400">
-              Simple tools that actually work. No fluff.
+              Set it up once, let it run on autopilot.
             </p>
           </div>
           
@@ -150,37 +145,37 @@ export default function HomePage() {
               {
                 icon: Search,
                 title: "Citation Tracking",
-                description: "We query Perplexity, Google AI, and ChatGPT for your brand and detect when they cite you.",
+                description: "We check Perplexity, Google AI, and ChatGPT for your brand—automatically.",
                 color: "emerald",
               },
               {
                 icon: Users,
-                title: "Competitor Monitoring",
-                description: "See when AI recommends your competitors. Know exactly who's winning the AI visibility game.",
+                title: "Competitor Intel",
+                description: "See when AI recommends your competitors. Know who's winning.",
                 color: "blue",
               },
               {
                 icon: Bell,
                 title: "Instant Alerts",
-                description: "Get notified the moment AI starts (or stops) citing your website. Never miss a change.",
+                description: "Get emailed the moment AI mentions you. Never miss a citation.",
                 color: "violet",
               },
               {
                 icon: BarChart3,
                 title: "GEO Score",
-                description: "A simple 0-100 score showing how AI-friendly your content is. Track it over time.",
+                description: "A 0-100 score showing how AI-friendly your content is.",
                 color: "amber",
               },
               {
                 icon: TrendingUp,
                 title: "Weekly Reports",
-                description: "Automated email reports with your citations vs competitors. No login required.",
+                description: "Automated digest of your AI visibility vs competitors.",
                 color: "rose",
               },
               {
                 icon: Globe,
-                title: "Multi-Site Support",
-                description: "Track multiple domains from one dashboard. Perfect for brands with multiple properties.",
+                title: "Multi-Site",
+                description: "Track multiple domains from one dashboard.",
                 color: "cyan",
               },
             ].map((feature, idx) => (
@@ -208,13 +203,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How it works - Honest */}
+      {/* How it works */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white">
-              How it works
-            </h2>
+            <h2 className="text-3xl font-bold text-white">How it works</h2>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
@@ -222,36 +215,32 @@ export default function HomePage() {
               {
                 step: "1",
                 title: "Add your domain",
-                description: "Enter your website URL. We'll start tracking it across AI platforms immediately.",
+                description: "Enter your website URL. Takes 30 seconds.",
               },
               {
                 step: "2",
-                title: "We query AI platforms",
-                description: "Our system asks Perplexity, Google AI, and ChatGPT relevant queries about your niche.",
+                title: "We monitor 24/7",
+                description: "Auto-checks run daily (or hourly on Pro). No action needed.",
               },
               {
                 step: "3",
                 title: "Get notified",
-                description: "See your citations in the dashboard. Get email alerts when AI mentions you or competitors.",
+                description: "Email alerts when AI mentions you or competitors.",
               },
             ].map((item, idx) => (
               <div key={idx} className="text-center">
                 <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
                   <span className="text-emerald-400 font-bold text-lg">{item.step}</span>
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-zinc-400">
-                  {item.description}
-                </p>
+                <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
+                <p className="text-sm text-zinc-400">{item.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Trust / Transparency */}
+      {/* Trust */}
       <section className="py-16 px-6 border-t border-zinc-800">
         <div className="max-w-3xl mx-auto">
           <div className="bg-zinc-900/50 rounded-2xl p-8 border border-zinc-800">
@@ -262,21 +251,16 @@ export default function HomePage() {
             
             <div className="space-y-4 text-sm text-zinc-400">
               <p>
-                <strong className="text-white">Perplexity:</strong> We use their official API 
-                and check the citations array. High confidence detection.
+                <strong className="text-white">Perplexity:</strong> Official API with citations array.
               </p>
               <p>
-                <strong className="text-white">Google AI:</strong> We use Gemini with search 
-                grounding and analyze the grounding metadata for your domain.
+                <strong className="text-white">Google AI:</strong> Gemini with search grounding.
               </p>
               <p>
-                <strong className="text-white">ChatGPT:</strong> We query GPT-4 and check if it 
-                knows about your brand from training data. No live web access—this is knowledge 
-                detection, not citation telemetry.
+                <strong className="text-white">ChatGPT:</strong> Knowledge detection via GPT-4.
               </p>
               <p className="pt-2 text-zinc-500">
-                We don&apos;t have access to internal citation indexes. We detect mentions through 
-                response analysis. This is not official platform data.
+                We detect mentions through response analysis. Not official platform data.
               </p>
             </div>
           </div>
@@ -287,20 +271,15 @@ export default function HomePage() {
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white">
-              Built for companies with brands
-            </h2>
-            <p className="mt-4 text-zinc-400">
-              If people search for your category, you need to know what AI tells them.
-            </p>
+            <h2 className="text-3xl font-bold text-white">Built for brands</h2>
           </div>
           
           <div className="grid md:grid-cols-2 gap-6">
             {[
-              { title: "SaaS Companies", desc: "Know if AI recommends you when users ask for tools in your category." },
-              { title: "E-commerce Brands", desc: "See if AI suggests your products when shoppers ask for recommendations." },
-              { title: "Service Businesses", desc: "Track if AI refers potential clients to you or your competitors." },
-              { title: "Digital Agencies", desc: "Monitor AI visibility for your clients. Report on a new channel." },
+              { title: "SaaS Companies", desc: "Know if AI recommends your tools." },
+              { title: "E-commerce", desc: "See if AI suggests your products." },
+              { title: "Service Businesses", desc: "Track if AI refers clients to you." },
+              { title: "Agencies", desc: "Monitor AI visibility for clients." },
             ].map((item, idx) => (
               <div 
                 key={idx}
@@ -324,7 +303,7 @@ export default function HomePage() {
             Find out what AI says about you
           </h2>
           <p className="text-lg text-zinc-400 mb-8">
-            Start your {TRIAL_DAYS}-day free trial. No credit card. Cancel anytime.
+            {TRIAL_DAYS}-day free trial. No credit card.
           </p>
           <Link
             href="/signup"
@@ -338,23 +317,58 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-zinc-800">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
-              <span className="text-black font-bold text-lg">C</span>
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            {/* Logo */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                <span className="text-white font-bold text-xl">🥬</span>
+              </div>
+              <div>
+                <span className="font-bold text-white text-lg">CabbageSEO</span>
+                <p className="text-xs text-zinc-500">AI Brand Intelligence</p>
+              </div>
             </div>
-            <span className="font-semibold text-white">CabbageSEO</span>
+            
+            {/* Links */}
+            <div className="flex items-center gap-6 text-sm">
+              <Link href="/pricing" className="text-zinc-400 hover:text-white transition-colors">
+                Pricing
+              </Link>
+              <Link href="/login" className="text-zinc-400 hover:text-white transition-colors">
+                Login
+              </Link>
+              <a href="mailto:arjun@cabbageseo.com" className="text-zinc-400 hover:text-white transition-colors">
+                Contact
+              </a>
+            </div>
+            
+            {/* Social */}
+            <div className="flex items-center gap-4">
+              <a 
+                href="https://x.com/Arjun06061" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-zinc-400 hover:text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+              </a>
+              <span className="text-zinc-600 text-sm">
+                Questions? <a href="https://x.com/Arjun06061" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300">DM me on X</a>
+              </span>
+            </div>
           </div>
           
-          <div className="flex items-center gap-6 text-sm text-zinc-500">
-            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-            <Link href="/login" className="hover:text-white transition-colors">Login</Link>
-            <a href="mailto:hello@cabbageseo.com" className="hover:text-white transition-colors">Contact</a>
+          <div className="mt-8 pt-6 border-t border-zinc-800 text-center">
+            <p className="text-sm text-zinc-600">
+              © {new Date().getFullYear()} CabbageSEO. Built by{" "}
+              <a href="https://x.com/Arjun06061" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white">
+                @Arjun06061
+              </a>
+            </p>
           </div>
-          
-          <p className="text-sm text-zinc-600">
-            © {new Date().getFullYear()} CabbageSEO
-          </p>
         </div>
       </footer>
     </main>

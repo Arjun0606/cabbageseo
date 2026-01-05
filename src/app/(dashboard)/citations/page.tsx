@@ -1,138 +1,128 @@
 "use client";
 
 /**
- * ============================================
- * CITATIONS PAGE - All Citations List
- * ============================================
+ * Citations Page - All AI mentions
  * 
- * Shows all citations with:
- * - Filtering by platform
- * - Search
+ * Shows:
+ * - List of all citations for current site
+ * - Filter by platform
  * - Export to CSV
  */
 
 import { useState, useEffect } from "react";
-import {
-  Loader2,
-  Search,
-  Bot,
-  Sparkles,
-  Eye,
-  Download,
+import { 
+  Search, 
+  Download, 
+  RefreshCw,
+  ExternalLink,
   Filter,
   Calendar,
-  ExternalLink,
+  AlertCircle,
+  CheckCircle2
 } from "lucide-react";
+import { useSite } from "@/context/site-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useSite } from "@/context/site-context";
-
-// Platform config
-const platformConfig = {
-  perplexity: { name: "Perplexity", icon: Search, color: "text-violet-400", bg: "bg-violet-500/10" },
-  google_aio: { name: "Google AI", icon: Sparkles, color: "text-blue-400", bg: "bg-blue-500/10" },
-  chatgpt: { name: "ChatGPT", icon: Bot, color: "text-emerald-400", bg: "bg-emerald-500/10" },
-};
 
 interface Citation {
   id: string;
-  platform: "perplexity" | "google_aio" | "chatgpt";
+  platform: string;
   query: string;
-  snippet: string;
-  page_url?: string;
+  snippet?: string;
+  pageUrl?: string;
   confidence: number;
-  discovered_at: string;
+  discoveredAt: string;
 }
 
 export default function CitationsPage() {
-  const { currentSite, loading: siteLoading } = useSite();
-  
+  const { currentSite, loading } = useSite();
   const [citations, setCitations] = useState<Citation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [platformFilter, setPlatformFilter] = useState<string>("all");
+  const [loadingCitations, setLoadingCitations] = useState(true);
+  const [filter, setFilter] = useState<string>("all");
 
-  // Load citations
+  // Fetch citations
   useEffect(() => {
-    async function loadCitations() {
-      if (!currentSite?.id) return;
-      
-      setLoading(true);
+    if (!currentSite) return;
+    
+    const fetchCitations = async () => {
+      setLoadingCitations(true);
       try {
-        const res = await fetch(`/api/geo/citations?siteId=${currentSite.id}&full=true`);
-        if (res.ok) {
-          const data = await res.json();
-          setCitations(data.data?.citations || data.data?.recent || []);
+        const res = await fetch(`/api/geo/citations?siteId=${currentSite.id}`);
+        const result = await res.json();
+        if (result.citations) {
+          setCitations(result.citations);
         }
       } catch (err) {
-        console.error("Failed to load citations:", err);
+        console.error("Failed to fetch citations:", err);
       } finally {
-        setLoading(false);
+        setLoadingCitations(false);
       }
-    }
-    
-    loadCitations();
-  }, [currentSite?.id]);
+    };
+
+    fetchCitations();
+  }, [currentSite]);
 
   // Filter citations
-  const filteredCitations = citations.filter((c) => {
-    const matchesPlatform = platformFilter === "all" || c.platform === platformFilter;
-    const matchesSearch = !searchQuery || 
-      c.query.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.snippet?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesPlatform && matchesSearch;
-  });
+  const filteredCitations = filter === "all" 
+    ? citations 
+    : citations.filter(c => c.platform === filter);
 
   // Export to CSV
   const exportCSV = () => {
-    const headers = ["Date", "Platform", "Query", "Snippet", "Confidence"];
-    const rows = filteredCitations.map((c) => [
-      new Date(c.discovered_at).toLocaleDateString(),
-      platformConfig[c.platform]?.name || c.platform,
-      `"${c.query.replace(/"/g, '""')}"`,
-      `"${(c.snippet || "").replace(/"/g, '""')}"`,
-      c.confidence,
+    if (citations.length === 0) return;
+    
+    const headers = ["Platform", "Query", "Snippet", "Confidence", "Discovered"];
+    const rows = citations.map(c => [
+      c.platform,
+      c.query,
+      c.snippet || "",
+      (c.confidence * 100).toFixed(0) + "%",
+      new Date(c.discoveredAt).toLocaleDateString(),
     ]);
     
-    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const csv = [headers, ...rows].map(row => row.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `citations-${currentSite?.domain}-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
-    URL.revokeObjectURL(url);
   };
 
-  // Loading state
-  if (siteLoading || loading) {
+  // Platform badge color
+  const getPlatformColor = (platform: string) => {
+    switch (platform) {
+      case "perplexity": return "bg-emerald-500/20 text-emerald-400";
+      case "google_aio": return "bg-blue-500/20 text-blue-400";
+      case "chatgpt": return "bg-violet-500/20 text-violet-400";
+      default: return "bg-zinc-500/20 text-zinc-400";
+    }
+  };
+
+  const formatPlatform = (platform: string) => {
+    switch (platform) {
+      case "perplexity": return "Perplexity";
+      case "google_aio": return "Google AI";
+      case "chatgpt": return "ChatGPT";
+      default: return platform;
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
-          <p className="text-zinc-500">Loading citations...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
       </div>
     );
   }
 
-  // No site
   if (!currentSite) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <Eye className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">No Site Selected</h2>
-          <p className="text-zinc-400">Add a website from the Dashboard to see citations.</p>
+          <AlertCircle className="w-8 h-8 text-zinc-500 mx-auto mb-4" />
+          <p className="text-zinc-400">Add a site first to see citations</p>
         </div>
       </div>
     );
@@ -141,126 +131,120 @@ export default function CitationsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Citations</h1>
-          <p className="text-zinc-500 text-sm mt-1">
-            {filteredCitations.length} citation{filteredCitations.length !== 1 ? "s" : ""} for {currentSite.domain}
+          <p className="text-sm text-zinc-500">
+            All AI mentions of {currentSite.domain}
           </p>
         </div>
-        <Button
-          onClick={exportCSV}
-          variant="outline"
-          disabled={filteredCitations.length === 0}
-          className="border-zinc-700"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Export CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={exportCSV}
+            disabled={citations.length === 0}
+            variant="outline"
+            className="border-zinc-700"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-4 gap-4">
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold text-white">{citations.length}</div>
+            <p className="text-sm text-zinc-500">Total Citations</p>
+          </CardContent>
+        </Card>
+        {["perplexity", "google_aio", "chatgpt"].map(platform => (
+          <Card key={platform} className="bg-zinc-900 border-zinc-800">
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold text-white">
+                {citations.filter(c => c.platform === platform).length}
+              </div>
+              <p className="text-sm text-zinc-500">{formatPlatform(platform)}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-          <Input
-            placeholder="Search citations..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-zinc-900/50 border-zinc-800"
-          />
-        </div>
-        <Select value={platformFilter} onValueChange={setPlatformFilter}>
-          <SelectTrigger className="w-[180px] bg-zinc-900/50 border-zinc-800">
-            <Filter className="w-4 h-4 mr-2 text-zinc-500" />
-            <SelectValue placeholder="All Platforms" />
-          </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-zinc-800">
-            <SelectItem value="all">All Platforms</SelectItem>
-            <SelectItem value="perplexity">Perplexity</SelectItem>
-            <SelectItem value="google_aio">Google AI</SelectItem>
-            <SelectItem value="chatgpt">ChatGPT</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex items-center gap-2">
+        <Filter className="w-4 h-4 text-zinc-500" />
+        {["all", "perplexity", "google_aio", "chatgpt"].map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-3 py-1 rounded-full text-sm transition-colors ${
+              filter === f 
+                ? "bg-emerald-500 text-black" 
+                : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+            }`}
+          >
+            {f === "all" ? "All" : formatPlatform(f)}
+          </button>
+        ))}
       </div>
 
-      {/* Citations List */}
-      {filteredCitations.length === 0 ? (
-        <Card className="bg-zinc-900/50 border-zinc-800">
+      {/* Citations list */}
+      {loadingCitations ? (
+        <div className="flex items-center justify-center py-12">
+          <RefreshCw className="w-6 h-6 text-emerald-400 animate-spin" />
+        </div>
+      ) : filteredCitations.length === 0 ? (
+        <Card className="bg-zinc-900 border-zinc-800">
           <CardContent className="py-12 text-center">
-            <Eye className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">No Citations Found</h3>
-            <p className="text-zinc-500">
-              {citations.length === 0 
-                ? "Run a check from the Dashboard to find citations."
-                : "No citations match your current filters."
-              }
+            <Search className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">No citations yet</h3>
+            <p className="text-zinc-500 mb-4">
+              Run a check to discover AI mentions of your site
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
-          {filteredCitations.map((citation) => {
-            const platform = platformConfig[citation.platform];
-            const Icon = platform?.icon || Search;
-            const confidencePercent = Math.round(citation.confidence * 100);
-            
-            return (
-              <Card key={citation.id} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-all">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-xl ${platform?.bg || "bg-zinc-800"} shrink-0`}>
-                      <Icon className={`w-5 h-5 ${platform?.color || "text-zinc-400"}`} />
+          {filteredCitations.map((citation) => (
+            <Card key={citation.id} className="bg-zinc-900 border-zinc-800">
+              <CardContent className="py-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className={getPlatformColor(citation.platform)}>
+                        {formatPlatform(citation.platform)}
+                      </Badge>
+                      <span className="text-xs text-zinc-500">
+                        {(citation.confidence * 100).toFixed(0)}% confidence
+                      </span>
                     </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white font-medium">"{citation.query}"</p>
-                          {citation.snippet && (
-                            <p className="text-sm text-zinc-400 mt-1 line-clamp-2">{citation.snippet}</p>
-                          )}
-                        </div>
-                        <Badge variant="outline" className={`shrink-0 ${
-                          confidencePercent >= 80 ? "border-emerald-500/30 text-emerald-400" :
-                          confidencePercent >= 50 ? "border-yellow-500/30 text-yellow-400" :
-                          "border-zinc-700 text-zinc-500"
-                        }`}>
-                          {confidencePercent}% confidence
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center gap-4 mt-3 text-xs text-zinc-500">
-                        <div className="flex items-center gap-1">
-                          <span className={`w-2 h-2 rounded-full ${
-                            citation.platform === "perplexity" ? "bg-violet-500" :
-                            citation.platform === "google_aio" ? "bg-blue-500" :
-                            "bg-emerald-500"
-                          }`} />
-                          {platform?.name}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(citation.discovered_at).toLocaleDateString()}
-                        </div>
-                        {citation.page_url && (
-                          <a 
-                            href={citation.page_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            View Source
-                          </a>
-                        )}
-                      </div>
-                    </div>
+                    <p className="text-white font-medium mb-1">{citation.query}</p>
+                    {citation.snippet && (
+                      <p className="text-sm text-zinc-400 line-clamp-2">
+                        {citation.snippet}
+                      </p>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-zinc-500">
+                      {new Date(citation.discoveredAt).toLocaleDateString()}
+                    </span>
+                    {citation.pageUrl && (
+                      <a 
+                        href={citation.pageUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-zinc-400 hover:text-white"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
     </div>

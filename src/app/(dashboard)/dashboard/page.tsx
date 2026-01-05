@@ -1,456 +1,479 @@
 "use client";
 
 /**
- * ============================================
- * DASHBOARD - Main Overview Page
- * ============================================
+ * Main Dashboard - Clean & Focused
+ * 
+ * Shows:
+ * - Current site overview
+ * - Citation stats by platform
+ * - Recent citations
+ * - Quick actions
+ * 
+ * Uses SiteContext for all data
  */
 
-import { useState, useEffect, Suspense } from "react";
-import Link from "next/link";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
-  Loader2,
+  Search, 
   TrendingUp,
-  TrendingDown,
+  Users, 
+  Bell,
   RefreshCw,
-  Search,
-  Bot,
-  Sparkles,
-  Eye,
-  ArrowRight,
-  Brain,
-  Target,
-  Plus,
+  ExternalLink,
+  ChevronRight,
+  Zap,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+  Plus
 } from "lucide-react";
+import { useSite } from "@/context/site-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import { useSite } from "@/context/site-context";
+import { TRIAL_DAYS, checkTrialStatus } from "@/lib/billing/citation-plans";
 
-// Platform config
-const platformConfig = {
-  perplexity: { name: "Perplexity", icon: Search, color: "text-violet-400", bg: "bg-violet-500/10" },
-  google_aio: { name: "Google AI", icon: Sparkles, color: "text-blue-400", bg: "bg-blue-500/10" },
-  chatgpt: { name: "ChatGPT", icon: Bot, color: "text-emerald-400", bg: "bg-emerald-500/10" },
-};
-
-interface Citation {
-  id: string;
-  platform: "perplexity" | "google_aio" | "chatgpt";
-  query: string;
-  snippet: string;
-  confidence: number;
-  discovered_at: string;
-}
-
-interface Stats {
-  total: number;
-  thisWeek: number;
-  lastWeek: number;
-  byPlatform: { perplexity: number; google_aio: number; chatgpt: number };
-}
-
-// Inner component that uses useSearchParams
 function DashboardContent() {
   const searchParams = useSearchParams();
-  const showAddForm = searchParams.get("add") === "true";
-  
   const { 
-    currentSite, 
-    sites, 
-    usage, 
-    organization, 
+    organization,
+    trial,
     loading, 
     error, 
-    addSite, 
-    runCheck,
+    currentSite, 
+    runCheck, 
+    refreshData 
   } = useSite();
   
-  const [citations, setCitations] = useState<Citation[]>([]);
-  const [stats, setStats] = useState<Stats>({
-    total: 0,
-    thisWeek: 0,
-    lastWeek: 0,
-    byPlatform: { perplexity: 0, google_aio: 0, chatgpt: 0 },
-  });
-  const [loadingCitations, setLoadingCitations] = useState(false);
-  
-  const [newDomain, setNewDomain] = useState("");
-  const [addingSite, setAddingSite] = useState(false);
   const [checking, setChecking] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [checkResults, setCheckResults] = useState<{
+    results: Array<{ platform: string; cited: boolean; snippet?: string; error?: string }>;
+    summary: { citedCount: number; apisCalled: number };
+  } | null>(null);
 
-  // Load citations when site changes
-  useEffect(() => {
-    async function loadCitations() {
-      if (!currentSite?.id) return;
-      
-      setLoadingCitations(true);
-      try {
-        const res = await fetch(`/api/geo/citations?siteId=${currentSite.id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setCitations(data.data?.recent || []);
-          setStats({
-            total: data.data?.total || 0,
-            thisWeek: data.data?.thisWeek || 0,
-            lastWeek: data.data?.lastWeek || 0,
-            byPlatform: data.data?.byPlatform || { perplexity: 0, google_aio: 0, chatgpt: 0 },
-          });
-        }
-      } catch (err) {
-        console.error("Failed to load citations:", err);
-      } finally {
-        setLoadingCitations(false);
-      }
-    }
-    
-    loadCitations();
-  }, [currentSite?.id]);
+  // Show success message if just signed up
+  const justSignedUp = searchParams.get("welcome") === "true";
 
-  // Handle add site
-  const handleAddSite = async () => {
-    if (!newDomain.trim()) return;
-    
-    setAddingSite(true);
-    setLocalError(null);
-    
-    const site = await addSite(newDomain);
-    
-    if (site) {
-      setNewDomain("");
-      setChecking(true);
-      await runCheck(site.id);
-      setChecking(false);
-    } else {
-      setLocalError("Failed to add site. Please try again.");
-    }
-    
-    setAddingSite(false);
-  };
+  // Check trial status
+  const isTrialExpired = organization?.plan === "free" && trial?.expired;
 
-  // Handle run check
-  const handleRunCheck = async () => {
+  // Handle manual check
+  const handleCheck = async () => {
+    if (!currentSite) return;
+    
     setChecking(true);
-    setLocalError(null);
+    setCheckResults(null);
     
-    const success = await runCheck();
-    
-    if (success && currentSite?.id) {
-      const res = await fetch(`/api/geo/citations?siteId=${currentSite.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setCitations(data.data?.recent || []);
-        setStats({
-          total: data.data?.total || 0,
-          thisWeek: data.data?.thisWeek || 0,
-          lastWeek: data.data?.lastWeek || 0,
-          byPlatform: data.data?.byPlatform || { perplexity: 0, google_aio: 0, chatgpt: 0 },
+    try {
+      const res = await fetch("/api/geo/citations/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          siteId: currentSite.id, 
+          domain: currentSite.domain 
+        }),
+      });
+      
+      const result = await res.json();
+      
+      if (result.results) {
+        setCheckResults({
+          results: result.results,
+          summary: result.summary,
         });
       }
-    } else if (!success) {
-      setLocalError("Check failed. Please try again.");
+      
+      // Refresh data to show new citations
+      await refreshData();
+    } catch (err) {
+      console.error("Check failed:", err);
+    } finally {
+      setChecking(false);
     }
-    
-    setChecking(false);
   };
 
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
-          <p className="text-zinc-500">Loading dashboard...</p>
+          <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin mx-auto mb-4" />
+          <p className="text-zinc-400">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
-  // No sites - onboarding
-  if (sites.length === 0 || showAddForm) {
+  // Error state
+  if (error) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center">
-        <div className="max-w-md w-full relative">
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[100px]" />
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-4" />
+          <p className="text-zinc-400">{error}</p>
+          <Button onClick={refreshData} className="mt-4">Try Again</Button>
+        </div>
+            </div>
+    );
+  }
+
+  // Trial expired - show upgrade prompt
+  if (isTrialExpired) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="max-w-md text-center bg-zinc-900 rounded-2xl p-8 border border-zinc-800">
+          <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-6">
+            <Clock className="w-8 h-8 text-amber-400" />
+            </div>
+          <h2 className="text-2xl font-bold text-white mb-3">
+            Trial Ended
+          </h2>
+          <p className="text-zinc-400 mb-6">
+            Your {TRIAL_DAYS}-day free trial has ended. Upgrade to continue tracking AI citations.
+          </p>
+          <Link href="/settings/billing">
+            <Button className="bg-emerald-500 hover:bg-emerald-400 text-black">
+              Upgrade Now
+            </Button>
+          </Link>
+              </div>
+            </div>
+    );
+  }
+
+  // No sites yet - show onboarding
+  if (!currentSite) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="max-w-md text-center">
+          <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-6">
+            <Plus className="w-8 h-8 text-emerald-400" />
           </div>
-          
-          <Card className="relative bg-[#0a0a0f] border-white/10">
-            <CardContent className="p-8 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/30">
-                <Eye className="w-8 h-8 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold text-white mb-2">
-                {sites.length === 0 ? "Track Your AI Citations" : "Add Another Website"}
-              </h1>
-              <p className="text-zinc-400 mb-6">
-                {sites.length === 0 
-                  ? "Know when ChatGPT, Perplexity, or Google AI mentions your website."
-                  : "Add another website to track its AI citations."
-                }
-              </p>
-              
-              {(localError || error) && (
-                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
-                  {localError || error}
-                </div>
-              )}
-              
-              <div className="space-y-3">
-                <Input
-                  placeholder="yoursite.com"
-                  value={newDomain}
-                  onChange={(e) => setNewDomain(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAddSite()}
-                  className="h-12 bg-white/5 border-white/10 text-center"
-                />
-                <Button
-                  onClick={handleAddSite}
-                  disabled={addingSite || checking || !newDomain.trim()}
-                  className="w-full h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500"
-                >
-                  {addingSite || checking ? (
-                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {checking ? "Checking AI platforms..." : "Setting up..."}</>
-                  ) : (
-                    <><Plus className="w-4 h-4 mr-2" /> Add & Start Tracking</>
-                  )}
-                </Button>
-                
-                {sites.length > 0 && (
-                  <Link href="/dashboard">
-                    <Button variant="ghost" className="w-full text-zinc-400">
-                      Cancel
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <h2 className="text-2xl font-bold text-white mb-3">
+            Add Your First Website
+          </h2>
+          <p className="text-zinc-400 mb-6">
+            Start tracking when AI platforms mention your brand.
+          </p>
+          <AddSiteForm />
         </div>
       </div>
     );
   }
-
-  // Calculate week change
-  const weekChange = stats.lastWeek > 0 
-    ? Math.round(((stats.thisWeek - stats.lastWeek) / stats.lastWeek) * 100) 
-    : stats.thisWeek > 0 ? 100 : 0;
 
   const plan = organization?.plan || "free";
+  const isPaid = plan !== "free";
 
-  // Main dashboard
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{currentSite?.domain}</h1>
-          <p className="text-zinc-500 text-sm mt-1">
-            {currentSite?.lastCheckedAt 
-              ? `Last checked ${new Date(currentSite.lastCheckedAt).toLocaleDateString()}`
-              : "Never checked"
-            }
-          </p>
+      {/* Welcome message */}
+      {justSignedUp && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            <p className="text-emerald-400">
+              Welcome! Run your first check to see if AI is citing your website.
+            </p>
+          </div>
         </div>
-        <Button
-          onClick={handleRunCheck}
-          disabled={checking || usage.checksUsed >= usage.checksLimit}
-          className="bg-emerald-600 hover:bg-emerald-500"
-        >
-          {checking ? (
-            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Checking...</>
-          ) : (
-            <><RefreshCw className="w-4 h-4 mr-2" /> Check Now</>
-          )}
-        </Button>
-      </div>
-
-      {(localError || error) && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
-          {localError || error}
+      )}
+          
+      {/* Trial countdown */}
+      {organization?.plan === "free" && trial && !trial.expired && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5 text-amber-400" />
+              <p className="text-amber-400">
+                {trial.daysRemaining} days left in trial
+              </p>
+            </div>
+            <Link href="/settings/billing">
+              <Button size="sm" variant="outline" className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10">
+                Upgrade
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-zinc-900/50 border-zinc-800">
-          <CardContent className="p-4">
-            <div className="text-3xl font-bold text-white">{stats.total}</div>
-            <p className="text-sm text-zinc-500">Total Citations</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-zinc-900/50 border-zinc-800">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <span className="text-3xl font-bold text-white">{stats.thisWeek}</span>
-              {weekChange !== 0 && (
-                <Badge className={weekChange > 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"}>
-                  {weekChange > 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                  {weekChange > 0 ? "+" : ""}{weekChange}%
-                </Badge>
+      {/* Site header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">{currentSite.domain}</h1>
+          <p className="text-sm text-zinc-500">
+            Last checked: {currentSite.lastCheckedAt 
+              ? new Date(currentSite.lastCheckedAt).toLocaleString() 
+              : "Never"}
+          </p>
+        </div>
+            <Button
+          onClick={handleCheck}
+              disabled={checking}
+          className="bg-emerald-500 hover:bg-emerald-400 text-black"
+            >
+              {checking ? (
+                <>
+              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Checking...
+                </>
+              ) : (
+                <>
+              <Search className="w-4 h-4 mr-2" />
+                  Check Now
+                </>
               )}
-            </div>
-            <p className="text-sm text-zinc-500">This Week</p>
-          </CardContent>
-        </Card>
+            </Button>
+        </div>
 
-        <Card className="bg-zinc-900/50 border-zinc-800">
-          <CardContent className="p-4">
+      {/* Stats cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="pt-6">
             <div className="text-3xl font-bold text-white">
-              {usage.checksUsed}/{usage.checksLimit === 999999 ? "∞" : usage.checksLimit}
+              {currentSite.totalCitations}
+                </div>
+            <p className="text-sm text-zinc-500">Total Citations</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="pt-6">
+            <div className="text-3xl font-bold text-emerald-400">
+              {currentSite.citationsThisWeek}
+                  </div>
+            <p className="text-sm text-zinc-500">This Week</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="pt-6">
+            <div className="text-3xl font-bold text-white">
+              {currentSite.geoScore || "—"}
+                </div>
+            <p className="text-sm text-zinc-500">GEO Score</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="pt-6">
+            <Badge className={`${isPaid ? "bg-emerald-500" : "bg-zinc-600"}`}>
+              {plan.charAt(0).toUpperCase() + plan.slice(1)}
+            </Badge>
+            <p className="text-sm text-zinc-500 mt-2">Current Plan</p>
+            </CardContent>
+          </Card>
+        </div>
+
+      {/* Check results */}
+      {checkResults && (
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+              <Zap className="w-5 h-5 text-emerald-400" />
+              Check Results
+                </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-3 gap-4">
+              {checkResults.results.map((result, idx) => (
+                <div 
+                  key={idx}
+                  className={`p-4 rounded-xl border ${
+                    result.cited 
+                      ? "bg-emerald-500/10 border-emerald-500/30" 
+                      : result.error
+                      ? "bg-red-500/10 border-red-500/30"
+                      : "bg-zinc-800/50 border-zinc-700"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-white capitalize">
+                      {result.platform === "google_aio" ? "Google AI" : result.platform}
+                    </span>
+                    {result.cited ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    ) : result.error ? (
+                      <AlertCircle className="w-5 h-5 text-red-400" />
+                    ) : (
+                      <span className="text-zinc-500 text-sm">Not cited</span>
+                    )}
+                  </div>
+                  {result.cited && result.snippet && (
+                    <p className="text-sm text-zinc-400 line-clamp-2">
+                      {result.snippet}
+                    </p>
+                  )}
+                  {result.error && (
+                    <p className="text-sm text-red-400">{result.error}</p>
+                  )}
+                </div>
+              ))}
+              </div>
+            <div className="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
+              <p className="text-sm text-zinc-500">
+                Found {checkResults.summary.citedCount} citation(s)
+              </p>
+              <Link href="/citations">
+                <Button variant="ghost" size="sm" className="text-emerald-400">
+                  View All <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
             </div>
-            <p className="text-sm text-zinc-500">Checks Used</p>
-            <Progress value={usage.checksLimit === 999999 ? 0 : (usage.checksUsed / usage.checksLimit) * 100} className="h-1 mt-2 bg-zinc-800" />
           </CardContent>
         </Card>
+      )}
 
-        <Card className="bg-zinc-900/50 border-zinc-800">
-          <CardContent className="p-4">
-            <div className="text-3xl font-bold text-white capitalize">{plan}</div>
-            <p className="text-sm text-zinc-500">Current Plan</p>
-            {plan === "free" && (
-              <Link href="/pricing">
-                <Button size="sm" variant="outline" className="mt-2 h-7 text-xs border-emerald-500/30 text-emerald-400">
+      {/* Platform breakdown */}
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardHeader>
+          <CardTitle className="text-white">Platform Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-3 gap-4">
+            {[
+              { name: "Perplexity", color: "emerald", icon: Search },
+              { name: "Google AI", color: "blue", icon: Zap },
+              { name: "ChatGPT", color: "violet", icon: TrendingUp },
+            ].map((platform) => (
+              <div 
+                key={platform.name}
+                className={`p-4 rounded-xl bg-${platform.color}-500/5 border border-${platform.color}-500/20`}
+              >
+                <platform.icon className={`w-5 h-5 text-${platform.color}-400 mb-2`} />
+                <div className="text-2xl font-bold text-white">0</div>
+                <p className="text-sm text-zinc-500">{platform.name}</p>
+                    </div>
+                  ))}
+                </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick actions */}
+      <div className="grid md:grid-cols-3 gap-4">
+        <Link href="/citations">
+          <Card className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-colors cursor-pointer h-full">
+            <CardContent className="pt-6">
+              <Search className="w-8 h-8 text-emerald-400 mb-3" />
+              <h3 className="font-semibold text-white">View Citations</h3>
+              <p className="text-sm text-zinc-500 mt-1">See all AI mentions</p>
+            </CardContent>
+          </Card>
+              </Link>
+              
+        <Link href="/competitors">
+          <Card className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-colors cursor-pointer h-full">
+            <CardContent className="pt-6">
+              <Users className="w-8 h-8 text-blue-400 mb-3" />
+              <h3 className="font-semibold text-white">Competitors</h3>
+              <p className="text-sm text-zinc-500 mt-1">Track who AI recommends</p>
+            </CardContent>
+          </Card>
+              </Link>
+              
+        <Link href="/intelligence">
+          <Card className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-colors cursor-pointer h-full">
+            <CardContent className="pt-6">
+              <TrendingUp className="w-8 h-8 text-violet-400 mb-3" />
+              <h3 className="font-semibold text-white">GEO Intelligence</h3>
+              <p className="text-sm text-zinc-500 mt-1">Score & optimization tips</p>
+            </CardContent>
+          </Card>
+        </Link>
+        </div>
+
+      {/* Auto-monitoring status */}
+      <Card className="bg-zinc-900 border-zinc-800">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-2 h-2 rounded-full ${isPaid ? "bg-emerald-400" : "bg-zinc-500"}`} />
+              <span className="text-sm text-zinc-400">
+                Auto-monitoring: {isPaid ? (
+                  <span className="text-emerald-400">
+                    {plan === "pro" ? "Hourly" : "Daily"} checks enabled
+                  </span>
+                ) : (
+                  <span className="text-zinc-500">
+                    Upgrade for automatic monitoring
+                  </span>
+                )}
+              </span>
+                </div>
+            {!isPaid && (
+              <Link href="/settings/billing">
+                <Button size="sm" variant="outline" className="text-xs">
                   Upgrade
                 </Button>
               </Link>
             )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Platform Breakdown */}
-      <Card className="bg-zinc-900/50 border-zinc-800">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg text-white">Platform Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            {Object.entries(platformConfig).map(([key, config]) => {
-              const count = stats.byPlatform[key as keyof typeof stats.byPlatform] || 0;
-              const Icon = config.icon;
-              return (
-                <div key={key} className={`p-4 rounded-xl ${config.bg}`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Icon className={`w-4 h-4 ${config.color}`} />
-                    <span className={`text-sm font-medium ${config.color}`}>{config.name}</span>
-                  </div>
-                  <div className="text-2xl font-bold text-white">{count}</div>
-                  <p className="text-xs text-zinc-500">citations</p>
-                </div>
-              );
-            })}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Recent Citations */}
-      <Card className="bg-zinc-900/50 border-zinc-800">
-        <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-lg text-white">Recent Citations</CardTitle>
-          <Link href="/citations">
-            <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">
-              View All <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-          </Link>
-        </CardHeader>
-        <CardContent>
-          {loadingCitations ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 text-zinc-500 animate-spin" />
-            </div>
-          ) : citations.length === 0 ? (
-            <div className="text-center py-8">
-              <Eye className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
-              <p className="text-zinc-500">No citations found yet</p>
-              <p className="text-zinc-600 text-sm mt-1">Click &quot;Check Now&quot; to scan AI platforms</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {citations.slice(0, 5).map((citation) => {
-                const platform = platformConfig[citation.platform];
-                const Icon = platform?.icon || Search;
-                return (
-                  <div key={citation.id} className="flex items-start gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/5">
-                    <div className={`p-2 rounded-lg ${platform?.bg || "bg-zinc-800"}`}>
-                      <Icon className={`w-4 h-4 ${platform?.color || "text-zinc-400"}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white font-medium truncate">&quot;{citation.query}&quot;</p>
-                      <p className="text-xs text-zinc-500 mt-0.5 line-clamp-1">{citation.snippet}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-zinc-600">{platform?.name}</span>
-                        <span className="text-zinc-700">•</span>
-                        <span className="text-xs text-zinc-600">
-                          {new Date(citation.discovered_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Quick Links */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Link href="/intelligence">
-          <Card className="bg-gradient-to-br from-emerald-500/10 to-blue-500/10 border-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer h-full">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-emerald-500/20">
-                <Brain className="w-6 h-6 text-emerald-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-white">GEO Intelligence</h3>
-                <p className="text-sm text-zinc-400">Get your GEO Score & tips</p>
-              </div>
-              <ArrowRight className="w-5 h-5 text-zinc-600 ml-auto" />
             </CardContent>
           </Card>
-        </Link>
-        
-        <Link href="/competitors">
-          <Card className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-all cursor-pointer h-full">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-violet-500/10">
-                <Target className="w-6 h-6 text-violet-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-white">Competitors</h3>
-                <p className="text-sm text-zinc-400">Track competitor citations</p>
-              </div>
-              <ArrowRight className="w-5 h-5 text-zinc-600 ml-auto" />
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
     </div>
   );
 }
 
-// Loading fallback
-function DashboardLoading() {
+// Add Site Form Component
+function AddSiteForm() {
+  const [domain, setDomain] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [error, setError] = useState("");
+  const { addSite } = useSite();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!domain.trim()) return;
+
+    setAdding(true);
+    setError("");
+
+    try {
+      const result = await addSite(domain);
+      if (!result) {
+        setError("Failed to add site");
+      }
+      // Success - context will update and show the site
+    } catch (err) {
+      setError("Failed to add site");
+    } finally {
+      setAdding(false);
+    }
+  };
+
   return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="text-center">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
-        <p className="text-zinc-500">Loading dashboard...</p>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <input
+          type="text"
+          value={domain}
+          onChange={(e) => setDomain(e.target.value)}
+          placeholder="yoursite.com"
+          className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+        />
+        {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
       </div>
-    </div>
+      <Button 
+        type="submit" 
+        disabled={adding || !domain.trim()}
+        className="w-full bg-emerald-500 hover:bg-emerald-400 text-black"
+      >
+        {adding ? "Adding..." : "Add Website"}
+      </Button>
+    </form>
   );
 }
 
-// Main export with Suspense boundary
+// Main export with Suspense
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<DashboardLoading />}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
+      </div>
+    }>
       <DashboardContent />
     </Suspense>
   );

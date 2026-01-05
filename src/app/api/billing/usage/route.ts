@@ -94,7 +94,7 @@ export async function GET() {
           competitorsUsed: competitorsCount,
         },
         limits: {
-          checks: limits.checksPerMonth,
+          checksPerDay: limits.manualChecksPerDay,
           sites: limits.sites,
           competitors: limits.competitors,
         },
