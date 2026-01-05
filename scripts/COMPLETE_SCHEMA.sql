@@ -399,6 +399,33 @@ GRANT ALL ON "query_intelligence" TO authenticated;
 GRANT ALL ON "query_intelligence" TO service_role;
 
 -- ============================================
+-- STEP 12: WEEKLY RESET FUNCTION
+-- (Called by Inngest cron job)
+-- ============================================
+
+CREATE OR REPLACE FUNCTION reset_weekly_citations()
+RETURNS void AS $$
+BEGIN
+  UPDATE sites
+  SET 
+    citations_last_week = citations_this_week,
+    citations_this_week = 0,
+    updated_at = now();
+END;
+$$ LANGUAGE plpgsql;
+
+-- Also add notification_settings to users if not exists
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'users' AND column_name = 'notification_settings'
+  ) THEN
+    ALTER TABLE users ADD COLUMN notification_settings jsonb DEFAULT '{"citationAlerts": true, "weeklyReport": true, "competitorAlerts": true, "productUpdates": false}'::jsonb;
+  END IF;
+END $$;
+
+-- ============================================
 -- ✅ DONE! Full GEO Platform Ready
 -- ============================================
 -- 
@@ -422,6 +449,12 @@ GRANT ALL ON "query_intelligence" TO service_role;
 -- ✅ GEO Tips (actionable optimization advice)
 -- ✅ Query Intelligence (what AI is answering)
 -- ✅ Citation Opportunities (where competitors cited, you're not)
+--
+-- AUTOMATION (via Inngest):
+-- ✅ Daily citation checks at 10 AM UTC
+-- ✅ Hourly checks for Pro users
+-- ✅ Weekly reports every Monday
+-- ✅ Instant alert emails on new citations
 --
 -- Now deploy and dominate GEO! 🥬
 -- ============================================
