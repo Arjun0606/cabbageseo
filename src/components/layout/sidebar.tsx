@@ -25,6 +25,7 @@ import {
   BarChart3,
   Search,
   HelpCircle,
+  Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -59,6 +60,12 @@ const navItems: NavItemType[] = [
     href: "/citations",
     icon: Eye,
     description: "All your citations",
+  },
+  {
+    name: "Intelligence",
+    href: "/intelligence",
+    icon: Brain,
+    description: "GEO Score & Tips",
   },
   {
     name: "Competitors",
