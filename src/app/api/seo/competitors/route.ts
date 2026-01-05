@@ -1,105 +1,268 @@
 /**
- * Competitor Analysis API
+ * /api/seo/competitors - Competitor Management
  * 
- * POST /api/seo/competitors
- * 
- * 100% AI-POWERED - No external SERP APIs
- * 
- * Actions:
- * - keywords: Get competitor's likely keywords (AI estimated)
- * - analyze: Full competitor GEO analysis
+ * GET: List competitors for a site
+ * POST: Add a competitor
+ * DELETE: Remove a competitor
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { seoData } from "@/lib/seo/data-service";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getCitationPlanLimits } from "@/lib/billing/citation-plans";
 
-export const maxDuration = 30;
-
-interface CompetitorRequest {
-  action: "keywords" | "analyze";
-  domain?: string;
-  keyword?: string;
-  options?: {
-    location?: string;
-    limit?: number;
-  };
+function getDbClient(): SupabaseClient | null {
+  try {
+    return createServiceClient();
+  } catch {
+    return null;
+  }
 }
 
+// GET - List competitors
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Not configured" }, { status: 500 });
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const siteId = searchParams.get("siteId");
+
+    if (!siteId) {
+      return NextResponse.json({ error: "siteId required" }, { status: 400 });
+    }
+
+    const db = getDbClient() || supabase;
+
+    // Verify site belongs to user
+    const { data: userData } = await db
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!userData?.organization_id) {
+      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+    }
+
+    const { data: site } = await db
+      .from("sites")
+      .select("id, organization_id")
+      .eq("id", siteId)
+      .maybeSingle();
+
+    if (!site || site.organization_id !== userData.organization_id) {
+      return NextResponse.json({ error: "Site not found" }, { status: 404 });
+    }
+
+    // Get competitors
+    const { data: competitors, error } = await db
+      .from("competitors")
+      .select("id, domain, total_citations, citations_change, last_checked_at, created_at")
+      .eq("site_id", siteId)
+      .order("total_citations", { ascending: false });
+
+    if (error) {
+      console.error("Competitors fetch error:", error);
+      return NextResponse.json({ error: "Failed to fetch competitors" }, { status: 500 });
+    }
+
+    return NextResponse.json({ competitors: competitors || [] });
+
+  } catch (error) {
+    console.error("[/api/seo/competitors GET] Error:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+// POST - Add competitor
 export async function POST(request: NextRequest) {
   try {
-    const body: CompetitorRequest = await request.json();
-    const { action, options = {} } = body;
-
-    switch (action) {
-      case "keywords": {
-        if (!body.domain) {
-          return NextResponse.json(
-            { error: "Missing required field: domain" },
-            { status: 400 }
-          );
-        }
-
-        // Use AI-powered competitor analysis
-        const result = await seoData.analyzeCompetitor(body.domain, options);
-        
-        return NextResponse.json({
-          success: true,
-          data: result.keywords,
-          count: result.keywords.length,
-          domain: body.domain,
-          contentGaps: result.contentGaps,
-          strengthAreas: result.strengthAreas,
-        });
-      }
-
-      case "analyze": {
-        if (!body.keyword) {
-          return NextResponse.json(
-            { error: "Missing required field: keyword" },
-            { status: 400 }
-          );
-        }
-
-        // Use AI for GEO-focused competitor analysis
-        const geoAnalysis = await seoData.analyzeForGEO(
-          body.keyword,
-          options.location
-        );
-        
-        return NextResponse.json({
-          success: true,
-          data: {
-            keyword: body.keyword,
-            location: options.location,
-            geoScores: {
-              chatgpt: geoAnalysis.chatgptScore,
-              perplexity: geoAnalysis.perplexityScore,
-              googleAi: geoAnalysis.googleAiScore,
-              overall: geoAnalysis.overallScore,
-            },
-            questionsToAnswer: geoAnalysis.questionsToAnswer,
-            entitiesToInclude: geoAnalysis.entitiesToInclude,
-            structureRecommendations: geoAnalysis.structureRecommendations,
-            locationContext: geoAnalysis.locationContext,
-          },
-        });
-      }
-
-      default:
-        return NextResponse.json(
-          { error: `Unknown action: ${action}. Valid actions: keywords, analyze` },
-          { status: 400 }
-        );
+    const supabase = await createClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Not configured" }, { status: 500 });
     }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { siteId, domain } = body;
+
+    if (!siteId || !domain) {
+      return NextResponse.json({ error: "siteId and domain required" }, { status: 400 });
+    }
+
+    // Clean domain
+    let cleanDomain = domain.trim().toLowerCase();
+    cleanDomain = cleanDomain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
+
+    const db = getDbClient() || supabase;
+
+    // Verify site belongs to user
+    const { data: userData } = await db
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!userData?.organization_id) {
+      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+    }
+
+    const { data: site } = await db
+      .from("sites")
+      .select("id, organization_id, domain")
+      .eq("id", siteId)
+      .maybeSingle();
+
+    if (!site || site.organization_id !== userData.organization_id) {
+      return NextResponse.json({ error: "Site not found" }, { status: 404 });
+    }
+
+    // Can't add yourself as a competitor
+    if (cleanDomain === site.domain) {
+      return NextResponse.json({ error: "Cannot add your own site as a competitor" }, { status: 400 });
+    }
+
+    // Get plan and check limits
+    const { data: org } = await db
+      .from("organizations")
+      .select("plan")
+      .eq("id", userData.organization_id)
+      .single();
+
+    const plan = org?.plan || "free";
+    const limits = getCitationPlanLimits(plan);
+
+    // Check competitor limit
+    const { count } = await db
+      .from("competitors")
+      .select("id", { count: "exact", head: true })
+      .eq("site_id", siteId);
+
+    if ((count || 0) >= limits.competitors) {
+      return NextResponse.json({ 
+        error: `Competitor limit reached (${limits.competitors}). Upgrade for more.` 
+      }, { status: 403 });
+    }
+
+    // Check if already exists
+    const { data: existing } = await db
+      .from("competitors")
+      .select("id")
+      .eq("site_id", siteId)
+      .eq("domain", cleanDomain)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json({ error: "Competitor already added" }, { status: 400 });
+    }
+
+    // Create competitor
+    const { data: competitor, error } = await db
+      .from("competitors")
+      .insert({
+        site_id: siteId,
+        domain: cleanDomain,
+        total_citations: 0,
+        citations_change: 0,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Competitor creation error:", error);
+      return NextResponse.json({ error: "Failed to add competitor" }, { status: 500 });
+    }
+
+    return NextResponse.json({ competitor });
+
   } catch (error) {
-    console.error("Competitor analysis error:", error);
-    
-    return NextResponse.json(
-      {
-        error: "Competitor analysis failed",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    console.error("[/api/seo/competitors POST] Error:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+// DELETE - Remove competitor
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Not configured" }, { status: 500 });
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const competitorId = searchParams.get("id");
+
+    if (!competitorId) {
+      return NextResponse.json({ error: "Competitor ID required" }, { status: 400 });
+    }
+
+    const db = getDbClient() || supabase;
+
+    // Verify competitor belongs to user's site
+    const { data: userData } = await db
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!userData?.organization_id) {
+      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+    }
+
+    // Get competitor with site info
+    const { data: competitor } = await db
+      .from("competitors")
+      .select("id, site_id")
+      .eq("id", competitorId)
+      .maybeSingle();
+
+    if (!competitor) {
+      return NextResponse.json({ error: "Competitor not found" }, { status: 404 });
+    }
+
+    // Verify site belongs to user's org
+    const { data: site } = await db
+      .from("sites")
+      .select("organization_id")
+      .eq("id", competitor.site_id)
+      .maybeSingle();
+
+    if (!site || site.organization_id !== userData.organization_id) {
+      return NextResponse.json({ error: "Competitor not found" }, { status: 404 });
+    }
+
+    // Delete competitor
+    const { error } = await db
+      .from("competitors")
+      .delete()
+      .eq("id", competitorId);
+
+    if (error) {
+      console.error("Competitor deletion error:", error);
+      return NextResponse.json({ error: "Failed to delete competitor" }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+    console.error("[/api/seo/competitors DELETE] Error:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

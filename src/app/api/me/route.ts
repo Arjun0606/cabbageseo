@@ -3,11 +3,9 @@
  * 
  * Returns everything about the current user in ONE call:
  * - User info
- * - Organization
+ * - Organization (with createdAt for trial calculation)
  * - All sites
  * - Plan & usage
- * 
- * This is the ONLY endpoint the dashboard needs.
  */
 
 import { NextResponse } from "next/server";
@@ -47,7 +45,11 @@ export async function GET() {
 
     // Get or create user profile with organization
     let orgId: string | null = null;
-    let orgData: { plan: string; subscription_status: string } | null = null;
+    let orgData: { 
+      plan: string; 
+      subscription_status: string;
+      created_at: string;
+    } | null = null;
 
     // Check if user exists in our users table
     const { data: existingUser } = await db
@@ -59,7 +61,7 @@ export async function GET() {
     if (existingUser?.organization_id) {
       orgId = existingUser.organization_id;
     } else {
-      // Create organization for user
+      // Create organization for user (free trial)
       const slug = (user.email?.split("@")[0]?.replace(/[^a-z0-9]/gi, "") || "user") + "-" + Date.now();
       
       const { data: newOrg } = await db
@@ -67,63 +69,75 @@ export async function GET() {
         .insert({
           name: user.user_metadata?.name || user.email?.split("@")[0] || "My Organization",
           slug,
-          plan: "starter",
+          plan: "free", // Start with free trial
           subscription_status: "active",
         })
-        .select("id")
+        .select("id, created_at")
         .single();
 
       if (newOrg) {
         orgId = newOrg.id;
 
-        // Create or update user record
-        if (!existingUser) {
-          await db.from("users").insert({
-            id: user.id,
-            organization_id: orgId,
-            email: user.email || "",
-            name: user.user_metadata?.name || null,
-            role: "owner",
-          });
-        } else {
-          await db.from("users").update({ organization_id: orgId }).eq("id", user.id);
-        }
+        // Create user record
+        await db.from("users").upsert({
+          id: user.id,
+          organization_id: orgId,
+          email: user.email || "",
+          name: user.user_metadata?.name || null,
+          role: "owner",
+        });
       }
     }
 
-    // Get organization details
+    // Get organization details (including created_at for trial calculation)
     if (orgId) {
       const { data: org } = await db
         .from("organizations")
-        .select("plan, subscription_status")
+        .select("plan, subscription_status, created_at")
         .eq("id", orgId)
         .maybeSingle();
       
-      orgData = org as { plan: string; subscription_status: string } | null;
+      orgData = org as { plan: string; subscription_status: string; created_at: string } | null;
     }
 
     // Get sites with citation data
-    let sites: Array<{
+    interface SiteRecord {
       id: string;
       domain: string;
+      name?: string;
+      total_citations?: number;
+      citations_this_week?: number;
+      citations_last_week?: number;
+      last_checked_at?: string;
+    }
+
+    interface SiteResponse {
+      id: string;
+      domain: string;
+      name?: string;
       totalCitations: number;
       citationsThisWeek: number;
+      citationsLastWeek: number;
       lastCheckedAt: string | null;
-    }> = [];
+    }
+
+    let sites: SiteResponse[] = [];
 
     if (orgId) {
       const { data: sitesData } = await db
         .from("sites")
-        .select("id, domain, name, total_citations, citations_this_week, last_checked_at")
+        .select("id, domain, name, total_citations, citations_this_week, citations_last_week, last_checked_at")
         .eq("organization_id", orgId)
         .order("created_at", { ascending: false });
 
       if (sitesData) {
-        sites = sitesData.map((s: { id: string; domain: string; total_citations?: number; citations_this_week?: number; last_checked_at?: string }) => ({
+        sites = (sitesData as SiteRecord[]).map((s) => ({
           id: s.id,
           domain: s.domain,
+          name: s.name,
           totalCitations: s.total_citations || 0,
           citationsThisWeek: s.citations_this_week || 0,
+          citationsLastWeek: s.citations_last_week || 0,
           lastCheckedAt: s.last_checked_at || null,
         }));
       }
@@ -138,8 +152,9 @@ export async function GET() {
       },
       organization: orgId ? {
         id: orgId,
-        plan: orgData?.plan || "starter",
+        plan: orgData?.plan || "free",
         status: orgData?.subscription_status || "active",
+        createdAt: orgData?.created_at || new Date().toISOString(),
       } : null,
       sites,
       currentSite: sites.length > 0 ? sites[0] : null,
@@ -153,4 +168,3 @@ export async function GET() {
     });
   }
 }
-

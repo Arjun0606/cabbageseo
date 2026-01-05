@@ -1,7 +1,20 @@
 "use client";
 
+/**
+ * ============================================
+ * INTELLIGENCE PAGE - GEO Score & Tips
+ * ============================================
+ * 
+ * Shows:
+ * - GEO Score with breakdown
+ * - Actionable tips
+ * - Query intelligence
+ * - Citation opportunities
+ */
+
 import { useState, useEffect } from "react";
 import {
+  Loader2,
   Brain,
   Lightbulb,
   Search,
@@ -9,28 +22,19 @@ import {
   TrendingUp,
   AlertCircle,
   CheckCircle2,
-  ArrowRight,
-  RefreshCw,
+  ChevronRight,
   Sparkles,
   BarChart3,
   Zap,
   BookOpen,
-  ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-
-// ============================================
-// GEO INTELLIGENCE PAGE
-// ============================================
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSite } from "@/context/site-context";
 
 interface GEOScore {
   overall: number;
@@ -46,7 +50,7 @@ interface GEOScore {
   summary: string;
 }
 
-interface GEOTip {
+interface Tip {
   id: string;
   category: string;
   priority: string;
@@ -56,137 +60,113 @@ interface GEOTip {
   example?: string;
 }
 
-interface QueryIntelligence {
+interface QueryIntel {
   query: string;
   searchVolume: string;
-  aiPlatforms: string[];
-  topSources: string[];
   yourPosition: string;
   opportunity: boolean;
 }
 
-interface CitationOpportunity {
+interface Opportunity {
   query: string;
   competitor: string;
-  competitorSnippet: string;
   platform: string;
   suggestedAction: string;
   difficulty: string;
 }
 
-interface GEOAnalysis {
-  score: GEOScore | null;
-  tips: GEOTip[];
-  queries: QueryIntelligence[];
-  opportunities: CitationOpportunity[];
-  needsAnalysis?: boolean;
-  cachedAt?: string;
-}
-
 export default function IntelligencePage() {
+  const { currentSite, loading: siteLoading } = useSite();
+  
+  const [score, setScore] = useState<GEOScore | null>(null);
+  const [tips, setTips] = useState<Tip[]>([]);
+  const [queries, setQueries] = useState<QueryIntel[]>([]);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [needsAnalysis, setNeedsAnalysis] = useState(true);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
-  const [siteId, setSiteId] = useState<string | null>(null);
-  const [siteDomain, setSiteDomain] = useState<string>("");
-  const [analysis, setAnalysis] = useState<GEOAnalysis | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  // Load site and existing analysis
+  // Load existing analysis
   useEffect(() => {
-    const loadData = async () => {
+    async function loadAnalysis() {
+      if (!currentSite?.id) return;
+      
+      setLoading(true);
       try {
-        // Get user's site
-        const meRes = await fetch("/api/me");
-        const meData = await meRes.json();
-        
-        if (meData.data?.sites?.[0]) {
-          const site = meData.data.sites[0];
-          setSiteId(site.id);
-          setSiteDomain(site.domain);
-
-          // Load existing analysis
-          const analysisRes = await fetch(`/api/geo/intelligence?siteId=${site.id}`);
-          const analysisData = await analysisRes.json();
-          
-          if (analysisData.success) {
-            setAnalysis(analysisData.data);
+        const res = await fetch(`/api/geo/intelligence?siteId=${currentSite.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.data) {
+            setScore(data.data.score);
+            setTips(data.data.tips || []);
+            setQueries(data.data.queries || []);
+            setOpportunities(data.data.opportunities || []);
+            setNeedsAnalysis(data.data.needsAnalysis || false);
           }
         }
       } catch (err) {
-        console.error("Failed to load data:", err);
-        setError("Failed to load site data");
+        console.error("Failed to load analysis:", err);
       } finally {
         setLoading(false);
       }
-    };
+    }
+    
+    loadAnalysis();
+  }, [currentSite?.id]);
 
-    loadData();
-  }, []);
-
-  // Run full analysis
+  // Run new analysis
   const runAnalysis = async () => {
-    if (!siteId) return;
+    if (!currentSite?.id) return;
     
     setAnalyzing(true);
-    setError(null);
-
     try {
       const res = await fetch("/api/geo/intelligence", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteId }),
+        body: JSON.stringify({ siteId: currentSite.id }),
       });
 
-      const data = await res.json();
-
-      if (data.success) {
-        setAnalysis(data.data);
-      } else {
-        setError(data.error || "Analysis failed");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.data) {
+          setScore(data.data.score);
+          setTips(data.data.tips || []);
+          setQueries(data.data.queries || []);
+          setOpportunities(data.data.opportunities || []);
+          setNeedsAnalysis(false);
+        }
       }
     } catch (err) {
-      setError("Failed to run analysis");
+      console.error("Analysis failed:", err);
     } finally {
       setAnalyzing(false);
     }
   };
 
   // Loading state
-  if (loading) {
+  if (siteLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin text-emerald-500 mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
           <p className="text-zinc-500">Loading GEO Intelligence...</p>
         </div>
       </div>
     );
   }
 
-  // No site state
-  if (!siteId) {
+  // No site
+  if (!currentSite) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Card className="bg-zinc-900 border-zinc-800 max-w-md">
-          <CardContent className="pt-6 text-center">
-            <Brain className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-white mb-2">Add a Site First</h2>
-            <p className="text-zinc-400 mb-4">
-              Go to your Dashboard and add a website to analyze its GEO performance.
-            </p>
-            <Button onClick={() => window.location.href = "/dashboard"}>
-              Go to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <Brain className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">No Site Selected</h2>
+          <p className="text-zinc-400">Add a website from the Dashboard to analyze.</p>
+        </div>
       </div>
     );
   }
-
-  const score = analysis?.score;
-  const tips = analysis?.tips || [];
-  const queries = analysis?.queries || [];
-  const opportunities = analysis?.opportunities || [];
 
   return (
     <div className="space-y-6">
@@ -198,7 +178,7 @@ export default function IntelligencePage() {
             GEO Intelligence
           </h1>
           <p className="text-zinc-400 mt-1">
-            Understand why AI does (or doesn&apos;t) cite {siteDomain}
+            Understand why AI does (or doesn&apos;t) cite {currentSite.domain}
           </p>
         </div>
         <Button
@@ -208,26 +188,20 @@ export default function IntelligencePage() {
         >
           {analyzing ? (
             <>
-              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               Analyzing...
             </>
           ) : (
             <>
               <Sparkles className="w-4 h-4 mr-2" />
-              {analysis?.needsAnalysis ? "Run Analysis" : "Refresh Analysis"}
+              {needsAnalysis ? "Run Analysis" : "Refresh Analysis"}
             </>
           )}
         </Button>
       </div>
 
-      {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
-          {error}
-        </div>
-      )}
-
       {/* Needs Analysis Prompt */}
-      {analysis?.needsAnalysis && !analyzing && (
+      {needsAnalysis && !analyzing && (
         <Card className="bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border-emerald-500/20">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
@@ -251,7 +225,7 @@ export default function IntelligencePage() {
 
       {/* GEO Score Card */}
       {score && (
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-zinc-900/50 border-zinc-800">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-emerald-500" />
@@ -319,19 +293,17 @@ export default function IntelligencePage() {
                     { key: "topicalDepth", label: "Topical Depth", icon: Brain },
                   ].map((item) => {
                     const value = score.breakdown![item.key as keyof typeof score.breakdown];
+                    const Icon = item.icon;
                     return (
                       <div key={item.key}>
                         <div className="flex items-center justify-between text-sm mb-1">
                           <span className="text-zinc-400 flex items-center gap-1.5">
-                            <item.icon className="w-3.5 h-3.5" />
+                            <Icon className="w-3.5 h-3.5" />
                             {item.label}
                           </span>
                           <span className="text-white font-medium">{value}</span>
                         </div>
-                        <Progress 
-                          value={value} 
-                          className="h-2 bg-zinc-800"
-                        />
+                        <Progress value={value} className="h-2 bg-zinc-800" />
                       </div>
                     );
                   })}
@@ -362,7 +334,7 @@ export default function IntelligencePage() {
         {/* Tips Tab */}
         <TabsContent value="tips" className="space-y-3">
           {tips.length === 0 ? (
-            <Card className="bg-zinc-900 border-zinc-800">
+            <Card className="bg-zinc-900/50 border-zinc-800">
               <CardContent className="py-8 text-center">
                 <Lightbulb className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
                 <p className="text-zinc-400">Run an analysis to get personalized GEO tips</p>
@@ -370,7 +342,7 @@ export default function IntelligencePage() {
             </Card>
           ) : (
             tips.map((tip) => (
-              <Card key={tip.id} className="bg-zinc-900 border-zinc-800">
+              <Card key={tip.id} className="bg-zinc-900/50 border-zinc-800">
                 <CardContent className="pt-4">
                   <div className="flex items-start gap-3">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
@@ -398,9 +370,7 @@ export default function IntelligencePage() {
                         </Badge>
                       </div>
                       <p className="text-sm text-zinc-400 mb-2">{tip.description}</p>
-                      <p className="text-xs text-emerald-400">
-                        Impact: {tip.impact}
-                      </p>
+                      <p className="text-xs text-emerald-400">Impact: {tip.impact}</p>
                       {tip.example && (
                         <p className="text-xs text-zinc-500 mt-2 p-2 bg-zinc-800/50 rounded">
                           💡 {tip.example}
@@ -417,59 +387,57 @@ export default function IntelligencePage() {
         {/* Queries Tab */}
         <TabsContent value="queries" className="space-y-3">
           {queries.length === 0 ? (
-            <Card className="bg-zinc-900 border-zinc-800">
+            <Card className="bg-zinc-900/50 border-zinc-800">
               <CardContent className="py-8 text-center">
                 <Search className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
                 <p className="text-zinc-400">Run an analysis to discover queries in your niche</p>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-3">
-              {queries.map((q, i) => (
-                <Card key={i} className={`bg-zinc-900 border-zinc-800 ${
-                  q.opportunity ? "border-l-2 border-l-emerald-500" : ""
-                }`}>
-                  <CardContent className="py-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white font-medium truncate">{q.query}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className={
-                            q.searchVolume === "high" ? "border-emerald-500/50 text-emerald-400" :
-                            q.searchVolume === "medium" ? "border-yellow-500/50 text-yellow-400" :
-                            "border-zinc-700 text-zinc-500"
-                          }>
-                            {q.searchVolume} volume
+            queries.map((q, i) => (
+              <Card key={i} className={`bg-zinc-900/50 border-zinc-800 ${
+                q.opportunity ? "border-l-2 border-l-emerald-500" : ""
+              }`}>
+                <CardContent className="py-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-medium truncate">{q.query}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className={
+                          q.searchVolume === "high" ? "border-emerald-500/50 text-emerald-400" :
+                          q.searchVolume === "medium" ? "border-yellow-500/50 text-yellow-400" :
+                          "border-zinc-700 text-zinc-500"
+                        }>
+                          {q.searchVolume} volume
+                        </Badge>
+                        {q.yourPosition === "cited" ? (
+                          <Badge className="bg-emerald-500/10 text-emerald-400 border-0">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            You&apos;re cited!
                           </Badge>
-                          {q.yourPosition === "cited" ? (
-                            <Badge className="bg-emerald-500/10 text-emerald-400 border-0">
-                              <CheckCircle2 className="w-3 h-3 mr-1" />
-                              You&apos;re cited!
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-yellow-500/10 text-yellow-400 border-0">
-                              Opportunity
-                            </Badge>
-                          )}
-                        </div>
+                        ) : (
+                          <Badge className="bg-yellow-500/10 text-yellow-400 border-0">
+                            Opportunity
+                          </Badge>
+                        )}
                       </div>
-                      <ChevronRight className="w-5 h-5 text-zinc-600" />
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    <ChevronRight className="w-5 h-5 text-zinc-600" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))
           )}
         </TabsContent>
 
         {/* Opportunities Tab */}
         <TabsContent value="opportunities" className="space-y-3">
           {opportunities.length === 0 ? (
-            <Card className="bg-zinc-900 border-zinc-800">
+            <Card className="bg-zinc-900/50 border-zinc-800">
               <CardContent className="py-8 text-center">
                 <Target className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
                 <p className="text-zinc-400">
-                  {analysis?.needsAnalysis 
+                  {needsAnalysis 
                     ? "Run an analysis to find citation opportunities" 
                     : "Add competitors to discover citation gaps"}
                 </p>
@@ -477,7 +445,7 @@ export default function IntelligencePage() {
             </Card>
           ) : (
             opportunities.map((opp, i) => (
-              <Card key={i} className="bg-zinc-900 border-zinc-800">
+              <Card key={i} className="bg-zinc-900/50 border-zinc-800">
                 <CardContent className="pt-4">
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
@@ -495,11 +463,6 @@ export default function IntelligencePage() {
                         {opp.difficulty}
                       </Badge>
                     </div>
-                    {opp.competitorSnippet && (
-                      <p className="text-xs text-zinc-500 p-2 bg-zinc-800/50 rounded italic">
-                        &quot;{opp.competitorSnippet.slice(0, 150)}...&quot;
-                      </p>
-                    )}
                     <div className="flex items-center gap-2 text-sm">
                       <Lightbulb className="w-4 h-4 text-emerald-500 shrink-0" />
                       <span className="text-emerald-400">{opp.suggestedAction}</span>
@@ -511,14 +474,6 @@ export default function IntelligencePage() {
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Cached indicator */}
-      {analysis?.cachedAt && (
-        <p className="text-xs text-zinc-600 text-center">
-          Last analyzed: {new Date(analysis.cachedAt).toLocaleString()}
-        </p>
-      )}
     </div>
   );
 }
-

@@ -1,340 +1,238 @@
 "use client";
 
+/**
+ * ============================================
+ * SETTINGS PAGE - Account & Preferences
+ * ============================================
+ */
+
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { User, Mail, Building, Globe, Camera, Loader2, Check, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import {
+  User,
+  Bell,
+  CreditCard,
+  Shield,
+  ChevronRight,
+  Loader2,
+  Trash2,
+  LogOut,
+  Globe,
+  Mail,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useSite } from "@/context/site-context";
 
-// ============================================
-// TYPES
-// ============================================
+const settingsNav = [
+  { href: "/settings/notifications", label: "Notifications", icon: Bell, description: "Email alerts & preferences" },
+  { href: "/settings/billing", label: "Billing", icon: CreditCard, description: "Subscription & invoices" },
+];
 
-interface AccountData {
-  id: string;
-  name: string;
-  email: string;
-  avatarUrl: string | null;
-  role: string;
-  emailVerified: boolean;
-  createdAt: string;
-  organization: {
-    id: string;
-    name: string;
-    slug: string;
-    plan: string;
-    website: string;
-    timezone: string;
-  } | null;
-}
+export default function SettingsPage() {
+  const { user, organization, sites, loading, deleteSite } = useSite();
+  
+  const [name, setName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deletingSite, setDeletingSite] = useState<string | null>(null);
 
-// ============================================
-// LOADING SKELETON
-// ============================================
-
-function SettingsLoading() {
-  return (
-    <div className="space-y-6 max-w-2xl">
-      {[...Array(3)].map((_, i) => (
-        <Card key={i}>
-          <CardHeader>
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-4 w-48" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-// ============================================
-// MAIN PAGE
-// ============================================
-
-export default function AccountSettingsPage() {
-  const queryClient = useQueryClient();
-  const [hasChanges, setHasChanges] = useState(false);
-
-  // Local form state
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    company: "",
-    website: "",
-    timezone: "UTC",
-  });
-
-  // Fetch account data
-  const { data, isLoading, error, refetch } = useQuery<AccountData>({
-    queryKey: ["account-settings"],
-    queryFn: async () => {
-      const response = await fetch("/api/settings/account");
-      if (!response.ok) throw new Error("Failed to fetch account");
-      const json = await response.json();
-      return json.data;
-    },
-  });
-
-  // Initialize form when data loads
   useEffect(() => {
-    if (data) {
-      setFormData({
-        name: data.name || "",
-        email: data.email || "",
-        company: data.organization?.name || "",
-        website: data.organization?.website || "",
-        timezone: data.organization?.timezone || "UTC",
-      });
+    if (user?.name) {
+      setName(user.name);
     }
-  }, [data]);
+  }, [user?.name]);
 
-  // Save mutation
-  const saveMutation = useMutation({
-    mutationFn: async (updates: Record<string, string>) => {
-      const response = await fetch("/api/settings/account", {
-        method: "PUT",
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await fetch("/api/settings/account", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: updates.name,
-          organizationName: updates.company,
-          website: updates.website,
-          timezone: updates.timezone,
-        }),
+        body: JSON.stringify({ name }),
       });
-      if (!response.ok) throw new Error("Failed to save");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["account-settings"] });
-      setHasChanges(false);
-    },
-  });
-
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setHasChanges(true);
+    } catch (err) {
+      console.error("Failed to save:", err);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSave = () => {
-    saveMutation.mutate(formData);
+  const handleDeleteSite = async (siteId: string) => {
+    if (!confirm("Are you sure you want to delete this site? All citations will be lost.")) return;
+    
+    setDeletingSite(siteId);
+    await deleteSite(siteId);
+    setDeletingSite(null);
   };
 
-  if (isLoading) {
-    return <SettingsLoading />;
-  }
-
-  if (error) {
+  if (loading) {
     return (
-      <Card className="p-6 max-w-2xl">
-        <div className="flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500" />
-          <div>
-            <p className="font-medium">Failed to load account settings</p>
-            <p className="text-sm text-muted-foreground">
-              {error instanceof Error ? error.message : "Please try again"}
-            </p>
-          </div>
-          <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto">
-            Retry
-          </Button>
-        </div>
-      </Card>
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      {/* Profile Photo */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile Photo</CardTitle>
-          <CardDescription>
-            Your photo will be visible to team members
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex items-center gap-6">
-          <Avatar className="w-20 h-20">
-            <AvatarImage src={data?.avatarUrl || ""} />
-            <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-              {formData.name.charAt(0).toUpperCase() || "U"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="space-y-2">
-            <Button variant="outline" size="sm">
-              <Camera className="w-4 h-4 mr-2" />
-              Change Photo
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              JPG, PNG or GIF. Max 2MB.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-6 max-w-3xl">
+      <div>
+        <h1 className="text-2xl font-bold text-white">Settings</h1>
+        <p className="text-zinc-500 text-sm mt-1">Manage your account and preferences</p>
+      </div>
 
-      {/* Basic Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Basic Information</CardTitle>
-          <CardDescription>
-            Update your personal details
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleChange("name", e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  disabled
-                  className="pr-20"
-                />
-                {data?.emailVerified && (
-                  <Badge className="absolute right-2 top-1/2 -translate-y-1/2" variant="secondary">
-                    Verified
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="company">Company / Organization</Label>
-              <Input
-                id="company"
-                value={formData.company}
-                onChange={(e) => handleChange("company", e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
-              <Input
-                id="website"
-                type="url"
-                placeholder="https://"
-                value={formData.website}
-                onChange={(e) => handleChange("website", e.target.value)}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Preferences */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Preferences</CardTitle>
-          <CardDescription>
-            Customize your experience
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="timezone">Timezone</Label>
-            <Select
-              value={formData.timezone}
-              onValueChange={(value) => handleChange("timezone", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="UTC">UTC</SelectItem>
-                <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
-                <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
-                <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
-                <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
-                <SelectItem value="Europe/London">London (GMT)</SelectItem>
-                <SelectItem value="Europe/Paris">Paris (CET)</SelectItem>
-                <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
-                <SelectItem value="Asia/Kolkata">India (IST)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Quick Nav */}
+      <div className="grid sm:grid-cols-2 gap-4">
+        {settingsNav.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link key={item.href} href={item.href}>
+              <Card className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-all cursor-pointer h-full">
+                <CardContent className="pt-6 flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-zinc-800">
+                    <Icon className="w-5 h-5 text-zinc-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-white">{item.label}</h3>
+                    <p className="text-sm text-zinc-500">{item.description}</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-zinc-600" />
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
 
       {/* Account Info */}
-      <Card>
+      <Card className="bg-zinc-900/50 border-zinc-800">
         <CardHeader>
-          <CardTitle>Account</CardTitle>
+          <CardTitle className="text-white flex items-center gap-2">
+            <User className="w-5 h-5 text-zinc-400" />
+            Account
+          </CardTitle>
+          <CardDescription>Your account information</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Role</span>
-            <Badge variant="secondary">{data?.role || "member"}</Badge>
+        <CardContent className="space-y-4">
+          <div>
+            <Label className="text-zinc-400">Email</Label>
+            <div className="flex items-center gap-2 mt-1">
+              <Mail className="w-4 h-4 text-zinc-600" />
+              <span className="text-white">{user?.email || "—"}</span>
+            </div>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Plan</span>
-            <Badge variant="outline" className="capitalize">{data?.organization?.plan || "starter"}</Badge>
+          
+          <div>
+            <Label htmlFor="name" className="text-zinc-400">Display Name</Label>
+            <div className="flex gap-2 mt-1">
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="max-w-xs bg-zinc-800 border-zinc-700"
+              />
+              <Button 
+                onClick={handleSave} 
+                disabled={saving || name === user?.name}
+                variant="outline"
+                className="border-zinc-700"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
+              </Button>
+            </div>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Member since</span>
-            <span>{data?.createdAt ? new Date(data.createdAt).toLocaleDateString() : "-"}</span>
+          
+          <div>
+            <Label className="text-zinc-400">Plan</Label>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge className={
+                organization?.plan === "pro" ? "bg-emerald-500/10 text-emerald-400 border-0" :
+                organization?.plan === "starter" ? "bg-blue-500/10 text-blue-400 border-0" :
+                "bg-zinc-800 text-zinc-400 border-0"
+              }>
+                {organization?.plan || "free"} {organization?.plan === "free" ? "trial" : "plan"}
+              </Badge>
+              {organization?.plan !== "pro" && (
+                <Link href="/pricing" className="text-sm text-emerald-400 hover:underline">
+                  Upgrade
+                </Link>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Save Button */}
-      <div className="flex justify-end gap-3">
-        {hasChanges && (
-          <Button
-            variant="ghost"
-            onClick={() => {
-              if (data) {
-                setFormData({
-                  name: data.name || "",
-                  email: data.email || "",
-                  company: data.organization?.name || "",
-                  website: data.organization?.website || "",
-                  timezone: data.organization?.timezone || "UTC",
-                });
-                setHasChanges(false);
-              }
-            }}
-          >
-            Cancel
-          </Button>
-        )}
-        <Button
-          onClick={handleSave}
-          disabled={!hasChanges || saveMutation.isPending}
-        >
-          {saveMutation.isPending ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : saveMutation.isSuccess ? (
-            <Check className="w-4 h-4 mr-2" />
-          ) : null}
-          {saveMutation.isSuccess ? "Saved!" : "Save Changes"}
-        </Button>
-      </div>
+      {/* Tracked Sites */}
+      <Card className="bg-zinc-900/50 border-zinc-800">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Globe className="w-5 h-5 text-zinc-400" />
+            Tracked Websites
+          </CardTitle>
+          <CardDescription>Manage your tracked domains</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {sites.length === 0 ? (
+            <p className="text-zinc-500 text-sm">No websites added yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {sites.map((site) => (
+                <div
+                  key={site.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-zinc-800/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                      <Globe className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-white font-medium">{site.domain}</p>
+                      <p className="text-xs text-zinc-500">{site.totalCitations} citations</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteSite(site.id)}
+                    disabled={deletingSite === site.id}
+                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                  >
+                    {deletingSite === site.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Danger Zone */}
+      <Card className="bg-zinc-900/50 border-red-500/20">
+        <CardHeader>
+          <CardTitle className="text-red-400 flex items-center gap-2">
+            <Shield className="w-5 h-5" />
+            Danger Zone
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-between">
+          <div>
+            <p className="text-white font-medium">Sign out</p>
+            <p className="text-sm text-zinc-500">Sign out of your account</p>
+          </div>
+          <Link href="/api/auth/logout">
+            <Button variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10">
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign out
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
     </div>
   );
 }

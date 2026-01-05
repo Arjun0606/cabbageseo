@@ -2,18 +2,15 @@
 
 /**
  * ============================================
- * CITATION INTELLIGENCE - DASHBOARD
+ * DASHBOARD - Main Overview Page
  * ============================================
- * 
- * FIXED: Properly loads from API, no mock data.
- * Clean, working dashboard.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Loader2,
-  Globe,
   TrendingUp,
   TrendingDown,
   RefreshCw,
@@ -22,15 +19,16 @@ import {
   Sparkles,
   Eye,
   ArrowRight,
-  ExternalLink,
   Brain,
   Target,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { useSite } from "@/context/site-context";
 
 // Platform config
 const platformConfig = {
@@ -38,14 +36,6 @@ const platformConfig = {
   google_aio: { name: "Google AI", icon: Sparkles, color: "text-blue-400", bg: "bg-blue-500/10" },
   chatgpt: { name: "ChatGPT", icon: Bot, color: "text-emerald-400", bg: "bg-emerald-500/10" },
 };
-
-interface Site {
-  id: string;
-  domain: string;
-  totalCitations: number;
-  citationsThisWeek: number;
-  lastCheckedAt: string | null;
-}
 
 interface Citation {
   id: string;
@@ -56,91 +46,101 @@ interface Citation {
   discovered_at: string;
 }
 
-export default function Dashboard() {
-  // State
-  const [loading, setLoading] = useState(true);
-  const [site, setSite] = useState<Site | null>(null);
+interface Stats {
+  total: number;
+  thisWeek: number;
+  lastWeek: number;
+  byPlatform: { perplexity: number; google_aio: number; chatgpt: number };
+}
+
+// Inner component that uses useSearchParams
+function DashboardContent() {
+  const searchParams = useSearchParams();
+  const showAddForm = searchParams.get("add") === "true";
+  
+  const { 
+    currentSite, 
+    sites, 
+    usage, 
+    organization, 
+    loading, 
+    error, 
+    addSite, 
+    runCheck,
+  } = useSite();
+  
   const [citations, setCitations] = useState<Citation[]>([]);
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<Stats>({
     total: 0,
     thisWeek: 0,
     lastWeek: 0,
     byPlatform: { perplexity: 0, google_aio: 0, chatgpt: 0 },
   });
-  const [plan, setPlan] = useState("free");
-  const [checksUsed, setChecksUsed] = useState(0);
-  const [checksLimit, setChecksLimit] = useState(100);
+  const [loadingCitations, setLoadingCitations] = useState(false);
   
-  // Add site form
   const [newDomain, setNewDomain] = useState("");
   const [addingSite, setAddingSite] = useState(false);
   const [checking, setChecking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
 
-  // Load all data
-  const loadData = useCallback(async () => {
-    try {
-      setError(null);
+  // Load citations when site changes
+  useEffect(() => {
+    async function loadCitations() {
+      if (!currentSite?.id) return;
       
-      // Get user data including sites
-      const meRes = await fetch("/api/me");
-      const meData = await meRes.json();
-      
-      if (!meData.authenticated) {
-        window.location.href = "/login";
-        return;
+      setLoadingCitations(true);
+      try {
+        const res = await fetch(`/api/geo/citations?siteId=${currentSite.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setCitations(data.data?.recent || []);
+          setStats({
+            total: data.data?.total || 0,
+            thisWeek: data.data?.thisWeek || 0,
+            lastWeek: data.data?.lastWeek || 0,
+            byPlatform: data.data?.byPlatform || { perplexity: 0, google_aio: 0, chatgpt: 0 },
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load citations:", err);
+      } finally {
+        setLoadingCitations(false);
       }
-      
-      setPlan(meData.organization?.plan || "free");
-      
-      // Get sites from /api/sites (more reliable)
-      const sitesRes = await fetch("/api/sites");
-      const sitesData = await sitesRes.json();
-      const sites = sitesData.sites || [];
-      
-      if (sites.length > 0) {
-        // Use the first site or saved site
-        const savedSiteId = localStorage.getItem("cabbageseo_site_id");
-        const selectedSite = sites.find((s: any) => s.id === savedSiteId) || sites[0];
-        
-        setSite({
-          id: selectedSite.id,
-          domain: selectedSite.domain,
-          totalCitations: selectedSite.total_citations || 0,
-          citationsThisWeek: selectedSite.citations_this_week || 0,
-          lastCheckedAt: selectedSite.last_checked_at,
-        });
-        
-        localStorage.setItem("cabbageseo_site_id", selectedSite.id);
-        
-        // Load citations for this site
-        await loadCitations(selectedSite.id);
-      } else {
-        setSite(null);
-        // Clear stale localStorage
-        localStorage.removeItem("cabbageseo_site_id");
-        localStorage.removeItem("cabbageseo_site");
-      }
-      
-      // Get usage
-      const usageRes = await fetch("/api/billing/usage");
-      if (usageRes.ok) {
-        const usageData = await usageRes.json();
-        setChecksUsed(usageData.data?.usage?.checksUsed || 0);
-        setChecksLimit(usageData.data?.limits?.checks || 100);
-      }
-    } catch (err) {
-      console.error("Dashboard load error:", err);
-      setError("Failed to load data. Please refresh.");
-    } finally {
-      setLoading(false);
     }
-  }, []);
+    
+    loadCitations();
+  }, [currentSite?.id]);
 
-  // Load citations for a site
-  const loadCitations = async (siteId: string) => {
-    try {
-      const res = await fetch(`/api/geo/citations?siteId=${siteId}`);
+  // Handle add site
+  const handleAddSite = async () => {
+    if (!newDomain.trim()) return;
+    
+    setAddingSite(true);
+    setLocalError(null);
+    
+    const site = await addSite(newDomain);
+    
+    if (site) {
+      setNewDomain("");
+      setChecking(true);
+      await runCheck(site.id);
+      setChecking(false);
+    } else {
+      setLocalError("Failed to add site. Please try again.");
+    }
+    
+    setAddingSite(false);
+  };
+
+  // Handle run check
+  const handleRunCheck = async () => {
+    setChecking(true);
+    setLocalError(null);
+    
+    const success = await runCheck();
+    
+    if (success && currentSite?.id) {
+      const res = await fetch(`/api/geo/citations?siteId=${currentSite.id}`);
       if (res.ok) {
         const data = await res.json();
         setCitations(data.data?.recent || []);
@@ -151,103 +151,12 @@ export default function Dashboard() {
           byPlatform: data.data?.byPlatform || { perplexity: 0, google_aio: 0, chatgpt: 0 },
         });
       }
-    } catch (err) {
-      console.error("Failed to load citations:", err);
+    } else if (!success) {
+      setLocalError("Check failed. Please try again.");
     }
+    
+    setChecking(false);
   };
-
-  // Add a new site
-  const addSite = async () => {
-    if (!newDomain.trim()) return;
-    setAddingSite(true);
-    setError(null);
-
-    try {
-      let domain = newDomain.trim().toLowerCase();
-      domain = domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
-
-      const res = await fetch("/api/sites", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ domain }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.site) {
-        setSite({
-          id: data.site.id,
-          domain: data.site.domain,
-          totalCitations: 0,
-          citationsThisWeek: 0,
-          lastCheckedAt: null,
-        });
-        localStorage.setItem("cabbageseo_site_id", data.site.id);
-        setNewDomain("");
-        
-        // Run initial check
-        await runCheck(data.site.id, data.site.domain);
-      } else {
-        setError(data.error || "Failed to add site");
-      }
-    } catch (err) {
-      console.error("Failed to add site:", err);
-      setError("Failed to add site. Please try again.");
-    } finally {
-      setAddingSite(false);
-    }
-  };
-
-  // Run citation check
-  const runCheck = async (siteId?: string, domain?: string) => {
-    const id = siteId || site?.id;
-    const dom = domain || site?.domain;
-    if (!id || !dom) return;
-
-    setChecking(true);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/geo/citations/check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteId: id, domain: dom }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setChecksUsed(prev => prev + 1);
-        // Reload citations
-        await loadCitations(id);
-        // Refresh site data
-        await loadData();
-      } else {
-        setError(data.error || "Check failed. Try again.");
-      }
-    } catch (err) {
-      console.error("Check failed:", err);
-      setError("Check failed. Please try again.");
-    } finally {
-      setChecking(false);
-    }
-  };
-
-  // Initial load
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  // Listen for site changes from SiteSwitcher
-  useEffect(() => {
-    const handleSiteChange = (e: CustomEvent) => {
-      if (e.detail?.id && e.detail?.id !== site?.id) {
-        loadData();
-      }
-    };
-    window.addEventListener("site-changed", handleSiteChange as EventListener);
-    return () => window.removeEventListener("site-changed", handleSiteChange as EventListener);
-  }, [site?.id, loadData]);
 
   // Loading state
   if (loading) {
@@ -261,8 +170,8 @@ export default function Dashboard() {
     );
   }
 
-  // No site - onboarding
-  if (!site) {
+  // No sites - onboarding
+  if (sites.length === 0 || showAddForm) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
         <div className="max-w-md w-full relative">
@@ -275,14 +184,19 @@ export default function Dashboard() {
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/30">
                 <Eye className="w-8 h-8 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-white mb-2">Track Your AI Citations</h1>
+              <h1 className="text-2xl font-bold text-white mb-2">
+                {sites.length === 0 ? "Track Your AI Citations" : "Add Another Website"}
+              </h1>
               <p className="text-zinc-400 mb-6">
-                Know when ChatGPT, Perplexity, or Google AI mentions your website.
+                {sites.length === 0 
+                  ? "Know when ChatGPT, Perplexity, or Google AI mentions your website."
+                  : "Add another website to track its AI citations."
+                }
               </p>
               
-              {error && (
+              {(localError || error) && (
                 <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
-                  {error}
+                  {localError || error}
                 </div>
               )}
               
@@ -291,20 +205,28 @@ export default function Dashboard() {
                   placeholder="yoursite.com"
                   value={newDomain}
                   onChange={(e) => setNewDomain(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addSite()}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddSite()}
                   className="h-12 bg-white/5 border-white/10 text-center"
                 />
                 <Button
-                  onClick={addSite}
-                  disabled={addingSite || !newDomain.trim()}
+                  onClick={handleAddSite}
+                  disabled={addingSite || checking || !newDomain.trim()}
                   className="w-full h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500"
                 >
-                  {addingSite ? (
-                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Setting up...</>
+                  {addingSite || checking ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {checking ? "Checking AI platforms..." : "Setting up..."}</>
                   ) : (
-                    <><Eye className="w-4 h-4 mr-2" /> Start Tracking</>
+                    <><Plus className="w-4 h-4 mr-2" /> Add & Start Tracking</>
                   )}
                 </Button>
+                
+                {sites.length > 0 && (
+                  <Link href="/dashboard">
+                    <Button variant="ghost" className="w-full text-zinc-400">
+                      Cancel
+                    </Button>
+                  </Link>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -318,23 +240,25 @@ export default function Dashboard() {
     ? Math.round(((stats.thisWeek - stats.lastWeek) / stats.lastWeek) * 100) 
     : stats.thisWeek > 0 ? 100 : 0;
 
+  const plan = organization?.plan || "free";
+
   // Main dashboard
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">{site.domain}</h1>
+          <h1 className="text-2xl font-bold text-white">{currentSite?.domain}</h1>
           <p className="text-zinc-500 text-sm mt-1">
-            {site.lastCheckedAt 
-              ? `Last checked ${new Date(site.lastCheckedAt).toLocaleDateString()}`
+            {currentSite?.lastCheckedAt 
+              ? `Last checked ${new Date(currentSite.lastCheckedAt).toLocaleDateString()}`
               : "Never checked"
             }
           </p>
         </div>
         <Button
-          onClick={() => runCheck()}
-          disabled={checking || checksUsed >= checksLimit}
+          onClick={handleRunCheck}
+          disabled={checking || usage.checksUsed >= usage.checksLimit}
           className="bg-emerald-600 hover:bg-emerald-500"
         >
           {checking ? (
@@ -345,9 +269,9 @@ export default function Dashboard() {
         </Button>
       </div>
 
-      {error && (
+      {(localError || error) && (
         <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
-          {error}
+          {localError || error}
         </div>
       )}
 
@@ -377,9 +301,11 @@ export default function Dashboard() {
 
         <Card className="bg-zinc-900/50 border-zinc-800">
           <CardContent className="p-4">
-            <div className="text-3xl font-bold text-white">{checksUsed}/{checksLimit === -1 ? "∞" : checksLimit}</div>
+            <div className="text-3xl font-bold text-white">
+              {usage.checksUsed}/{usage.checksLimit === 999999 ? "∞" : usage.checksLimit}
+            </div>
             <p className="text-sm text-zinc-500">Checks Used</p>
-            <Progress value={checksLimit === -1 ? 0 : (checksUsed / checksLimit) * 100} className="h-1 mt-2 bg-zinc-800" />
+            <Progress value={usage.checksLimit === 999999 ? 0 : (usage.checksUsed / usage.checksLimit) * 100} className="h-1 mt-2 bg-zinc-800" />
           </CardContent>
         </Card>
 
@@ -434,11 +360,15 @@ export default function Dashboard() {
           </Link>
         </CardHeader>
         <CardContent>
-          {citations.length === 0 ? (
+          {loadingCitations ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 text-zinc-500 animate-spin" />
+            </div>
+          ) : citations.length === 0 ? (
             <div className="text-center py-8">
               <Eye className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
               <p className="text-zinc-500">No citations found yet</p>
-              <p className="text-zinc-600 text-sm mt-1">Click "Check Now" to scan AI platforms</p>
+              <p className="text-zinc-600 text-sm mt-1">Click &quot;Check Now&quot; to scan AI platforms</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -451,7 +381,7 @@ export default function Dashboard() {
                       <Icon className={`w-4 h-4 ${platform?.color || "text-zinc-400"}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white font-medium truncate">"{citation.query}"</p>
+                      <p className="text-sm text-white font-medium truncate">&quot;{citation.query}&quot;</p>
                       <p className="text-xs text-zinc-500 mt-0.5 line-clamp-1">{citation.snippet}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-zinc-600">{platform?.name}</span>
@@ -472,7 +402,7 @@ export default function Dashboard() {
       {/* Quick Links */}
       <div className="grid sm:grid-cols-2 gap-4">
         <Link href="/intelligence">
-          <Card className="bg-gradient-to-br from-emerald-500/10 to-blue-500/10 border-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer">
+          <Card className="bg-gradient-to-br from-emerald-500/10 to-blue-500/10 border-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer h-full">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-3 rounded-xl bg-emerald-500/20">
                 <Brain className="w-6 h-6 text-emerald-400" />
@@ -487,7 +417,7 @@ export default function Dashboard() {
         </Link>
         
         <Link href="/competitors">
-          <Card className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-all cursor-pointer">
+          <Card className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-all cursor-pointer h-full">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-3 rounded-xl bg-violet-500/10">
                 <Target className="w-6 h-6 text-violet-400" />
@@ -502,5 +432,26 @@ export default function Dashboard() {
         </Link>
       </div>
     </div>
+  );
+}
+
+// Loading fallback
+function DashboardLoading() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
+        <p className="text-zinc-500">Loading dashboard...</p>
+      </div>
+    </div>
+  );
+}
+
+// Main export with Suspense boundary
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <DashboardContent />
+    </Suspense>
   );
 }

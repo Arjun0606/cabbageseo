@@ -1,22 +1,29 @@
 /**
- * Citations API
- * GET /api/geo/citations - Get all citations for a site
+ * /api/geo/citations - Get Citations
  * 
+ * GET: Fetch citations for a site
  * Query params:
- * - siteId: required
- * - all: if true, returns all citations (not just summary)
- * - platform: filter by platform
- * - limit: max results (default 50)
+ *   - siteId: Required site ID
+ *   - full: If true, return all citations (for Citations page)
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+function getDbClient(): SupabaseClient | null {
+  try {
+    return createServiceClient();
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     if (!supabase) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+      return NextResponse.json({ error: "Not configured" }, { status: 500 });
     }
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -26,109 +33,100 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const siteId = searchParams.get("siteId");
-    const all = searchParams.get("all") === "true";
-    const platform = searchParams.get("platform");
-    const limit = parseInt(searchParams.get("limit") || "50");
+    const full = searchParams.get("full") === "true";
 
     if (!siteId) {
       return NextResponse.json({ error: "siteId required" }, { status: 400 });
     }
 
-    // Use service client to bypass RLS for complex queries
-    // Cast to any because Supabase types don't include the new Citation Intelligence schema yet
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = createServiceClient() as any;
+    const db = getDbClient() || supabase;
 
-    // Verify site belongs to user's org
+    // Verify site belongs to user
     const { data: userData } = await db
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
     if (!userData?.organization_id) {
-      return NextResponse.json({ error: "No organization" }, { status: 403 });
+      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
     const { data: site } = await db
       .from("sites")
-      .select("id, domain, organization_id, total_citations, citations_this_week, citations_last_week")
+      .select("id, organization_id, total_citations, citations_this_week, citations_last_week")
       .eq("id", siteId)
-      .eq("organization_id", userData.organization_id)
-      .single();
+      .maybeSingle();
 
-    if (!site) {
+    if (!site || site.organization_id !== userData.organization_id) {
       return NextResponse.json({ error: "Site not found" }, { status: 404 });
     }
 
-    // Build citations query
-    let query = db
+    // Get citations
+    const query = db
       .from("citations")
-      .select("id, site_id, platform, query, snippet, page_url, confidence, cited_at, last_checked_at, created_at")
+      .select("id, platform, query, snippet, page_url, confidence, cited_at, created_at")
       .eq("site_id", siteId)
       .order("cited_at", { ascending: false });
 
-    if (platform) {
-      query = query.eq("platform", platform);
+    if (!full) {
+      query.limit(10);
     }
 
-    query = query.limit(limit);
+    const { data: citations, error } = await query;
 
-    const { data: citations, error: citationsError } = await query;
-
-    if (citationsError) {
-      console.error("Citations query error:", citationsError);
+    if (error) {
+      console.error("Citations fetch error:", error);
       return NextResponse.json({ error: "Failed to fetch citations" }, { status: 500 });
     }
 
-    // Type assertion for citations
-    type CitationRow = { id: string; platform: string; query: string; snippet: string; page_url: string; confidence: string; cited_at: string; last_checked_at: string };
-    const citationsList = (citations || []) as CitationRow[];
+    // Format citations
+    const formattedCitations = (citations || []).map((c: {
+      id: string;
+      platform: string;
+      query: string;
+      snippet?: string;
+      page_url?: string;
+      confidence?: number;
+      cited_at: string;
+      created_at: string;
+    }) => ({
+      id: c.id,
+      platform: c.platform,
+      query: c.query,
+      snippet: c.snippet || "",
+      page_url: c.page_url,
+      confidence: c.confidence || 0.7,
+      discovered_at: c.cited_at || c.created_at,
+    }));
 
-    // Platform breakdown
+    // Calculate platform breakdown
     const byPlatform = {
-      perplexity: citationsList.filter(c => c.platform === "perplexity").length,
-      google_aio: citationsList.filter(c => c.platform === "google_aio").length,
-      chatgpt: citationsList.filter(c => c.platform === "chatgpt").length,
+      perplexity: 0,
+      google_aio: 0,
+      chatgpt: 0,
     };
 
-    // Calculate change percentage
-    const lastWeek = site.citations_last_week || 0;
-    const thisWeek = site.citations_this_week || 0;
-    const change = lastWeek > 0 ? Math.round(((thisWeek - lastWeek) / lastWeek) * 100) : (thisWeek > 0 ? 100 : 0);
-
-    if (all) {
-      // Return full citations list
-      return NextResponse.json({
-        success: true,
-        data: {
-          total: site.total_citations || citationsList.length,
-          thisWeek,
-          lastWeek,
-          change,
-          byPlatform,
-          citations: citationsList,
-        },
-      });
-    } else {
-      // Return summary with recent citations
-      return NextResponse.json({
-        success: true,
-        data: {
-          total: site.total_citations || citationsList.length,
-          thisWeek,
-          lastWeek,
-          change,
-          byPlatform,
-          recent: citationsList.slice(0, 5),
-        },
-      });
+    for (const c of formattedCitations) {
+      if (c.platform in byPlatform) {
+        byPlatform[c.platform as keyof typeof byPlatform]++;
+      }
     }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        total: site.total_citations || 0,
+        thisWeek: site.citations_this_week || 0,
+        lastWeek: site.citations_last_week || 0,
+        byPlatform,
+        citations: full ? formattedCitations : undefined,
+        recent: formattedCitations.slice(0, 10),
+      },
+    });
+
   } catch (error) {
-    console.error("[Citations API] Error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Server error" },
-      { status: 500 }
-    );
+    console.error("[/api/geo/citations GET] Error:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

@@ -1,625 +1,328 @@
 "use client";
 
+/**
+ * ============================================
+ * BILLING SETTINGS - Subscription Management
+ * ============================================
+ */
+
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   CreditCard,
   Check,
+  Crown,
   Zap,
-  Clock,
-  Download,
-  AlertCircle,
-  ArrowRight,
-  FileText,
-  TrendingUp,
-  Package,
+  Building2,
   Loader2,
-  ChevronRight,
-  CheckCircle2,
-  XCircle,
+  ExternalLink,
+  ChevronLeft,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSite } from "@/context/site-context";
+import { CITATION_PLANS, TRIAL_DAYS } from "@/lib/billing/citation-plans";
 
-// ============================================
-// TYPES
-// ============================================
-
-interface UsageData {
-  plan: {
-    id: string;
-    name: string;
-    status: string;
-    billingInterval: string;
-    currentPeriodStart: string | null;
-    currentPeriodEnd: string | null;
-  };
-  usage: {
-    articles: number;
-    keywords: number;
-    audits: number;
-    aioAnalyses: number;
-    aiCredits: number;
-  };
-  limits: {
-    articles: number;
-    keywords: number;
-    audits: number;
-    aioAnalyses: number;
-    aiCredits: number;
-  };
-  percentages: {
-    articles: number;
-    keywords: number;
-    audits: number;
-    aioAnalyses: number;
-    aiCredits: number;
-  };
-}
-
-interface Plan {
-  id: string;
-  name: string;
-  description: string;
-  monthlyPrice: number;
-  yearlyPrice: number;
-  features: string[];
-  popular?: boolean;
-}
-
-// Plans matching PRICING_STRATEGY.md
-const availablePlans: Plan[] = [
-  {
-    id: "starter",
-    name: "Starter",
-    description: "Perfect for small sites and bloggers",
-    monthlyPrice: 29,
-    yearlyPrice: 24,
-    features: [
-      "1 website",
-      "10 AI articles/month",
-      "100 keywords tracked",
-      "5 technical audits/month",
-      "20 AIO analyses/month",
-      "1,000 AI credits/month",
-      "WordPress/Webflow publishing",
-      "Email support",
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    description: "For growing businesses and consultants",
-    monthlyPrice: 79,
-    yearlyPrice: 66,
-    popular: true,
-    features: [
-      "5 websites",
-      "50 AI articles/month",
-      "500 keywords tracked",
-      "20 technical audits/month",
-      "100 AIO analyses/month",
-      "5,000 AI credits/month",
-      "All CMS integrations",
-      "Team collaboration (5 seats)",
-      "Google Search Console",
-      "API access",
-      "Priority support",
-    ],
-  },
-  {
-    id: "pro_plus",
-    name: "Pro+",
-    description: "For agencies and large sites",
-    monthlyPrice: 199,
-    yearlyPrice: 166,
-    features: [
-      "20 websites",
-      "200 AI articles/month",
-      "2,000 keywords tracked",
-      "Unlimited audits*",
-      "500 AIO analyses/month",
-      "20,000 AI credits/month",
-      "Premium AI (Claude Opus)",
-      "White-label reports",
-      "Unlimited team members",
-      "Custom integrations",
-      "SLA guarantee",
-      "Dedicated support",
-    ],
-  },
-];
-
-
-// ============================================
-// PLAN CARD
-// ============================================
-
-function PlanCard({
-  plan,
-  isCurrent,
-  onSelect,
-  loading,
-  billingInterval,
-}: {
-  plan: Plan;
-  isCurrent: boolean;
-  onSelect: () => void;
-  loading?: boolean;
-  billingInterval: "monthly" | "yearly";
-}) {
-  const price = billingInterval === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
-  const savings = billingInterval === "yearly" ? Math.round((1 - plan.yearlyPrice / plan.monthlyPrice) * 100) : 0;
-
-  return (
-    <Card
-      className={`relative ${
-        plan.popular ? "border-primary ring-2 ring-primary/20" : ""
-      } ${isCurrent ? "bg-primary/5" : ""}`}
-    >
-      {plan.popular && (
-        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
-          Most Popular
-        </Badge>
-      )}
-      <CardHeader className="text-center pb-2">
-        <CardTitle>{plan.name}</CardTitle>
-        <p className="text-sm text-muted-foreground">{plan.description}</p>
-        <div className="mt-3">
-          <span className="text-4xl font-bold">${price}</span>
-          <span className="text-muted-foreground">/month</span>
-          {billingInterval === "yearly" && savings > 0 && (
-            <Badge variant="secondary" className="ml-2">
-              Save {savings}%
-            </Badge>
-          )}
-        </div>
-        {billingInterval === "yearly" && (
-          <p className="text-xs text-muted-foreground mt-1">
-            Billed annually at ${price * 12}/year
-          </p>
-        )}
-      </CardHeader>
-      <CardContent>
-        <ul className="space-y-2 mb-6 text-sm">
-          {plan.features.map((feature, i) => (
-            <li key={i} className="flex items-start gap-2">
-              <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-              <span>{feature}</span>
-            </li>
-          ))}
-        </ul>
-        <Button
-          className="w-full"
-          variant={isCurrent ? "secondary" : plan.popular ? "default" : "outline"}
-          disabled={isCurrent || loading}
-          onClick={onSelect}
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : isCurrent ? (
-            "Current Plan"
-          ) : (
-            <>
-              Upgrade
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ============================================
-// MAIN PAGE
-// ============================================
-
-// Loading fallback for Suspense
-function BillingPageLoading() {
-  return (
-    <div className="flex items-center justify-center h-64">
-      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-    </div>
-  );
-}
-
-// Content component that uses useSearchParams
-function BillingPageContent() {
+function BillingContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const [showUpgrade, setShowUpgrade] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<UsageData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { organization, usage, trial, loading } = useSite();
+  
   const [upgrading, setUpgrading] = useState<string | null>(null);
-  const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
-  const [checkoutStatus, setCheckoutStatus] = useState<"success" | "cancelled" | "pending" | null>(null);
-  const [checkingSession, setCheckingSession] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
 
-  // Check checkout session status if returning from payment
+  const currentPlan = organization?.plan || "free";
+  const selectedPlan = searchParams.get("plan");
+  const interval = searchParams.get("interval") || "yearly";
+
+  // Auto-redirect to checkout if plan selected
   useEffect(() => {
-    const sessionId = searchParams.get("session_id");
-    if (sessionId && sessionId !== "{CHECKOUT_SESSION_ID}") {
-      setCheckingSession(true);
-      // Verify session status with our API
-      fetch(`/api/billing/verify-session?session_id=${sessionId}`)
-        .then(res => res.json())
-        .then(json => {
-          if (json.success) {
-            if (json.data?.status === "succeeded") {
-              setCheckoutStatus("success");
-            } else if (json.data?.status === "cancelled" || json.data?.status === "failed") {
-              setCheckoutStatus("cancelled");
-            } else {
-              setCheckoutStatus("pending");
-            }
-          } else {
-            // If we can't verify, assume cancelled (user closed checkout)
-            setCheckoutStatus("cancelled");
-          }
-        })
-        .catch(() => {
-          setCheckoutStatus("cancelled");
-        })
-        .finally(() => {
-          setCheckingSession(false);
-          // Clear the URL params after checking
-          window.history.replaceState({}, "", "/settings/billing");
-        });
+    if (selectedPlan && selectedPlan !== currentPlan) {
+      handleUpgrade(selectedPlan);
     }
-  }, [searchParams]);
-
-  useEffect(() => {
-    async function fetchUsage() {
-      try {
-        const res = await fetch("/api/billing/usage");
-        if (!res.ok) throw new Error("Failed to fetch usage data");
-        const json = await res.json();
-        setData(json.data || json);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load billing data");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchUsage();
-  }, [checkoutStatus]); // Refetch when checkout completes
-
-  const handleManageBilling = async () => {
-    try {
-      const res = await fetch("/api/billing/portal", { method: "POST" });
-      const json = await res.json();
-      if (json.data?.portalUrl) {
-        window.location.href = json.data.portalUrl;
-      }
-    } catch {
-      console.error("Failed to open billing portal");
-    }
-  };
+  }, [selectedPlan, currentPlan]);
 
   const handleUpgrade = async (planId: string) => {
     setUpgrading(planId);
+    
     try {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, interval: billingInterval }),
+        body: JSON.stringify({ 
+          planId, 
+          interval,
+          successUrl: `${window.location.origin}/settings/billing?success=true`,
+          cancelUrl: `${window.location.origin}/settings/billing`,
+        }),
       });
-      const json = await res.json();
-      if (json.data?.checkoutUrl) {
-        window.location.href = json.data.checkoutUrl;
-      } else if (json.error) {
-        setError(json.error);
+      
+      const data = await res.json();
+      
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error("No checkout URL returned");
+        setUpgrading(null);
       }
-    } catch {
-      setError("Failed to start checkout");
-    } finally {
+    } catch (err) {
+      console.error("Checkout failed:", err);
       setUpgrading(null);
+    }
+  };
+
+  const handleManageBilling = async () => {
+    setPortalLoading(true);
+    
+    try {
+      const res = await fetch("/api/billing/portal", { method: "POST" });
+      const data = await res.json();
+      
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error("Portal access failed:", err);
+    } finally {
+      setPortalLoading(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
       </div>
     );
   }
 
-  if (error || !data) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-lg font-medium mb-2">Unable to load billing data</p>
-          <p className="text-muted-foreground mb-4">{error || "Please try again later"}</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const usageMetrics = [
-    { name: "AI Articles", used: data.usage.articles, limit: data.limits.articles, pct: data.percentages.articles, overage: "$3.00/article" },
-    { name: "Keywords Tracked", used: data.usage.keywords, limit: data.limits.keywords, pct: data.percentages.keywords, overage: "$5.00/100" },
-    { name: "Technical Audits", used: data.usage.audits, limit: data.limits.audits, pct: data.percentages.audits, overage: "$1.00/audit" },
-    { name: "AIO Analyses", used: data.usage.aioAnalyses, limit: data.limits.aioAnalyses, pct: data.percentages.aioAnalyses, overage: "$0.50/analysis" },
-    { name: "AI Credits", used: data.usage.aiCredits, limit: data.limits.aiCredits, pct: data.percentages.aiCredits, overage: "$2.00/1000" },
-  ];
-
-  const daysUntilRenewal = data.plan.currentPeriodEnd 
-    ? Math.max(0, Math.ceil((new Date(data.plan.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-    : null;
+  const plan = CITATION_PLANS[currentPlan as keyof typeof CITATION_PLANS] || CITATION_PLANS.free;
 
   return (
-    <div className="space-y-8">
-      {/* Checkout Status Notification */}
-      {checkingSession && (
-        <Card className="border-blue-500/30 bg-blue-500/5">
-          <CardContent className="py-4 flex items-center gap-3">
-            <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
-            <span>Verifying your payment...</span>
-          </CardContent>
-        </Card>
-      )}
-      
-      {checkoutStatus === "success" && (
-        <Card className="border-emerald-500/30 bg-emerald-500/5">
-          <CardContent className="py-4 flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+    <div className="space-y-6 max-w-3xl">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link href="/settings">
+          <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+        </Link>
             <div>
-              <p className="font-medium text-emerald-400">Payment successful!</p>
-              <p className="text-sm text-zinc-400">Your subscription has been upgraded. Thank you for your purchase!</p>
+          <h1 className="text-2xl font-bold text-white">Billing</h1>
+          <p className="text-zinc-500 text-sm">Manage your subscription</p>
+        </div>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="ml-auto"
-              onClick={() => setCheckoutStatus(null)}
-            >
-              Dismiss
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-      
-      {checkoutStatus === "cancelled" && (
-        <Card className="border-yellow-500/30 bg-yellow-500/5">
-          <CardContent className="py-4 flex items-center gap-3">
-            <XCircle className="w-5 h-5 text-yellow-400" />
-            <div>
-              <p className="font-medium text-yellow-400">Checkout cancelled</p>
-              <p className="text-sm text-zinc-400">Your payment was not completed. You can try again anytime.</p>
+
+      {/* Trial Warning */}
+      {trial.isTrialUser && (
+        <Card className={`border-2 ${
+          trial.daysRemaining <= 3 ? "bg-red-500/5 border-red-500/30" : "bg-amber-500/5 border-amber-500/30"
+        }`}>
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                trial.daysRemaining <= 3 ? "bg-red-500/20" : "bg-amber-500/20"
+              }`}>
+                <AlertTriangle className={`w-6 h-6 ${
+                  trial.daysRemaining <= 3 ? "text-red-400" : "text-amber-400"
+                }`} />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-white">
+                  {trial.daysRemaining <= 0 
+                    ? "Your trial has ended" 
+                    : `${trial.daysRemaining} day${trial.daysRemaining !== 1 ? "s" : ""} left in your trial`
+                  }
+                </h3>
+                <p className="text-sm text-zinc-400 mt-1">
+                  Upgrade to keep tracking your AI citations.
+                </p>
+                <Progress 
+                  value={(trial.daysUsed / TRIAL_DAYS) * 100} 
+                  className={`h-2 mt-3 ${trial.daysRemaining <= 3 ? "bg-red-900" : "bg-amber-900"}`} 
+                />
+              </div>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="ml-auto"
-              onClick={() => setCheckoutStatus(null)}
-            >
-              Dismiss
-            </Button>
           </CardContent>
         </Card>
       )}
 
       {/* Current Plan */}
-      <Card>
+      <Card className="bg-zinc-900/50 border-zinc-800">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="w-5 h-5" />
+          <CardTitle className="text-white flex items-center gap-2">
+            <CreditCard className="w-5 h-5 text-zinc-400" />
                 Current Plan
               </CardTitle>
-              <CardDescription>
-                Your subscription details and billing
-              </CardDescription>
-            </div>
-            <Badge 
-              variant={data.plan.status === "active" ? "default" : "secondary"} 
-              className="text-lg px-3 py-1 capitalize"
-            >
-              {data.plan.name}
-            </Badge>
-          </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-6 sm:grid-cols-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Status</p>
-              <p className="text-xl font-semibold capitalize flex items-center gap-2">
-                {data.plan.status === "active" && <span className="w-2 h-2 bg-green-500 rounded-full"></span>}
-                {data.plan.status}
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+                currentPlan === "agency" ? "bg-violet-500/10" :
+                currentPlan === "pro" ? "bg-emerald-500/10" :
+                currentPlan === "starter" ? "bg-blue-500/10" :
+                "bg-zinc-800"
+              }`}>
+                {currentPlan === "agency" ? <Building2 className="w-7 h-7 text-violet-400" /> :
+                 currentPlan === "pro" ? <Zap className="w-7 h-7 text-emerald-400" /> :
+                 currentPlan === "starter" ? <Crown className="w-7 h-7 text-blue-400" /> :
+                 <CreditCard className="w-7 h-7 text-zinc-500" />}
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">
+                  {plan.name} {currentPlan === "free" ? "Trial" : "Plan"}
+                </h3>
+                <p className="text-sm text-zinc-500">{plan.description}</p>
+              </div>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Billing</p>
-              <p className="text-xl font-semibold capitalize">{data.plan.billingInterval || "Monthly"}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Next Renewal</p>
-              <p className="text-xl font-semibold">
-                {data.plan.currentPeriodEnd 
-                  ? new Date(data.plan.currentPeriodEnd).toLocaleDateString()
-                  : "—"}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Time Left</p>
-              <p className="text-xl font-semibold">
-                {daysUntilRenewal !== null ? `${daysUntilRenewal} days` : "—"}
-              </p>
-            </div>
+            {currentPlan !== "free" && (
+              <Button
+                onClick={handleManageBilling}
+                disabled={portalLoading}
+                variant="outline"
+                className="border-zinc-700"
+              >
+                {portalLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>Manage <ExternalLink className="w-3 h-3 ml-2" /></>
+                )}
+              </Button>
+            )}
           </div>
-          <div className="flex gap-3 mt-6">
-            <Dialog open={showUpgrade} onOpenChange={setShowUpgrade}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Zap className="w-4 h-4 mr-2" />
-                  Change Plan
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Choose Your Plan</DialogTitle>
-                  <DialogDescription>
-                    Select the plan that best fits your needs.
-                  </DialogDescription>
-                </DialogHeader>
-                
-                {/* Billing Toggle */}
-                <div className="flex justify-center py-4">
-                  <Tabs value={billingInterval} onValueChange={(v) => setBillingInterval(v as "monthly" | "yearly")}>
-                    <TabsList>
-                      <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                      <TabsTrigger value="yearly" className="relative">
-                        Yearly
-                        <Badge variant="secondary" className="ml-2 text-xs">Save 17%</Badge>
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                </div>
 
-                <div className="grid gap-4 sm:grid-cols-3 py-4">
-                  {availablePlans.map((plan) => (
-                    <PlanCard
-                      key={plan.id}
-                      plan={plan}
-                      isCurrent={plan.id === data.plan.id}
-                      onSelect={() => handleUpgrade(plan.id)}
-                      loading={upgrading === plan.id}
-                      billingInterval={billingInterval}
-                    />
-                  ))}
-                </div>
-                
-                <p className="text-xs text-muted-foreground text-center">
-                  *Pro+ "Unlimited" audits are soft-capped at 100/month for fair use
-                </p>
-              </DialogContent>
-            </Dialog>
-            <Button variant="outline" onClick={handleManageBilling}>
-              <CreditCard className="w-4 h-4 mr-2" />
-              Manage Billing
-            </Button>
+          {/* Usage Stats */}
+          <div className="grid sm:grid-cols-3 gap-4 mt-6">
+            <div className="p-4 rounded-xl bg-zinc-800/50">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-zinc-400">Sites</span>
+                <span className="text-sm font-medium text-white">
+                  {usage.sitesUsed}/{usage.sitesLimit}
+                </span>
+              </div>
+              <Progress value={(usage.sitesUsed / usage.sitesLimit) * 100} className="h-2 bg-zinc-700" />
+            </div>
+            
+            <div className="p-4 rounded-xl bg-zinc-800/50">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-zinc-400">Checks</span>
+                <span className="text-sm font-medium text-white">
+                  {usage.checksUsed}/{usage.checksLimit === 999999 ? "∞" : usage.checksLimit}
+                </span>
+              </div>
+              <Progress value={usage.checksLimit === 999999 ? 0 : (usage.checksUsed / usage.checksLimit) * 100} className="h-2 bg-zinc-700" />
+            </div>
+            
+            <div className="p-4 rounded-xl bg-zinc-800/50">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-zinc-400">Competitors</span>
+                <span className="text-sm font-medium text-white">
+                  {usage.competitorsUsed}/{usage.competitorsLimit === 999999 ? "∞" : usage.competitorsLimit}
+                </span>
+              </div>
+              <Progress value={usage.competitorsLimit === 999999 ? 0 : (usage.competitorsUsed / usage.competitorsLimit) * 100} className="h-2 bg-zinc-700" />
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Usage */}
-      <Card>
+      {/* Upgrade Options */}
+      {currentPlan !== "agency" && (
+        <Card className="bg-zinc-900/50 border-zinc-800">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                Usage This Month
-              </CardTitle>
-              <CardDescription>
-                Track your resource consumption. Overages billed at rates shown.
-              </CardDescription>
-            </div>
-            {daysUntilRenewal !== null && (
-              <Badge variant="outline">
-                <Clock className="w-3 h-3 mr-1" />
-                Resets in {daysUntilRenewal} days
-              </Badge>
-            )}
-          </div>
+            <CardTitle className="text-white">Upgrade</CardTitle>
+            <CardDescription>Get more features and limits</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {usageMetrics.map((metric) => {
-              const isNearLimit = metric.pct >= 80;
-              const isOverLimit = metric.pct >= 100;
-
+            <div className="grid sm:grid-cols-2 gap-4">
+              {(["starter", "pro", "agency"] as const)
+                .filter(p => {
+                  const planOrder = ["free", "starter", "pro", "agency"];
+                  return planOrder.indexOf(p) > planOrder.indexOf(currentPlan);
+                })
+                .map((planId) => {
+                  const planData = CITATION_PLANS[planId];
               return (
-                <div key={metric.name} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{metric.name}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground">
-                        Overage: {metric.overage}
-                      </span>
-                    <span
-                        className={`text-sm tabular-nums ${
-                        isOverLimit
-                            ? "text-red-500 font-medium"
-                          : isNearLimit
-                          ? "text-yellow-500"
-                          : "text-muted-foreground"
+                    <div
+                      key={planId}
+                      className={`p-4 rounded-xl border ${
+                        planId === "pro" 
+                          ? "bg-emerald-500/5 border-emerald-500/30" 
+                          : "bg-zinc-800/50 border-zinc-700"
                       }`}
                     >
-                        {metric.used.toLocaleString()} / {metric.limit.toLocaleString()}
-                    </span>
-                    </div>
-                  </div>
-                  <Progress
-                    value={Math.min(metric.pct, 100)}
-                    className={`h-2 ${
-                      isOverLimit
-                        ? "[&>div]:bg-red-500"
-                        : isNearLimit
-                        ? "[&>div]:bg-yellow-500"
-                        : ""
-                    }`}
-                  />
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold text-white">{planData.name}</h4>
+                        {planId === "pro" && (
+                          <Badge className="bg-emerald-500 text-white text-xs">Popular</Badge>
+                        )}
+                      </div>
+                      <div className="mb-3">
+                        <span className="text-2xl font-bold text-white">${planData.yearlyPrice}</span>
+                        <span className="text-zinc-500">/mo</span>
+                      </div>
+                      <ul className="space-y-2 text-sm text-zinc-400 mb-4">
+                        <li className="flex items-center gap-2">
+                          <Check className="w-4 h-4 text-emerald-400" />
+                          {planData.limits.sites} sites
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="w-4 h-4 text-emerald-400" />
+                          {planData.limits.checksPerMonth === 999999 ? "Unlimited" : planData.limits.checksPerMonth} checks/mo
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="w-4 h-4 text-emerald-400" />
+                          {planData.limits.competitors === 999999 ? "Unlimited" : planData.limits.competitors} competitors
+                        </li>
+                      </ul>
+                      <Button
+                        onClick={() => handleUpgrade(planId)}
+                        disabled={upgrading === planId}
+                        className={`w-full ${
+                          planId === "pro" 
+                            ? "bg-emerald-600 hover:bg-emerald-500" 
+                            : "bg-zinc-700 hover:bg-zinc-600"
+                        }`}
+                      >
+                        {upgrading === planId ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          `Upgrade to ${planData.name}`
+                        )}
+                      </Button>
                 </div>
               );
             })}
           </div>
         </CardContent>
       </Card>
+      )}
 
-      {/* Billing History */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Invoices & History
-              </CardTitle>
-              <CardDescription>
-                View and download past invoices
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <Download className="w-10 h-10 mx-auto mb-3 text-muted-foreground/50" />
-            <p className="text-muted-foreground mb-2">
-              Invoice history is available in the billing portal
-            </p>
-            <Button variant="outline" onClick={handleManageBilling}>
-              Open Billing Portal
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Back Link */}
+      <Link href="/settings">
+        <Button variant="ghost" className="text-zinc-400">
+          <ChevronLeft className="w-4 h-4 mr-2" />
+          Back to Settings
+        </Button>
+      </Link>
     </div>
   );
 }
 
-// Wrap in Suspense for useSearchParams
+// Main export with Suspense
 export default function BillingPage() {
   return (
-    <Suspense fallback={<BillingPageLoading />}>
-      <BillingPageContent />
+    <Suspense fallback={
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+      </div>
+    }>
+      <BillingContent />
     </Suspense>
   );
 }

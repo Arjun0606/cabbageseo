@@ -1,210 +1,230 @@
 "use client";
 
-import { useState } from "react";
-import { Bell, Mail, Smartphone, Globe, Zap, AlertTriangle, CheckCircle2 } from "lucide-react";
+/**
+ * ============================================
+ * NOTIFICATIONS SETTINGS - Alert Preferences
+ * ============================================
+ */
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import {
+  Bell,
+  Mail,
+  ChevronLeft,
+  Loader2,
+  Check,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { useSite } from "@/context/site-context";
 
 interface NotificationSettings {
-  email: {
-    weeklyReport: boolean;
-    rankingChanges: boolean;
-    contentPublished: boolean;
-    auditComplete: boolean;
-    usageAlerts: boolean;
-  };
-  push: {
-    enabled: boolean;
-    urgentOnly: boolean;
-  };
+  citationAlerts: boolean;
+  weeklyReport: boolean;
+  competitorAlerts: boolean;
+  productUpdates: boolean;
 }
 
-export default function NotificationsSettingsPage() {
+export default function NotificationsPage() {
+  const { user, loading: siteLoading } = useSite();
+  
   const [settings, setSettings] = useState<NotificationSettings>({
-    email: {
-      weeklyReport: true,
-      rankingChanges: true,
-      contentPublished: true,
-      auditComplete: true,
-      usageAlerts: true,
-    },
-    push: {
-      enabled: false,
-      urgentOnly: true,
-    },
+    citationAlerts: true,
+    weeklyReport: true,
+    competitorAlerts: true,
+    productUpdates: false,
   });
-
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    // TODO: Save to API
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  // Load notification settings
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch("/api/notifications");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.settings) {
+            setSettings(data.settings);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load settings:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadSettings();
+  }, []);
+
+  const handleToggle = async (key: keyof NotificationSettings) => {
+    const newValue = !settings[key];
+    setSettings(prev => ({ ...prev, [key]: newValue }));
+    
+    setSaving(true);
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [key]: newValue }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      // Revert on error
+      setSettings(prev => ({ ...prev, [key]: !newValue }));
+    } finally {
+      setSaving(false);
+    }
   };
 
+  if (siteLoading || loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Email Notifications */}
-      <Card className="bg-zinc-900 border-zinc-800">
+    <div className="space-y-6 max-w-3xl">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link href="/settings">
+            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Notifications</h1>
+            <p className="text-zinc-500 text-sm">Manage your email alerts</p>
+          </div>
+        </div>
+        {saved && (
+          <div className="flex items-center gap-2 text-emerald-400 text-sm">
+            <Check className="w-4 h-4" />
+            Saved
+          </div>
+        )}
+      </div>
+
+      {/* Email Info */}
+      <Card className="bg-zinc-900/50 border-zinc-800">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-zinc-800">
+              <Mail className="w-5 h-5 text-zinc-400" />
+            </div>
+            <div>
+              <p className="text-sm text-zinc-400">Notifications sent to</p>
+              <p className="text-white font-medium">{user?.email || "—"}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Citation Alerts */}
+      <Card className="bg-zinc-900/50 border-zinc-800">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Mail className="w-5 h-5 text-emerald-500" />
-            Email Notifications
+          <CardTitle className="text-white flex items-center gap-2">
+            <Bell className="w-5 h-5 text-emerald-400" />
+            Citation Alerts
           </CardTitle>
-          <CardDescription className="text-zinc-400">
-            Choose what emails you want to receive
-          </CardDescription>
+          <CardDescription>Get notified about AI citations</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="weekly-report" className="text-zinc-200">Weekly Report</Label>
-              <p className="text-xs text-zinc-400">
-                Get a summary of your SEO performance every week
+              <Label htmlFor="citation-alerts" className="text-white font-medium">
+                New Citation Alerts
+              </Label>
+              <p className="text-sm text-zinc-500 mt-0.5">
+                Get emailed when AI platforms cite your website
+              </p>
+            </div>
+            <Switch
+              id="citation-alerts"
+              checked={settings.citationAlerts}
+              onCheckedChange={() => handleToggle("citationAlerts")}
+              disabled={saving}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="competitor-alerts" className="text-white font-medium">
+                Competitor Alerts
+              </Label>
+              <p className="text-sm text-zinc-500 mt-0.5">
+                Get notified when competitors gain citations
+              </p>
+            </div>
+            <Switch
+              id="competitor-alerts"
+              checked={settings.competitorAlerts}
+              onCheckedChange={() => handleToggle("competitorAlerts")}
+              disabled={saving}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="weekly-report" className="text-white font-medium">
+                Weekly Report
+              </Label>
+              <p className="text-sm text-zinc-500 mt-0.5">
+                Receive a weekly summary of your AI visibility
               </p>
             </div>
             <Switch
               id="weekly-report"
-              checked={settings.email.weeklyReport}
-              onCheckedChange={(checked) =>
-                setSettings((s) => ({ ...s, email: { ...s.email, weeklyReport: checked } }))
-              }
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="ranking-changes" className="text-zinc-200">Ranking Changes</Label>
-              <p className="text-xs text-zinc-400">
-                Get notified when your keywords move significantly
-              </p>
-            </div>
-            <Switch
-              id="ranking-changes"
-              checked={settings.email.rankingChanges}
-              onCheckedChange={(checked) =>
-                setSettings((s) => ({ ...s, email: { ...s.email, rankingChanges: checked } }))
-              }
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="content-published" className="text-zinc-200">Content Published</Label>
-              <p className="text-xs text-zinc-400">
-                Confirmation when content is published to your CMS
-              </p>
-            </div>
-            <Switch
-              id="content-published"
-              checked={settings.email.contentPublished}
-              onCheckedChange={(checked) =>
-                setSettings((s) => ({ ...s, email: { ...s.email, contentPublished: checked } }))
-              }
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="audit-complete" className="text-zinc-200">Audit Complete</Label>
-              <p className="text-xs text-zinc-400">
-                Get notified when site audits finish running
-              </p>
-            </div>
-            <Switch
-              id="audit-complete"
-              checked={settings.email.auditComplete}
-              onCheckedChange={(checked) =>
-                setSettings((s) => ({ ...s, email: { ...s.email, auditComplete: checked } }))
-              }
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="usage-alerts" className="text-zinc-200">Usage Alerts</Label>
-              <p className="text-xs text-zinc-400">
-                Get notified when you're approaching usage limits
-              </p>
-            </div>
-            <Switch
-              id="usage-alerts"
-              checked={settings.email.usageAlerts}
-              onCheckedChange={(checked) =>
-                setSettings((s) => ({ ...s, email: { ...s.email, usageAlerts: checked } }))
-              }
+              checked={settings.weeklyReport}
+              onCheckedChange={() => handleToggle("weeklyReport")}
+              disabled={saving}
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* Push Notifications */}
-      <Card className="bg-zinc-900 border-zinc-800">
+      {/* Product Updates */}
+      <Card className="bg-zinc-900/50 border-zinc-800">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Smartphone className="w-5 h-5 text-emerald-500" />
-            Push Notifications
-          </CardTitle>
-          <CardDescription className="text-zinc-400">
-            Browser push notifications (coming soon)
-          </CardDescription>
+          <CardTitle className="text-white">Product Updates</CardTitle>
+          <CardDescription>Stay informed about CabbageSEO</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between opacity-50">
+        <CardContent>
+          <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="push-enabled" className="text-zinc-200">Enable Push Notifications</Label>
-              <p className="text-xs text-zinc-400">
-                Receive notifications in your browser
+              <Label htmlFor="product-updates" className="text-white font-medium">
+                Product News
+              </Label>
+              <p className="text-sm text-zinc-500 mt-0.5">
+                New features, tips, and updates
               </p>
             </div>
             <Switch
-              id="push-enabled"
-              disabled
-              checked={settings.push.enabled}
-              onCheckedChange={(checked) =>
-                setSettings((s) => ({ ...s, push: { ...s.push, enabled: checked } }))
-              }
-            />
-          </div>
-
-          <div className="flex items-center justify-between opacity-50">
-            <div>
-              <Label htmlFor="urgent-only" className="text-zinc-200">Urgent Only</Label>
-              <p className="text-xs text-zinc-400">
-                Only receive notifications for critical alerts
-              </p>
-            </div>
-            <Switch
-              id="urgent-only"
-              disabled
-              checked={settings.push.urgentOnly}
-              onCheckedChange={(checked) =>
-                setSettings((s) => ({ ...s, push: { ...s.push, urgentOnly: checked } }))
-              }
+              id="product-updates"
+              checked={settings.productUpdates}
+              onCheckedChange={() => handleToggle("productUpdates")}
+              disabled={saving}
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <Button 
-          onClick={handleSave}
-          className="bg-emerald-600 hover:bg-emerald-500 text-white"
-        >
-          {saved ? (
-            <>
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Saved!
-            </>
-          ) : (
-            "Save Preferences"
-          )}
+      {/* Back Link */}
+      <Link href="/settings">
+        <Button variant="ghost" className="text-zinc-400">
+          <ChevronLeft className="w-4 h-4 mr-2" />
+          Back to Settings
         </Button>
-      </div>
+      </Link>
     </div>
   );
 }
-

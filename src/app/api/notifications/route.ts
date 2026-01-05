@@ -1,193 +1,99 @@
 /**
- * Notifications API
+ * /api/notifications - Notification Settings
  * 
- * GET - Fetch notifications for current user
- * POST - Mark notifications as read
- * DELETE - Delete a notification
+ * GET: Get notification preferences
+ * PATCH: Update notification preferences
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-interface NotificationRow {
-  id: string;
-  user_id: string;
-  title: string;
-  description: string | null;
-  type: string;
-  category: string;
-  read: boolean;
-  action_url: string | null;
-  metadata: Record<string, unknown> | null;
-  created_at: string;
+function getDbClient(): SupabaseClient | null {
+  try {
+    return createServiceClient();
+  } catch {
+    return null;
+  }
 }
 
-// GET - Fetch notifications
-export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  if (!supabase) {
-    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
-  }
+// Default settings
+const defaultSettings = {
+  citationAlerts: true,
+  weeklyReport: true,
+  competitorAlerts: true,
+  productUpdates: false,
+};
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+// GET - Get settings
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "20");
-    const unreadOnly = searchParams.get("unreadOnly") === "true";
-    const category = searchParams.get("category");
-
-    let query = supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(limit);
-
-    if (unreadOnly) {
-      query = query.eq("read", false);
+    const supabase = await createClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Not configured" }, { status: 500 });
     }
 
-    if (category) {
-      query = query.eq("category", category);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data, error } = await query;
+    const db = getDbClient() || supabase;
 
-    if (error) {
-      console.error("[Notifications API] Fetch error:", error);
-      throw error;
-    }
+    // Get user's notification settings
+    const { data: userData } = await db
+      .from("users")
+      .select("notification_settings")
+      .eq("id", user.id)
+      .maybeSingle();
 
-    // Get unread count
-    const { count: unreadCount } = await supabase
-      .from("notifications")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("read", false);
+    const settings = userData?.notification_settings || defaultSettings;
 
-    const notifications = ((data || []) as NotificationRow[]).map(n => ({
-      id: n.id,
-      title: n.title,
-      description: n.description,
-      type: n.type,
-      category: n.category,
-      read: n.read,
-      actionUrl: n.action_url,
-      metadata: n.metadata,
-      createdAt: n.created_at,
-    }));
-
-    return NextResponse.json({
-      success: true,
-      notifications,
-      unreadCount: unreadCount || 0,
-    });
+    return NextResponse.json({ settings });
 
   } catch (error) {
-    console.error("[Notifications API] Error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch notifications" },
-      { status: 500 }
-    );
+    console.error("[/api/notifications GET] Error:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
 
-// POST - Mark notifications as read
-export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  if (!supabase) {
-    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
-  }
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+// PATCH - Update settings
+export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { notificationIds, markAll } = body;
-
-    if (markAll) {
-      // Mark all as read
-      const { error } = await supabase
-        .from("notifications")
-        .update({ read: true } as never)
-        .eq("user_id", user.id)
-        .eq("read", false);
-
-      if (error) throw error;
-
-      return NextResponse.json({ success: true, message: "All notifications marked as read" });
+    const supabase = await createClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Not configured" }, { status: 500 });
     }
 
-    if (!notificationIds || !Array.isArray(notificationIds) || notificationIds.length === 0) {
-      return NextResponse.json({ error: "notificationIds required" }, { status: 400 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Mark specific notifications as read
-    const { error } = await supabase
-      .from("notifications")
-      .update({ read: true } as never)
-      .in("id", notificationIds)
-      .eq("user_id", user.id);
+    const updates = await request.json();
 
-    if (error) throw error;
+    const db = getDbClient() || supabase;
 
-    return NextResponse.json({ 
-      success: true, 
-      message: `${notificationIds.length} notification(s) marked as read` 
-    });
+    // Get current settings
+    const { data: userData } = await db
+      .from("users")
+      .select("notification_settings")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const currentSettings = userData?.notification_settings || defaultSettings;
+    const newSettings = { ...currentSettings, ...updates };
+
+    // Update settings
+    await db
+      .from("users")
+      .update({ notification_settings: newSettings })
+      .eq("id", user.id);
+
+    return NextResponse.json({ settings: newSettings });
 
   } catch (error) {
-    console.error("[Notifications API] Mark read error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to mark as read" },
-      { status: 500 }
-    );
+    console.error("[/api/notifications PATCH] Error:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
-
-// DELETE - Delete a notification
-export async function DELETE(request: NextRequest) {
-  const supabase = await createClient();
-  if (!supabase) {
-    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
-  }
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const { searchParams } = new URL(request.url);
-    const notificationId = searchParams.get("id");
-
-    if (!notificationId) {
-      return NextResponse.json({ error: "Notification ID required" }, { status: 400 });
-    }
-
-    const { error } = await supabase
-      .from("notifications")
-      .delete()
-      .eq("id", notificationId)
-      .eq("user_id", user.id);
-
-    if (error) throw error;
-
-    return NextResponse.json({ success: true, message: "Notification deleted" });
-
-  } catch (error) {
-    console.error("[Notifications API] Delete error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to delete notification" },
-      { status: 500 }
-    );
-  }
-}
-

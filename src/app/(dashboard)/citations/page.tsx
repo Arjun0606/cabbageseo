@@ -2,36 +2,45 @@
 
 /**
  * ============================================
- * CITATIONS PAGE
+ * CITATIONS PAGE - All Citations List
  * ============================================
  * 
- * All citations for the selected site.
- * Filter by platform, search, export.
+ * Shows all citations with:
+ * - Filtering by platform
+ * - Search
+ * - Export to CSV
  */
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import {
   Loader2,
-  Eye,
   Search,
   Bot,
   Sparkles,
+  Eye,
   Download,
-  RefreshCw,
-  ExternalLink,
-  X,
   Filter,
+  Calendar,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useSite } from "@/context/site-context";
 
-const platforms = {
-  perplexity: { name: "Perplexity", icon: Search, color: "text-violet-400", bg: "bg-violet-500/10", activeBg: "bg-violet-500" },
-  google_aio: { name: "Google AI", icon: Sparkles, color: "text-blue-400", bg: "bg-blue-500/10", activeBg: "bg-blue-500" },
-  chatgpt: { name: "ChatGPT", icon: Bot, color: "text-emerald-400", bg: "bg-emerald-500/10", activeBg: "bg-emerald-500" },
+// Platform config
+const platformConfig = {
+  perplexity: { name: "Perplexity", icon: Search, color: "text-violet-400", bg: "bg-violet-500/10" },
+  google_aio: { name: "Google AI", icon: Sparkles, color: "text-blue-400", bg: "bg-blue-500/10" },
+  chatgpt: { name: "ChatGPT", icon: Bot, color: "text-emerald-400", bg: "bg-emerald-500/10" },
 };
 
 interface Citation {
@@ -40,110 +49,91 @@ interface Citation {
   query: string;
   snippet: string;
   page_url?: string;
-  confidence: string;
-  cited_at: string;
-}
-
-interface Site {
-  id: string;
-  domain: string;
+  confidence: number;
+  discovered_at: string;
 }
 
 export default function CitationsPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [site, setSite] = useState<Site | null>(null);
+  const { currentSite, loading: siteLoading } = useSite();
+  
   const [citations, setCitations] = useState<Citation[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [platformFilter, setPlatformFilter] = useState<string>("all");
 
+  // Load citations
   useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      // Get sites first
-      const sitesRes = await fetch("/api/sites");
-      if (!sitesRes.ok) {
-        router.push("/dashboard");
-        return;
-      }
-
-      const sitesData = await sitesRes.json();
-      const sites = sitesData.sites || [];
+    async function loadCitations() {
+      if (!currentSite?.id) return;
       
-      if (sites.length === 0) {
-        router.push("/dashboard");
-        return;
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/geo/citations?siteId=${currentSite.id}&full=true`);
+        if (res.ok) {
+          const data = await res.json();
+          setCitations(data.data?.citations || data.data?.recent || []);
+        }
+      } catch (err) {
+        console.error("Failed to load citations:", err);
+      } finally {
+        setLoading(false);
       }
-
-      // Get saved site or first one
-      const savedId = localStorage.getItem("cabbageseo_site_id");
-      const selectedSite = sites.find((s: Site) => s.id === savedId) || sites[0];
-      setSite(selectedSite);
-
-      // Load citations
-      await loadCitations(selectedSite.id);
-    } catch (err) {
-      console.error("Failed to load:", err);
-      router.push("/dashboard");
     }
-  };
-
-  const loadCitations = async (siteId: string) => {
-    try {
-      const res = await fetch(`/api/geo/citations?siteId=${siteId}&all=true`);
-      if (res.ok) {
-        const data = await res.json();
-        setCitations(data.data?.citations || []);
-      }
-    } catch (err) {
-      console.error("Failed to load citations:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    
+    loadCitations();
+  }, [currentSite?.id]);
 
   // Filter citations
-  const filtered = citations.filter(c => {
-    if (platformFilter !== "all" && c.platform !== platformFilter) return false;
-    if (searchQuery && !c.query.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
+  const filteredCitations = citations.filter((c) => {
+    const matchesPlatform = platformFilter === "all" || c.platform === platformFilter;
+    const matchesSearch = !searchQuery || 
+      c.query.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.snippet?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesPlatform && matchesSearch;
   });
 
-  // Stats
-  const stats = {
-    total: citations.length,
-    perplexity: citations.filter(c => c.platform === "perplexity").length,
-    google_aio: citations.filter(c => c.platform === "google_aio").length,
-    chatgpt: citations.filter(c => c.platform === "chatgpt").length,
-  };
-
-  // Export CSV
+  // Export to CSV
   const exportCSV = () => {
-    const headers = ["Platform", "Query", "Snippet", "Confidence", "Date"];
-    const rows = filtered.map(c => [
-      platforms[c.platform]?.name || c.platform,
+    const headers = ["Date", "Platform", "Query", "Snippet", "Confidence"];
+    const rows = filteredCitations.map((c) => [
+      new Date(c.discovered_at).toLocaleDateString(),
+      platformConfig[c.platform]?.name || c.platform,
       `"${c.query.replace(/"/g, '""')}"`,
       `"${(c.snippet || "").replace(/"/g, '""')}"`,
       c.confidence,
-      new Date(c.cited_at).toLocaleDateString(),
     ]);
     
-    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `citations-${site?.domain}-${new Date().toISOString().split("T")[0]}.csv`;
+    a.download = `citations-${currentSite?.domain}-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
+    URL.revokeObjectURL(url);
   };
 
-  if (loading) {
+  // Loading state
+  if (siteLoading || loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
+          <p className="text-zinc-500">Loading citations...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No site
+  if (!currentSite) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <Eye className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">No Site Selected</h2>
+          <p className="text-zinc-400">Add a website from the Dashboard to see citations.</p>
+        </div>
       </div>
     );
   }
@@ -152,139 +142,127 @@ export default function CitationsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-            <Eye className="w-5 h-5 text-emerald-400" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-white">All Citations</h1>
-            <p className="text-sm text-zinc-500">AI mentions of {site?.domain}</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-white">Citations</h1>
+          <p className="text-zinc-500 text-sm mt-1">
+            {filteredCitations.length} citation{filteredCitations.length !== 1 ? "s" : ""} for {currentSite.domain}
+          </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={exportCSV} className="border-white/10 text-zinc-400">
-            <Download className="w-4 h-4 mr-2" /> Export
-          </Button>
-          <Button size="sm" onClick={() => site && loadCitations(site.id)} className="bg-emerald-600 hover:bg-emerald-500">
-            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-3">
-        <button
-          onClick={() => setPlatformFilter("all")}
-          className={`p-4 rounded-xl border text-left transition-all ${
-            platformFilter === "all" ? "bg-emerald-500/10 border-emerald-500/30" : "bg-[#0a0a0f] border-white/5 hover:border-white/10"
-          }`}
+        <Button
+          onClick={exportCSV}
+          variant="outline"
+          disabled={filteredCitations.length === 0}
+          className="border-zinc-700"
         >
-          <p className="text-xs text-zinc-500 mb-1">Total</p>
-          <p className="text-2xl font-bold text-white font-mono">{stats.total}</p>
-        </button>
-
-        {(Object.keys(platforms) as Array<keyof typeof platforms>).map((key) => {
-          const p = platforms[key];
-          const Icon = p.icon;
-          const count = stats[key];
-          
-          return (
-            <button
-              key={key}
-              onClick={() => setPlatformFilter(platformFilter === key ? "all" : key)}
-              className={`p-4 rounded-xl border text-left transition-all ${
-                platformFilter === key ? `${p.bg} border-white/20` : "bg-[#0a0a0f] border-white/5 hover:border-white/10"
-              }`}
-            >
-              <p className={`text-xs ${p.color} flex items-center gap-1 mb-1`}>
-                <Icon className="w-3 h-3" /> {p.name}
-              </p>
-              <p className="text-2xl font-bold text-white font-mono">{count}</p>
-            </button>
-          );
-        })}
+          <Download className="w-4 h-4 mr-2" />
+          Export CSV
+        </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-        <Input
-          placeholder="Search queries..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-11 h-11 bg-[#0a0a0f] border-white/10"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => setSearchQuery("")}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+          <Input
+            placeholder="Search citations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-zinc-900/50 border-zinc-800"
+          />
+        </div>
+        <Select value={platformFilter} onValueChange={setPlatformFilter}>
+          <SelectTrigger className="w-[180px] bg-zinc-900/50 border-zinc-800">
+            <Filter className="w-4 h-4 mr-2 text-zinc-500" />
+            <SelectValue placeholder="All Platforms" />
+          </SelectTrigger>
+          <SelectContent className="bg-zinc-900 border-zinc-800">
+            <SelectItem value="all">All Platforms</SelectItem>
+            <SelectItem value="perplexity">Perplexity</SelectItem>
+            <SelectItem value="google_aio">Google AI</SelectItem>
+            <SelectItem value="chatgpt">ChatGPT</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Citations List */}
-      <Card className="bg-[#0a0a0f] border-white/5">
-        <CardContent className="p-0">
-          {filtered.length === 0 ? (
-            <div className="text-center py-16">
-              <Eye className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">No citations found</h3>
-              <p className="text-zinc-500">
-                {citations.length === 0 ? "Run a check from the dashboard to find citations." : "Try adjusting your filters."}
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-white/5">
-              {filtered.map((c) => {
-                const p = platforms[c.platform];
-                const Icon = p.icon;
-                
-                return (
-                  <div key={c.id} className="p-5 hover:bg-white/[0.02] transition-colors">
-                    <div className="flex gap-4">
-                      <div className={`w-10 h-10 rounded-xl ${p.bg} flex items-center justify-center shrink-0`}>
-                        <Icon className={`w-5 h-5 ${p.color}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-2">
-                          <span className={`text-sm font-medium ${p.color}`}>{p.name}</span>
-                          <Badge variant="outline" className={`text-[10px] ${
-                            c.confidence === "high" ? "border-emerald-500/30 text-emerald-400" :
-                            c.confidence === "medium" ? "border-amber-500/30 text-amber-400" :
-                            "border-zinc-500/30 text-zinc-400"
-                          }`}>
-                            {c.confidence}
-                          </Badge>
-                          <span className="text-xs text-zinc-600 ml-auto">
-                            {new Date(c.cited_at).toLocaleDateString()}
-                          </span>
+      {filteredCitations.length === 0 ? (
+        <Card className="bg-zinc-900/50 border-zinc-800">
+          <CardContent className="py-12 text-center">
+            <Eye className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">No Citations Found</h3>
+            <p className="text-zinc-500">
+              {citations.length === 0 
+                ? "Run a check from the Dashboard to find citations."
+                : "No citations match your current filters."
+              }
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {filteredCitations.map((citation) => {
+            const platform = platformConfig[citation.platform];
+            const Icon = platform?.icon || Search;
+            const confidencePercent = Math.round(citation.confidence * 100);
+            
+            return (
+              <Card key={citation.id} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-all">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-xl ${platform?.bg || "bg-zinc-800"} shrink-0`}>
+                      <Icon className={`w-5 h-5 ${platform?.color || "text-zinc-400"}`} />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-medium">"{citation.query}"</p>
+                          {citation.snippet && (
+                            <p className="text-sm text-zinc-400 mt-1 line-clamp-2">{citation.snippet}</p>
+                          )}
                         </div>
-                        <p className="text-white mb-2">"{c.query}"</p>
-                        {c.snippet && (
-                          <p className="text-sm text-zinc-500 italic line-clamp-2">{c.snippet}</p>
-                        )}
-                        {c.page_url && (
-                          <a
-                            href={c.page_url}
+                        <Badge variant="outline" className={`shrink-0 ${
+                          confidencePercent >= 80 ? "border-emerald-500/30 text-emerald-400" :
+                          confidencePercent >= 50 ? "border-yellow-500/30 text-yellow-400" :
+                          "border-zinc-700 text-zinc-500"
+                        }`}>
+                          {confidencePercent}% confidence
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 mt-3 text-xs text-zinc-500">
+                        <div className="flex items-center gap-1">
+                          <span className={`w-2 h-2 rounded-full ${
+                            citation.platform === "perplexity" ? "bg-violet-500" :
+                            citation.platform === "google_aio" ? "bg-blue-500" :
+                            "bg-emerald-500"
+                          }`} />
+                          {platform?.name}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(citation.discovered_at).toLocaleDateString()}
+                        </div>
+                        {citation.page_url && (
+                          <a 
+                            href={citation.page_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 mt-2"
+                            className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300"
                           >
-                            <ExternalLink className="w-3 h-3" /> View source
+                            <ExternalLink className="w-3 h-3" />
+                            View Source
                           </a>
                         )}
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
