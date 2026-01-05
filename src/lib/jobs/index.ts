@@ -3,20 +3,7 @@
  */
 
 export { inngest } from "./inngest-client";
-export { functions } from "./functions";
-
-export type {
-  CrawlSiteEvent,
-  AuditSiteEvent,
-  GenerateContentEvent,
-  KeywordResearchEvent,
-  AnalyticsSyncEvent,
-  AutopilotRunEvent,
-  AutopilotTask,
-  ScheduledJobEvent,
-  GEOSiteAddedEvent,
-  CabbageSEOEvents,
-} from "./inngest-client";
+export { citationFunctions } from "./citation-jobs";
 
 // Helper to trigger jobs from API routes
 export async function triggerJob<T extends { name: string; data: unknown }>(
@@ -26,4 +13,3 @@ export async function triggerJob<T extends { name: string; data: unknown }>(
   const result = await inngest.send(event);
   return { id: result.ids[0] };
 }
-

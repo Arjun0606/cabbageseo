@@ -2,16 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, Link2, CreditCard, Bell, Shield, Palette } from "lucide-react";
+import { User, CreditCard, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const settingsNav = [
   { href: "/settings", label: "Account", icon: User, exact: true },
-  { href: "/settings/integrations", label: "Integrations", icon: Link2 },
   { href: "/settings/billing", label: "Billing & Usage", icon: CreditCard },
   { href: "/settings/notifications", label: "Notifications", icon: Bell },
-  { href: "/settings/security", label: "Security", icon: Shield },
-  { href: "/settings/appearance", label: "Appearance", icon: Palette },
 ];
 
 export default function SettingsLayout({
@@ -65,4 +62,3 @@ export default function SettingsLayout({
     </div>
   );
 }
-
