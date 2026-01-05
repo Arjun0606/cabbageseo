@@ -62,6 +62,10 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'citation_platform') THEN
     CREATE TYPE "citation_platform" AS ENUM ('perplexity', 'google_aio', 'chatgpt', 'bing_ai');
   END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'citation_confidence') THEN
+    CREATE TYPE "citation_confidence" AS ENUM ('high', 'medium', 'low');
+  END IF;
 END $$;
 
 -- ============================================
