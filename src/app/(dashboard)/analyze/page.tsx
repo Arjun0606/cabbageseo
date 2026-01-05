@@ -43,7 +43,7 @@ interface AnalysisResult {
 }
 
 export default function AnalyzePage() {
-  const { usage } = useSite();
+  const { usage, loading } = useSite();
   
   const [domain, setDomain] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
@@ -51,7 +51,10 @@ export default function AnalyzePage() {
   const [analyzedDomain, setAnalyzedDomain] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const canAnalyze = usage.checksUsed < usage.checksLimit;
+  // Safe access to usage with fallback defaults
+  const checksUsed = usage?.checksUsed ?? 0;
+  const checksLimit = usage?.checksLimit ?? 100;
+  const canAnalyze = !loading && checksUsed < checksLimit;
 
   const handleAnalyze = async () => {
     if (!domain.trim()) return;

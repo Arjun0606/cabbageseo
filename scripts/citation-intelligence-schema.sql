@@ -331,7 +331,8 @@ RETURNS TRIGGER AS $$
 BEGIN
   UPDATE sites
   SET total_citations = total_citations + 1,
-      citations_this_week = citations_this_week + 1
+      citations_this_week = citations_this_week + 1,
+      updated_at = now()
   WHERE id = NEW.site_id;
   RETURN NEW;
 END;
