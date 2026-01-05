@@ -70,7 +70,7 @@ export default function SignupPage() {
 
     // Get the redirect from URL params or default to onboarding
     const urlParams = new URLSearchParams(window.location.search);
-    const redirectPath = urlParams.get("redirect") || "/onboarding";
+    const redirectPath = urlParams.get("redirect") || "/dashboard?welcome=true";
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -115,9 +115,9 @@ export default function SignupPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
             <img 
-              src="/cabbageseo_logo.png" 
+              src="/apple-touch-icon.png" 
               alt="CabbageSEO" 
-              className="h-12 w-auto"
+              className="h-10 w-10 rounded-xl"
             />
             <span className="text-2xl font-bold text-white">CabbageSEO</span>
           </Link>

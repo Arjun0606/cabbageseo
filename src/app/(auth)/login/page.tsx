@@ -81,7 +81,7 @@ function LoginPageContent() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
-            <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-12 w-auto" />
+            <img src="/apple-touch-icon.png" alt="CabbageSEO" className="h-10 w-10 rounded-xl" />
             <span className="text-2xl font-bold text-white">CabbageSEO</span>
           </Link>
           <p className="mt-2 text-zinc-400">Welcome back</p>
