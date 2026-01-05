@@ -62,15 +62,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Site not found" }, { status: 404 });
     }
 
-    // Get citations
-    const query = db
+    // Get citations - build query with optional limit
+    let query = db
       .from("citations")
       .select("id, platform, query, snippet, page_url, confidence, cited_at, created_at")
       .eq("site_id", siteId)
       .order("cited_at", { ascending: false });
 
     if (!full) {
-      query.limit(10);
+      query = query.limit(10);
     }
 
     const { data: citations, error } = await query;

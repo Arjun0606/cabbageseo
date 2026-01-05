@@ -351,29 +351,39 @@ function DashboardContent() {
         </Card>
       )}
 
-      {/* Platform breakdown */}
+      {/* Platform breakdown - using static classes for Tailwind purge */}
           <Card className="bg-zinc-900 border-zinc-800">
             <CardHeader>
           <CardTitle className="text-white">Platform Breakdown</CardTitle>
             </CardHeader>
             <CardContent>
           <div className="grid md:grid-cols-3 gap-4">
-            {[
-              { name: "Perplexity", key: "perplexity", color: "emerald", icon: Search },
-              { name: "Google AI", key: "google_aio", color: "blue", icon: Zap },
-              { name: "ChatGPT", key: "chatgpt", color: "violet", icon: TrendingUp },
-            ].map((platform) => (
-              <div 
-                key={platform.name}
-                className={`p-4 rounded-xl bg-${platform.color}-500/5 border border-${platform.color}-500/20`}
-              >
-                <platform.icon className={`w-5 h-5 text-${platform.color}-400 mb-2`} />
-                <div className="text-2xl font-bold text-white">
-                  {platformBreakdown[platform.key as keyof typeof platformBreakdown]}
-                </div>
-                <p className="text-sm text-zinc-500">{platform.name}</p>
-                    </div>
-                  ))}
+            {/* Perplexity */}
+            <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <Search className="w-5 h-5 text-emerald-400 mb-2" />
+              <div className="text-2xl font-bold text-white">
+                {platformBreakdown.perplexity}
+              </div>
+              <p className="text-sm text-zinc-500">Perplexity</p>
+            </div>
+            
+            {/* Google AI */}
+            <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
+              <Zap className="w-5 h-5 text-blue-400 mb-2" />
+              <div className="text-2xl font-bold text-white">
+                {platformBreakdown.google_aio}
+              </div>
+              <p className="text-sm text-zinc-500">Google AI</p>
+            </div>
+            
+            {/* ChatGPT */}
+            <div className="p-4 rounded-xl bg-violet-500/5 border border-violet-500/20">
+              <TrendingUp className="w-5 h-5 text-violet-400 mb-2" />
+              <div className="text-2xl font-bold text-white">
+                {platformBreakdown.chatgpt}
+              </div>
+              <p className="text-sm text-zinc-500">ChatGPT</p>
+            </div>
                 </div>
         </CardContent>
       </Card>
