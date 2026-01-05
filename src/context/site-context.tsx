@@ -225,6 +225,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           citationsThisWeek: 0,
           citationsLastWeek: 0,
           lastCheckedAt: null,
+          geoScore: null,
         };
         
         setSites(prev => [newSite, ...prev]);

@@ -298,7 +298,12 @@ export const usage = pgTable(
     // Period (YYYY-MM)
     period: text("period").notNull(),
 
-    // Usage counts
+    // Citation Intelligence usage
+    checksUsed: integer("checks_used").default(0),
+    sitesUsed: integer("sites_used").default(0),
+    competitorsUsed: integer("competitors_used").default(0),
+
+    // Legacy usage counts (keeping for compatibility)
     articlesGenerated: integer("articles_generated").default(0),
     keywordsAnalyzed: integer("keywords_analyzed").default(0),
     serpCalls: integer("serp_calls").default(0),
@@ -406,6 +411,14 @@ export const sites = pgTable(
     domain: text("domain").notNull(),
     name: text("name").notNull(),
     description: text("description"),
+    status: text("status").default("active"),
+
+    // Citation Intelligence - Core metrics
+    totalCitations: integer("total_citations").default(0),
+    citationsThisWeek: integer("citations_this_week").default(0),
+    citationsLastWeek: integer("citations_last_week").default(0),
+    lastCheckedAt: timestamp("last_checked_at"),
+    geoScoreAvg: integer("geo_score_avg"),
 
     // CMS Integration
     cmsType: cmsTypeEnum("cms_type"),
@@ -924,11 +937,11 @@ export const entities = pgTable(
 );
 
 // ============================================
-// AI CITATIONS (Track when AI platforms cite our content)
+// CITATIONS (Track when AI platforms cite our content)
 // ============================================
 
-export const aiCitations = pgTable(
-  "ai_citations",
+export const citations = pgTable(
+  "citations",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     siteId: uuid("site_id")
@@ -937,28 +950,55 @@ export const aiCitations = pgTable(
     pageId: uuid("page_id").references(() => pages.id, { onDelete: "cascade" }),
 
     // Which platform cited us
-    platform: text("platform").notNull(), // google_aio, chatgpt, perplexity, claude, gemini
+    platform: text("platform").notNull(), // google_aio, chatgpt, perplexity
 
     // The query that resulted in citation
     query: text("query").notNull(),
 
     // Citation details
-    citationType: text("citation_type"), // direct_quote, paraphrase, source_link, featured
     snippet: text("snippet"),
-    position: integer("position"), // Position in AI response
-
-    // Confidence
-    confidence: decimal("confidence", { precision: 3, scale: 2 }).default("0.80"),
+    confidence: text("confidence").default("medium"), // high, medium, low
 
     // Discovery metadata
-    discoveredAt: timestamp("discovered_at").defaultNow(),
+    citedAt: timestamp("cited_at").defaultNow(),
     lastVerifiedAt: timestamp("last_verified_at"),
   },
   (table) => [
-    index("ai_citations_site_idx").on(table.siteId),
-    index("ai_citations_platform_idx").on(table.platform),
-    index("ai_citations_page_idx").on(table.pageId),
-    uniqueIndex("ai_citations_unique_idx").on(table.siteId, table.platform, table.query, table.pageId),
+    index("citations_site_idx").on(table.siteId),
+    index("citations_platform_idx").on(table.platform),
+    index("citations_page_idx").on(table.pageId),
+    // Prevent duplicate citations for the same query/platform/site
+    uniqueIndex("citations_unique_idx").on(table.siteId, table.platform, table.query),
+  ]
+);
+
+// ============================================
+// GEO ANALYSES (Site-level GEO optimization analysis)
+// ============================================
+
+export const geoAnalyses = pgTable(
+  "geo_analyses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+    organizationId: uuid("organization_id")
+      .references(() => organizations.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Analysis results (JSON)
+    score: jsonb("score").notNull(), // { overall, breakdown, grade, summary }
+    tips: jsonb("tips").default([]),
+    queries: jsonb("queries").default([]),
+    opportunities: jsonb("opportunities").default([]),
+    rawData: jsonb("raw_data").default({}),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("geo_analyses_site_idx").on(table.siteId),
+    index("geo_analyses_created_idx").on(table.createdAt),
   ]
 );
 
@@ -1057,7 +1097,7 @@ export const sitesRelations = relations(sites, ({ one, many }) => ({
   tasks: many(tasks),
   rankings: many(rankings),
   entities: many(entities),
-  aiCitations: many(aiCitations),
+  citations: many(citations),
   aioAnalyses: many(aioAnalyses),
   audits: many(audits),
 }));
@@ -1143,7 +1183,7 @@ export const pagesRelations = relations(pages, ({ one, many }) => ({
     references: [content.id],
   }),
   entities: many(entities),
-  aiCitations: many(aiCitations),
+  citations: many(citations),
   aioAnalyses: many(aioAnalyses),
   issues: many(issues),
 }));
@@ -1163,13 +1203,13 @@ export const entitiesRelations = relations(entities, ({ one }) => ({
   }),
 }));
 
-export const aiCitationsRelations = relations(aiCitations, ({ one }) => ({
+export const citationsRelations = relations(citations, ({ one }) => ({
   site: one(sites, {
-    fields: [aiCitations.siteId],
+    fields: [citations.siteId],
     references: [sites.id],
   }),
   page: one(pages, {
-    fields: [aiCitations.pageId],
+    fields: [citations.pageId],
     references: [pages.id],
   }),
 }));
@@ -1182,6 +1222,17 @@ export const aioAnalysesRelations = relations(aioAnalyses, ({ one }) => ({
   page: one(pages, {
     fields: [aioAnalyses.pageId],
     references: [pages.id],
+  }),
+}));
+
+export const geoAnalysesRelations = relations(geoAnalyses, ({ one }) => ({
+  site: one(sites, {
+    fields: [geoAnalyses.siteId],
+    references: [sites.id],
+  }),
+  organization: one(organizations, {
+    fields: [geoAnalyses.organizationId],
+    references: [organizations.id],
   }),
 }));
 
@@ -1208,10 +1259,12 @@ export type UsageRecord = typeof usageRecords.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Entity = typeof entities.$inferSelect;
 export type NewEntity = typeof entities.$inferInsert;
-export type AICitation = typeof aiCitations.$inferSelect;
-export type NewAICitation = typeof aiCitations.$inferInsert;
+export type Citation = typeof citations.$inferSelect;
+export type NewCitation = typeof citations.$inferInsert;
 export type AIOAnalysis = typeof aioAnalyses.$inferSelect;
 export type NewAIOAnalysis = typeof aioAnalyses.$inferInsert;
+export type GeoAnalysis = typeof geoAnalyses.$inferSelect;
+export type NewGeoAnalysis = typeof geoAnalyses.$inferInsert;
 export type Integration = typeof integrations.$inferSelect;
 export type NewIntegration = typeof integrations.$inferInsert;
 export type CreditBalance = typeof creditBalance.$inferSelect;

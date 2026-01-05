@@ -170,6 +170,14 @@ export interface Database {
           domain: string;
           name: string;
           description: string | null;
+          status: string;
+          // Citation Intelligence metrics
+          total_citations: number;
+          citations_this_week: number;
+          citations_last_week: number;
+          last_checked_at: string | null;
+          geo_score_avg: number | null;
+          // CMS Integration
           cms_type: CMSType | null;
           cms_url: string | null;
           cms_credentials: Json | null;
@@ -197,6 +205,12 @@ export interface Database {
           domain: string;
           name: string;
           description?: string | null;
+          status?: string;
+          total_citations?: number;
+          citations_this_week?: number;
+          citations_last_week?: number;
+          last_checked_at?: string | null;
+          geo_score_avg?: number | null;
           cms_type?: CMSType | null;
           cms_url?: string | null;
           cms_credentials?: Json | null;
@@ -222,6 +236,12 @@ export interface Database {
           domain?: string;
           name?: string;
           description?: string | null;
+          status?: string;
+          total_citations?: number;
+          citations_this_week?: number;
+          citations_last_week?: number;
+          last_checked_at?: string | null;
+          geo_score_avg?: number | null;
           cms_type?: CMSType | null;
           cms_url?: string | null;
           cms_credentials?: Json | null;
@@ -984,39 +1004,64 @@ export interface Database {
           updated_at?: string;
         };
       };
-      ai_citations: {
+      citations: {
         Row: {
           id: string;
           site_id: string;
           page_id: string | null;
-          platform: AIOPlatform;
+          platform: string;
           query: string;
-          citation_type: string | null;
           snippet: string | null;
-          position: number | null;
-          confidence: number;
-          discovered_at: string;
+          confidence: string;
+          cited_at: string;
           last_verified_at: string | null;
         };
         Insert: {
           id?: string;
           site_id: string;
           page_id?: string | null;
-          platform: AIOPlatform;
+          platform: string;
           query: string;
-          citation_type?: string | null;
           snippet?: string | null;
-          position?: number | null;
-          confidence?: number;
-          discovered_at?: string;
+          confidence?: string;
+          cited_at?: string;
           last_verified_at?: string | null;
         };
         Update: {
-          citation_type?: string | null;
           snippet?: string | null;
-          position?: number | null;
-          confidence?: number;
+          confidence?: string;
           last_verified_at?: string | null;
+        };
+      };
+      geo_analyses: {
+        Row: {
+          id: string;
+          site_id: string;
+          organization_id: string;
+          score: Json;
+          tips: Json;
+          queries: Json;
+          opportunities: Json;
+          raw_data: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          site_id: string;
+          organization_id: string;
+          score: Json;
+          tips?: Json;
+          queries?: Json;
+          opportunities?: Json;
+          raw_data?: Json;
+          created_at?: string;
+        };
+        Update: {
+          score?: Json;
+          tips?: Json;
+          queries?: Json;
+          opportunities?: Json;
+          raw_data?: Json;
         };
       };
       aio_analyses: {

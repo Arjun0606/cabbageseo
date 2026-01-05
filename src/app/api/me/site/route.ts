@@ -1,8 +1,10 @@
 /**
  * /api/me/site - Add or update user's site
  * 
- * POST - Add a new site (creates org if needed, runs analysis)
- * PATCH - Update site settings (autopilot, etc.)
+ * POST - Add a new site (creates org if needed)
+ * PATCH - Update site settings
+ * 
+ * NO FAKE DATA. Real site creation only.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -102,7 +104,7 @@ export async function POST(request: NextRequest) {
     // Check if site already exists
     const { data: existingSite } = await db
       .from("sites")
-      .select("id, domain, geo_score_avg, autopilot_enabled")
+      .select("id, domain, geo_score_avg, total_citations, citations_this_week")
       .eq("organization_id", orgId)
       .eq("domain", domain)
       .maybeSingle();
@@ -113,26 +115,28 @@ export async function POST(request: NextRequest) {
         site: {
           id: existingSite.id,
           domain: existingSite.domain,
-          geoScore: existingSite.geo_score_avg || 55,
-          autopilotEnabled: existingSite.autopilot_enabled ?? true,
+          geoScore: existingSite.geo_score_avg || null,
+          totalCitations: existingSite.total_citations || 0,
+          citationsThisWeek: existingSite.citations_this_week || 0,
         },
         message: "Site already exists",
       });
     }
 
-    // Create new site
+    // Create new site - NO FAKE DATA, just empty values
     const { data: newSite, error: siteError } = await db
       .from("sites")
       .insert({
         organization_id: orgId,
         domain,
         name: domain,
-        url: normalizedUrl,
-        geo_score_avg: 55, // Default score
-        autopilot_enabled: true,
-        is_active: true,
+        status: "active",
+        total_citations: 0,
+        citations_this_week: 0,
+        citations_last_week: 0,
+        geo_score_avg: null, // Will be set when user runs GEO analysis
       })
-      .select("id, domain, geo_score_avg, autopilot_enabled")
+      .select("id, domain, geo_score_avg, total_citations, citations_this_week")
       .single();
 
     if (siteError || !newSite) {
@@ -140,17 +144,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to create site" }, { status: 500 });
     }
 
-    // Run quick analysis in background (don't block response)
-    runAnalysis(newSite.id, normalizedUrl, domain, db).catch(console.error);
-
     return NextResponse.json({
       success: true,
       site: {
         id: newSite.id,
         domain: newSite.domain,
-        geoScore: newSite.geo_score_avg || 55,
-        autopilotEnabled: newSite.autopilot_enabled ?? true,
+        geoScore: newSite.geo_score_avg || null,
+        totalCitations: newSite.total_citations || 0,
+        citationsThisWeek: newSite.citations_this_week || 0,
       },
+      message: "Site created. Run a citation check to start tracking.",
     });
 
   } catch (error) {
@@ -173,7 +176,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { siteId, autopilotEnabled } = body;
+    const { siteId, topics, name } = body;
 
     if (!siteId) {
       return NextResponse.json({ error: "siteId required" }, { status: 400 });
@@ -192,10 +195,17 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "No organization" }, { status: 400 });
     }
 
-    // Update site
+    // Build update object with only provided fields
     const updateData: Record<string, unknown> = {};
-    if (typeof autopilotEnabled === "boolean") {
-      updateData.autopilot_enabled = autopilotEnabled;
+    if (Array.isArray(topics)) {
+      updateData.topics = topics;
+    }
+    if (typeof name === "string" && name.trim()) {
+      updateData.name = name.trim();
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: "No updates provided" }, { status: 400 });
     }
 
     const { data: updatedSite, error } = await db
@@ -203,7 +213,7 @@ export async function PATCH(request: NextRequest) {
       .update(updateData)
       .eq("id", siteId)
       .eq("organization_id", userData.organization_id)
-      .select("id, domain, geo_score_avg, autopilot_enabled")
+      .select("id, domain, name, topics, geo_score_avg, total_citations")
       .single();
 
     if (error) {
@@ -215,8 +225,10 @@ export async function PATCH(request: NextRequest) {
       site: {
         id: updatedSite.id,
         domain: updatedSite.domain,
-        geoScore: updatedSite.geo_score_avg || 55,
-        autopilotEnabled: updatedSite.autopilot_enabled ?? true,
+        name: updatedSite.name,
+        topics: updatedSite.topics,
+        geoScore: updatedSite.geo_score_avg || null,
+        totalCitations: updatedSite.total_citations || 0,
       },
     });
 
@@ -225,75 +237,3 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
-
-// Background analysis (non-blocking)
-async function runAnalysis(siteId: string, url: string, domain: string, db: SupabaseClient) {
-  try {
-    // Simple GEO score calculation based on domain characteristics
-    let geoScore = 55;
-    
-    // Bonus for common TLDs that AI trusts
-    if (domain.endsWith(".com") || domain.endsWith(".org") || domain.endsWith(".io")) {
-      geoScore += 5;
-    }
-    
-    // Bonus for shorter domains (more memorable)
-    if (domain.length < 15) {
-      geoScore += 5;
-    }
-    
-    // Random variance
-    geoScore += Math.floor(Math.random() * 10) - 5;
-    geoScore = Math.max(40, Math.min(80, geoScore));
-
-    // Update site with score
-    await db
-      .from("sites")
-      .update({ 
-        geo_score_avg: geoScore,
-        last_crawl_at: new Date().toISOString(),
-      })
-      .eq("id", siteId);
-
-    // Create initial analysis record
-    await db
-      .from("aio_analyses")
-      .insert({
-        site_id: siteId,
-        combined_score: geoScore,
-        chatgpt_score: Math.round(geoScore * 0.95),
-        perplexity_score: Math.round(geoScore * 0.85),
-        google_aio_score: Math.round(geoScore * 0.9),
-        analyzed_at: new Date().toISOString(),
-      });
-
-    // Generate and store initial keywords based on domain
-    const domainParts = domain.replace(/\.(com|org|io|net|co)$/i, "").split(/[-_.]/).filter(p => p.length > 2);
-    const baseKeywords = [
-      ...domainParts,
-      `${domain} guide`,
-      `${domain} tutorial`,
-      "ai optimization",
-      "chatgpt seo",
-      "generative engine optimization",
-      "ai citations",
-      "perplexity ranking",
-    ];
-
-    // Insert keywords
-    const keywordRecords = baseKeywords.slice(0, 10).map((kw, i) => ({
-      site_id: siteId,
-      keyword: kw.toLowerCase(),
-      status: "active" as const,
-      volume: Math.floor(Math.random() * 5000) + 500,
-      difficulty: Math.floor(Math.random() * 60) + 20,
-      intent: i < 3 ? "informational" : "commercial",
-    }));
-
-    await db.from("keywords").insert(keywordRecords);
-
-  } catch (err) {
-    console.error("[runAnalysis] Error:", err);
-  }
-}
-
