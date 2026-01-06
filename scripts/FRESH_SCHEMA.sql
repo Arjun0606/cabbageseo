@@ -128,6 +128,7 @@ CREATE TYPE "public"."citation_confidence" AS ENUM (
 CREATE TABLE "public"."organizations" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   "name" text NOT NULL,
+  "slug" text NOT NULL UNIQUE,
   "plan" plan NOT NULL DEFAULT 'free',
   "subscription_status" subscription_status NOT NULL DEFAULT 'trialing',
   "billing_interval" billing_interval DEFAULT 'monthly',
