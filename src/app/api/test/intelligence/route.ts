@@ -459,7 +459,7 @@ Provide a brief analysis (max 50 words) of why the competitor might be cited ins
   try {
     const actionsRoute = await import("@/app/api/geo/intelligence/actions/route");
     
-    if (actionsRoute.GET && actionsRoute.POST) {
+    if (typeof actionsRoute.GET === "function" && typeof actionsRoute.POST === "function") {
       apiSuite.tests.push({
         name: "Intelligence actions route handlers exist",
         status: "pass",
@@ -482,7 +482,7 @@ Provide a brief analysis (max 50 words) of why the competitor might be cited ins
   try {
     const intelligenceRoute = await import("@/app/api/geo/intelligence/route");
     
-    if (intelligenceRoute.GET && intelligenceRoute.POST) {
+    if (typeof intelligenceRoute.GET === "function" && typeof intelligenceRoute.POST === "function") {
       apiSuite.tests.push({
         name: "GEO intelligence route handlers exist",
         status: "pass",
