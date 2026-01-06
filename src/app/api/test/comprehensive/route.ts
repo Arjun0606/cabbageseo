@@ -577,6 +577,114 @@ export async function GET(request: NextRequest) {
   suites.push({ name: "Email (Resend)", tests: emailTests });
 
   // ============================================
+  // TEST SUITE: Intelligence Features
+  // ============================================
+  const intelligenceTests: TestResult[] = [];
+
+  // Test intelligence limits configuration
+  try {
+    const { getIntelligenceLimits } = await import("@/lib/billing/citation-plans");
+    
+    const freeLimits = getIntelligenceLimits("free");
+    const starterLimits = getIntelligenceLimits("starter");
+    const proLimits = getIntelligenceLimits("pro");
+    
+    intelligenceTests.push({
+      name: "Intelligence limits configured",
+      passed: freeLimits.gapAnalyses === 0 && 
+              starterLimits.gapAnalyses === 5 && 
+              proLimits.gapAnalyses === Infinity,
+      data: { free: freeLimits, starter: starterLimits, pro: proLimits },
+    });
+  } catch (e) {
+    intelligenceTests.push({
+      name: "Intelligence limits configured",
+      passed: false,
+      error: e instanceof Error ? e.message : "Unknown",
+    });
+  }
+
+  // Test CitationIntelligenceService exists
+  try {
+    const { CitationIntelligenceService } = await import("@/lib/geo/citation-intelligence");
+    const service = new CitationIntelligenceService();
+    
+    intelligenceTests.push({
+      name: "CitationIntelligenceService available",
+      passed: typeof service.getGapAnalysis === "function" &&
+              typeof service.getContentRecommendations === "function" &&
+              typeof service.getWeeklyActionPlan === "function",
+      data: "All methods available",
+    });
+  } catch (e) {
+    intelligenceTests.push({
+      name: "CitationIntelligenceService available",
+      passed: false,
+      error: e instanceof Error ? e.message : "Unknown",
+    });
+  }
+
+  // Test intelligence usage columns exist
+  try {
+    const { error } = await serviceClient
+      .from("usage")
+      .select("gap_analyses_used, content_ideas_used, action_plans_used")
+      .limit(1);
+    
+    intelligenceTests.push({
+      name: "Intelligence usage columns exist",
+      passed: !error || !error.message.includes("does not exist"),
+      error: error?.message,
+    });
+  } catch (e) {
+    intelligenceTests.push({
+      name: "Intelligence usage columns exist",
+      passed: false,
+      error: e instanceof Error ? e.message : "Unknown",
+    });
+  }
+
+  // Test OpenAI API for intelligence
+  if (process.env.OPENAI_API_KEY) {
+    try {
+      const openaiStart = Date.now();
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content: "Reply with just: OK" }],
+          max_tokens: 5,
+        }),
+      });
+      
+      intelligenceTests.push({
+        name: "OpenAI API for intelligence",
+        passed: response.ok,
+        duration: Date.now() - openaiStart,
+        data: response.ok ? "API ready" : `HTTP ${response.status}`,
+      });
+    } catch (e) {
+      intelligenceTests.push({
+        name: "OpenAI API for intelligence",
+        passed: false,
+        error: e instanceof Error ? e.message : "Unknown",
+      });
+    }
+  } else {
+    intelligenceTests.push({
+      name: "OpenAI API for intelligence",
+      passed: false,
+      error: "OPENAI_API_KEY not set",
+    });
+  }
+
+  suites.push({ name: "Intelligence Features", tests: intelligenceTests });
+
+  // ============================================
   // SUMMARY
   // ============================================
   let totalPassed = 0;
