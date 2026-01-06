@@ -478,21 +478,22 @@ export async function GET(request: NextRequest) {
       data: process.env.RESEND_API_KEY ? "Configured" : "Missing",
     });
 
-    // Test Resend API is reachable
+    // Test Resend API is reachable (use api-keys endpoint which just validates the key)
     if (process.env.RESEND_API_KEY) {
       const resendStart = Date.now();
       try {
-        const response = await fetch("https://api.resend.com/domains", {
+        const response = await fetch("https://api.resend.com/api-keys", {
           headers: {
             "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
           },
         });
         
+        // 2xx = valid key, 401 = invalid key, anything else is still reachable
         emailTests.push({
           name: "7.2 Resend API reachable",
-          passed: response.ok,
+          passed: response.status !== 401,
           duration: Date.now() - resendStart,
-          data: `Status: ${response.status}`,
+          data: response.status === 200 ? "API key valid" : `Status: ${response.status}`,
         });
       } catch (e) {
         emailTests.push({
