@@ -259,12 +259,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: profile } = await supabase
+    const { data: profileData2 } = await supabase
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
       .single();
 
+    const profile = profileData2 as { organization_id: string } | null;
     if (!profile?.organization_id) {
       return NextResponse.json({ error: "No organization" }, { status: 400 });
     }
