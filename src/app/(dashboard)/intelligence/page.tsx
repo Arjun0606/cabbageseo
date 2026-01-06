@@ -3,10 +3,12 @@
 /**
  * GEO Intelligence Page
  * 
- * Shows:
+ * The $100k features:
  * - GEO Score (how AI-friendly your site is)
- * - Optimization tips
- * - Query intelligence (what AI answers about your niche)
+ * - "Why Not Me?" Analysis - why competitors get cited
+ * - Content Recommendations - what to publish next
+ * - Weekly Action Plan - your AI search to-do list (Pro)
+ * - Competitor Deep Dive - full competitor analysis (Pro)
  */
 
 import { useState, useEffect } from "react";
@@ -19,11 +21,18 @@ import {
   Lock,
   ArrowUp,
   ArrowDown,
-  Zap
+  Zap,
+  HelpCircle,
+  FileText,
+  Calendar,
+  Users,
+  Sparkles,
+  Crown,
+  CheckCircle
 } from "lucide-react";
 import { useSite } from "@/context/site-context";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
@@ -57,14 +66,40 @@ interface GEOAnalysis {
   }>;
 }
 
+// Intelligence action results
+interface GapAnalysisResult {
+  whyNotYou: string[];
+  missingElements: string[];
+  actionItems: string[];
+  confidence: string;
+}
+
+interface ContentRecommendation {
+  title: string;
+  description: string;
+  targetQueries: string[];
+  priority: string;
+  rationale: string;
+}
+
 export default function IntelligencePage() {
-  const { currentSite, organization, loading } = useSite();
+  const { currentSite, organization, loading, citations } = useSite();
   const [analysis, setAnalysis] = useState<GEOAnalysis | null>(null);
   const [loadingAnalysis, setLoadingAnalysis] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  
+  // Intelligence features state
+  const [gapAnalysis, setGapAnalysis] = useState<GapAnalysisResult | null>(null);
+  const [contentIdeas, setContentIdeas] = useState<ContentRecommendation[]>([]);
+  const [loadingGap, setLoadingGap] = useState(false);
+  const [loadingContent, setLoadingContent] = useState(false);
+  const [loadingAction, setLoadingAction] = useState(false);
+  const [actionPlan, setActionPlan] = useState<{ summary: string; priorities: Array<{ title: string; description: string; impact: string }> } | null>(null);
+  const [intelligenceUsage, setIntelligenceUsage] = useState<{ gapRemaining: number | string; contentRemaining: number | string } | null>(null);
 
   const plan = organization?.plan || "free";
   const isPaid = plan !== "free";
+  const isPro = plan === "pro";
 
   // Fetch analysis
   useEffect(() => {
@@ -115,6 +150,113 @@ export default function IntelligencePage() {
       console.error("Analysis failed:", err);
     } finally {
       setAnalyzing(false);
+    }
+  };
+
+  // Fetch intelligence usage limits
+  useEffect(() => {
+    const fetchUsage = async () => {
+      try {
+        const res = await fetch("/api/geo/intelligence/actions");
+        if (res.ok) {
+          const data = await res.json();
+          setIntelligenceUsage({
+            gapRemaining: data.features?.gapAnalysis?.remaining ?? 0,
+            contentRemaining: data.features?.contentRecommendations?.remaining ?? 0,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch usage:", err);
+      }
+    };
+    if (isPaid) fetchUsage();
+  }, [isPaid]);
+
+  // Run "Why Not Me?" analysis
+  const runGapAnalysis = async (query: string) => {
+    if (!currentSite) return;
+    
+    setLoadingGap(true);
+    try {
+      const res = await fetch("/api/geo/intelligence/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          action: "gap-analysis",
+          siteId: currentSite.id,
+          query,
+        }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setGapAnalysis(result.data);
+        if (result.remaining !== undefined) {
+          setIntelligenceUsage(prev => ({ ...prev!, gapRemaining: result.remaining }));
+        }
+      } else if (result.upgradeRequired) {
+        alert(result.error);
+      }
+    } catch (err) {
+      console.error("Gap analysis failed:", err);
+    } finally {
+      setLoadingGap(false);
+    }
+  };
+
+  // Get content recommendations
+  const getContentIdeas = async () => {
+    if (!currentSite) return;
+    
+    setLoadingContent(true);
+    try {
+      const res = await fetch("/api/geo/intelligence/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          action: "content-recommendations",
+          siteId: currentSite.id,
+        }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setContentIdeas(result.data || []);
+        if (result.remaining !== undefined) {
+          setIntelligenceUsage(prev => ({ ...prev!, contentRemaining: result.remaining }));
+        }
+      } else if (result.upgradeRequired) {
+        alert(result.error);
+      }
+    } catch (err) {
+      console.error("Content ideas failed:", err);
+    } finally {
+      setLoadingContent(false);
+    }
+  };
+
+  // Get weekly action plan (Pro only)
+  const getActionPlan = async () => {
+    if (!currentSite) return;
+    
+    setLoadingAction(true);
+    try {
+      const res = await fetch("/api/geo/intelligence/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          action: "action-plan",
+          siteId: currentSite.id,
+        }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setActionPlan(result.data);
+      } else if (result.upgradeRequired) {
+        alert(result.error);
+      }
+    } catch (err) {
+      console.error("Action plan failed:", err);
+    } finally {
+      setLoadingAction(false);
     }
   };
 
@@ -385,7 +527,19 @@ export default function IntelligencePage() {
                           )}
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="flex items-center gap-2">
+                        {isPaid && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-xs"
+                            onClick={() => runGapAnalysis(query.query)}
+                            disabled={loadingGap}
+                          >
+                            <HelpCircle className="w-3 h-3 mr-1" />
+                            Why not me?
+                          </Button>
+                        )}
                         <span className={`text-sm ${
                           query.yourPosition === "cited" 
                             ? "text-emerald-400" 
@@ -402,6 +556,217 @@ export default function IntelligencePage() {
               )}
             </CardContent>
           </Card>
+
+          {/* ============================================ */}
+          {/* INTELLIGENCE ACTIONS - The $100k Features */}
+          {/* ============================================ */}
+          
+          <div className="border-t border-zinc-800 pt-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Sparkles className="w-5 h-5 text-violet-400" />
+              <h2 className="text-xl font-bold text-white">Citation Intelligence</h2>
+              {isPro && <Badge className="bg-violet-500/20 text-violet-400">Pro</Badge>}
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* "Why Not Me?" Analysis */}
+              <Card className="bg-zinc-900 border-zinc-800">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2 text-base">
+                    <HelpCircle className="w-5 h-5 text-amber-400" />
+                    "Why Not Me?" Analysis
+                  </CardTitle>
+                  <CardDescription className="text-zinc-500">
+                    Understand why AI cites competitors instead of you
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {!isPaid ? (
+                    <div className="text-center py-4">
+                      <Lock className="w-6 h-6 text-zinc-500 mx-auto mb-2" />
+                      <p className="text-sm text-zinc-500 mb-3">Requires Starter plan</p>
+                      <Link href="/settings/billing">
+                        <Button size="sm" className="bg-emerald-500 hover:bg-emerald-400 text-black">
+                          Upgrade
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : gapAnalysis ? (
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="text-sm font-medium text-zinc-400 mb-2">Why competitors win:</h4>
+                        <ul className="space-y-1">
+                          {gapAnalysis.whyNotYou.map((reason, i) => (
+                            <li key={i} className="text-sm text-zinc-300 flex items-start gap-2">
+                              <span className="text-red-400 mt-0.5">•</span>
+                              {reason}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-zinc-400 mb-2">Action items:</h4>
+                        <ul className="space-y-1">
+                          {gapAnalysis.actionItems.map((item, i) => (
+                            <li key={i} className="text-sm text-zinc-300 flex items-start gap-2">
+                              <CheckCircle className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-zinc-500 mb-3">
+                        Click "Why not me?" on any query above to analyze
+                      </p>
+                      {intelligenceUsage && (
+                        <p className="text-xs text-zinc-600">
+                          {intelligenceUsage.gapRemaining === "unlimited" 
+                            ? "Unlimited analyses" 
+                            : `${intelligenceUsage.gapRemaining} analyses remaining this month`}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Content Recommendations */}
+              <Card className="bg-zinc-900 border-zinc-800">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2 text-base">
+                    <FileText className="w-5 h-5 text-blue-400" />
+                    What to Publish Next
+                  </CardTitle>
+                  <CardDescription className="text-zinc-500">
+                    Content ideas to increase AI citations
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {!isPaid ? (
+                    <div className="text-center py-4">
+                      <Lock className="w-6 h-6 text-zinc-500 mx-auto mb-2" />
+                      <p className="text-sm text-zinc-500 mb-3">Requires Starter plan</p>
+                      <Link href="/settings/billing">
+                        <Button size="sm" className="bg-emerald-500 hover:bg-emerald-400 text-black">
+                          Upgrade
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : contentIdeas.length > 0 ? (
+                    <div className="space-y-3">
+                      {contentIdeas.slice(0, 3).map((idea, i) => (
+                        <div key={i} className="p-3 bg-zinc-800/50 rounded-lg">
+                          <h4 className="font-medium text-white text-sm">{idea.title}</h4>
+                          <p className="text-xs text-zinc-500 mt-1">{idea.description}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge className={`text-xs ${
+                              idea.priority === "high" 
+                                ? "bg-red-500/20 text-red-400" 
+                                : "bg-blue-500/20 text-blue-400"
+                            }`}>
+                              {idea.priority} priority
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <Button
+                        onClick={getContentIdeas}
+                        disabled={loadingContent}
+                        size="sm"
+                        className="bg-blue-500 hover:bg-blue-400 text-white"
+                      >
+                        {loadingContent ? (
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-4 h-4 mr-2" />
+                        )}
+                        Generate Ideas
+                      </Button>
+                      {intelligenceUsage && (
+                        <p className="text-xs text-zinc-600 mt-2">
+                          {intelligenceUsage.contentRemaining === "unlimited" 
+                            ? "Unlimited ideas" 
+                            : `${intelligenceUsage.contentRemaining} ideas remaining this month`}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Weekly Action Plan - Pro Only */}
+            <Card className="bg-zinc-900 border-zinc-800 mt-6">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-violet-400" />
+                  Weekly Action Playbook
+                  {!isPro && <Badge className="bg-violet-500/20 text-violet-400">Pro</Badge>}
+                </CardTitle>
+                <CardDescription className="text-zinc-500">
+                  Your personalized AI search to-do list for this week
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!isPro ? (
+                  <div className="text-center py-6">
+                    <Crown className="w-8 h-8 text-violet-400 mx-auto mb-3" />
+                    <h3 className="font-semibold text-white mb-2">Pro Feature</h3>
+                    <p className="text-sm text-zinc-500 mb-4 max-w-md mx-auto">
+                      Get a weekly action plan with prioritized tasks to beat your competitors in AI search
+                    </p>
+                    <Link href="/settings/billing">
+                      <Button className="bg-violet-500 hover:bg-violet-400 text-white">
+                        Upgrade to Pro
+                      </Button>
+                    </Link>
+                  </div>
+                ) : actionPlan ? (
+                  <div className="space-y-4">
+                    <p className="text-zinc-300">{actionPlan.summary}</p>
+                    <div className="space-y-3">
+                      {actionPlan.priorities.map((priority, i) => (
+                        <div key={i} className="flex items-start gap-3 p-3 bg-zinc-800/50 rounded-lg">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
+                            priority.impact === "high" ? "bg-red-500/20 text-red-400" :
+                            priority.impact === "medium" ? "bg-amber-500/20 text-amber-400" :
+                            "bg-blue-500/20 text-blue-400"
+                          }`}>
+                            {i + 1}
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-white">{priority.title}</h4>
+                            <p className="text-sm text-zinc-500">{priority.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <Button
+                      onClick={getActionPlan}
+                      disabled={loadingAction}
+                      className="bg-violet-500 hover:bg-violet-400 text-white"
+                    >
+                      {loadingAction ? (
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Calendar className="w-4 h-4 mr-2" />
+                      )}
+                      Generate This Week's Plan
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </>
       )}
     </div>
