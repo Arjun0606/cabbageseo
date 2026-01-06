@@ -20,7 +20,7 @@ import {
   canUseActionPlan,
   canAddSite,
   canAddCompetitor,
-  canRunCheck,
+  canRunManualCheck,
 } from "@/lib/billing/citation-plans";
 import { citationIntelligence } from "@/lib/geo/citation-intelligence";
 
@@ -151,9 +151,9 @@ export async function GET(request: NextRequest) {
   });
 
   // Test 4: Manual checks (3/day limit)
-  const freeCheck1 = canRunCheck("free", 0);
-  const freeCheck3 = canRunCheck("free", 2);
-  const freeCheck4 = canRunCheck("free", 3);
+  const freeCheck1 = canRunManualCheck("free", 0);
+  const freeCheck3 = canRunManualCheck("free", 2);
+  const freeCheck4 = canRunManualCheck("free", 3);
   results.push({
     feature: "Manual check limit (3/day)",
     plan: "free",
@@ -273,7 +273,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Test 13: Unlimited manual checks
-  const starterCheck100 = canRunCheck("starter", 100);
+  const starterCheck100 = canRunManualCheck("starter", 100);
   results.push({
     feature: "Unlimited manual checks",
     plan: "starter",
