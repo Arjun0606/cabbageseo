@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Free: Manual checks (3/day)
-  if (freePlan.limits.checksPerDay === 3) {
+  if (freePlan.limits.manualChecksPerDay === 3) {
     freeWorkflow.tests.push({
       name: "Limited to 3 manual checks/day",
       status: "pass",
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
     freeWorkflow.tests.push({
       name: "Limited to 3 manual checks/day",
       status: "fail",
-      description: `Expected 3 checks, got ${freePlan.limits.checksPerDay}`,
+      description: `Expected 3 checks, got ${freePlan.limits.manualChecksPerDay}`,
     });
     freeWorkflow.failed++;
   }
@@ -291,7 +291,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Starter: Unlimited manual checks
-  if (starterPlan.limits.checksPerDay === -1) {
+  if (starterPlan.limits.manualChecksPerDay === -1) {
     starterWorkflow.tests.push({
       name: "Unlimited manual checks",
       status: "pass",
@@ -302,7 +302,7 @@ export async function GET(request: NextRequest) {
     starterWorkflow.tests.push({
       name: "Unlimited manual checks",
       status: "fail",
-      description: `Expected unlimited (-1), got ${starterPlan.limits.checksPerDay}`,
+      description: `Expected unlimited (-1), got ${starterPlan.limits.manualChecksPerDay}`,
     });
     starterWorkflow.failed++;
   }
