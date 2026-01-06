@@ -83,7 +83,7 @@ interface ContentRecommendation {
 }
 
 export default function IntelligencePage() {
-  const { currentSite, organization, loading, citations } = useSite();
+  const { currentSite, organization, loading } = useSite();
   const [analysis, setAnalysis] = useState<GEOAnalysis | null>(null);
   const [loadingAnalysis, setLoadingAnalysis] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
