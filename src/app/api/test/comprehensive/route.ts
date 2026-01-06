@@ -583,18 +583,18 @@ export async function GET(request: NextRequest) {
 
   // Test intelligence limits configuration
   try {
-    const { getIntelligenceLimits } = await import("@/lib/billing/citation-plans");
+    const { getIntelligenceFeatureSummary } = await import("@/lib/billing/citation-plans");
     
-    const freeLimits = getIntelligenceLimits("free");
-    const starterLimits = getIntelligenceLimits("starter");
-    const proLimits = getIntelligenceLimits("pro");
+    const freeSummary = getIntelligenceFeatureSummary("free");
+    const starterSummary = getIntelligenceFeatureSummary("starter");
+    const proSummary = getIntelligenceFeatureSummary("pro");
     
     intelligenceTests.push({
       name: "Intelligence limits configured",
-      passed: freeLimits.gapAnalyses === 0 && 
-              starterLimits.gapAnalyses === 5 && 
-              proLimits.gapAnalyses === Infinity,
-      data: { free: freeLimits, starter: starterLimits, pro: proLimits },
+      passed: freeSummary.gapAnalyses.limit === 0 && 
+              starterSummary.gapAnalyses.limit === 5 && 
+              proSummary.gapAnalyses.limit === Infinity,
+      data: { free: freeSummary, starter: starterSummary, pro: proSummary },
     });
   } catch (e) {
     intelligenceTests.push({
@@ -604,21 +604,20 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // Test CitationIntelligenceService exists
+  // Test citationIntelligence service exists
   try {
-    const { CitationIntelligenceService } = await import("@/lib/geo/citation-intelligence");
-    const service = new CitationIntelligenceService();
+    const { citationIntelligence } = await import("@/lib/geo/citation-intelligence");
     
     intelligenceTests.push({
-      name: "CitationIntelligenceService available",
-      passed: typeof service.getGapAnalysis === "function" &&
-              typeof service.getContentRecommendations === "function" &&
-              typeof service.getWeeklyActionPlan === "function",
+      name: "Citation intelligence service available",
+      passed: typeof citationIntelligence.analyzeCitationGap === "function" &&
+              typeof citationIntelligence.generateContentRecommendations === "function" &&
+              typeof citationIntelligence.generateWeeklyActionPlan === "function",
       data: "All methods available",
     });
   } catch (e) {
     intelligenceTests.push({
-      name: "CitationIntelligenceService available",
+      name: "Citation intelligence service available",
       passed: false,
       error: e instanceof Error ? e.message : "Unknown",
     });

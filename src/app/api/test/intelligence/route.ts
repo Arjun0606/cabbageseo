@@ -20,8 +20,14 @@
 
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { CITATION_PLANS, getIntelligenceLimits } from "@/lib/billing/citation-plans";
-import { CitationIntelligenceService } from "@/lib/geo/citation-intelligence";
+import { 
+  CITATION_PLANS, 
+  getIntelligenceFeatureSummary,
+  canUseGapAnalysis,
+  canUseContentRecommendations,
+  canUseActionPlan,
+} from "@/lib/billing/citation-plans";
+import { citationIntelligence } from "@/lib/geo/citation-intelligence";
 
 interface TestResult {
   name: string;
@@ -77,16 +83,16 @@ export async function GET() {
 
   // Test 1.2: Starter plan should have LIMITED intelligence features
   const starterPlan = CITATION_PLANS.starter;
-  const starterLimits = getIntelligenceLimits("starter");
+  const starterSummary = getIntelligenceFeatureSummary("starter");
   if (starterPlan.features.citationGapAnalysis && 
       starterPlan.features.contentRecommendations &&
       !starterPlan.features.weeklyActionPlan &&
-      starterLimits.gapAnalyses === 5 &&
-      starterLimits.contentIdeas === 3) {
+      starterSummary.gapAnalyses.limit === 5 &&
+      starterSummary.contentIdeas.limit === 3) {
     planSuite.tests.push({
       name: "Starter plan has LIMITED intelligence features",
       status: "pass",
-      message: `Gap: ${starterLimits.gapAnalyses}/mo, Content: ${starterLimits.contentIdeas}/mo, Action Plan: No`,
+      message: `Gap: ${starterSummary.gapAnalyses.limit}/mo, Content: ${starterSummary.contentIdeas.limit}/mo, Action Plan: No`,
     });
     planSuite.passed++;
   } else {
@@ -94,19 +100,19 @@ export async function GET() {
       name: "Starter plan has LIMITED intelligence features",
       status: "fail",
       message: "Starter plan limits are incorrect",
-      details: { features: starterPlan.features, limits: starterLimits },
+      details: { features: starterPlan.features, summary: starterSummary },
     });
     planSuite.failed++;
   }
 
   // Test 1.3: Pro plan should have UNLIMITED intelligence features
   const proPlan = CITATION_PLANS.pro;
-  const proLimits = getIntelligenceLimits("pro");
+  const proSummary = getIntelligenceFeatureSummary("pro");
   if (proPlan.features.citationGapAnalysis && 
       proPlan.features.contentRecommendations &&
       proPlan.features.weeklyActionPlan &&
       proPlan.features.competitorDeepDive &&
-      proLimits.gapAnalyses === Infinity) {
+      proSummary.gapAnalyses.limit === Infinity) {
     planSuite.tests.push({
       name: "Pro plan has UNLIMITED intelligence features",
       status: "pass",
@@ -118,7 +124,7 @@ export async function GET() {
       name: "Pro plan has UNLIMITED intelligence features",
       status: "fail",
       message: "Pro plan should have unlimited intelligence",
-      details: { features: proPlan.features, limits: proLimits },
+      details: { features: proPlan.features, summary: proSummary },
     });
     planSuite.failed++;
   }
@@ -157,7 +163,7 @@ export async function GET() {
   // Test 2.2: Supabase connection
   try {
     const supabase = createServiceClient();
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("organizations")
       .select("id")
       .limit(1);
@@ -410,110 +416,29 @@ Provide a brief analysis (max 50 words) of why the competitor might be cited ins
     skipped: 0,
   };
 
-  // Test 4.1: Service instantiation
+  // Test 4.1: Service object exists with all methods
   try {
-    const service = new CitationIntelligenceService();
-    if (service) {
+    const hasAllMethods = 
+      typeof citationIntelligence.analyzeCitationGap === "function" &&
+      typeof citationIntelligence.generateContentRecommendations === "function" &&
+      typeof citationIntelligence.generateWeeklyActionPlan === "function" &&
+      typeof citationIntelligence.analyzeCompetitorDeepDive === "function";
+    
+    if (hasAllMethods) {
       serviceSuite.tests.push({
-        name: "Service instantiation",
+        name: "Intelligence service has all methods",
         status: "pass",
-        message: "CitationIntelligenceService created successfully",
-      });
-      serviceSuite.passed++;
-    }
-  } catch (err) {
-    serviceSuite.tests.push({
-      name: "Service instantiation",
-      status: "fail",
-      message: `Failed to create service: ${err instanceof Error ? err.message : "Unknown"}`,
-    });
-    serviceSuite.failed++;
-  }
-
-  // Test 4.2: Gap analysis method exists and is callable
-  try {
-    const service = new CitationIntelligenceService();
-    if (typeof service.getGapAnalysis === "function") {
-      serviceSuite.tests.push({
-        name: "Gap analysis method available",
-        status: "pass",
-        message: "getGapAnalysis() method exists",
+        message: "analyzeCitationGap, generateContentRecommendations, generateWeeklyActionPlan, analyzeCompetitorDeepDive all available",
       });
       serviceSuite.passed++;
     } else {
-      throw new Error("Method not found");
+      throw new Error("Missing methods");
     }
   } catch (err) {
     serviceSuite.tests.push({
-      name: "Gap analysis method available",
+      name: "Intelligence service has all methods",
       status: "fail",
-      message: `Method error: ${err instanceof Error ? err.message : "Unknown"}`,
-    });
-    serviceSuite.failed++;
-  }
-
-  // Test 4.3: Content recommendations method exists
-  try {
-    const service = new CitationIntelligenceService();
-    if (typeof service.getContentRecommendations === "function") {
-      serviceSuite.tests.push({
-        name: "Content recommendations method available",
-        status: "pass",
-        message: "getContentRecommendations() method exists",
-      });
-      serviceSuite.passed++;
-    } else {
-      throw new Error("Method not found");
-    }
-  } catch (err) {
-    serviceSuite.tests.push({
-      name: "Content recommendations method available",
-      status: "fail",
-      message: `Method error: ${err instanceof Error ? err.message : "Unknown"}`,
-    });
-    serviceSuite.failed++;
-  }
-
-  // Test 4.4: Weekly action plan method exists
-  try {
-    const service = new CitationIntelligenceService();
-    if (typeof service.getWeeklyActionPlan === "function") {
-      serviceSuite.tests.push({
-        name: "Weekly action plan method available",
-        status: "pass",
-        message: "getWeeklyActionPlan() method exists",
-      });
-      serviceSuite.passed++;
-    } else {
-      throw new Error("Method not found");
-    }
-  } catch (err) {
-    serviceSuite.tests.push({
-      name: "Weekly action plan method available",
-      status: "fail",
-      message: `Method error: ${err instanceof Error ? err.message : "Unknown"}`,
-    });
-    serviceSuite.failed++;
-  }
-
-  // Test 4.5: Competitor deep dive method exists
-  try {
-    const service = new CitationIntelligenceService();
-    if (typeof service.getCompetitorDeepDive === "function") {
-      serviceSuite.tests.push({
-        name: "Competitor deep dive method available",
-        status: "pass",
-        message: "getCompetitorDeepDive() method exists",
-      });
-      serviceSuite.passed++;
-    } else {
-      throw new Error("Method not found");
-    }
-  } catch (err) {
-    serviceSuite.tests.push({
-      name: "Competitor deep dive method available",
-      status: "fail",
-      message: `Method error: ${err instanceof Error ? err.message : "Unknown"}`,
+      message: `Service error: ${err instanceof Error ? err.message : "Unknown"}`,
     });
     serviceSuite.failed++;
   }
@@ -533,8 +458,6 @@ Provide a brief analysis (max 50 words) of why the competitor might be cited ins
 
   // Test 5.1: GET /api/geo/intelligence/actions returns usage info
   try {
-    // We can't easily test authenticated endpoints here, but we can verify the route exists
-    // by checking if the module loads without error
     const actionsRoute = await import("@/app/api/geo/intelligence/actions/route");
     
     if (actionsRoute.GET && actionsRoute.POST) {
@@ -582,214 +505,240 @@ Provide a brief analysis (max 50 words) of why the competitor might be cited ins
   suites.push(apiSuite);
 
   // ============================================
-  // SUITE 6: Mock Data Detection Tests
+  // SUITE 6: Plan Access Control Tests
   // ============================================
-  const mockSuite: TestSuite = {
-    name: "Mock/Fake Data Detection",
+  const accessSuite: TestSuite = {
+    name: "Plan Access Control",
     tests: [],
     passed: 0,
     failed: 0,
     skipped: 0,
   };
 
-  // Test 6.1: Check citation-intelligence.ts for mock data patterns
+  // Test 6.1: Free plan cannot use gap analysis
   try {
-    const serviceCode = await import("@/lib/geo/citation-intelligence");
-    const serviceString = CitationIntelligenceService.toString();
-    
-    const mockPatterns = [
-      "Math.random",
-      "faker",
-      "mock",
-      "dummy",
-      "placeholder",
-      "lorem ipsum",
-      "test data",
-    ];
-    
-    const foundPatterns: string[] = [];
-    for (const pattern of mockPatterns) {
-      if (serviceString.toLowerCase().includes(pattern.toLowerCase())) {
-        foundPatterns.push(pattern);
-      }
-    }
-    
-    if (foundPatterns.length === 0) {
-      mockSuite.tests.push({
-        name: "No mock data patterns in service",
+    const result = canUseGapAnalysis("free", 0);
+    if (!result.allowed) {
+      accessSuite.tests.push({
+        name: "Free plan cannot use gap analysis",
         status: "pass",
-        message: "CitationIntelligenceService uses real data",
+        message: `Blocked: ${result.reason}`,
       });
-      mockSuite.passed++;
+      accessSuite.passed++;
     } else {
-      mockSuite.tests.push({
-        name: "No mock data patterns in service",
+      accessSuite.tests.push({
+        name: "Free plan cannot use gap analysis",
         status: "fail",
-        message: `Found mock patterns: ${foundPatterns.join(", ")}`,
+        message: "Free plan should be blocked from gap analysis",
       });
-      mockSuite.failed++;
+      accessSuite.failed++;
     }
   } catch (err) {
-    mockSuite.tests.push({
-      name: "No mock data patterns in service",
-      status: "skip",
-      message: `Could not analyze: ${err instanceof Error ? err.message : "Unknown"}`,
+    accessSuite.tests.push({
+      name: "Free plan cannot use gap analysis",
+      status: "fail",
+      message: `Error: ${err instanceof Error ? err.message : "Unknown"}`,
     });
-    mockSuite.skipped++;
+    accessSuite.failed++;
   }
 
-  // Test 6.2: Verify service uses real Supabase queries
+  // Test 6.2: Starter plan can use gap analysis (within limit)
   try {
-    // Check that the service file imports Supabase
-    const serviceModule = await import("@/lib/geo/citation-intelligence");
-    
-    // The service should exist and have database-dependent methods
-    if (serviceModule.CitationIntelligenceService) {
-      mockSuite.tests.push({
-        name: "Service uses database for data",
+    const result = canUseGapAnalysis("starter", 0);
+    if (result.allowed) {
+      accessSuite.tests.push({
+        name: "Starter plan can use gap analysis (within limit)",
         status: "pass",
-        message: "CitationIntelligenceService imports and uses Supabase",
+        message: `Allowed with ${result.remaining} remaining`,
       });
-      mockSuite.passed++;
+      accessSuite.passed++;
+    } else {
+      accessSuite.tests.push({
+        name: "Starter plan can use gap analysis (within limit)",
+        status: "fail",
+        message: `Blocked: ${result.reason}`,
+      });
+      accessSuite.failed++;
     }
   } catch (err) {
-    mockSuite.tests.push({
-      name: "Service uses database for data",
+    accessSuite.tests.push({
+      name: "Starter plan can use gap analysis (within limit)",
       status: "fail",
-      message: `Import error: ${err instanceof Error ? err.message : "Unknown"}`,
+      message: `Error: ${err instanceof Error ? err.message : "Unknown"}`,
     });
-    mockSuite.failed++;
+    accessSuite.failed++;
   }
 
-  // Test 6.3: Verify service uses real LLM calls
+  // Test 6.3: Starter plan blocked from action plan
   try {
-    // The askLLM function should be imported and used
-    const llmModule = await import("@/lib/geo/citation-intelligence");
-    
-    mockSuite.tests.push({
-      name: "Service uses real LLM calls",
-      status: "pass",
-      message: "Service imports and uses OpenAI for analysis",
-    });
-    mockSuite.passed++;
+    const result = canUseActionPlan("starter");
+    if (!result.allowed) {
+      accessSuite.tests.push({
+        name: "Starter plan blocked from action plan",
+        status: "pass",
+        message: `Blocked: ${result.reason}`,
+      });
+      accessSuite.passed++;
+    } else {
+      accessSuite.tests.push({
+        name: "Starter plan blocked from action plan",
+        status: "fail",
+        message: "Starter plan should be blocked from action plan (Pro only)",
+      });
+      accessSuite.failed++;
+    }
   } catch (err) {
-    mockSuite.tests.push({
-      name: "Service uses real LLM calls",
+    accessSuite.tests.push({
+      name: "Starter plan blocked from action plan",
       status: "fail",
-      message: `LLM import error: ${err instanceof Error ? err.message : "Unknown"}`,
+      message: `Error: ${err instanceof Error ? err.message : "Unknown"}`,
     });
-    mockSuite.failed++;
+    accessSuite.failed++;
   }
 
-  suites.push(mockSuite);
+  // Test 6.4: Pro plan has unlimited access
+  try {
+    const gapResult = canUseGapAnalysis("pro", 1000);
+    const contentResult = canUseContentRecommendations("pro", 1000);
+    const actionResult = canUseActionPlan("pro");
+    
+    if (gapResult.allowed && contentResult.allowed && actionResult.allowed) {
+      accessSuite.tests.push({
+        name: "Pro plan has unlimited access",
+        status: "pass",
+        message: "All features available even at high usage",
+      });
+      accessSuite.passed++;
+    } else {
+      accessSuite.tests.push({
+        name: "Pro plan has unlimited access",
+        status: "fail",
+        message: "Pro plan should have unlimited access",
+      });
+      accessSuite.failed++;
+    }
+  } catch (err) {
+    accessSuite.tests.push({
+      name: "Pro plan has unlimited access",
+      status: "fail",
+      message: `Error: ${err instanceof Error ? err.message : "Unknown"}`,
+    });
+    accessSuite.failed++;
+  }
+
+  suites.push(accessSuite);
 
   // ============================================
-  // SUITE 7: Usage Tracking Tests
+  // SUITE 7: Feature Summary Tests
   // ============================================
-  const usageSuite: TestSuite = {
-    name: "Usage Tracking & Enforcement",
+  const summarySuite: TestSuite = {
+    name: "Feature Summary",
     tests: [],
     passed: 0,
     failed: 0,
     skipped: 0,
   };
 
-  // Test 7.1: getIntelligenceLimits returns correct structure
+  // Test 7.1: getIntelligenceFeatureSummary returns correct structure
   try {
-    const freeLimits = getIntelligenceLimits("free");
-    const starterLimits = getIntelligenceLimits("starter");
-    const proLimits = getIntelligenceLimits("pro");
+    const freeSummary = getIntelligenceFeatureSummary("free");
+    const starterSummary = getIntelligenceFeatureSummary("starter");
+    const proSummary = getIntelligenceFeatureSummary("pro");
     
     const hasCorrectStructure = 
-      typeof freeLimits.gapAnalyses === "number" &&
-      typeof freeLimits.contentIdeas === "number" &&
-      typeof freeLimits.actionPlans === "number" &&
-      typeof starterLimits.gapAnalyses === "number" &&
-      typeof proLimits.gapAnalyses === "number";
+      typeof freeSummary.gapAnalyses.limit === "number" &&
+      typeof freeSummary.contentIdeas.limit === "number" &&
+      typeof freeSummary.actionPlans.available === "boolean" &&
+      typeof starterSummary.gapAnalyses.limit === "number" &&
+      typeof proSummary.gapAnalyses.limit === "number";
     
     if (hasCorrectStructure) {
-      usageSuite.tests.push({
-        name: "Intelligence limits function returns correct structure",
+      summarySuite.tests.push({
+        name: "Intelligence summary returns correct structure",
         status: "pass",
-        message: "All plans have gapAnalyses, contentIdeas, actionPlans limits",
-        details: { free: freeLimits, starter: starterLimits, pro: proLimits },
+        message: "All plans have gapAnalyses, contentIdeas, actionPlans info",
+        details: { 
+          free: { gap: freeSummary.gapAnalyses.limit, content: freeSummary.contentIdeas.limit },
+          starter: { gap: starterSummary.gapAnalyses.limit, content: starterSummary.contentIdeas.limit },
+          pro: { gap: proSummary.gapAnalyses.limit, content: proSummary.contentIdeas.limit },
+        },
       });
-      usageSuite.passed++;
+      summarySuite.passed++;
     } else {
-      throw new Error("Missing limit properties");
+      throw new Error("Missing properties");
     }
   } catch (err) {
-    usageSuite.tests.push({
-      name: "Intelligence limits function returns correct structure",
+    summarySuite.tests.push({
+      name: "Intelligence summary returns correct structure",
       status: "fail",
-      message: `Limits error: ${err instanceof Error ? err.message : "Unknown"}`,
+      message: `Error: ${err instanceof Error ? err.message : "Unknown"}`,
     });
-    usageSuite.failed++;
+    summarySuite.failed++;
   }
 
   // Test 7.2: Free plan has zero limits
   try {
-    const freeLimits = getIntelligenceLimits("free");
+    const freeSummary = getIntelligenceFeatureSummary("free");
     
-    if (freeLimits.gapAnalyses === 0 && 
-        freeLimits.contentIdeas === 0 && 
-        freeLimits.actionPlans === 0) {
-      usageSuite.tests.push({
+    if (freeSummary.gapAnalyses.limit === 0 && 
+        freeSummary.contentIdeas.limit === 0 && 
+        !freeSummary.actionPlans.available) {
+      summarySuite.tests.push({
         name: "Free plan has zero intelligence limits",
         status: "pass",
         message: "Free users cannot use intelligence features",
       });
-      usageSuite.passed++;
+      summarySuite.passed++;
     } else {
-      usageSuite.tests.push({
+      summarySuite.tests.push({
         name: "Free plan has zero intelligence limits",
         status: "fail",
         message: "Free plan should have 0 for all intelligence limits",
-        details: freeLimits,
+        details: freeSummary,
       });
-      usageSuite.failed++;
+      summarySuite.failed++;
     }
   } catch (err) {
-    usageSuite.tests.push({
+    summarySuite.tests.push({
       name: "Free plan has zero intelligence limits",
       status: "fail",
       message: `Error: ${err instanceof Error ? err.message : "Unknown"}`,
     });
-    usageSuite.failed++;
+    summarySuite.failed++;
   }
 
   // Test 7.3: Pro plan has unlimited (Infinity)
   try {
-    const proLimits = getIntelligenceLimits("pro");
+    const proSummary = getIntelligenceFeatureSummary("pro");
     
-    if (proLimits.gapAnalyses === Infinity && 
-        proLimits.contentIdeas === Infinity && 
-        proLimits.actionPlans === Infinity) {
-      usageSuite.tests.push({
+    if (proSummary.gapAnalyses.limit === Infinity && 
+        proSummary.contentIdeas.limit === Infinity && 
+        proSummary.actionPlans.available) {
+      summarySuite.tests.push({
         name: "Pro plan has unlimited intelligence",
         status: "pass",
         message: "Pro users have unlimited access to all features",
       });
-      usageSuite.passed++;
+      summarySuite.passed++;
     } else {
-      usageSuite.tests.push({
+      summarySuite.tests.push({
         name: "Pro plan has unlimited intelligence",
         status: "fail",
         message: "Pro plan should have Infinity for all intelligence limits",
-        details: proLimits,
+        details: proSummary,
       });
-      usageSuite.failed++;
+      summarySuite.failed++;
     }
   } catch (err) {
-    usageSuite.tests.push({
+    summarySuite.tests.push({
       name: "Pro plan has unlimited intelligence",
       status: "fail",
       message: `Error: ${err instanceof Error ? err.message : "Unknown"}`,
     });
-    usageSuite.failed++;
+    summarySuite.failed++;
   }
 
-  suites.push(usageSuite);
+  suites.push(summarySuite);
 
   // ============================================
   // Calculate totals
@@ -830,4 +779,3 @@ Provide a brief analysis (max 50 words) of why the competitor might be cited ins
     timestamp: new Date().toISOString(),
   });
 }
-

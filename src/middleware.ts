@@ -25,6 +25,3 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|api/inngest|api/webhooks|api/test|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
-
-
-// Force redeploy Tue Jan  6 11:01:31 IST 2026
