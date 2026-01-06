@@ -84,13 +84,14 @@ function PricingContent() {
         { text: "GEO Score", included: true },
         { text: "Competitor tracking", included: false },
         { text: "Auto monitoring", included: false },
-        { text: "Email alerts", included: false },
+        { text: "\"Why Not Me?\" Analysis", included: false },
+        { text: "Content Recommendations", included: false },
       ],
     },
     {
       id: CITATION_PLANS.starter.id,
       name: CITATION_PLANS.starter.name,
-      description: CITATION_PLANS.starter.description,
+      description: "Know why competitors win",
       monthlyPrice: CITATION_PLANS.starter.monthlyPrice,
       yearlyPrice: CITATION_PLANS.starter.yearlyPrice,
       icon: Rocket,
@@ -102,34 +103,36 @@ function PricingContent() {
         { text: "3 websites", included: true },
         { text: "Unlimited manual checks", included: true },
         { text: "30-day history", included: true },
-        { text: "GEO Score + Tips", included: true },
         { text: "2 competitors per site", included: true },
-        { text: "Daily auto-monitoring", included: true, highlight: true },
-        { text: "Email alerts", included: true },
-        { text: "Weekly reports", included: true },
-        { text: "CSV export", included: true },
+        { text: "Daily auto-monitoring", included: true },
+        { text: "Email alerts & reports", included: true },
+        { text: "\"Why Not Me?\" Analysis (5/mo)", included: true, highlight: true },
+        { text: "Content Ideas (3/mo)", included: true, highlight: true },
+        { text: "Weekly Action Plan", included: false },
       ],
     },
     {
       id: CITATION_PLANS.pro.id,
       name: CITATION_PLANS.pro.name,
-      description: CITATION_PLANS.pro.description,
+      description: "Win every AI conversation",
       monthlyPrice: CITATION_PLANS.pro.monthlyPrice,
       yearlyPrice: CITATION_PLANS.pro.yearlyPrice,
       icon: Building2,
       color: "violet",
       cta: "Go Pro",
       ctaHref: `/signup?plan=pro&interval=${billingInterval}`,
+      badge: "Best Value",
       features: [
         { text: "10 websites", included: true },
         { text: "Unlimited manual checks", included: true },
         { text: "1-year history", included: true },
-        { text: "GEO Score + Tips", included: true },
         { text: "10 competitors per site", included: true },
-        { text: "Hourly auto-monitoring", included: true, highlight: true },
-        { text: "Email alerts", included: true },
-        { text: "Weekly reports", included: true },
-        { text: "CSV export", included: true },
+        { text: "Hourly auto-monitoring", included: true },
+        { text: "Email alerts & reports", included: true },
+        { text: "Unlimited \"Why Not Me?\"", included: true, highlight: true },
+        { text: "Unlimited Content Ideas", included: true, highlight: true },
+        { text: "Weekly Action Playbook", included: true, highlight: true },
+        { text: "Competitor Deep Dive", included: true, highlight: true },
       ],
     },
   ];
@@ -140,14 +143,14 @@ function PricingContent() {
       <section className="pt-32 pb-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <span className="text-emerald-400 text-sm font-medium tracking-wide uppercase">
-            Simple Pricing
+            Citation Intelligence
           </span>
           <h1 className="mt-4 text-4xl md:text-5xl font-bold text-white">
-            Know when AI talks about you
+            Know <span className="text-emerald-400">why</span> AI chooses your competitors
           </h1>
           <p className="mt-6 text-lg text-zinc-400 max-w-2xl mx-auto">
             Track citations across ChatGPT, Perplexity, and Google AI. 
-            See who AI recommends—you or your competitors.
+            See exactly what to do to get cited instead of your competitors.
           </p>
           
           {/* Monthly/Yearly Toggle */}

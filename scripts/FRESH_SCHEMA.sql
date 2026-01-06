@@ -211,6 +211,10 @@ CREATE TABLE "public"."usage" (
   "checks_used" integer DEFAULT 0,
   "sites_used" integer DEFAULT 0,
   "competitors_used" integer DEFAULT 0,
+  -- Intelligence feature usage
+  "gap_analyses_used" integer DEFAULT 0,
+  "content_ideas_used" integer DEFAULT 0,
+  "action_plans_used" integer DEFAULT 0,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL DEFAULT now(),
   UNIQUE("organization_id", "period")

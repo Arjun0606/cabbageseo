@@ -24,6 +24,7 @@ export interface CitationPlanLimits {
 }
 
 export interface CitationPlanFeatures {
+  // Monitoring
   manualChecks: boolean;
   dailyAutoCheck: boolean;      // Inngest cron - daily
   hourlyAutoCheck: boolean;     // Inngest cron - hourly (Pro only)
@@ -33,15 +34,32 @@ export interface CitationPlanFeatures {
   competitorTracking: boolean;
   geoScore: boolean;
   geoTips: boolean;
+  
+  // Intelligence (the $100k features)
+  citationGapAnalysis: boolean;       // "Why competitor, not me?"
+  citationGapFull: boolean;           // Full per-query analysis (Pro only)
+  contentRecommendations: boolean;    // "What to publish next"
+  contentRecsUnlimited: boolean;      // Unlimited vs 3/month
+  weeklyActionPlan: boolean;          // GEO Action Playbook (Pro only)
+  competitorDeepDive: boolean;        // Full competitor comparison (Pro only)
+}
+
+// Intelligence limits
+export interface CitationIntelligenceLimits {
+  gapAnalysesPerMonth: number;        // -1 = unlimited
+  contentIdeasPerMonth: number;       // -1 = unlimited
+  actionPlansPerMonth: number;        // 0 = not available
 }
 
 export interface CitationPlan {
   id: CitationPlanId;
   name: string;
   description: string;
+  tagline?: string;  // Value prop for marketing
   monthlyPrice: number;
   yearlyPrice: number;
   limits: CitationPlanLimits;
+  intelligenceLimits: CitationIntelligenceLimits;
   features: CitationPlanFeatures;
   isTrial?: boolean;
 }
@@ -51,6 +69,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     id: "free",
     name: "Free Trial",
     description: `${TRIAL_DAYS}-day trial to explore`,
+    tagline: "See who AI cites",
     monthlyPrice: 0,
     yearlyPrice: 0,
     isTrial: true,
@@ -60,6 +79,11 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       competitors: 0,
       historyDays: 7,
       teamMembers: 1,
+    },
+    intelligenceLimits: {
+      gapAnalysesPerMonth: 0,    // No intelligence on free
+      contentIdeasPerMonth: 0,
+      actionPlansPerMonth: 0,
     },
     features: {
       manualChecks: true,
@@ -71,12 +95,20 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       competitorTracking: false,
       geoScore: true,
       geoTips: false,
+      // Intelligence features
+      citationGapAnalysis: false,
+      citationGapFull: false,
+      contentRecommendations: false,
+      contentRecsUnlimited: false,
+      weeklyActionPlan: false,
+      competitorDeepDive: false,
     },
   },
   starter: {
     id: "starter",
     name: "Starter",
     description: "For individuals & small brands",
+    tagline: "Know why competitors win",
     monthlyPrice: 29,
     yearlyPrice: 24,
     limits: {
@@ -85,6 +117,11 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       competitors: 2,
       historyDays: 30,
       teamMembers: 1,
+    },
+    intelligenceLimits: {
+      gapAnalysesPerMonth: 5,    // 5 "why not me?" analyses
+      contentIdeasPerMonth: 3,   // 3 content ideas
+      actionPlansPerMonth: 0,    // No action plans (Pro only)
     },
     features: {
       manualChecks: true,
@@ -96,12 +133,20 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       competitorTracking: true,
       geoScore: true,
       geoTips: true,
+      // Intelligence features
+      citationGapAnalysis: true,    // Basic "why not me?" summary
+      citationGapFull: false,       // Full per-query analysis is Pro
+      contentRecommendations: true, // Limited content ideas
+      contentRecsUnlimited: false,  // 3/month limit
+      weeklyActionPlan: false,      // Pro only
+      competitorDeepDive: false,    // Pro only
     },
   },
   pro: {
     id: "pro",
     name: "Pro",
     description: "For brands & growing companies",
+    tagline: "Win every AI conversation",
     monthlyPrice: 79,
     yearlyPrice: 66,
     limits: {
@@ -110,6 +155,11 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       competitors: 10,
       historyDays: 365,
       teamMembers: 1,
+    },
+    intelligenceLimits: {
+      gapAnalysesPerMonth: -1,   // Unlimited
+      contentIdeasPerMonth: -1,  // Unlimited
+      actionPlansPerMonth: 4,    // Weekly action plans
     },
     features: {
       manualChecks: true,
@@ -121,6 +171,13 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       competitorTracking: true,
       geoScore: true,
       geoTips: true,
+      // Intelligence features - ALL UNLOCKED
+      citationGapAnalysis: true,    // Full gap analysis
+      citationGapFull: true,        // Per-query deep dive
+      contentRecommendations: true, // Unlimited content ideas
+      contentRecsUnlimited: true,   // No limits
+      weeklyActionPlan: true,       // GEO Action Playbook
+      competitorDeepDive: true,     // Full competitor breakdown
     },
   },
 };
@@ -250,4 +307,130 @@ export function canAddSite(
 
 export function formatLimit(value: number): string {
   return value === -1 ? "Unlimited" : value.toString();
+}
+
+// ============================================
+// INTELLIGENCE FEATURE HELPERS
+// ============================================
+
+export function canUseGapAnalysis(
+  planId: CitationPlanId | string,
+  usedThisMonth: number
+): { allowed: boolean; reason?: string; remaining?: number } {
+  const plan = getCitationPlan(planId);
+  
+  if (!plan.features.citationGapAnalysis) {
+    return {
+      allowed: false,
+      reason: "Citation Gap Analysis requires Starter plan or higher.",
+    };
+  }
+  
+  const limit = plan.intelligenceLimits.gapAnalysesPerMonth;
+  
+  // Unlimited
+  if (limit === -1) {
+    return { allowed: true, remaining: -1 };
+  }
+  
+  if (usedThisMonth >= limit) {
+    return {
+      allowed: false,
+      reason: `Monthly limit reached (${limit}). Upgrade to Pro for unlimited.`,
+      remaining: 0,
+    };
+  }
+  
+  return { allowed: true, remaining: limit - usedThisMonth };
+}
+
+export function canUseContentRecommendations(
+  planId: CitationPlanId | string,
+  usedThisMonth: number
+): { allowed: boolean; reason?: string; remaining?: number } {
+  const plan = getCitationPlan(planId);
+  
+  if (!plan.features.contentRecommendations) {
+    return {
+      allowed: false,
+      reason: "Content Recommendations require Starter plan or higher.",
+    };
+  }
+  
+  const limit = plan.intelligenceLimits.contentIdeasPerMonth;
+  
+  // Unlimited
+  if (limit === -1) {
+    return { allowed: true, remaining: -1 };
+  }
+  
+  if (usedThisMonth >= limit) {
+    return {
+      allowed: false,
+      reason: `Monthly limit reached (${limit} ideas). Upgrade to Pro for unlimited.`,
+      remaining: 0,
+    };
+  }
+  
+  return { allowed: true, remaining: limit - usedThisMonth };
+}
+
+export function canUseActionPlan(
+  planId: CitationPlanId | string
+): { allowed: boolean; reason?: string } {
+  const plan = getCitationPlan(planId);
+  
+  if (!plan.features.weeklyActionPlan) {
+    return {
+      allowed: false,
+      reason: "Weekly Action Plans are a Pro feature. Upgrade to unlock.",
+    };
+  }
+  
+  return { allowed: true };
+}
+
+export function canUseCompetitorDeepDive(
+  planId: CitationPlanId | string
+): { allowed: boolean; reason?: string } {
+  const plan = getCitationPlan(planId);
+  
+  if (!plan.features.competitorDeepDive) {
+    return {
+      allowed: false,
+      reason: "Competitor Deep Dive is a Pro feature. Upgrade to unlock.",
+    };
+  }
+  
+  return { allowed: true };
+}
+
+// Get intelligence feature summary for UI
+export function getIntelligenceFeatureSummary(planId: CitationPlanId | string): {
+  gapAnalysis: string;
+  contentIdeas: string;
+  actionPlan: string;
+  competitorDeepDive: string;
+} {
+  const plan = getCitationPlan(planId);
+  const limits = plan.intelligenceLimits;
+  
+  return {
+    gapAnalysis: !plan.features.citationGapAnalysis 
+      ? "Not available"
+      : limits.gapAnalysesPerMonth === -1 
+        ? "Unlimited per-query analysis"
+        : `${limits.gapAnalysesPerMonth} analyses/month`,
+    contentIdeas: !plan.features.contentRecommendations
+      ? "Not available"  
+      : limits.contentIdeasPerMonth === -1
+        ? "Unlimited ideas"
+        : `${limits.contentIdeasPerMonth} ideas/month`,
+    actionPlan: plan.features.weeklyActionPlan
+      ? "Weekly GEO Playbook"
+      : "Pro only",
+    competitorDeepDive: plan.features.competitorDeepDive
+      ? "Full competitor breakdown"
+      : "Pro only",
+  };
 }
