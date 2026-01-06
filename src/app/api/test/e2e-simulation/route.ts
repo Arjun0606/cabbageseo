@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
       slug: org.id,
       plan: org.plan,
       created_at: new Date().toISOString(),
-    });
+    } as any);
     
     if (error) {
       results.push({
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
       full_name: `Test ${user.org_id.split("-")[2]} User`,
       organization_id: user.org_id,
       created_at: new Date().toISOString(),
-    });
+    } as any);
   }
 
   // ============================================
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
     domain: "freetest.com",
     name: "Free Test Site",
     created_at: new Date().toISOString(),
-  });
+  } as any);
 
   // Test 4: Manual checks (3/day limit)
   const freeCheck1 = canRunManualCheck("free", 0);
@@ -269,7 +269,7 @@ export async function GET(request: NextRequest) {
       domain: `startertest${i}.com`,
       name: `Starter Test Site ${i}`,
       created_at: new Date().toISOString(),
-    });
+    } as any);
   }
 
   // Test 13: Unlimited manual checks
@@ -416,7 +416,7 @@ export async function GET(request: NextRequest) {
       domain: `protest${i}.com`,
       name: `Pro Test Site ${i}`,
       created_at: new Date().toISOString(),
-    });
+    } as any);
   }
 
   // Test 25: Competitor limit (10)
