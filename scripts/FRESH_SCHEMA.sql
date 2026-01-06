@@ -178,11 +178,11 @@ CREATE TABLE "public"."sites" (
 CREATE TABLE "public"."citations" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   "site_id" uuid NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
-  "platform" text NOT NULL,
+  "platform" citation_platform NOT NULL,
   "query" text NOT NULL,
   "snippet" text,
   "page_url" text,
-  "confidence" text DEFAULT 'medium',
+  "confidence" citation_confidence DEFAULT 'medium',
   "cited_at" timestamptz NOT NULL DEFAULT now(),
   "last_checked_at" timestamptz NOT NULL DEFAULT now(),
   "created_at" timestamptz NOT NULL DEFAULT now()
@@ -196,6 +196,7 @@ CREATE TABLE "public"."competitors" (
   "name" text,
   "total_citations" integer DEFAULT 0,
   "citations_this_week" integer DEFAULT 0,
+  "citations_change" integer DEFAULT 0,
   "last_checked_at" timestamptz,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL DEFAULT now(),
