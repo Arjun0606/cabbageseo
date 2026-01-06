@@ -263,7 +263,7 @@ export async function GET(request: NextRequest) {
         .insert({
           user_id: userId,
           email_new_citation: true,
-          email_weekly_digest: plan.features.weeklyReports,
+          email_weekly_digest: plan.features.weeklyReport,
         } as never)
         .select("id")
         .single();
@@ -322,9 +322,9 @@ export async function GET(request: NextRequest) {
       });
 
       tests.push({
-        name: `Weekly reports: ${plan.features.weeklyReports ? "ENABLED" : "disabled"}`,
+        name: `Weekly reports: ${plan.features.weeklyReport ? "ENABLED" : "disabled"}`,
         passed: true,
-        data: plan.features.weeklyReports,
+        data: plan.features.weeklyReport,
       });
 
       tests.push({
