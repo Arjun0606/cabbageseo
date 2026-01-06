@@ -22,7 +22,6 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { 
   CITATION_PLANS, 
-  getIntelligenceFeatureSummary,
   canUseGapAnalysis,
   canUseContentRecommendations,
   canUseActionPlan,
@@ -83,16 +82,16 @@ export async function GET() {
 
   // Test 1.2: Starter plan should have LIMITED intelligence features
   const starterPlan = CITATION_PLANS.starter;
-  const starterSummary = getIntelligenceFeatureSummary("starter");
+  const starterLimits = starterPlan.intelligenceLimits;
   if (starterPlan.features.citationGapAnalysis && 
       starterPlan.features.contentRecommendations &&
       !starterPlan.features.weeklyActionPlan &&
-      starterSummary.gapAnalyses.limit === 5 &&
-      starterSummary.contentIdeas.limit === 3) {
+      starterLimits.gapAnalysesPerMonth === 5 &&
+      starterLimits.contentIdeasPerMonth === 3) {
     planSuite.tests.push({
       name: "Starter plan has LIMITED intelligence features",
       status: "pass",
-      message: `Gap: ${starterSummary.gapAnalyses.limit}/mo, Content: ${starterSummary.contentIdeas.limit}/mo, Action Plan: No`,
+      message: `Gap: ${starterLimits.gapAnalysesPerMonth}/mo, Content: ${starterLimits.contentIdeasPerMonth}/mo, Action Plan: No`,
     });
     planSuite.passed++;
   } else {
@@ -100,19 +99,19 @@ export async function GET() {
       name: "Starter plan has LIMITED intelligence features",
       status: "fail",
       message: "Starter plan limits are incorrect",
-      details: { features: starterPlan.features, summary: starterSummary },
+      details: { features: starterPlan.features, limits: starterLimits },
     });
     planSuite.failed++;
   }
 
   // Test 1.3: Pro plan should have UNLIMITED intelligence features
   const proPlan = CITATION_PLANS.pro;
-  const proSummary = getIntelligenceFeatureSummary("pro");
+  const proLimits = proPlan.intelligenceLimits;
   if (proPlan.features.citationGapAnalysis && 
       proPlan.features.contentRecommendations &&
       proPlan.features.weeklyActionPlan &&
       proPlan.features.competitorDeepDive &&
-      proSummary.gapAnalyses.limit === Infinity) {
+      proLimits.gapAnalysesPerMonth === -1) { // -1 means unlimited
     planSuite.tests.push({
       name: "Pro plan has UNLIMITED intelligence features",
       status: "pass",
@@ -124,7 +123,7 @@ export async function GET() {
       name: "Pro plan has UNLIMITED intelligence features",
       status: "fail",
       message: "Pro plan should have unlimited intelligence",
-      details: { features: proPlan.features, summary: proSummary },
+      details: { features: proPlan.features, limits: proLimits },
     });
     planSuite.failed++;
   }
@@ -629,116 +628,116 @@ Provide a brief analysis (max 50 words) of why the competitor might be cited ins
   suites.push(accessSuite);
 
   // ============================================
-  // SUITE 7: Feature Summary Tests
+  // SUITE 7: Intelligence Limits Tests
   // ============================================
-  const summarySuite: TestSuite = {
-    name: "Feature Summary",
+  const limitsSuite: TestSuite = {
+    name: "Intelligence Limits",
     tests: [],
     passed: 0,
     failed: 0,
     skipped: 0,
   };
 
-  // Test 7.1: getIntelligenceFeatureSummary returns correct structure
+  // Test 7.1: Plans have correct intelligence limits structure
   try {
-    const freeSummary = getIntelligenceFeatureSummary("free");
-    const starterSummary = getIntelligenceFeatureSummary("starter");
-    const proSummary = getIntelligenceFeatureSummary("pro");
+    const freeLimits = CITATION_PLANS.free.intelligenceLimits;
+    const starterLimits = CITATION_PLANS.starter.intelligenceLimits;
+    const proLimits = CITATION_PLANS.pro.intelligenceLimits;
     
     const hasCorrectStructure = 
-      typeof freeSummary.gapAnalyses.limit === "number" &&
-      typeof freeSummary.contentIdeas.limit === "number" &&
-      typeof freeSummary.actionPlans.available === "boolean" &&
-      typeof starterSummary.gapAnalyses.limit === "number" &&
-      typeof proSummary.gapAnalyses.limit === "number";
+      typeof freeLimits.gapAnalysesPerMonth === "number" &&
+      typeof freeLimits.contentIdeasPerMonth === "number" &&
+      typeof freeLimits.actionPlansPerMonth === "number" &&
+      typeof starterLimits.gapAnalysesPerMonth === "number" &&
+      typeof proLimits.gapAnalysesPerMonth === "number";
     
     if (hasCorrectStructure) {
-      summarySuite.tests.push({
-        name: "Intelligence summary returns correct structure",
+      limitsSuite.tests.push({
+        name: "Intelligence limits have correct structure",
         status: "pass",
-        message: "All plans have gapAnalyses, contentIdeas, actionPlans info",
+        message: "All plans have gapAnalysesPerMonth, contentIdeasPerMonth, actionPlansPerMonth",
         details: { 
-          free: { gap: freeSummary.gapAnalyses.limit, content: freeSummary.contentIdeas.limit },
-          starter: { gap: starterSummary.gapAnalyses.limit, content: starterSummary.contentIdeas.limit },
-          pro: { gap: proSummary.gapAnalyses.limit, content: proSummary.contentIdeas.limit },
+          free: freeLimits,
+          starter: starterLimits,
+          pro: proLimits,
         },
       });
-      summarySuite.passed++;
+      limitsSuite.passed++;
     } else {
       throw new Error("Missing properties");
     }
   } catch (err) {
-    summarySuite.tests.push({
-      name: "Intelligence summary returns correct structure",
+    limitsSuite.tests.push({
+      name: "Intelligence limits have correct structure",
       status: "fail",
       message: `Error: ${err instanceof Error ? err.message : "Unknown"}`,
     });
-    summarySuite.failed++;
+    limitsSuite.failed++;
   }
 
   // Test 7.2: Free plan has zero limits
   try {
-    const freeSummary = getIntelligenceFeatureSummary("free");
+    const freeLimits = CITATION_PLANS.free.intelligenceLimits;
     
-    if (freeSummary.gapAnalyses.limit === 0 && 
-        freeSummary.contentIdeas.limit === 0 && 
-        !freeSummary.actionPlans.available) {
-      summarySuite.tests.push({
+    if (freeLimits.gapAnalysesPerMonth === 0 && 
+        freeLimits.contentIdeasPerMonth === 0 && 
+        freeLimits.actionPlansPerMonth === 0) {
+      limitsSuite.tests.push({
         name: "Free plan has zero intelligence limits",
         status: "pass",
         message: "Free users cannot use intelligence features",
       });
-      summarySuite.passed++;
+      limitsSuite.passed++;
     } else {
-      summarySuite.tests.push({
+      limitsSuite.tests.push({
         name: "Free plan has zero intelligence limits",
         status: "fail",
         message: "Free plan should have 0 for all intelligence limits",
-        details: freeSummary,
+        details: freeLimits,
       });
-      summarySuite.failed++;
+      limitsSuite.failed++;
     }
   } catch (err) {
-    summarySuite.tests.push({
+    limitsSuite.tests.push({
       name: "Free plan has zero intelligence limits",
       status: "fail",
       message: `Error: ${err instanceof Error ? err.message : "Unknown"}`,
     });
-    summarySuite.failed++;
+    limitsSuite.failed++;
   }
 
-  // Test 7.3: Pro plan has unlimited (Infinity)
+  // Test 7.3: Pro plan has unlimited (-1)
   try {
-    const proSummary = getIntelligenceFeatureSummary("pro");
+    const proLimits = CITATION_PLANS.pro.intelligenceLimits;
     
-    if (proSummary.gapAnalyses.limit === Infinity && 
-        proSummary.contentIdeas.limit === Infinity && 
-        proSummary.actionPlans.available) {
-      summarySuite.tests.push({
+    // -1 means unlimited in the plan config
+    if (proLimits.gapAnalysesPerMonth === -1 && 
+        proLimits.contentIdeasPerMonth === -1) {
+      limitsSuite.tests.push({
         name: "Pro plan has unlimited intelligence",
         status: "pass",
-        message: "Pro users have unlimited access to all features",
+        message: "Pro users have unlimited access to gap analysis and content ideas",
       });
-      summarySuite.passed++;
+      limitsSuite.passed++;
     } else {
-      summarySuite.tests.push({
+      limitsSuite.tests.push({
         name: "Pro plan has unlimited intelligence",
         status: "fail",
-        message: "Pro plan should have Infinity for all intelligence limits",
-        details: proSummary,
+        message: "Pro plan should have -1 (unlimited) for main intelligence limits",
+        details: proLimits,
       });
-      summarySuite.failed++;
+      limitsSuite.failed++;
     }
   } catch (err) {
-    summarySuite.tests.push({
+    limitsSuite.tests.push({
       name: "Pro plan has unlimited intelligence",
       status: "fail",
       message: `Error: ${err instanceof Error ? err.message : "Unknown"}`,
     });
-    summarySuite.failed++;
+    limitsSuite.failed++;
   }
 
-  suites.push(summarySuite);
+  suites.push(limitsSuite);
 
   // ============================================
   // Calculate totals

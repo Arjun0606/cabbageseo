@@ -583,18 +583,18 @@ export async function GET(request: NextRequest) {
 
   // Test intelligence limits configuration
   try {
-    const { getIntelligenceFeatureSummary } = await import("@/lib/billing/citation-plans");
+    const { CITATION_PLANS } = await import("@/lib/billing/citation-plans");
     
-    const freeSummary = getIntelligenceFeatureSummary("free");
-    const starterSummary = getIntelligenceFeatureSummary("starter");
-    const proSummary = getIntelligenceFeatureSummary("pro");
+    const freeLimits = CITATION_PLANS.free.intelligenceLimits;
+    const starterLimits = CITATION_PLANS.starter.intelligenceLimits;
+    const proLimits = CITATION_PLANS.pro.intelligenceLimits;
     
     intelligenceTests.push({
       name: "Intelligence limits configured",
-      passed: freeSummary.gapAnalyses.limit === 0 && 
-              starterSummary.gapAnalyses.limit === 5 && 
-              proSummary.gapAnalyses.limit === Infinity,
-      data: { free: freeSummary, starter: starterSummary, pro: proSummary },
+      passed: freeLimits.gapAnalysesPerMonth === 0 && 
+              starterLimits.gapAnalysesPerMonth === 5 && 
+              proLimits.gapAnalysesPerMonth === -1, // -1 means unlimited
+      data: { free: freeLimits, starter: starterLimits, pro: proLimits },
     });
   } catch (e) {
     intelligenceTests.push({
