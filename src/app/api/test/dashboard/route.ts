@@ -54,6 +54,23 @@ export async function GET(request: NextRequest) {
       // Create test organization
       const orgStart = Date.now();
       const orgSlug = `test-${planId}-${Date.now()}`;
+      
+      // First check if schema is applied
+      const { data: schemaCheck, error: schemaError } = await supabase
+        .from("organizations")
+        .select("id")
+        .limit(0);
+      
+      if (schemaError?.message?.includes("schema cache")) {
+        tests.push({
+          name: "Database schema check",
+          passed: false,
+          error: "Schema not applied! Please run FRESH_SCHEMA.sql in Supabase SQL Editor.",
+        });
+        planTests.push({ plan: planId, tests });
+        continue;
+      }
+      
       const { data: org, error: orgError } = await supabase
         .from("organizations")
         .insert({
