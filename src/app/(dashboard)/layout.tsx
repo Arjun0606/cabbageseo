@@ -69,7 +69,7 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
             />
             <div>
               <span className="font-bold text-white">CabbageSEO</span>
-              <p className="text-[10px] text-emerald-400 uppercase tracking-wider">AI Intel</p>
+              <p className="text-[10px] text-emerald-400 uppercase tracking-wider">AI Search Intelligence</p>
             </div>
           </Link>
           {mobile && onClose && (

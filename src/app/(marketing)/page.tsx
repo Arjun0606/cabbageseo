@@ -16,7 +16,10 @@ import {
   Globe,
   TrendingUp,
   Shield,
-  Zap
+  Zap,
+  Lightbulb,
+  Target,
+  FileText
 } from "lucide-react";
 import { TRIAL_DAYS } from "@/lib/billing/citation-plans";
 
@@ -60,18 +63,18 @@ export default function HomePage() {
           <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 mb-8">
             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
             <span className="text-emerald-400 text-sm font-medium">
-              AI Brand Intelligence
+              AI Search Intelligence
             </span>
           </div>
           
           <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight">
-            See when AI recommends
-            <span className="block text-emerald-400">you or your competitors</span>
+            Know <span className="text-emerald-400">why</span> AI cites your competitors
+            <span className="block text-zinc-400 text-3xl md:text-4xl mt-2">and exactly what to do about it</span>
           </h1>
           
           <p className="mt-6 text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto">
-            Track when ChatGPT, Perplexity, and Google AI mention your company.
-            Know instantly if they&apos;re sending traffic to you—or your competition.
+            Track citations across ChatGPT, Perplexity, and Google AI.
+            Get actionable insights on <span className="text-white">why competitors win</span> and <span className="text-emerald-400">how to beat them</span>.
           </p>
           
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -146,23 +149,107 @@ export default function HomePage() {
                 <div className="w-3 h-3 rounded-full bg-green-500" />
               </div>
               <div className="font-mono text-sm space-y-2">
-                <p className="text-zinc-500">$ Auto-checking AI platforms...</p>
+                <p className="text-zinc-500">$ Checking AI platforms...</p>
                 <p className="text-emerald-400">✓ Perplexity: yoursite.com cited</p>
-                <p className="text-emerald-400">✓ Google AI: yoursite.com mentioned</p>
                 <p className="text-yellow-400">○ ChatGPT: competitor.com cited</p>
-                <p className="text-zinc-500 mt-4">→ Email alert sent</p>
+                <p className="text-zinc-500 mt-3">→ Analyzing why competitor won...</p>
+                <p className="text-violet-400">→ Missing: structured FAQ schema</p>
+                <p className="text-violet-400">→ Missing: E-E-A-T author signals</p>
+                <p className="text-emerald-400 mt-3">✓ 3 action items generated</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
+      {/* Intelligence Features - NEW */}
+      <section className="py-20 px-6 bg-gradient-to-b from-emerald-950/10 to-zinc-950">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 rounded-full px-4 py-1.5 mb-6">
+              <Zap className="w-4 h-4 text-violet-400" />
+              <span className="text-violet-400 text-sm font-medium">
+                Not just monitoring—actionable intelligence
+              </span>
+            </div>
+            <h2 className="text-3xl font-bold text-white">
+              From &quot;I see it&quot; to &quot;I know what to do&quot;
+            </h2>
+            <p className="mt-4 text-zinc-400 max-w-xl mx-auto">
+              Most tools just show you data. We tell you exactly what to change to get cited by AI instead of your competitors.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-zinc-900 rounded-2xl p-8 border border-zinc-800 hover:border-violet-500/30 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center mb-4">
+                <Target className="w-6 h-6 text-violet-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                &quot;Why Not Me?&quot; Analysis
+              </h3>
+              <p className="text-zinc-400 mb-4">
+                For every query where competitors get cited, we analyze exactly why AI trusted them over you—missing entities, authority signals, content gaps.
+              </p>
+              <p className="text-sm text-violet-400 font-medium">
+                → 5 bullet points on exactly what to fix
+              </p>
+            </div>
+            
+            <div className="bg-zinc-900 rounded-2xl p-8 border border-zinc-800 hover:border-emerald-500/30 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
+                <Lightbulb className="w-6 h-6 text-emerald-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Content Recommendations
+              </h3>
+              <p className="text-zinc-400 mb-4">
+                Based on queries and competitor citations, we tell you what pages to create, what headings to use, and what entities to mention.
+              </p>
+              <p className="text-sm text-emerald-400 font-medium">
+                → AI-native content planning, not generic SEO
+              </p>
+            </div>
+            
+            <div className="bg-zinc-900 rounded-2xl p-8 border border-zinc-800 hover:border-amber-500/30 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center mb-4">
+                <FileText className="w-6 h-6 text-amber-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Weekly Action Playbook
+              </h3>
+              <p className="text-zinc-400 mb-4">
+                Every week, we send you a prioritized to-do list based on what queries you lost, which competitors won, and what they did differently.
+              </p>
+              <p className="text-sm text-amber-400 font-medium">
+                → Your AI Search To-Do List, delivered weekly
+              </p>
+            </div>
+            
+            <div className="bg-zinc-900 rounded-2xl p-8 border border-zinc-800 hover:border-blue-500/30 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-4">
+                <Users className="w-6 h-6 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Competitor Deep Dive
+              </h3>
+              <p className="text-zinc-400 mb-4">
+                Full breakdown of why each competitor wins citations—their content structure, authority signals, and weaknesses you can exploit.
+              </p>
+              <p className="text-sm text-blue-400 font-medium">
+                → Turn competitor wins into your opportunities
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Monitoring Features */}
       <section className="py-20 px-6 bg-zinc-900/50">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white">
-              Everything you need
+              Plus real-time monitoring
             </h2>
             <p className="mt-4 text-zinc-400">
               Set it up once, let it run on autopilot.
@@ -357,7 +444,7 @@ export default function HomePage() {
               />
               <div>
                 <span className="font-bold text-white text-lg">CabbageSEO</span>
-                <p className="text-xs text-zinc-500">AI Brand Intelligence</p>
+                <p className="text-xs text-zinc-500">AI Search Intelligence</p>
               </div>
             </div>
             

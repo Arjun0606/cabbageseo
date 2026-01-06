@@ -390,7 +390,7 @@ function PricingContent() {
               />
               <div>
                 <span className="font-bold text-white text-lg">CabbageSEO</span>
-                <p className="text-xs text-zinc-500">AI Brand Intelligence</p>
+                <p className="text-xs text-zinc-500">AI Search Intelligence</p>
               </div>
             </div>
             
