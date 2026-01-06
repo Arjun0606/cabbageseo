@@ -49,20 +49,20 @@ export async function GET(request: NextRequest) {
   // PHASE 1: DATABASE SETUP - Create Test Data
   // ============================================
   
-  // Create test organization for each plan
+  // Create test organization for each plan (using UUIDs)
   const testOrgs = [
-    { id: "test-org-free", plan: "free", name: "Test Free Org" },
-    { id: "test-org-starter", plan: "starter", name: "Test Starter Org" },
-    { id: "test-org-pro", plan: "pro", name: "Test Pro Org" },
+    { id: "00000000-0000-0000-0000-000000000001", plan: "free", name: "Test Free Org" },
+    { id: "00000000-0000-0000-0000-000000000002", plan: "starter", name: "Test Starter Org" },
+    { id: "00000000-0000-0000-0000-000000000003", plan: "pro", name: "Test Pro Org" },
   ];
 
-  // Clean up any existing test data
-  await supabase.from("citations").delete().like("site_id", "test-%");
-  await supabase.from("competitors").delete().like("site_id", "test-%");
-  await supabase.from("sites").delete().like("id", "test-%");
-  await supabase.from("usage").delete().like("organization_id", "test-%");
-  await supabase.from("users").delete().like("id", "test-%");
-  await supabase.from("organizations").delete().like("id", "test-%");
+  // Clean up any existing test data (using UUID pattern 00000000-0000-0000-0000-...)
+  await supabase.from("citations").delete().like("site_id", "00000000-0000-0000-0000-%");
+  await supabase.from("competitors").delete().like("site_id", "00000000-0000-0000-0000-%");
+  await supabase.from("sites").delete().like("id", "00000000-0000-0000-0000-%");
+  await supabase.from("usage").delete().like("organization_id", "00000000-0000-0000-0000-%");
+  await supabase.from("users").delete().like("id", "00000000-0000-0000-0000-%");
+  await supabase.from("organizations").delete().like("id", "00000000-0000-0000-0000-%");
 
   // Create test organizations
   for (const org of testOrgs) {
@@ -87,9 +87,9 @@ export async function GET(request: NextRequest) {
 
   // Create test users
   const testUsers = [
-    { id: "test-user-free", email: "free@test.cabbageseo.com", org_id: "test-org-free" },
-    { id: "test-user-starter", email: "starter@test.cabbageseo.com", org_id: "test-org-starter" },
-    { id: "test-user-pro", email: "pro@test.cabbageseo.com", org_id: "test-org-pro" },
+    { id: "00000000-0000-0000-0000-000000000011", email: "free@test.cabbageseo.com", org_id: "00000000-0000-0000-0000-000000000001" },
+    { id: "00000000-0000-0000-0000-000000000012", email: "starter@test.cabbageseo.com", org_id: "00000000-0000-0000-0000-000000000002" },
+    { id: "00000000-0000-0000-0000-000000000013", email: "pro@test.cabbageseo.com", org_id: "00000000-0000-0000-0000-000000000003" },
   ];
 
   for (const user of testUsers) {
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
   // ============================================
   
   const freePlan = CITATION_PLANS.free;
-  const freeOrgId = "test-org-free";
+  const freeOrgId = "00000000-0000-0000-0000-000000000001";
 
   // Test 1: Trial countdown
   const freeTrialStatus = checkTrialStatus(new Date());
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
 
   // Create a test site for free user
   await supabase.from("sites").insert({
-    id: "test-site-free",
+    id: "00000000-0000-0000-0000-000000000100",
     organization_id: freeOrgId,
     domain: "freetest.com",
     name: "Free Test Site",
@@ -231,7 +231,7 @@ export async function GET(request: NextRequest) {
   // ============================================
   
   const starterPlan = CITATION_PLANS.starter;
-  const starterOrgId = "test-org-starter";
+  const starterOrgId = "00000000-0000-0000-0000-000000000002";
 
   // Test 11: Pricing
   results.push({
@@ -264,7 +264,7 @@ export async function GET(request: NextRequest) {
   // Create test sites for starter
   for (let i = 1; i <= 3; i++) {
     await supabase.from("sites").insert({
-      id: `test-site-starter-${i}`,
+      id: `00000000-0000-0000-0000-00000000020${i}`,
       organization_id: starterOrgId,
       domain: `startertest${i}.com`,
       name: `Starter Test Site ${i}`,
@@ -378,7 +378,7 @@ export async function GET(request: NextRequest) {
   // ============================================
   
   const proPlan = CITATION_PLANS.pro;
-  const proOrgId = "test-org-pro";
+  const proOrgId = "00000000-0000-0000-0000-000000000003";
 
   // Test 23: Pricing
   results.push({
@@ -410,8 +410,9 @@ export async function GET(request: NextRequest) {
 
   // Create test sites for pro
   for (let i = 1; i <= 10; i++) {
+    const siteNum = i.toString().padStart(2, '0');
     await supabase.from("sites").insert({
-      id: `test-site-pro-${i}`,
+      id: `00000000-0000-0000-0000-000000000003${siteNum}`,
       organization_id: proOrgId,
       domain: `protest${i}.com`,
       name: `Pro Test Site ${i}`,
@@ -641,12 +642,12 @@ export async function GET(request: NextRequest) {
   // ============================================
   
   // Clean up test data
-  await supabase.from("citations").delete().like("site_id", "test-%");
-  await supabase.from("competitors").delete().like("site_id", "test-%");
-  await supabase.from("sites").delete().like("id", "test-%");
-  await supabase.from("usage").delete().like("organization_id", "test-%");
-  await supabase.from("users").delete().like("id", "test-%");
-  await supabase.from("organizations").delete().like("id", "test-%");
+  await supabase.from("citations").delete().like("site_id", "00000000-0000-0000-0000-%");
+  await supabase.from("competitors").delete().like("site_id", "00000000-0000-0000-0000-%");
+  await supabase.from("sites").delete().like("id", "00000000-0000-0000-0000-%");
+  await supabase.from("usage").delete().like("organization_id", "00000000-0000-0000-0000-%");
+  await supabase.from("users").delete().like("id", "00000000-0000-0000-0000-%");
+  await supabase.from("organizations").delete().like("id", "00000000-0000-0000-0000-%");
 
   // ============================================
   // SUMMARY
