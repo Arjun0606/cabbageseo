@@ -50,12 +50,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Get profile & org
-    const { data: profile } = await supabase
+    const { data: profileData } = await supabase
       .from("users")
       .select("organization_id")
       .eq("id", user.id)
       .single();
 
+    const profile = profileData as { organization_id: string } | null;
     if (!profile?.organization_id) {
       return NextResponse.json({ error: "No organization" }, { status: 400 });
     }
