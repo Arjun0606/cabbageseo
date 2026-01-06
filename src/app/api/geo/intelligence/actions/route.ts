@@ -210,8 +210,9 @@ export async function POST(request: NextRequest) {
 }
 
 // Helper to increment usage counters
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function incrementUsage(
-  client: ReturnType<typeof createServiceClient>,
+  client: any,
   organizationId: string,
   period: string,
   field: string
