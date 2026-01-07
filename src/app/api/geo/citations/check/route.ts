@@ -134,7 +134,7 @@ async function checkPerplexity(domain: string, queries: string[]): Promise<Check
 // GOOGLE AI (Gemini) - With Search Grounding
 // ============================================
 async function checkGoogleAI(domain: string, queries: string[]): Promise<CheckResult> {
-  const apiKey = process.env.GOOGLE_AI_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
   const query = queries[1];
   
   if (!apiKey) {

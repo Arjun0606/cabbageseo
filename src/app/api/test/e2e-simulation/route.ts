@@ -64,17 +64,17 @@ export async function GET(request: NextRequest) {
   await supabase.from("users").delete().like("id", "00000000-0000-0000-0000-%");
   await supabase.from("organizations").delete().like("id", "00000000-0000-0000-0000-%");
 
-  // Create test organizations (upsert to handle re-runs)
+  // Create test organizations
   for (const org of testOrgs) {
-    const { error } = await supabase.from("organizations").upsert({
+    const { error } = await supabase.from("organizations").insert({
       id: org.id,
       name: org.name,
       slug: org.id,
       plan: org.plan,
       created_at: new Date().toISOString(),
-    } as any, { onConflict: 'id' });
+    } as any);
     
-    if (error && !error.message.includes('duplicate')) {
+    if (error) {
       results.push({
         feature: "Create test organization",
         plan: org.plan,
@@ -93,13 +93,13 @@ export async function GET(request: NextRequest) {
   ];
 
   for (const user of testUsers) {
-    await supabase.from("users").upsert({
+    await supabase.from("users").insert({
       id: user.id,
       email: user.email,
-      full_name: `Test User`,
+      full_name: `Test ${user.org_id.split("-")[2]} User`,
       organization_id: user.org_id,
       created_at: new Date().toISOString(),
-    } as any, { onConflict: 'id' });
+    } as any);
   }
 
   // ============================================
@@ -142,13 +142,13 @@ export async function GET(request: NextRequest) {
   });
 
   // Create a test site for free user
-  await supabase.from("sites").upsert({
+  await supabase.from("sites").insert({
     id: "00000000-0000-0000-0000-000000000100",
     organization_id: freeOrgId,
     domain: "freetest.com",
     name: "Free Test Site",
     created_at: new Date().toISOString(),
-  } as any, { onConflict: 'id' });
+  } as any);
 
   // Test 4: Manual checks (3/day limit)
   const freeCheck1 = canRunManualCheck("free", 0);
@@ -263,13 +263,13 @@ export async function GET(request: NextRequest) {
 
   // Create test sites for starter
   for (let i = 1; i <= 3; i++) {
-    await supabase.from("sites").upsert({
+    await supabase.from("sites").insert({
       id: `00000000-0000-0000-0000-00000000020${i}`,
       organization_id: starterOrgId,
       domain: `startertest${i}.com`,
       name: `Starter Test Site ${i}`,
       created_at: new Date().toISOString(),
-    } as any, { onConflict: 'id' });
+    } as any);
   }
 
   // Test 13: Unlimited manual checks
@@ -411,13 +411,13 @@ export async function GET(request: NextRequest) {
   // Create test sites for pro
   for (let i = 1; i <= 10; i++) {
     const siteNum = i.toString().padStart(2, '0');
-    await supabase.from("sites").upsert({
+    await supabase.from("sites").insert({
       id: `00000000-0000-0000-0000-000000000003${siteNum}`,
       organization_id: proOrgId,
       domain: `protest${i}.com`,
       name: `Pro Test Site ${i}`,
       created_at: new Date().toISOString(),
-    } as any, { onConflict: 'id' });
+    } as any);
   }
 
   // Test 25: Competitor limit (10)
