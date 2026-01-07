@@ -164,6 +164,8 @@ CREATE TABLE "public"."sites" (
   "name" text,
   "status" text DEFAULT 'active',
   "topics" text[] DEFAULT '{}',
+  "category" text, -- Business category for smarter query generation
+  "custom_queries" jsonb DEFAULT '[]', -- User-defined queries (Starter+)
   "last_checked_at" timestamptz,
   "total_citations" integer DEFAULT 0,
   "citations_this_week" integer DEFAULT 0,

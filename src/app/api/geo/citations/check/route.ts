@@ -22,16 +22,116 @@ function getDbClient(): SupabaseClient | null {
   }
 }
 
-// Generate relevant queries for a domain
-function generateQueries(domain: string): string[] {
+// Category-specific query templates
+const CATEGORY_QUERIES: Record<string, string[]> = {
+  productivity: [
+    "What is the best productivity app?",
+    "Best note-taking apps for teams",
+    "Top productivity tools for remote work",
+    "Best apps for organizing projects",
+    "What tools do startups use for documentation?",
+  ],
+  crm: [
+    "What is the best CRM software?",
+    "Best CRM for small businesses",
+    "Top sales management tools",
+    "Salesforce alternatives",
+    "Best free CRM tools",
+  ],
+  ecommerce: [
+    "Best ecommerce platforms",
+    "Shopify alternatives",
+    "How to start an online store",
+    "Best tools for selling online",
+    "Top ecommerce solutions for small business",
+  ],
+  marketing: [
+    "Best marketing automation tools",
+    "Top email marketing platforms",
+    "Best SEO tools",
+    "Social media management tools",
+    "Best analytics tools for marketing",
+  ],
+  design: [
+    "Best design tools for teams",
+    "Figma alternatives",
+    "Top UI/UX design software",
+    "Best prototyping tools",
+    "Collaborative design platforms",
+  ],
+  development: [
+    "Best developer tools",
+    "Top code editors",
+    "Best hosting platforms for developers",
+    "CI/CD tools comparison",
+    "Best API management tools",
+  ],
+  analytics: [
+    "Best analytics platforms",
+    "Google Analytics alternatives",
+    "Top business intelligence tools",
+    "Best data visualization software",
+    "Website analytics tools",
+  ],
+  communication: [
+    "Best team communication tools",
+    "Slack alternatives",
+    "Top video conferencing software",
+    "Best collaboration platforms",
+    "Team chat apps comparison",
+  ],
+  finance: [
+    "Best accounting software",
+    "Top invoicing tools",
+    "Best expense tracking apps",
+    "Payroll software for small business",
+    "Financial planning tools",
+  ],
+  education: [
+    "Best online learning platforms",
+    "Top educational tools",
+    "E-learning software comparison",
+    "Best LMS platforms",
+    "Online course creation tools",
+  ],
+};
+
+// Generate queries based on domain, category, and plan
+function generateQueries(
+  domain: string, 
+  category: string | null, 
+  customQueries: string[], 
+  plan: string
+): string[] {
   const name = domain.split(".")[0];
   const cleanName = name.charAt(0).toUpperCase() + name.slice(1);
   
-  return [
+  // Base queries (always included)
+  const baseQueries = [
     `What is ${cleanName} and what do they do?`,
     `Tell me about ${domain}`,
     `What are the best alternatives to ${cleanName}?`,
   ];
+  
+  // Category-specific queries
+  const categoryQueries = category && CATEGORY_QUERIES[category.toLowerCase()] 
+    ? CATEGORY_QUERIES[category.toLowerCase()] 
+    : [];
+  
+  // Determine query count by plan
+  let maxQueries = 3; // Free
+  if (plan === "starter") maxQueries = 10;
+  if (plan === "pro") maxQueries = 20;
+  
+  // Combine: custom queries first, then base, then category
+  const allQueries = [
+    ...customQueries.slice(0, plan === "pro" ? 100 : 5), // Custom queries (limited for starter)
+    ...baseQueries,
+    ...categoryQueries,
+  ];
+  
+  // Return unique queries up to the plan limit
+  return [...new Set(allQueries)].slice(0, maxQueries);
 }
 
 interface CheckResult {
@@ -352,7 +452,51 @@ export async function POST(request: NextRequest) {
     cleanDomain = cleanDomain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
 
     const db = getDbClient() || supabase;
-    const queries = generateQueries(cleanDomain);
+    
+    // Get user's plan and site data for smart query generation
+    let plan = "free";
+    let category: string | null = null;
+    let customQueries: string[] = [];
+    
+    // Fetch user's organization and plan
+    const { data: userData } = await db
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .maybeSingle();
+    
+    if (userData?.organization_id) {
+      const { data: orgData } = await db
+        .from("organizations")
+        .select("plan")
+        .eq("id", userData.organization_id)
+        .maybeSingle();
+      
+      if (orgData?.plan) {
+        plan = orgData.plan;
+      }
+      
+      // If we have a siteId, get the site's category and custom queries
+      if (siteId) {
+        const { data: siteInfo } = await db
+          .from("sites")
+          .select("category, custom_queries")
+          .eq("id", siteId)
+          .maybeSingle();
+        
+        if (siteInfo) {
+          category = siteInfo.category || null;
+          customQueries = Array.isArray(siteInfo.custom_queries) 
+            ? siteInfo.custom_queries 
+            : [];
+        }
+      }
+    }
+    
+    // Generate queries based on plan, category, and custom queries
+    const queries = generateQueries(cleanDomain, category, customQueries, plan);
+    
+    console.log(`[Citation Check] Plan: ${plan}, Category: ${category}, Queries: ${queries.length}`);
 
     // Run ALL checks in parallel - real API calls only
     const [perplexityResult, googleResult, chatgptResult] = await Promise.all([
@@ -368,28 +512,21 @@ export async function POST(request: NextRequest) {
     const citedCount = results.filter(r => r.cited).length;
 
     // If tracking a site, save citations to database
-    if (siteId) {
-      const { data: userData } = await db
-        .from("users")
-        .select("organization_id")
-        .eq("id", user.id)
+    if (siteId && userData?.organization_id) {
+      const { data: siteData } = await db
+        .from("sites")
+        .select("id, organization_id, total_citations, citations_this_week")
+        .eq("id", siteId)
         .maybeSingle();
+      
+      const site = siteData as { 
+        id: string; 
+        organization_id: string; 
+        total_citations: number; 
+        citations_this_week: number 
+      } | null;
 
-      if (userData?.organization_id) {
-        const { data: siteData } = await db
-          .from("sites")
-          .select("id, organization_id, total_citations, citations_this_week")
-          .eq("id", siteId)
-          .maybeSingle();
-        
-        const site = siteData as { 
-          id: string; 
-          organization_id: string; 
-          total_citations: number; 
-          citations_this_week: number 
-        } | null;
-
-        if (site && site.organization_id === userData.organization_id) {
+      if (site && site.organization_id === userData.organization_id) {
           let newCitationsCount = 0;
 
           // Save new citations (only from successful API calls)
@@ -454,6 +591,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Return enriched response with query info
     return NextResponse.json({
       success: true,
       results: results.map(r => ({

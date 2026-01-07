@@ -451,9 +451,25 @@ function DashboardContent() {
   );
 }
 
+// Business categories for smarter query generation
+const BUSINESS_CATEGORIES = [
+  { value: "", label: "Select category (optional)" },
+  { value: "productivity", label: "Productivity & SaaS" },
+  { value: "crm", label: "CRM & Sales" },
+  { value: "ecommerce", label: "E-commerce" },
+  { value: "marketing", label: "Marketing & SEO" },
+  { value: "design", label: "Design & Creative" },
+  { value: "development", label: "Development & DevOps" },
+  { value: "analytics", label: "Analytics & BI" },
+  { value: "communication", label: "Communication & Collaboration" },
+  { value: "finance", label: "Finance & Accounting" },
+  { value: "education", label: "Education & Learning" },
+];
+
 // Add Site Form Component
 function AddSiteForm() {
   const [domain, setDomain] = useState("");
+  const [category, setCategory] = useState("");
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
   const { addSite } = useSite();
@@ -466,7 +482,7 @@ function AddSiteForm() {
     setError("");
 
     try {
-      const result = await addSite(domain);
+      const result = await addSite(domain, category || undefined);
       if (!result) {
         setError("Failed to add site");
       }
@@ -488,8 +504,24 @@ function AddSiteForm() {
           placeholder="yoursite.com"
           className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
         />
-        {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
       </div>
+      <div>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-xl text-white focus:outline-none focus:border-emerald-500"
+        >
+          {BUSINESS_CATEGORIES.map((cat) => (
+            <option key={cat.value} value={cat.value} className="bg-zinc-900">
+              {cat.label}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-zinc-500 mt-1">
+          Helps us generate better AI queries for your industry
+        </p>
+      </div>
+      {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
       <Button 
         type="submit" 
         disabled={adding || !domain.trim()}

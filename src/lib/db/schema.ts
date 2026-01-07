@@ -419,6 +419,10 @@ export const sites = pgTable(
     citationsLastWeek: integer("citations_last_week").default(0),
     lastCheckedAt: timestamp("last_checked_at"),
     geoScoreAvg: integer("geo_score_avg"),
+    
+    // Custom queries & category (for better citation tracking)
+    category: text("category"), // e.g., "productivity", "crm", "ecommerce"
+    customQueries: jsonb("custom_queries").$type<string[]>().default([]), // User-defined queries
 
     // CMS Integration
     cmsType: cmsTypeEnum("cms_type"),

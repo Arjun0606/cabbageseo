@@ -27,6 +27,8 @@ interface Site {
   citationsLastWeek: number;
   lastCheckedAt: string | null;
   geoScore: number | null;
+  category: string | null;
+  customQueries: string[];
 }
 
 interface User {
@@ -74,7 +76,7 @@ interface SiteContextType {
   // Actions
   setCurrentSite: (site: Site) => void;
   refreshData: () => Promise<void>;
-  addSite: (domain: string) => Promise<Site | null>;
+  addSite: (domain: string, category?: string) => Promise<Site | null>;
   deleteSite: (siteId: string) => Promise<boolean>;
   runCheck: (siteId?: string) => Promise<boolean>;
 }
@@ -158,6 +160,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         citationsLastWeek: s.citations_last_week || 0,
         lastCheckedAt: s.last_checked_at,
         geoScore: s.geo_score_avg,
+        category: s.category || null,
+        customQueries: Array.isArray(s.custom_queries) ? s.custom_queries : [],
       }));
       
       setSites(siteList);
@@ -202,7 +206,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("cabbageseo_site_id", site.id);
   }, []);
 
-  const addSite = useCallback(async (domain: string): Promise<Site | null> => {
+  const addSite = useCallback(async (domain: string, category?: string): Promise<Site | null> => {
     try {
       // Clean domain
       let cleanDomain = domain.trim().toLowerCase();
@@ -211,7 +215,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       const res = await fetch("/api/sites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ domain: cleanDomain }),
+        body: JSON.stringify({ domain: cleanDomain, category }),
       });
       
       const data = await res.json();
@@ -226,6 +230,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           citationsLastWeek: 0,
           lastCheckedAt: null,
           geoScore: null,
+          category: data.site.category || null,
+          customQueries: data.site.custom_queries || [],
         };
         
         setSites(prev => [newSite, ...prev]);

@@ -21,6 +21,8 @@ export interface CitationPlanLimits {
   competitors: number;
   historyDays: number;
   teamMembers: number;
+  queriesPerCheck: number;     // Auto-generated queries per check
+  customQueriesPerSite: number; // User-defined queries (-1 = unlimited)
 }
 
 export interface CitationPlanFeatures {
@@ -42,6 +44,8 @@ export interface CitationPlanFeatures {
   contentRecsUnlimited: boolean;      // Unlimited vs 3/month
   weeklyActionPlan: boolean;          // GEO Action Playbook (Pro only)
   competitorDeepDive: boolean;        // Full competitor comparison (Pro only)
+  customQueries: boolean;             // User-defined queries (Starter+)
+  queryDiscovery: boolean;            // AI-suggested queries (Pro only)
 }
 
 // Intelligence limits
@@ -79,6 +83,8 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       competitors: 0,
       historyDays: 7,
       teamMembers: 1,
+      queriesPerCheck: 3,        // 3 basic queries
+      customQueriesPerSite: 0,   // No custom queries
     },
     intelligenceLimits: {
       gapAnalysesPerMonth: 0,    // No intelligence on free
@@ -102,6 +108,8 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       contentRecsUnlimited: false,
       weeklyActionPlan: false,
       competitorDeepDive: false,
+      customQueries: false,
+      queryDiscovery: false,
     },
   },
   starter: {
@@ -117,6 +125,8 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       competitors: 2,
       historyDays: 30,
       teamMembers: 1,
+      queriesPerCheck: 10,       // 10 queries per check
+      customQueriesPerSite: 5,   // 5 custom queries per site
     },
     intelligenceLimits: {
       gapAnalysesPerMonth: 5,    // 5 "why not me?" analyses
@@ -140,6 +150,8 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       contentRecsUnlimited: false,  // 3/month limit
       weeklyActionPlan: false,      // Pro only
       competitorDeepDive: false,    // Pro only
+      customQueries: true,          // 5 custom queries per site
+      queryDiscovery: false,        // Pro only
     },
   },
   pro: {
@@ -155,6 +167,8 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       competitors: 10,
       historyDays: 365,
       teamMembers: 1,
+      queriesPerCheck: 20,       // 20 queries per check
+      customQueriesPerSite: -1,  // Unlimited custom queries
     },
     intelligenceLimits: {
       gapAnalysesPerMonth: -1,   // Unlimited
@@ -178,6 +192,8 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       contentRecsUnlimited: true,   // No limits
       weeklyActionPlan: true,       // GEO Action Playbook
       competitorDeepDive: true,     // Full competitor breakdown
+      customQueries: true,          // Unlimited custom queries
+      queryDiscovery: true,         // AI-suggested queries
     },
   },
 };

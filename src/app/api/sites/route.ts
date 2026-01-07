@@ -45,10 +45,10 @@ export async function GET() {
       return NextResponse.json({ sites: [] });
     }
 
-    // Get sites with geo_score_avg
+    // Get sites with geo_score_avg, category, and custom_queries
     const { data: sites, error } = await db
       .from("sites")
-      .select("id, domain, name, total_citations, citations_this_week, citations_last_week, last_checked_at, geo_score_avg, created_at")
+      .select("id, domain, name, total_citations, citations_this_week, citations_last_week, last_checked_at, geo_score_avg, category, custom_queries, created_at")
       .eq("organization_id", userData.organization_id)
       .order("created_at", { ascending: false });
 
@@ -79,7 +79,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    let { domain } = body;
+    const { domain: rawDomain, category } = body;
+    let domain = rawDomain;
 
     if (!domain) {
       return NextResponse.json({ error: "Domain is required" }, { status: 400 });
@@ -164,13 +165,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Domain already added" }, { status: 400 });
     }
 
-    // Create site
+    // Create site with optional category
     const { data: site, error } = await db
       .from("sites")
       .insert({
         organization_id: orgId,
         domain,
         name: domain,
+        category: category || null,
+        custom_queries: [],
         total_citations: 0,
         citations_this_week: 0,
         citations_last_week: 0,
