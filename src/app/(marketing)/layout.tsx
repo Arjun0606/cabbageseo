@@ -15,7 +15,6 @@ import {
   X, 
   ArrowRight,
   Twitter,
-  Github,
   Mail
 } from "lucide-react";
 import { useState } from "react";
@@ -142,7 +141,7 @@ function Footer() {
     company: [
       { href: "/privacy", label: "Privacy Policy" },
       { href: "/terms", label: "Terms of Service" },
-      { href: "mailto:support@cabbageseo.com", label: "Contact Us" },
+      { href: "mailto:arjun@cabbageseo.com", label: "Contact Us" },
     ],
     resources: [
       { href: "/login", label: "Log In" },
@@ -172,7 +171,7 @@ function Footer() {
             {/* Social Links */}
             <div className="flex gap-3">
               <a 
-                href="https://twitter.com/cabbageseo" 
+                href="https://x.com/Arjun06061" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
@@ -180,15 +179,7 @@ function Footer() {
                 <Twitter className="w-4 h-4" />
               </a>
               <a 
-                href="https://github.com/cabbageseo" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
-              >
-                <Github className="w-4 h-4" />
-              </a>
-              <a 
-                href="mailto:support@cabbageseo.com"
+                href="mailto:arjun@cabbageseo.com"
                 className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
               >
                 <Mail className="w-4 h-4" />
@@ -261,8 +252,8 @@ function Footer() {
               <Link href="/terms" className="text-zinc-600 hover:text-zinc-400 text-sm">
                 Terms
               </Link>
-              <span className="text-zinc-700 text-sm">
-                Made with 🥬 for founders
+              <span className="text-zinc-700 text-sm flex items-center gap-1">
+                Made with <img src="/apple-touch-icon.png" alt="🥬" className="w-4 h-4 inline rounded" /> for founders
               </span>
             </div>
           </div>
