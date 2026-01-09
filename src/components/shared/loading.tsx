@@ -76,7 +76,7 @@ export function PageLoading({ message = "Loading..." }: PageLoadingProps) {
         <div className="relative">
           <div className="h-16 w-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <img src="/cabbageseo_logo.png" alt="Loading" className="h-8 w-auto" />
+            <img src="/apple-touch-icon.png" alt="Loading" className="h-8 w-8 rounded-lg" />
           </div>
         </div>
         <p className="text-sm font-medium text-muted-foreground">{message}</p>

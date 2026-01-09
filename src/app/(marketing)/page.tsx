@@ -56,7 +56,7 @@ export default function HomePage() {
             <p className="text-sm text-zinc-500">Free check • No credit card</p>
           </div>
 
-          {/* The money shot - Demo result */}
+          {/* The demo - TRUTHFUL, no fake data */}
           <div className="max-w-2xl mx-auto">
             <div className="bg-zinc-900/90 rounded-2xl border border-zinc-800 overflow-hidden shadow-2xl">
               {/* Header */}
@@ -66,51 +66,53 @@ export default function HomePage() {
                   <div className="w-3 h-3 rounded-full bg-amber-500" />
                   <div className="w-3 h-3 rounded-full bg-emerald-500" />
                 </div>
-                <span className="text-zinc-500 text-sm">yoursite.com</span>
+                <span className="text-zinc-500 text-sm">Your results will appear here</span>
               </div>
               
               {/* Content */}
               <div className="p-6">
-                {/* Loss banner */}
+                {/* Alert banner - truthful */}
                 <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6">
                   <div className="flex items-center gap-3">
-                    <DollarSign className="w-8 h-8 text-red-400" />
+                    <Search className="w-8 h-8 text-red-400" />
                     <div>
-                      <div className="text-3xl font-bold text-red-400">-$18,500<span className="text-lg">/mo</span></div>
-                      <div className="text-sm text-zinc-400">Estimated revenue going to competitors</div>
+                      <div className="text-2xl font-bold text-red-400">High-Intent Queries Missed</div>
+                      <div className="text-sm text-zinc-400">Buyers ask AI for recommendations — AI sends them to competitors</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Competition table */}
+                {/* What you'll see - truthful */}
                 <div className="mb-6">
-                  <div className="text-sm text-zinc-500 mb-3">Who AI recommends instead of you:</div>
+                  <div className="text-sm text-zinc-500 mb-3">What you&apos;ll discover:</div>
                   <div className="space-y-2">
                     {[
-                      { query: "best project management tools", winner: "Notion, ClickUp", value: "$8,200" },
-                      { query: "best productivity apps 2025", winner: "Todoist, Asana", value: "$5,400" },
-                      { query: "notion alternatives", winner: "Coda, Obsidian", value: "$4,900" },
+                      { query: "best [your category] tools", info: "Which competitors AI recommends", intent: "High Intent" },
+                      { query: "alternatives to [competitor]", info: "Whether AI mentions you", intent: "High Intent" },
+                      { query: "[your industry] software", info: "Which sources AI trusts", intent: "Medium Intent" },
                     ].map((row, i) => (
                       <div key={i} className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg">
                         <div>
                           <div className="text-white text-sm">&ldquo;{row.query}&rdquo;</div>
-                          <div className="text-zinc-500 text-xs">AI recommends: {row.winner}</div>
+                          <div className="text-zinc-500 text-xs">{row.info}</div>
                         </div>
-                        <div className="text-red-400 font-medium text-sm">-{row.value}</div>
+                        <div className={`text-xs px-2 py-1 rounded ${
+                          row.intent === "High Intent" ? "bg-red-500/20 text-red-400" : "bg-amber-500/20 text-amber-400"
+                        }`}>{row.intent}</div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* AI Market Share */}
+                {/* AI Mention Share - truthful label */}
                 <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-xl">
                   <div>
-                    <div className="text-zinc-500 text-sm">Your AI Market Share</div>
-                    <div className="text-2xl font-bold text-white">8%</div>
+                    <div className="text-zinc-500 text-sm">Your AI Mention Share</div>
+                    <div className="text-lg text-zinc-400">(tracked queries only)</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-zinc-500 text-sm">Competitors</div>
-                    <div className="text-2xl font-bold text-amber-400">92%</div>
+                    <div className="text-zinc-500 text-sm">See who&apos;s winning</div>
+                    <div className="text-lg font-bold text-emerald-400">Run a check →</div>
                   </div>
                 </div>
               </div>
@@ -177,13 +179,13 @@ export default function HomePage() {
           <div className="space-y-8">
             <div className="flex gap-6 items-start p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
               <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
-                <DollarSign className="w-6 h-6 text-red-400" />
+                <Search className="w-6 h-6 text-red-400" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-white mb-2">See Your Revenue Loss</h3>
+                <h3 className="text-xl font-semibold text-white mb-2">See What AI Actually Says</h3>
                 <p className="text-zinc-400">
-                  Know exactly how much money AI is sending to your competitors. 
-                  Not vanity metrics — real estimated revenue impact.
+                  Real responses from ChatGPT, Perplexity, and Google AI. 
+                  See exactly who they recommend — and whether they mention you.
                 </p>
               </div>
             </div>
@@ -193,10 +195,10 @@ export default function HomePage() {
                 <BarChart2 className="w-6 h-6 text-amber-400" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-white mb-2">Track Your AI Market Share</h3>
+                <h3 className="text-xl font-semibold text-white mb-2">Track Your AI Mention Share</h3>
                 <p className="text-zinc-400">
-                  See your percentage of AI recommendations vs competitors. 
-                  Watch it grow as you optimize.
+                  See your percentage of AI mentions in tracked queries vs competitors. 
+                  Watch it grow as you take action.
                 </p>
               </div>
             </div>

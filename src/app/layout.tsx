@@ -65,10 +65,10 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
-      { url: "/cabbageseo_logo.png", type: "image/png" },
+      { url: "/apple-touch-icon.png", type: "image/png" },
     ],
     shortcut: "/favicon.ico",
-    apple: "/cabbageseo_logo.png",
+    apple: "/apple-touch-icon.png",
   },
   manifest: "/site.webmanifest",
 };

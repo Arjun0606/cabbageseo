@@ -165,15 +165,15 @@ export default function CitationsPage() {
         </div>
         <div className="flex items-center gap-2">
           {isPaid && (
-            <Button 
-              onClick={exportCSV}
-              disabled={citations.length === 0}
-              variant="outline"
-              className="border-zinc-700"
-            >
-              <Download className="w-4 h-4 mr-2" />
+          <Button 
+            onClick={exportCSV}
+            disabled={citations.length === 0}
+            variant="outline"
+            className="border-zinc-700"
+          >
+            <Download className="w-4 h-4 mr-2" />
               Export
-            </Button>
+          </Button>
           )}
         </div>
       </div>
@@ -215,14 +215,14 @@ export default function CitationsPage() {
         </Card>
         
         <Card className="bg-zinc-900 border-zinc-800">
-          <CardContent className="pt-6">
+            <CardContent className="pt-6">
             <div className="flex items-center gap-2 mb-2">
               <Search className="w-5 h-5 text-zinc-400" />
               <span className="text-xs text-zinc-500">Total Tracked</span>
-            </div>
+              </div>
             <div className="text-3xl font-bold text-white">{citations.length}</div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
       </div>
 
       {/* Filters */}
@@ -281,10 +281,10 @@ export default function CitationsPage() {
                     : "bg-zinc-900 border-zinc-800"
                 }`}
               >
-                <CardContent className="py-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
+              <CardContent className="py-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
                         {isWin ? (
                           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                         ) : isPartial ? (
@@ -292,28 +292,28 @@ export default function CitationsPage() {
                         ) : (
                           <Search className="w-4 h-4 text-zinc-400" />
                         )}
-                        <Badge className={getPlatformColor(citation.platform)}>
-                          {formatPlatform(citation.platform)}
-                        </Badge>
+                      <Badge className={getPlatformColor(citation.platform)}>
+                        {formatPlatform(citation.platform)}
+                      </Badge>
                         <span className="text-xs text-emerald-400 font-medium">
                           +${estimatedValue}/mo
-                        </span>
-                      </div>
-                      <p className="text-white font-medium mb-1">&ldquo;{citation.query}&rdquo;</p>
-                      {citation.snippet && (
-                        <p className="text-sm text-zinc-400 line-clamp-2">
-                          {citation.snippet}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs text-zinc-500">
-                        {new Date(citation.discoveredAt).toLocaleDateString()}
                       </span>
                     </div>
+                      <p className="text-white font-medium mb-1">&ldquo;{citation.query}&rdquo;</p>
+                    {citation.snippet && (
+                      <p className="text-sm text-zinc-400 line-clamp-2">
+                        {citation.snippet}
+                      </p>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-zinc-500">
+                      {new Date(citation.discoveredAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
             );
           })}
         </div>

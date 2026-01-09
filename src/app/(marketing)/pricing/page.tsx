@@ -28,11 +28,11 @@ export default function PricingPage() {
         { name: "1 site", included: true },
         { name: "Manual checks only", included: true },
         { name: "See competitors winning", included: true },
-        { name: "See revenue you're losing", included: true },
+        { name: "See high-intent queries missed", included: true },
         { name: "Daily monitoring", included: false },
         { name: "Content fix generator", included: false },
         { name: "Competitor takeover alerts", included: false },
-        { name: "Weekly revenue reports", included: false },
+        { name: "Weekly AI reports", included: false },
       ],
     },
     {
@@ -46,12 +46,12 @@ export default function PricingPage() {
       features: [
         { name: "3 sites", included: true },
         { name: "Daily AI checks", included: true },
-        { name: "Revenue loss tracking", included: true },
-        { name: "AI market share dashboard", included: true },
+        { name: "AI mention tracking", included: true },
+        { name: "AI mention share dashboard", included: true },
         { name: "2 competitors per site", included: true },
         { name: "5 content fix analyses/month", included: true },
         { name: "Email alerts", included: true },
-        { name: "Weekly revenue reports", included: true },
+        { name: "Weekly AI reports", included: true },
       ],
       popular: false,
     },
@@ -66,8 +66,8 @@ export default function PricingPage() {
       features: [
         { name: "10 sites", included: true },
         { name: "Hourly AI checks", included: true },
-        { name: "Revenue loss tracking", included: true },
-        { name: "AI market share dashboard", included: true },
+        { name: "AI mention tracking", included: true },
+        { name: "AI mention share dashboard", included: true },
         { name: "10 competitors per site", included: true },
         { name: "Unlimited content fixes", included: true },
         { name: "Priority alerts", included: true },
@@ -191,7 +191,7 @@ export default function PricingPage() {
                 </div>
               </div>
               <p className="text-zinc-400">
-                See which queries you&apos;re losing and how much estimated revenue is going to competitors. 
+                See which high-intent queries you&apos;re missing and which competitors AI recommends. 
                 Manual checks only — no ongoing monitoring.
               </p>
             </div>
@@ -252,12 +252,12 @@ export default function PricingPage() {
           <div className="space-y-8">
             <div>
               <h3 className="text-lg font-semibold text-white mb-2">
-                How accurate are the revenue estimates?
+                What data do you show?
               </h3>
               <p className="text-zinc-400">
-                Our estimates are based on query buyer intent and category value. They&apos;re designed to show 
-                <em> relative </em> impact — which queries matter most — not precise dollar figures. Think of 
-                them as a prioritization tool.
+                We show <em>real</em> AI responses from ChatGPT, Perplexity, and Google AI. You see exactly who
+                AI recommends, which sources it uses, and whether you&apos;re mentioned. No fake metrics or invented
+                numbers — just what AI actually said.
               </p>
             </div>
 
@@ -331,7 +331,7 @@ export default function PricingPage() {
             <span className="font-semibold text-white">CabbageSEO</span>
           </div>
           <div className="text-sm text-zinc-500">
-            AI Revenue Intelligence
+            AI Visibility Intelligence
           </div>
         </div>
       </footer>

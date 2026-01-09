@@ -158,7 +158,7 @@ export default function DocsPage() {
       <header className="border-b border-zinc-800">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-10 w-auto" />
+            <img src="/apple-touch-icon.png" alt="CabbageSEO" className="h-10 w-10 rounded-lg" />
             <span className="font-bold text-xl tracking-tight text-white">CabbageSEO</span>
           </Link>
           <nav className="flex items-center gap-6">
@@ -252,7 +252,7 @@ export default function DocsPage() {
       <footer className="border-t border-zinc-800 py-8 px-4 mt-12">
         <div className="container mx-auto max-w-4xl flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/cabbageseo_logo.png" alt="CabbageSEO" className="h-6 w-auto" />
+            <img src="/apple-touch-icon.png" alt="CabbageSEO" className="h-6 w-6 rounded" />
             <span className="text-zinc-500 text-sm">CabbageSEO</span>
           </div>
           <div className="flex items-center gap-4 text-sm text-zinc-500">
