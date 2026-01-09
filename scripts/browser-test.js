@@ -42,6 +42,7 @@ async function runAllTests() {
   
   await test('GET /api/me returns user data', async () => {
     const res = await fetch(`${BASE_URL}/api/me`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     if (!data.authenticated) throw new Error('Not authenticated');
     if (!data.user?.email) throw new Error('Missing user email');
@@ -101,14 +102,22 @@ async function runAllTests() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ planId: 'starter', interval: 'monthly' }),
     });
-    const data = await res.json();
-    // 500 is ok if Dodo not configured, should have url or error
+    // 500/503 is ok if Dodo not configured
     if (!res.ok && res.status !== 500 && res.status !== 503) {
-      throw new Error(`HTTP ${res.status}: ${data.error}`);
+      // Try to parse error message if available
+      let errorMsg = `HTTP ${res.status}`;
+      try {
+        const errorData = await res.json();
+        if (errorData.error) errorMsg += `: ${errorData.error}`;
+      } catch { /* ignore parse errors */ }
+      throw new Error(errorMsg);
     }
     // If success, should have checkout URL
-    if (res.ok && !data.url && !data.data?.checkoutUrl) {
-      throw new Error('No checkout URL returned');
+    if (res.ok) {
+      const data = await res.json();
+      if (!data.url && !data.data?.checkoutUrl) {
+        throw new Error('No checkout URL returned');
+      }
     }
   });
 
