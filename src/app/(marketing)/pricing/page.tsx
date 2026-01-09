@@ -122,7 +122,7 @@ export default function PricingPage() {
 
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-white mb-1">{plan.name}</h2>
-                  <p className="text-zinc-500 text-sm mb-4">{plan.tagline}</p>
+                  <p className="text-zinc-400 text-sm mb-4">{plan.tagline}</p>
                   
                   <div className="flex items-baseline gap-1 mb-2">
                     {plan.price === 0 ? (
@@ -130,12 +130,12 @@ export default function PricingPage() {
                     ) : (
                       <>
                         <span className="text-4xl font-bold text-white">${plan.price}</span>
-                        <span className="text-zinc-500">{plan.period}</span>
+                        <span className="text-zinc-400">{plan.period}</span>
                       </>
                     )}
                   </div>
                   
-                  <p className="text-sm text-zinc-400">{plan.description}</p>
+                  <p className="text-sm text-zinc-300">{plan.description}</p>
                 </div>
 
                 <Link href="/signup">
@@ -157,9 +157,9 @@ export default function PricingPage() {
                       {feature.included ? (
                         <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                       ) : (
-                        <X className="w-4 h-4 text-zinc-600 shrink-0" />
+                        <X className="w-4 h-4 text-zinc-500 shrink-0" />
                       )}
-                      <span className={feature.included ? "text-zinc-300" : "text-zinc-600"}>
+                      <span className={feature.included ? "text-white" : "text-zinc-500"}>
                         {feature.name}
                       </span>
                     </li>
