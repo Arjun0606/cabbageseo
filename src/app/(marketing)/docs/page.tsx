@@ -127,17 +127,40 @@ GET /api/competitors?siteId=xxx
     ],
   },
   {
+    id: "methodology",
+    title: "Methodology & Data",
+    icon: CheckCircle2,
+    items: [
+      {
+        title: "How We Detect Citations",
+        content: `For each query, we call the AI platform's API and analyze the response:\n\n• **Perplexity**: Uses their citations API which returns source URLs directly. We match your domain against these URLs.\n• **Google AI (Gemini)**: Uses search grounding to get real-time web data. We extract mentioned domains from the response.\n• **OpenAI (ChatGPT)**: We send queries and parse the response text for domain mentions and brand references.\n\nAll raw responses are stored so you can verify any detection.`,
+      },
+      {
+        title: "Confidence Levels Explained",
+        content: `We label each citation with a confidence tier:\n\n• **High**: Your exact domain URL was in the AI's citation list or response.\n• **Medium**: Your brand name or product was mentioned in the response text.\n• **Low**: Related content was referenced but not a direct mention.\n\nWe err on the side of caution — we'd rather under-report than over-report.`,
+      },
+      {
+        title: "AI Mention Share Calculation",
+        content: `AI Mention Share = (times your site was mentioned) ÷ (total mentions of all sites in those queries).\n\nThis is calculated only for queries you've tracked. It's labeled "AI mention share (tracked queries only)" — not market share, not industry share. Just what we observed in your specific queries.`,
+      },
+      {
+        title: "Data Integrity",
+        content: `We follow strict data rules:\n\n• We only show data from actual API responses\n• We never invent or estimate metrics\n• All percentages come from real observations\n• If we don't have data, we say "Run more checks"\n• Raw AI responses are always available for verification`,
+      },
+    ],
+  },
+  {
     id: "faq",
     title: "FAQ",
     icon: HelpCircle,
     items: [
       {
         title: "How often are citations checked?",
-        content: `• Free: Manual checks (3/day)\n• Starter: Daily automated checks\n• Pro: Hourly automated checks\n• Agency: Continuous monitoring`,
+        content: `• Free: Manual checks (3/day)\n• Starter: Daily automated checks\n• Pro: Hourly automated checks`,
       },
       {
         title: "Can I check any website?",
-        content: `Yes! You can check any public website. The free analyzer at /analyze lets anyone check a site without signing up.`,
+        content: `Yes! You can check any public website. Add your domain to get started.`,
       },
       {
         title: "What makes a site more likely to be cited?",
@@ -145,7 +168,7 @@ GET /api/competitors?siteId=xxx
       },
       {
         title: "How accurate is citation detection?",
-        content: `Perplexity citations are 100% accurate (real API). Google AI citations use Gemini grounding. ChatGPT uses simulation queries. We're continuously improving accuracy.`,
+        content: `We surface the citations and sources returned by each AI platform. Perplexity's API provides citation metadata which we show verbatim. For Google AI we use Gemini with search grounding. For ChatGPT we use OpenAI's API. We label results with confidence tiers (High/Medium/Low) and always surface the raw AI response so you can verify. Accuracy depends on what each platform returns — we continuously test and improve detection.`,
       },
     ],
   },

@@ -139,7 +139,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">Traffic Is Shifting</h3>
               <p className="text-zinc-400">
-                30% of product searches now happen in AI. That number doubles every year.
+                A growing share of product discovery now happens in AI assistants — and it&apos;s accelerating.
               </p>
             </div>
 
@@ -223,10 +223,10 @@ export default function HomePage() {
       <section className="py-24 px-6 border-t border-zinc-900">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
-            Start seeing where money goes
+            Start seeing who AI recommends
           </h2>
           <p className="text-lg text-zinc-400 mb-12">
-            Starts at $29/mo. Cancel anytime.
+            7-day free trial. Cancel anytime.
           </p>
 
           <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
@@ -237,11 +237,11 @@ export default function HomePage() {
               <ul className="text-left space-y-2 text-zinc-300 mb-6">
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> 3 sites</li>
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Daily AI checks</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Revenue loss tracking</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Competitor analysis</li>
+                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> AI mention tracking</li>
+                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> 5 content fixes/month</li>
               </ul>
               <Link href="/signup">
-                <Button className="w-full" variant="outline">Get Started</Button>
+                <Button className="w-full" variant="outline">Start Free Trial</Button>
               </Link>
             </div>
 
@@ -252,11 +252,11 @@ export default function HomePage() {
               <ul className="text-left space-y-2 text-zinc-300 mb-6">
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> 10 sites</li>
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Hourly AI checks</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> One-click content fixes</li>
+                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Unlimited content fixes</li>
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Competitor takeover alerts</li>
               </ul>
               <Link href="/signup">
-                <Button className="w-full bg-emerald-500 hover:bg-emerald-400 text-black">Get Started</Button>
+                <Button className="w-full bg-emerald-500 hover:bg-emerald-400 text-black">Start Free Trial</Button>
               </Link>
             </div>
           </div>
