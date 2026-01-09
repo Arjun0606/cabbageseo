@@ -11,7 +11,7 @@
  * - FAQs
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { 
   Zap, 
   RefreshCw,
@@ -54,7 +54,7 @@ interface GapAnalysisResult {
   actionItems: string[];
 }
 
-export default function IntelligencePage() {
+function IntelligenceContent() {
   const searchParams = useSearchParams();
   const { currentSite, organization, loading } = useSite();
   
@@ -439,5 +439,17 @@ export default function IntelligencePage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function IntelligencePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
+      </div>
+    }>
+      <IntelligenceContent />
+    </Suspense>
   );
 }

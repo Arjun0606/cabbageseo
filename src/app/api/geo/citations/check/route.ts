@@ -596,7 +596,6 @@ export async function POST(request: NextRequest) {
           }
         }
       }
-    }
 
     // Analyze competitive landscape for each result
     const competitiveResults = results.map(r => {
