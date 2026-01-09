@@ -28,7 +28,9 @@ import {
   Lock,
   ArrowRight,
   Zap,
-  AlertTriangle
+  AlertTriangle,
+  Globe,
+  ExternalLink
 } from "lucide-react";
 import { useSite } from "@/context/site-context";
 import { Button } from "@/components/ui/button";
@@ -63,6 +65,19 @@ interface RevenueIntelligence {
   category: string | null;
 }
 
+interface TrustSource {
+  domain: string;
+  name: string;
+  trustScore: number;
+  howToGetListed: string;
+}
+
+interface DistributionIntelligence {
+  sourcesFound: number;
+  sourcesMentioningCompetitors: string[];
+  knownTrustSources: TrustSource[];
+}
+
 function DashboardContent() {
   const searchParams = useSearchParams();
   const { 
@@ -77,6 +92,7 @@ function DashboardContent() {
   const [checking, setChecking] = useState(false);
   const [checkResults, setCheckResults] = useState<CompetitiveResult[] | null>(null);
   const [revenueIntel, setRevenueIntel] = useState<RevenueIntelligence | null>(null);
+  const [distributionIntel, setDistributionIntel] = useState<DistributionIntelligence | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
 
   const justSignedUp = searchParams.get("welcome") === "true";
@@ -91,6 +107,7 @@ function DashboardContent() {
     setChecking(true);
     setCheckResults(null);
     setRevenueIntel(null);
+    setDistributionIntel(null);
     setShowPaywall(false);
     
     try {
@@ -108,6 +125,7 @@ function DashboardContent() {
       if (data.success) {
         setCheckResults(data.results);
         setRevenueIntel(data.revenueIntelligence);
+        setDistributionIntel(data.distributionIntelligence);
         
         // If free user has losses, show paywall after revealing the pain
         if (!isPaid && data.revenueIntelligence?.queriesLost > 0) {
@@ -413,6 +431,94 @@ function DashboardContent() {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* AI TRUST MAP - Where you need to be listed */}
+          {distributionIntel && distributionIntel.knownTrustSources.length > 0 && (
+            <Card className="bg-gradient-to-br from-violet-500/5 to-zinc-900 border-violet-500/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-violet-400" />
+                  Where AI Gets Its Information
+                </CardTitle>
+                <p className="text-sm text-zinc-500 mt-1">
+                  These sites feed AI&apos;s recommendations. Get listed to get recommended.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {distributionIntel.knownTrustSources.slice(0, 5).map((source, idx) => {
+                    const isCompetitorSource = distributionIntel.sourcesMentioningCompetitors.includes(source.name);
+                    return (
+                      <div 
+                        key={idx}
+                        className={`flex items-center justify-between p-3 rounded-lg ${
+                          isCompetitorSource 
+                            ? "bg-red-500/10 border border-red-500/30" 
+                            : "bg-zinc-800/50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                            isCompetitorSource ? "bg-red-500/20" : "bg-violet-500/20"
+                          }`}>
+                            <span className="text-lg">{source.trustScore >= 9 ? "⭐" : "📍"}</span>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-white font-medium">{source.name}</span>
+                              {isCompetitorSource && (
+                                <Badge className="bg-red-500/20 text-red-400 text-xs">
+                                  Competitors here
+                                </Badge>
+                              )}
+                            </div>
+                            <span className="text-xs text-zinc-500">{source.domain}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            source.trustScore >= 9 
+                              ? "bg-amber-500/20 text-amber-400" 
+                              : "bg-zinc-700 text-zinc-400"
+                          }`}>
+                            Trust: {source.trustScore}/10
+                          </span>
+                          {isPaid ? (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs border-violet-500/50 text-violet-400"
+                              onClick={() => {
+                                // Show how to get listed
+                                alert(source.howToGetListed);
+                              }}
+                            >
+                              How to get listed
+                            </Button>
+                          ) : (
+                            <Lock className="w-4 h-4 text-zinc-600" />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {!isPaid && (
+                  <div className="mt-4 p-4 rounded-lg bg-violet-500/10 border border-violet-500/30 text-center">
+                    <p className="text-violet-400 text-sm mb-2">
+                      🔒 Upgrade to see how to get listed on all {distributionIntel.knownTrustSources.length}+ trust sources
+                    </p>
+                    <Link href="/settings/billing">
+                      <Button size="sm" className="bg-violet-500 hover:bg-violet-400 text-white">
+                        Unlock Distribution Roadmap
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

@@ -20,6 +20,11 @@ import {
   analyzeCompetitiveLoss,
   formatMoneyLoss,
 } from "@/lib/ai-revenue";
+import {
+  extractSources,
+  getTrustSourceInfo,
+  TRUST_SOURCES,
+} from "@/lib/ai-revenue/sources";
 
 function getDbClient(): SupabaseClient | null {
   try {
@@ -606,6 +611,12 @@ export async function POST(request: NextRequest) {
       const buyerIntent = calculateBuyerIntent(r.query);
       const queryValue = calculateQueryValue(r.query, category, competitiveAnalysis.competitorsMentioned.length);
       
+      // Extract sources from AI response
+      const sources = r.snippet ? extractSources(r.snippet) : [];
+      const trustedSources = sources
+        .map(s => getTrustSourceInfo(s))
+        .filter((s): s is NonNullable<typeof s> => s !== null);
+      
       return {
         platform: r.platform,
         cited: r.cited,
@@ -613,13 +624,19 @@ export async function POST(request: NextRequest) {
         snippet: r.snippet,
         confidence: r.confidence,
         error: r.error,
-        // NEW: Competitive intelligence
+        // Competitive intelligence
         competitors: competitiveAnalysis.competitorsMentioned.map(c => c.name),
         isLoss: competitiveAnalysis.isLoss,
         lossMessage: competitiveAnalysis.lossMessage,
         buyerIntent,
         estimatedValue: queryValue,
         estimatedValueFormatted: formatMoneyLoss(queryValue),
+        // NEW: Trust sources
+        sources: trustedSources.map(s => ({
+          domain: s.domain,
+          name: s.name,
+          trustScore: s.trustScore,
+        })),
       };
     });
     
@@ -635,6 +652,16 @@ export async function POST(request: NextRequest) {
     const totalMentions = competitiveResults.filter(r => !r.error).length;
     const yourMentions = competitiveResults.filter(r => r.cited).length;
     const aiMarketShare = totalMentions > 0 ? Math.round((yourMentions / totalMentions) * 100) : 0;
+    
+    // Collect all sources mentioned across results
+    const allSources = [...new Set(competitiveResults.flatMap(r => r.sources.map(s => s.domain)))];
+    
+    // Find distribution gaps (sources competitors are on but you're not)
+    // This is a simplified version - full Trust Map is built client-side
+    const sourcesMentioningCompetitors = competitiveResults
+      .filter(r => !r.cited && r.competitors.length > 0)
+      .flatMap(r => r.sources.map(s => s.name));
+    const uniqueCompetitorSources = [...new Set(sourcesMentioningCompetitors)];
 
     // Return enriched response with REVENUE INTELLIGENCE
     return NextResponse.json({
@@ -647,7 +674,7 @@ export async function POST(request: NextRequest) {
         citedCount,
         checkedAt: new Date().toISOString(),
       },
-      // NEW: Revenue intelligence data
+      // Revenue intelligence data
       revenueIntelligence: {
         aiMarketShare,
         totalQueriesChecked: totalMentions,
@@ -657,6 +684,17 @@ export async function POST(request: NextRequest) {
         estimatedMonthlyLossFormatted: formatMoneyLoss(totalLoss),
         topCompetitors: allCompetitors.slice(0, 5),
         category: category,
+      },
+      // NEW: Distribution intelligence
+      distributionIntelligence: {
+        sourcesFound: allSources.length,
+        sourcesMentioningCompetitors: uniqueCompetitorSources,
+        knownTrustSources: TRUST_SOURCES.slice(0, 10).map(s => ({
+          domain: s.domain,
+          name: s.name,
+          trustScore: s.trustScore,
+          howToGetListed: s.howToGetListed,
+        })),
       },
     });
 
