@@ -293,10 +293,22 @@ export const sendCitationAlert = inngest.createFunction(
               </a>
             </div>
             
+            <div style="background: #18181b; border-radius: 8px; padding: 16px; margin: 24px 0; text-align: center;">
+              <p style="color: #a1a1aa; font-size: 13px; margin: 0 0 8px;">
+                🎉 Share this win!
+              </p>
+              <a href="${process.env.NEXT_PUBLIC_APP_URL}/ai-profile/${encodeURIComponent(domain)}" 
+                 style="color: #10b981; font-size: 12px; word-break: break-all;">
+                ${process.env.NEXT_PUBLIC_APP_URL}/ai-profile/${encodeURIComponent(domain)}
+              </a>
+            </div>
+            
             <hr style="border: none; border-top: 1px solid #27272a; margin: 30px 0;" />
             
             <p style="color: #71717a; font-size: 12px; text-align: center;">
               <a href="${process.env.NEXT_PUBLIC_APP_URL}/settings/notifications" style="color: #10b981;">Manage email preferences</a>
+              <br /><br />
+              Powered by <a href="https://cabbageseo.com" style="color: #10b981;">CabbageSEO</a> — AI Visibility Intelligence
             </p>
           </div>
         `,

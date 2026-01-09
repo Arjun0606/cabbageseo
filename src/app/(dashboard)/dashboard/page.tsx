@@ -30,7 +30,8 @@ import {
   Zap,
   AlertTriangle,
   Globe,
-  ExternalLink
+  ExternalLink,
+  Share2
 } from "lucide-react";
 import { useSite } from "@/context/site-context";
 import { Button } from "@/components/ui/button";
@@ -162,7 +163,7 @@ function DashboardContent() {
           <p className="text-zinc-400">{error}</p>
           <Button onClick={refreshData} className="mt-4">Try Again</Button>
         </div>
-      </div>
+            </div>
     );
   }
 
@@ -173,7 +174,7 @@ function DashboardContent() {
         <div className="max-w-md text-center bg-zinc-900 rounded-2xl p-8 border border-red-500/30">
           <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-6">
             <DollarSign className="w-8 h-8 text-red-400" />
-          </div>
+            </div>
           <h2 className="text-2xl font-bold text-white mb-3">
             You&apos;re Flying Blind
           </h2>
@@ -185,8 +186,8 @@ function DashboardContent() {
               See Where Your Money Is Going — $29/mo
             </Button>
           </Link>
-        </div>
-      </div>
+              </div>
+            </div>
     );
   }
 
@@ -218,13 +219,13 @@ function DashboardContent() {
           {currentSite.domain}
         </h1>
         <p className="text-sm text-zinc-500">AI Revenue Intelligence</p>
-      </div>
+        </div>
 
       {/* Trial warning */}
       {plan === "free" && trial && !trial.expired && (
         <div className="bg-gradient-to-r from-red-500/10 to-amber-500/10 border border-red-500/30 rounded-xl p-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 text-red-400" />
               <div>
                 <p className="text-red-400 font-medium">
@@ -258,7 +259,7 @@ function DashboardContent() {
               See which competitors AI recommends instead of you — and how much revenue you&apos;re losing.
             </p>
             <Button
-              onClick={handleCheck}
+          onClick={handleCheck}
               disabled={checking}
               size="lg"
               className="bg-emerald-500 hover:bg-emerald-400 text-black px-8"
@@ -283,10 +284,10 @@ function DashboardContent() {
       {checkResults && revenueIntel && (
         <div className="space-y-6">
           {/* AI Visibility Stats - Truth-based metrics only */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* High-Intent Queries Missed */}
             <Card className={`col-span-2 border ${revenueIntel.queriesLost > 0 ? "bg-red-500/5 border-red-500/30" : "bg-emerald-500/5 border-emerald-500/30"}`}>
-              <CardContent className="pt-6">
+            <CardContent className="pt-6">
                 <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle className={`w-5 h-5 ${revenueIntel.queriesLost > 0 ? "text-red-400" : "text-emerald-400"}`} />
                   <span className="text-sm text-zinc-500">High-Intent Queries Missed</span>
@@ -297,12 +298,12 @@ function DashboardContent() {
                 <p className="text-sm text-zinc-500 mt-1">
                   Buyer-intent queries where AI recommends competitors
                 </p>
-              </CardContent>
-            </Card>
-            
+            </CardContent>
+          </Card>
+
             {/* AI Mention Share (tracked queries only) */}
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardContent className="pt-6">
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="pt-6">
                 <div className="flex items-center gap-2 mb-2">
                   <Target className="w-4 h-4 text-zinc-500" />
                   <span className="text-xs text-zinc-500">AI Mention Share</span>
@@ -316,24 +317,24 @@ function DashboardContent() {
                     className="bg-emerald-500 h-2 rounded-full transition-all"
                     style={{ width: `${revenueIntel.aiMarketShare}%` }}
                   />
-                </div>
-              </CardContent>
-            </Card>
-            
+                  </div>
+            </CardContent>
+          </Card>
+
             {/* Queries Where You Appeared */}
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardContent className="pt-6">
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="pt-6">
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                   <span className="text-xs text-zinc-500">AI Mentioned You</span>
                 </div>
-                <div className="text-3xl font-bold text-white">
+            <div className="text-3xl font-bold text-white">
                   {revenueIntel.queriesWon}
                   <span className="text-lg text-zinc-500">/{revenueIntel.totalQueriesChecked}</span>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+            </CardContent>
+          </Card>
+        </div>
 
           {/* WHO IS AI RECOMMENDING - Real data from AI responses */}
           {revenueIntel.queriesLost > 0 && (
@@ -419,14 +420,14 @@ function DashboardContent() {
 
           {/* TOP COMPETITORS */}
           {revenueIntel.topCompetitors.length > 0 && (
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardHeader>
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Trophy className="w-5 h-5 text-amber-400" />
                   Who&apos;s Winning Your Market
                 </CardTitle>
-              </CardHeader>
-              <CardContent>
+          </CardHeader>
+          <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   {revenueIntel.topCompetitors.map((comp, idx) => (
                     <div 
@@ -459,8 +460,8 @@ function DashboardContent() {
                   {distributionIntel.knownTrustSources.slice(0, 5).map((source, idx) => {
                     const isCompetitorSource = distributionIntel.sourcesMentioningCompetitors.includes(source.name);
                     return (
-                      <div 
-                        key={idx}
+                <div 
+                  key={idx}
                         className={`flex items-center justify-between p-3 rounded-lg ${
                           isCompetitorSource 
                             ? "bg-red-500/10 border border-red-500/30" 
@@ -492,7 +493,7 @@ function DashboardContent() {
                               : "bg-zinc-700 text-zinc-400"
                           }`}>
                             Trust: {source.trustScore}/10
-                          </span>
+                    </span>
                           {isPaid ? (
                             <div className="flex gap-2">
                               <Button 
@@ -531,8 +532,8 @@ function DashboardContent() {
                             </div>
                           ) : (
                             <Lock className="w-4 h-4 text-zinc-600" />
-                          )}
-                        </div>
+                    )}
+                  </div>
                       </div>
                     );
                   })}
@@ -575,26 +576,26 @@ function DashboardContent() {
                     <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-black w-full">
                       Unlock AI Visibility Intelligence — $29/mo
                       <ArrowRight className="w-5 h-5 ml-2" />
-                    </Button>
-                  </Link>
+                </Button>
+              </Link>
                   <p className="text-sm text-zinc-500">
                     Includes: Trust source map • Listing guides • AI mention tracking
                   </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
           {/* ONE-CLICK FIX - For paid users */}
           {isPaid && revenueIntel.queriesLost > 0 && (
             <Card className="bg-gradient-to-br from-emerald-500/5 to-zinc-900 border-emerald-500/20">
-              <CardHeader>
+            <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Zap className="w-5 h-5 text-emerald-400" />
                   One-Click Fix
                 </CardTitle>
-              </CardHeader>
-              <CardContent>
+            </CardHeader>
+            <CardContent>
                 <p className="text-zinc-400 mb-4">
                   Generate content outlines to win back these recommendations:
                 </p>
@@ -610,21 +611,37 @@ function DashboardContent() {
                         <div>
                           <p className="text-white text-sm">&ldquo;{result.query}&rdquo;</p>
                           <p className="text-red-400 text-xs">Losing {result.estimatedValueFormatted}/mo</p>
-                        </div>
+              </div>
                         <Link href={`/intelligence?fix=${encodeURIComponent(result.query)}`}>
                           <Button size="sm" variant="outline" className="border-emerald-500/50 text-emerald-400">
                             Generate Fix
                           </Button>
                         </Link>
-                      </div>
+            </div>
                     ))}
                 </div>
-              </CardContent>
-            </Card>
+        </CardContent>
+      </Card>
           )}
 
-          {/* Run Again */}
-          <div className="text-center">
+          {/* Actions - Share & Run Again */}
+          <div className="flex items-center justify-center gap-4">
+            {/* Share Button */}
+            {currentSite && revenueIntel && revenueIntel.queriesWon > 0 && (
+              <Button
+                variant="outline"
+                className="border-emerald-500/50 text-emerald-400"
+                onClick={() => {
+                  const shareUrl = `${window.location.origin}/ai-profile/${encodeURIComponent(currentSite.domain)}`;
+                  navigator.clipboard.writeText(shareUrl);
+                  alert("Share link copied! 🎉\n\n" + shareUrl);
+                }}
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Share Your Wins
+              </Button>
+            )}
+            
             <Button
               onClick={handleCheck}
               disabled={checking}
@@ -644,7 +661,21 @@ function DashboardContent() {
               )}
             </Button>
           </div>
-        </div>
+          
+          {/* View Public Profile Link */}
+          {currentSite && (
+            <div className="text-center mt-4">
+              <Link 
+                href={`/ai-profile/${encodeURIComponent(currentSite.domain)}`}
+                target="_blank"
+                className="text-sm text-zinc-500 hover:text-emerald-400 transition inline-flex items-center gap-1"
+              >
+                View your public AI profile
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+            </div>
+          )}
+          </div>
       )}
     </div>
   );
