@@ -131,7 +131,7 @@ export default async function AIProfilePage({ params }: PageProps) {
   if (!exists) {
     return (
       <div className="min-h-screen bg-black">
-        <ProfileHeader />
+        {/* Header handled by marketing layout */}
         
         <main className="max-w-4xl mx-auto px-4 py-16">
           <div className="text-center space-y-6">
@@ -159,7 +159,7 @@ export default async function AIProfilePage({ params }: PageProps) {
   if (!isPublic) {
     return (
       <div className="min-h-screen bg-black">
-        <ProfileHeader />
+        {/* Header handled by marketing layout */}
         
         <main className="max-w-4xl mx-auto px-4 py-16">
           <div className="text-center space-y-6">
@@ -201,7 +201,7 @@ export default async function AIProfilePage({ params }: PageProps) {
   // === CASE 3: Domain tracked and profile is PUBLIC ===
   return (
     <div className="min-h-screen bg-black">
-      <ProfileHeader />
+      {/* Header handled by marketing layout */}
       
       <main className="max-w-4xl mx-auto px-4 py-8">
         {/* Profile Header */}
@@ -325,23 +325,7 @@ export default async function AIProfilePage({ params }: PageProps) {
 
 // === COMPONENTS ===
 
-function ProfileHeader() {
-  return (
-    <header className="border-b border-zinc-800">
-      <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <img src="/apple-touch-icon.png" alt="CabbageSEO" className="h-8 w-8 rounded-lg" />
-          <span className="font-bold text-white">CabbageSEO</span>
-        </Link>
-        <Link href="/signup">
-          <Button className="bg-emerald-500 hover:bg-emerald-400 text-black">
-            Track Your Site
-          </Button>
-        </Link>
-      </div>
-    </header>
-  );
-}
+// Header is now in the marketing layout - no need for inline header
 
 function ClaimProfileCard({ domain, variant = "primary" }: { domain: string; variant?: "primary" | "secondary" }) {
   return (

@@ -23,8 +23,7 @@ import {
   ExternalLink,
   ArrowRight,
   Crown,
-  Target,
-  Share2
+  Target
 } from "lucide-react";
 
 interface PageProps {
@@ -160,27 +159,6 @@ export default async function LeaderboardPage({ params }: PageProps) {
   
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="border-b border-zinc-800">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/apple-touch-icon.png" alt="CabbageSEO" className="h-8 w-8 rounded-lg" />
-            <span className="font-bold text-white">CabbageSEO</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" className="border-zinc-700 text-zinc-400">
-              <Share2 className="w-4 h-4 mr-2" />
-              Share
-            </Button>
-            <Link href="/signup">
-              <Button className="bg-emerald-500 hover:bg-emerald-400 text-black">
-                Track Your Site
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-      
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Header Section */}
         <div className="mb-8">

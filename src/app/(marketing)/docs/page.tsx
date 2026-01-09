@@ -154,23 +154,6 @@ GET /api/competitors?siteId=xxx
 export default function DocsPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {/* Header */}
-      <header className="border-b border-zinc-800">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/apple-touch-icon.png" alt="CabbageSEO" className="h-10 w-10 rounded-lg" />
-            <span className="font-bold text-xl tracking-tight text-white">CabbageSEO</span>
-          </Link>
-          <nav className="flex items-center gap-6">
-            <Link href="/pricing" className="text-zinc-400 hover:text-white">Pricing</Link>
-            <Link href="/feedback" className="text-zinc-400 hover:text-white">Feedback</Link>
-            <Link href="/dashboard">
-              <Button className="bg-emerald-600 hover:bg-emerald-500">Dashboard</Button>
-            </Link>
-          </nav>
-        </div>
-      </header>
-
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           {/* Title */}
@@ -248,22 +231,6 @@ export default function DocsPage() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-800 py-8 px-4 mt-12">
-        <div className="container mx-auto max-w-4xl flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/apple-touch-icon.png" alt="CabbageSEO" className="h-6 w-6 rounded" />
-            <span className="text-zinc-500 text-sm">CabbageSEO</span>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-zinc-500">
-            <Link href="/privacy" className="hover:text-white">Privacy</Link>
-            <Link href="/terms" className="hover:text-white">Terms</Link>
-            <a href="https://x.com/Arjun06061" target="_blank" rel="noopener noreferrer" className="hover:text-white">
-              𝕏 @Arjun06061
-            </a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

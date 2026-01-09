@@ -280,19 +280,6 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="py-8 px-6 border-t border-zinc-900">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🥬</span>
-            <span className="font-semibold text-white">CabbageSEO</span>
-          </div>
-          <div className="text-sm text-zinc-500">
-            AI Revenue Intelligence
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
