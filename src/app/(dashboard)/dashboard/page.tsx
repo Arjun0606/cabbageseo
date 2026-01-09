@@ -282,34 +282,35 @@ function DashboardContent() {
       {/* RESULTS - Revenue Intelligence */}
       {checkResults && revenueIntel && (
         <div className="space-y-6">
-          {/* The Money Stats - Lead with loss */}
+          {/* AI Visibility Stats - Truth-based metrics only */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Estimated Loss - BIGGEST */}
-            <Card className={`col-span-2 border ${revenueIntel.estimatedMonthlyLoss > 0 ? "bg-red-500/5 border-red-500/30" : "bg-emerald-500/5 border-emerald-500/30"}`}>
+            {/* High-Intent Queries Missed */}
+            <Card className={`col-span-2 border ${revenueIntel.queriesLost > 0 ? "bg-red-500/5 border-red-500/30" : "bg-emerald-500/5 border-emerald-500/30"}`}>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className={`w-5 h-5 ${revenueIntel.estimatedMonthlyLoss > 0 ? "text-red-400" : "text-emerald-400"}`} />
-                  <span className="text-sm text-zinc-500">Est. Monthly Revenue Loss</span>
+                  <AlertTriangle className={`w-5 h-5 ${revenueIntel.queriesLost > 0 ? "text-red-400" : "text-emerald-400"}`} />
+                  <span className="text-sm text-zinc-500">High-Intent Queries Missed</span>
                 </div>
-                <div className={`text-4xl font-bold ${revenueIntel.estimatedMonthlyLoss > 0 ? "text-red-400" : "text-emerald-400"}`}>
-                  {revenueIntel.estimatedMonthlyLoss > 0 ? "-" : ""}{revenueIntel.estimatedMonthlyLossFormatted}
+                <div className={`text-4xl font-bold ${revenueIntel.queriesLost > 0 ? "text-red-400" : "text-emerald-400"}`}>
+                  {revenueIntel.queriesLost}
                 </div>
                 <p className="text-sm text-zinc-500 mt-1">
-                  Going to competitors instead of you
+                  Buyer-intent queries where AI recommends competitors
                 </p>
               </CardContent>
             </Card>
             
-            {/* AI Market Share */}
+            {/* AI Mention Share (tracked queries only) */}
             <Card className="bg-zinc-900 border-zinc-800">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 mb-2">
                   <Target className="w-4 h-4 text-zinc-500" />
-                  <span className="text-xs text-zinc-500">AI Market Share</span>
+                  <span className="text-xs text-zinc-500">AI Mention Share</span>
                 </div>
                 <div className="text-3xl font-bold text-white">
                   {revenueIntel.aiMarketShare}%
                 </div>
+                <p className="text-xs text-zinc-600 mt-1">of tracked queries</p>
                 <div className="w-full bg-zinc-800 rounded-full h-2 mt-2">
                   <div 
                     className="bg-emerald-500 h-2 rounded-full transition-all"
@@ -319,61 +320,53 @@ function DashboardContent() {
               </CardContent>
             </Card>
             
-            {/* Queries Lost */}
+            {/* Queries Where You Appeared */}
             <Card className="bg-zinc-900 border-zinc-800">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <TrendingDown className="w-4 h-4 text-red-400" />
-                  <span className="text-xs text-zinc-500">Queries Lost</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs text-zinc-500">AI Mentioned You</span>
                 </div>
                 <div className="text-3xl font-bold text-white">
-                  {revenueIntel.queriesLost}
+                  {revenueIntel.queriesWon}
                   <span className="text-lg text-zinc-500">/{revenueIntel.totalQueriesChecked}</span>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* WHO IS AI RECOMMENDING - The Competition Table */}
+          {/* WHO IS AI RECOMMENDING - Real data from AI responses */}
           {revenueIntel.queriesLost > 0 && (
             <Card className="bg-gradient-to-br from-red-500/5 to-zinc-900 border-red-500/20">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Users className="w-5 h-5 text-red-400" />
-                  Who AI Is Recommending Instead Of You
+                  What AI Actually Said
                 </CardTitle>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Real responses from AI platforms. No estimates or guesses.
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-zinc-800">
-                        <th className="text-left py-3 text-sm font-medium text-zinc-400">Query</th>
-                        <th className="text-left py-3 text-sm font-medium text-zinc-400">AI Recommends</th>
-                        <th className="text-center py-3 text-sm font-medium text-zinc-400">You?</th>
-                        <th className="text-right py-3 text-sm font-medium text-zinc-400">Est. Value</th>
+                        <th className="text-left py-3 text-sm font-medium text-zinc-400">Query Asked</th>
+                        <th className="text-left py-3 text-sm font-medium text-zinc-400">Products AI Mentioned</th>
+                        <th className="text-center py-3 text-sm font-medium text-zinc-400">Mentioned You?</th>
+                        <th className="text-right py-3 text-sm font-medium text-zinc-400">Intent Level</th>
                       </tr>
                     </thead>
                     <tbody>
                       {checkResults
                         .filter(r => !r.error)
-                        .sort((a, b) => b.estimatedValue - a.estimatedValue)
+                        .sort((a, b) => b.buyerIntent - a.buyerIntent)
                         .map((result, idx) => (
                           <tr key={idx} className="border-b border-zinc-800/50">
                             <td className="py-4">
-                              <div className="flex items-center gap-2">
-                                <Badge 
-                                  variant="outline" 
-                                  className={`text-xs ${
-                                    result.buyerIntent >= 0.8 
-                                      ? "border-amber-500/50 text-amber-400" 
-                                      : "border-zinc-700 text-zinc-500"
-                                  }`}
-                                >
-                                  {result.buyerIntent >= 0.8 ? "High Intent" : "Med Intent"}
-                                </Badge>
-                              </div>
-                              <p className="text-white mt-1 text-sm">&ldquo;{result.query}&rdquo;</p>
+                              <p className="text-white text-sm">&ldquo;{result.query}&rdquo;</p>
+                              <span className="text-xs text-zinc-600">{result.platform}</span>
                             </td>
                             <td className="py-4">
                               <div className="flex flex-wrap gap-1">
@@ -384,22 +377,36 @@ function DashboardContent() {
                                     </Badge>
                                   ))
                                 ) : (
-                                  <span className="text-zinc-500 text-sm">No specific products</span>
+                                  <span className="text-zinc-500 text-sm">No specific products detected</span>
                                 )}
                               </div>
                             </td>
                             <td className="py-4 text-center">
                               {result.cited ? (
-                                <CheckCircle2 className="w-5 h-5 text-emerald-400 mx-auto" />
+                                <div className="flex flex-col items-center">
+                                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                                  <span className="text-xs text-emerald-400 mt-1">Yes</span>
+                                </div>
                               ) : (
-                                <XCircle className="w-5 h-5 text-red-400 mx-auto" />
+                                <div className="flex flex-col items-center">
+                                  <XCircle className="w-5 h-5 text-red-400" />
+                                  <span className="text-xs text-red-400 mt-1">No</span>
+                                </div>
                               )}
                             </td>
                             <td className="py-4 text-right">
-                              <span className={`font-medium ${result.cited ? "text-emerald-400" : "text-red-400"}`}>
-                                {result.cited ? "+" : "-"}{result.estimatedValueFormatted}
-                              </span>
-                              <span className="text-zinc-500 text-xs">/mo</span>
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs ${
+                                  result.buyerIntent >= 0.8 
+                                    ? "border-amber-500/50 text-amber-400 bg-amber-500/10" 
+                                    : result.buyerIntent >= 0.5
+                                      ? "border-zinc-600 text-zinc-400"
+                                      : "border-zinc-700 text-zinc-500"
+                                }`}
+                              >
+                                {result.buyerIntent >= 0.8 ? "High" : result.buyerIntent >= 0.5 ? "Medium" : "Low"}
+                              </Badge>
                             </td>
                           </tr>
                         ))}
@@ -547,7 +554,7 @@ function DashboardContent() {
             </Card>
           )}
 
-          {/* THE PAYWALL - After showing the pain */}
+          {/* THE PAYWALL - After showing real data */}
           {showPaywall && (
             <Card className="bg-gradient-to-br from-emerald-500/10 to-zinc-900 border-emerald-500/30">
               <CardContent className="pt-8 pb-8 text-center">
@@ -555,23 +562,23 @@ function DashboardContent() {
                   <Lock className="w-8 h-8 text-emerald-400" />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-3">
-                  Get The Fix
+                  See How To Get Recommended
                 </h2>
                 <p className="text-zinc-400 mb-2">
-                  You&apos;re losing <span className="text-red-400 font-bold">{revenueIntel.estimatedMonthlyLossFormatted}/mo</span> to competitors.
+                  AI mentioned competitors in <span className="text-red-400 font-bold">{revenueIntel.queriesLost} high-intent queries</span> instead of you.
                 </p>
                 <p className="text-zinc-400 mb-6">
-                  Upgrade to see exactly what to publish to win these recommendations.
+                  Upgrade to see where to get listed and track your AI visibility growth.
                 </p>
                 <div className="space-y-3">
                   <Link href="/settings/billing">
                     <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-black w-full">
-                      Unlock AI Revenue Intelligence — $29/mo
+                      Unlock AI Visibility Intelligence — $29/mo
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </Button>
                   </Link>
                   <p className="text-sm text-zinc-500">
-                    Includes: Competitor analysis • Content fixes • Weekly revenue reports
+                    Includes: Trust source map • Listing guides • AI mention tracking
                   </p>
                 </div>
               </CardContent>
