@@ -87,7 +87,7 @@ export default function PricingPage() {
             <DollarSign className="w-4 h-4 text-emerald-400" />
             <span className="text-emerald-400 text-sm font-medium">
               7-day free trial on all paid plans
-            </span>
+          </span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
@@ -141,13 +141,13 @@ export default function PricingPage() {
                 <Link href="/signup">
                   <Button
                     className={`w-full mb-6 ${
-                      plan.popular
-                        ? "bg-emerald-500 hover:bg-emerald-400 text-black"
+                    plan.popular
+                      ? "bg-emerald-500 hover:bg-emerald-400 text-black"
                         : ""
-                    }`}
+                  }`}
                     variant={plan.ctaVariant}
-                  >
-                    {plan.cta}
+                >
+                  {plan.cta}
                   </Button>
                 </Link>
 
@@ -177,7 +177,7 @@ export default function PricingPage() {
           <h2 className="text-3xl font-bold text-center text-white mb-16">
             What you unlock at each level
           </h2>
-
+          
           <div className="space-y-8">
             {/* Free */}
             <div className="p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
@@ -185,7 +185,7 @@ export default function PricingPage() {
                 <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center">
                   <Target className="w-5 h-5 text-zinc-400" />
                 </div>
-                <div>
+            <div>
                   <h3 className="text-xl font-semibold text-white">Free</h3>
                   <p className="text-zinc-500">The wake-up call</p>
                 </div>
@@ -195,7 +195,7 @@ export default function PricingPage() {
                 Manual checks only — no ongoing monitoring.
               </p>
             </div>
-
+            
             {/* Starter */}
             <div className="p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
               <div className="flex items-center gap-4 mb-4">
@@ -223,7 +223,7 @@ export default function PricingPage() {
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/30 flex items-center justify-center">
                   <Zap className="w-5 h-5 text-emerald-400" />
                 </div>
-                <div>
+            <div>
                   <h3 className="text-xl font-semibold text-white">Pro — $79/mo</h3>
                   <p className="text-zinc-500">Full competitive warfare</p>
                 </div>
@@ -248,7 +248,7 @@ export default function PricingPage() {
           <h2 className="text-3xl font-bold text-center text-white mb-16">
             Common questions
           </h2>
-
+          
           <div className="space-y-8">
             <div>
               <h3 className="text-lg font-semibold text-white mb-2">
@@ -281,7 +281,7 @@ export default function PricingPage() {
                 It&apos;s a roadmap to win that query.
               </p>
             </div>
-
+            
             <div>
               <h3 className="text-lg font-semibold text-white mb-2">
                 Can I cancel anytime?
@@ -291,7 +291,7 @@ export default function PricingPage() {
                 the end of your billing period.
               </p>
             </div>
-
+            
             <div>
               <h3 className="text-lg font-semibold text-white mb-2">
                 Is there a free trial?

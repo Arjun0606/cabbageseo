@@ -966,7 +966,7 @@ export const citations = pgTable(
     // Citation details
     snippet: text("snippet"),
     confidence: text("confidence").default("medium"), // high, medium, low
-    
+
     // Source attribution (for AI Impact Tracking)
     sourceDomain: text("source_domain"), // Which trust source led to this (g2.com, etc.)
 

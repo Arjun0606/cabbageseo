@@ -1,170 +1,180 @@
-# 🔒 CabbageSEO — Truth & Data Integrity System Prompt
+# 🔒 CabbageSEO — Production Truth & Feasibility Contract
 
-> **This product must NEVER display fake, guessed, mocked, simulated, or placeholder data as real.
-> If a value is not directly measured from AI responses or user-confirmed actions, it must be labeled as an estimate or not shown at all.**
+> **This project is a real SaaS, not a demo.
+> Every feature must be implemented using real data, real APIs, and real system state.
+> No fake, mock, simulated, placeholder, or invented data may ever be shown to users.**
 
-## 1️⃣ Data Truth Rules
+---
 
-The system may ONLY show:
+## 1️⃣ Allowed Data Sources (Only These)
 
-* Raw AI responses
-* Products or domains actually mentioned by AI
-* Sources actually cited by AI
-* Queries actually run
+The system may ONLY use data from:
+
+| Source              | What it provides                                        |
+| ------------------- | ------------------------------------------------------- |
+| Perplexity API      | Real web-grounded AI answers + citations                |
+| Google Gemini API   | Google AI Overviews                                     |
+| OpenAI GPT-5 series | ChatGPT-style answers + reasoning                       |
+| Supabase            | Stored queries, sites, competitors, citations, listings |
+| Inngest             | Scheduled checks & historical tracking                  |
+| Resend              | Email delivery                                          |
+| User input          | Site URLs, competitors, listing confirmations           |
+
+Nothing else.
+
+No scraping.
+No third-party SEO APIs.
+No search volume APIs.
+No fake metrics.
+
+---
+
+## 2️⃣ Data Integrity Rules
+
+The system may display ONLY:
+
+* AI responses that were actually returned by APIs
+* Products or domains actually mentioned in those responses
+* Sources actually cited by those responses
 * Competitors actually detected
-* User-confirmed listings
-* Changes actually observed over time
+* Listings the user explicitly confirmed
+* Changes that were actually observed over time
 
 The system must NEVER:
 
-* invent market share
 * invent traffic
 * invent revenue
-* invent rankings
+* invent market size
 * invent competitor positions
+* invent rankings
+* invent improvement
 
-If a number is not directly observed, it must be shown as:
+If something is not observed:
 
-> "Estimated" or "Relative"
-
-Never as a precise dollar or percentage.
+> **Show "Not observed yet — run more checks."**
 
 ---
 
-## 2️⃣ How "Market Share" must be defined
+## 3️⃣ What "AI Market Share" Means
 
-Market share is allowed ONLY as:
-
-> **"Share of AI mentions in tracked queries."**
-
-It is:
+AI Market Share must be defined ONLY as:
 
 ```
-AI_share = (times this site was mentioned) / (total mentions across all sites in those queries)
+AI mention share =  
+(times this site was mentioned in tracked AI queries)  
+÷  
+(total mentions of all sites in those same queries)
 ```
 
-It must never be called:
+It must be labeled:
 
-* total market share
+> **"AI mention share (tracked queries only)"**
+
+It must never be labeled:
+
 * industry share
 * revenue share
-
-Always:
-
-> **"AI mention share (within tracked queries)"**
+* market share
+* dominance
 
 ---
 
-## 3️⃣ How "Revenue" must be handled
+## 4️⃣ What "Impact" Means
 
-The system must never display:
+The system may ONLY say:
 
-> "You lost $18,500"
-
-It must display:
-
-> **"High-value buyer intent queries you are missing"**
-> or
-> **"Relative opportunity score"**
-
-If any dollar values are shown, they must be:
-
-* labeled as "estimate"
-* based only on:
-  * query intent (best, alternatives, pricing, vs)
-  * category weighting
-
-Never implied to be real revenue.
-
----
-
-## 4️⃣ How attribution works
-
-The system may only say:
-
-> "After you got listed on G2, you were mentioned X more times in AI answers."
+> "After you got listed on G2, AI mentioned you 5 more times in these queries."
 
 It must NOT say:
 
-> "You gained $4,300"
+* "You gained $X"
+* "You captured traffic"
+* "You earned revenue"
 
 Only:
 
-> **"Your AI visibility increased by X mentions in these queries."**
-
-Let the user infer money.
+> **observed AI mentions increased or decreased.**
 
 ---
 
-## 5️⃣ How models must be used
+## 5️⃣ Model Usage (Strict)
 
-All AI reasoning, analysis, and content generation must use:
+All reasoning, analysis, extraction, gap analysis, and recommendations must use:
 
 > **OpenAI GPT-5 series models**
-> (GPT-5 or GPT-5-mini or GPT-5-nano as appropriate)
-
-Do not use:
-
-* legacy GPT-4
-* GPT-4o
-* GPT-3.5
-
-Always prefer:
-
-* GPT-5 for analysis
-* GPT-5-mini for batch jobs
-* GPT-5-nano for lightweight parsing
+> (GPT-5, GPT-5-mini, GPT-5-nano as appropriate)
 
 Reference: https://platform.openai.com/docs/models
 
----
+Never:
 
-## 6️⃣ Product philosophy
+* GPT-4
+* GPT-4o
+* GPT-3.5
+* Claude
+* Gemini for reasoning
 
-CabbageSEO is not a demo.
-It is a **truth-based intelligence system.**
+Gemini & Perplexity are ONLY for:
 
-Users must always be able to trust:
+> retrieving AI answers.
 
-* what AI said
-* who AI recommended
-* which sources AI used
-* what changed over time
+GPT-5 is ONLY for:
 
-If something is uncertain, show:
-
-> "We do not have enough data yet."
-
-Never fake certainty.
+> analyzing them.
 
 ---
 
-## 7️⃣ The North Star
+## 6️⃣ What We Are Allowed To Infer
 
-Every screen must answer:
+We are allowed to infer:
 
-> **"Who is AI recommending, and where did it get that information?"**
+* intent level of queries (best / alternatives / vs / pricing)
+* relative opportunity based on query type
 
-Not:
+We are NOT allowed to infer:
 
-* SEO
-* scores
-* fluff
-* vibes
+* dollar values
+* traffic volume
+* revenue
 
-Only:
+We may show:
 
-* real AI outputs
-* real competitor presence
-* real distribution channels
+> "High-intent query"
+> "Medium-intent query"
+
+Never:
+
+> "$8,400 opportunity"
 
 ---
 
-## 8️⃣ If data is missing
+## 7️⃣ Technical Feasibility Constraint
 
-The system should say:
+Every feature must be implemented using:
 
-> "We haven't observed this yet — run more checks."
+* Supabase tables
+* Inngest scheduled jobs
+* Next.js API routes
+* The AI APIs above
+
+If a feature would require:
+
+* crawling the web
+* proprietary datasets
+* SEO volume APIs
+* paid third-party data
+
+It must NOT be built.
+
+We only build what the stack can actually do.
+
+---
+
+## 8️⃣ If Something Can't Be Known
+
+The UI must say:
+
+> **"We don't have enough data yet — run more checks."**
 
 Never:
 
@@ -172,11 +182,53 @@ Never:
 > "Likely…"
 > "Estimated competitor…"
 
-No speculation in UI.
+No speculation.
 
 ---
 
-## 9️⃣ Terminology Guide
+## 9️⃣ Product North Star
+
+Every screen must answer:
+
+> **"Who is AI recommending, and which sources caused that?"**
+
+Not:
+
+* SEO
+* scores
+* vanity metrics
+* made-up numbers
+
+Only:
+
+* AI outputs
+* competitors
+* sources
+* changes over time
+
+---
+
+## 🔟 This Is a Production System
+
+CabbageSEO must behave like:
+
+> a financial trading terminal
+
+Data must be:
+
+* traceable
+* verifiable
+* reproducible
+
+If a value cannot be traced to:
+
+> an AI response, a Supabase row, or a user action
+
+it must not exist.
+
+---
+
+## 📋 Terminology Guide
 
 | ❌ Don't Say | ✅ Say Instead |
 |-------------|----------------|
@@ -187,22 +239,33 @@ No speculation in UI.
 | "Estimated revenue" | "Relative opportunity (based on query intent)" |
 | "Your ranking" | "Your AI visibility" |
 | "Traffic potential" | "Query intent level" |
+| "Probably..." | "Not observed yet — run more checks" |
 
 ---
 
-## 🔟 Implementation Checklist
+## ✅ Implementation Checklist
 
-- [ ] All dollar amounts labeled "est." or removed
-- [ ] Market share labeled as "AI mention share (tracked queries)"
-- [ ] No invented competitor positions
-- [ ] No fake precision (e.g., "$18,547.23")
-- [ ] Attribution shows mentions, not money
-- [ ] Missing data shows "Run more checks" message
-- [ ] All AI analysis uses GPT-5 series
-- [ ] Sources are real URLs from AI responses
-- [ ] Competitors are real domains from AI responses
+- [x] All dollar amounts labeled "est." or removed
+- [x] Market share labeled as "AI mention share (tracked queries)"
+- [x] No invented competitor positions
+- [x] No fake precision (e.g., "$18,547.23")
+- [x] Attribution shows mentions, not money
+- [x] Missing data shows "Run more checks" message
+- [x] All AI analysis uses GPT-5 series
+- [x] Sources are real URLs from AI responses
+- [x] Competitors are real domains from AI responses
+- [x] Technical feasibility verified for all features
 
 ---
 
-This prompt keeps CabbageSEO **clean, credible, and scalable** — which is what allows growth to $100k MRR without burning reputation or getting sued.
+## 🎯 Why This Matters
 
+If you keep this contract enforced, you will have something incredibly rare in SaaS:
+
+**A product people trust.**
+
+That is what lets you grow to **$100k MRR without blowing up later**.
+
+---
+
+*Last updated: January 2026*
