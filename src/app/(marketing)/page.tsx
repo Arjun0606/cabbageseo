@@ -29,17 +29,17 @@ export default function HomePage() {
               <DollarSign className="w-4 h-4 text-red-400" />
               <span className="text-red-400 text-sm font-medium">
                 AI is choosing your competitors right now
-              </span>
+            </span>
             </div>
           </div>
-
+          
           {/* Main headline */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-center leading-tight mb-6">
             <span className="text-white">See exactly how much money</span>
             <br />
             <span className="text-red-400">AI is sending to your competitors</span>
           </h1>
-
+          
           <p className="text-xl text-zinc-400 text-center max-w-2xl mx-auto mb-8">
             ChatGPT, Perplexity, and Google AI recommend products to millions of buyers every day. 
             <strong className="text-white"> Are they recommending yours?</strong>
@@ -55,7 +55,7 @@ export default function HomePage() {
             </Link>
             <p className="text-sm text-zinc-500">Free check • No credit card</p>
           </div>
-
+          
           {/* The demo - TRUTHFUL, no fake data */}
           <div className="max-w-2xl mx-auto">
             <div className="bg-zinc-900/90 rounded-2xl border border-zinc-800 overflow-hidden shadow-2xl">
@@ -181,7 +181,7 @@ export default function HomePage() {
               <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
                 <Search className="w-6 h-6 text-red-400" />
               </div>
-              <div>
+            <div>
                 <h3 className="text-xl font-semibold text-white mb-2">See What AI Actually Says</h3>
                 <p className="text-zinc-400">
                   Real responses from ChatGPT, Perplexity, and Google AI. 
@@ -202,7 +202,7 @@ export default function HomePage() {
                 </p>
               </div>
             </div>
-
+            
             <div className="flex gap-6 items-start p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
               <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
                 <Zap className="w-6 h-6 text-emerald-400" />
@@ -224,39 +224,39 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
             Start seeing who AI recommends
-          </h2>
+            </h2>
           <p className="text-lg text-zinc-400 mb-12">
             7-day free trial. Cancel anytime.
           </p>
 
           <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            <div className="p-6 rounded-2xl bg-zinc-900 border border-zinc-800">
+            <div className="p-6 rounded-2xl bg-zinc-800/80 border border-zinc-700">
               <div className="text-2xl font-bold text-white mb-1">Starter</div>
-              <div className="text-4xl font-bold text-white mb-1">$29<span className="text-lg text-zinc-500">/mo</span></div>
-              <div className="text-zinc-500 mb-6">&ldquo;Where am I losing?&rdquo;</div>
-              <ul className="text-left space-y-2 text-zinc-300 mb-6">
+              <div className="text-4xl font-bold text-white mb-1">$29<span className="text-lg text-zinc-400">/mo</span></div>
+              <div className="text-zinc-400 mb-6">&ldquo;Where am I losing?&rdquo;</div>
+              <ul className="text-left space-y-2 text-white mb-6">
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> 3 sites</li>
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Daily AI checks</li>
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> AI mention tracking</li>
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> 5 content fixes/month</li>
               </ul>
               <Link href="/signup">
-                <Button className="w-full" variant="outline">Start Free Trial</Button>
+                <Button className="w-full border-zinc-500 text-white hover:bg-zinc-700" variant="outline">Start Free Trial</Button>
               </Link>
             </div>
-
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-zinc-900 border border-emerald-500/30">
+            
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-zinc-800 border border-emerald-500/40">
               <div className="text-2xl font-bold text-white mb-1">Pro</div>
-              <div className="text-4xl font-bold text-white mb-1">$79<span className="text-lg text-zinc-500">/mo</span></div>
-              <div className="text-zinc-500 mb-6">&ldquo;How do I win?&rdquo;</div>
-              <ul className="text-left space-y-2 text-zinc-300 mb-6">
+              <div className="text-4xl font-bold text-white mb-1">$79<span className="text-lg text-zinc-400">/mo</span></div>
+              <div className="text-zinc-400 mb-6">&ldquo;How do I win?&rdquo;</div>
+              <ul className="text-left space-y-2 text-white mb-6">
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> 10 sites</li>
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Hourly AI checks</li>
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Unlimited content fixes</li>
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Competitor takeover alerts</li>
               </ul>
               <Link href="/signup">
-                <Button className="w-full bg-emerald-500 hover:bg-emerald-400 text-black">Start Free Trial</Button>
+                <Button className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-semibold">Start Free Trial</Button>
               </Link>
             </div>
           </div>
@@ -280,6 +280,6 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
-    </div>
+        </div>
   );
 }

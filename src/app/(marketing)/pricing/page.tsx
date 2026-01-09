@@ -108,8 +108,8 @@ export default function PricingPage() {
                 key={plan.name}
                 className={`relative p-6 rounded-2xl border ${
                   plan.popular
-                    ? "bg-gradient-to-br from-emerald-500/10 to-zinc-900 border-emerald-500/30"
-                    : "bg-zinc-900 border-zinc-800"
+                    ? "bg-gradient-to-br from-emerald-500/20 to-zinc-800 border-emerald-500/40"
+                    : "bg-zinc-800/80 border-zinc-700"
                 }`}
               >
                 {plan.popular && (
@@ -142,8 +142,8 @@ export default function PricingPage() {
                   <Button
                     className={`w-full mb-6 ${
                     plan.popular
-                      ? "bg-emerald-500 hover:bg-emerald-400 text-black"
-                        : ""
+                      ? "bg-emerald-500 hover:bg-emerald-400 text-black font-semibold"
+                      : "border-zinc-500 text-white hover:bg-zinc-700 hover:text-white"
                   }`}
                     variant={plan.ctaVariant}
                 >
