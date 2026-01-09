@@ -233,12 +233,12 @@ export default function HomePage() {
             <div className="p-6 rounded-2xl bg-zinc-800/80 border border-zinc-700">
               <div className="text-2xl font-bold text-white mb-1">Starter</div>
               <div className="text-4xl font-bold text-white mb-1">$29<span className="text-lg text-zinc-400">/mo</span></div>
-              <div className="text-zinc-400 mb-6">&ldquo;Where am I losing?&rdquo;</div>
+              <div className="text-zinc-400 mb-6">100 checks/month • Daily monitoring</div>
               <ul className="text-left space-y-2 text-white mb-6">
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> 3 sites</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Daily AI checks</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> AI mention tracking</li>
+                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Daily automated checks</li>
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> 5 content fixes/month</li>
+                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> CSV export</li>
               </ul>
               <Link href="/signup">
                 <Button className="w-full border-zinc-500 text-white hover:bg-zinc-700" variant="outline">Start Free Trial</Button>
@@ -248,12 +248,12 @@ export default function HomePage() {
             <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-zinc-800 border border-emerald-500/40">
               <div className="text-2xl font-bold text-white mb-1">Pro</div>
               <div className="text-4xl font-bold text-white mb-1">$79<span className="text-lg text-zinc-400">/mo</span></div>
-              <div className="text-zinc-400 mb-6">&ldquo;How do I win?&rdquo;</div>
+              <div className="text-zinc-400 mb-6">1000 checks/month • Hourly monitoring</div>
               <ul className="text-left space-y-2 text-white mb-6">
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> 10 sites</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Hourly AI checks</li>
+                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Hourly automated checks</li>
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Unlimited content fixes</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Competitor takeover alerts</li>
+                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> API access</li>
               </ul>
               <Link href="/signup">
                 <Button className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-semibold">Start Free Trial</Button>
