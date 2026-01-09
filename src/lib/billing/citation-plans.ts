@@ -42,7 +42,7 @@ export interface CitationPlanFeatures {
   citationGapFull: boolean;           // Full per-query analysis (Pro only)
   contentRecommendations: boolean;    // "What to publish next"
   contentRecsUnlimited: boolean;      // Unlimited vs 3/month
-  weeklyActionPlan: boolean;          // GEO Action Playbook (Pro only)
+  weeklyActionPlan: boolean;          // Weekly Action Playbook (Pro only)
   competitorDeepDive: boolean;        // Full competitor comparison (Pro only)
   customQueries: boolean;             // User-defined queries (Starter+)
   queryDiscovery: boolean;            // AI-suggested queries (Pro only)
@@ -190,7 +190,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       citationGapFull: true,        // Per-query deep dive
       contentRecommendations: true, // Unlimited content ideas
       contentRecsUnlimited: true,   // No limits
-      weeklyActionPlan: true,       // GEO Action Playbook
+      weeklyActionPlan: true,       // Weekly Action Playbook
       competitorDeepDive: true,     // Full competitor breakdown
       customQueries: true,          // Unlimited custom queries
       queryDiscovery: true,         // AI-suggested queries
@@ -443,7 +443,7 @@ export function getIntelligenceFeatureSummary(planId: CitationPlanId | string): 
         ? "Unlimited ideas"
         : `${limits.contentIdeasPerMonth} ideas/month`,
     actionPlan: plan.features.weeklyActionPlan
-      ? "Weekly GEO Playbook"
+      ? "Weekly Action Playbook"
       : "Pro only",
     competitorDeepDive: plan.features.competitorDeepDive
       ? "Full competitor breakdown"

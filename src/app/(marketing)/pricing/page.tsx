@@ -82,7 +82,7 @@ function PricingContent() {
         { text: "3 basic queries per check", included: true },
         { text: "3 manual checks/day", included: true },
         { text: "7-day history", included: true },
-        { text: "GEO Score", included: true },
+        { text: "AI Visibility Score", included: true },
         { text: "Custom queries", included: false },
         { text: "Competitor tracking", included: false },
         { text: "Auto monitoring", included: false },

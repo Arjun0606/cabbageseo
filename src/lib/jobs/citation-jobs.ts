@@ -252,7 +252,7 @@ export const sendCitationAlert = inngest.createFunction(
       return { sent: false, reason: "Alerts disabled" };
     }
 
-    // Send the email
+    // Send the email - FEAR + ACTION copy
     await step.run("send-email", async () => {
       const { Resend } = await import("resend");
       const resend = new Resend(process.env.RESEND_API_KEY);
@@ -262,38 +262,41 @@ export const sendCitationAlert = inngest.createFunction(
       await resend.emails.send({
         from: "CabbageSEO <alerts@cabbageseo.com>",
         to: userEmail.email,
-        subject: `🎉 New AI Citation for ${domain}!`,
+        subject: `⚔️ You just won a battle: ${domain} is being cited!`,
         html: `
-          <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #09090b; color: #fff;">
             <div style="text-align: center; margin-bottom: 30px;">
               <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 30px;">🎯</span>
+                <span style="font-size: 30px;">🏆</span>
               </div>
-              <h1 style="font-size: 24px; margin: 0; color: #111;">AI is Citing Your Website!</h1>
+              <h1 style="font-size: 24px; margin: 0; color: #fff;">You Won This One!</h1>
             </div>
             
-            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-              <p style="margin: 0; color: #166534; font-size: 16px;">
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+              <p style="margin: 0; color: #10b981; font-size: 16px;">
                 <strong>${domain}</strong> was just cited by <strong>${platformList}</strong>
               </p>
             </div>
             
-            <p style="color: #6b7280; line-height: 1.6;">
-              ${newCitations} new citation${newCitations > 1 ? "s" : ""} detected! This means AI platforms are recommending your website to users.
+            <p style="color: #a1a1aa; line-height: 1.6;">
+              ${newCitations} new citation${newCitations > 1 ? "s" : ""} detected. AI is recommending you to users asking questions in your industry.
+            </p>
+            
+            <p style="color: #a1a1aa; line-height: 1.6; margin-top: 16px;">
+              <strong style="color: #fff;">But are you winning everywhere?</strong> Check your dashboard to see other battles you might be losing.
             </p>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.NEXT_PUBLIC_APP_URL}/citations" 
-                 style="display: inline-block; background: #10b981; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
-                View Citations →
+              <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" 
+                 style="display: inline-block; background: #10b981; color: #000; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                See All Battles →
               </a>
             </div>
             
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
+            <hr style="border: none; border-top: 1px solid #27272a; margin: 30px 0;" />
             
-            <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-              You're receiving this because you have citation alerts enabled.
-              <a href="${process.env.NEXT_PUBLIC_APP_URL}/settings/notifications" style="color: #10b981;">Manage preferences</a>
+            <p style="color: #71717a; font-size: 12px; text-align: center;">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL}/settings/notifications" style="color: #10b981;">Manage email preferences</a>
             </p>
           </div>
         `,
@@ -367,43 +370,69 @@ export const weeklyReport = inngest.createFunction(
         const lastWeek = siteList.reduce((sum, s) => sum + (s.citations_last_week || 0), 0);
         const change = lastWeek > 0 ? Math.round(((thisWeek - lastWeek) / lastWeek) * 100) : 0;
 
-        // Send email
+        // Send email - WAR ROOM style with fear/action
         const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
+        
+        const isLosing = change < 0;
+        const subjectLine = isLosing 
+          ? `⚠️ You lost ground this week: ${primarySite.domain}`
+          : thisWeek > 0
+          ? `⚔️ Battle Report: ${thisWeek} wins this week`
+          : `🎯 Weekly Intel: ${primarySite.domain}`;
 
         await resend.emails.send({
           from: "CabbageSEO <reports@cabbageseo.com>",
           to: userData.email,
-          subject: `📊 Weekly Report: ${primarySite.domain}`,
+          subject: subjectLine,
           html: `
-            <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h1 style="font-size: 24px; margin-bottom: 24px; color: #111;">Your Weekly Citation Report</h1>
+            <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #09090b; color: #fff;">
+              <div style="text-align: center; margin-bottom: 24px;">
+                <h1 style="font-size: 24px; margin: 0; color: #fff;">⚔️ Weekly Battle Report</h1>
+                <p style="color: #71717a; margin-top: 8px;">${primarySite.domain}</p>
+              </div>
               
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
-                <div style="background: #f9fafb; padding: 16px; border-radius: 12px; text-align: center;">
-                  <div style="font-size: 28px; font-weight: bold; color: #111;">${totalCitations}</div>
-                  <div style="font-size: 12px; color: #6b7280;">Total Citations</div>
+              ${isLosing ? `
+                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: center;">
+                  <p style="margin: 0; color: #ef4444; font-size: 14px;">
+                    ⚠️ You're losing citations. Competitors are gaining ground.
+                  </p>
                 </div>
-                <div style="background: #f0fdf4; padding: 16px; border-radius: 12px; text-align: center;">
-                  <div style="font-size: 28px; font-weight: bold; color: #10b981;">${thisWeek}</div>
-                  <div style="font-size: 12px; color: #6b7280;">This Week</div>
+              ` : ''}
+              
+              <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+                <div style="flex: 1; background: #18181b; padding: 16px; border-radius: 12px; text-align: center; border: 1px solid #27272a;">
+                  <div style="font-size: 28px; font-weight: bold; color: #fff;">${totalCitations}</div>
+                  <div style="font-size: 12px; color: #71717a;">Total Wins</div>
                 </div>
-                <div style="background: ${change >= 0 ? '#f0fdf4' : '#fef2f2'}; padding: 16px; border-radius: 12px; text-align: center;">
+                <div style="flex: 1; background: ${thisWeek > 0 ? 'rgba(16, 185, 129, 0.1)' : '#18181b'}; padding: 16px; border-radius: 12px; text-align: center; border: 1px solid ${thisWeek > 0 ? 'rgba(16, 185, 129, 0.3)' : '#27272a'};">
+                  <div style="font-size: 28px; font-weight: bold; color: ${thisWeek > 0 ? '#10b981' : '#fff'};">${thisWeek}</div>
+                  <div style="font-size: 12px; color: #71717a;">This Week</div>
+                </div>
+                <div style="flex: 1; background: ${change >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; padding: 16px; border-radius: 12px; text-align: center; border: 1px solid ${change >= 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};">
                   <div style="font-size: 28px; font-weight: bold; color: ${change >= 0 ? '#10b981' : '#ef4444'};">${change >= 0 ? '+' : ''}${change}%</div>
-                  <div style="font-size: 12px; color: #6b7280;">Change</div>
+                  <div style="font-size: 12px; color: #71717a;">Momentum</div>
                 </div>
               </div>
+              
+              <p style="color: #a1a1aa; line-height: 1.6; margin-bottom: 24px;">
+                ${isLosing 
+                  ? "Your competitors gained visibility while you lost ground. Time to fight back."
+                  : thisWeek > 0
+                  ? "You won some battles this week. But there are more to fight. See where you're still losing."
+                  : "No new wins this week. Check your dashboard to see why competitors are winning."}
+              </p>
               
               <div style="text-align: center; margin: 30px 0;">
                 <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" 
-                   style="display: inline-block; background: #10b981; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
-                  View Full Dashboard →
+                   style="display: inline-block; background: #10b981; color: #000; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                  Enter War Room →
                 </a>
               </div>
               
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
+              <hr style="border: none; border-top: 1px solid #27272a; margin: 30px 0;" />
               
-              <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+              <p style="color: #71717a; font-size: 12px; text-align: center;">
                 <a href="${process.env.NEXT_PUBLIC_APP_URL}/settings/notifications" style="color: #10b981;">Manage email preferences</a>
               </p>
             </div>
