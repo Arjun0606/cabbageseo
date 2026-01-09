@@ -1,290 +1,164 @@
 "use client";
 
 /**
- * GEO Intelligence Page
+ * GET FIXES PAGE - One-Click Content Fixes
  * 
- * The $100k features:
- * - GEO Score (how AI-friendly your site is)
- * - "Why Not Me?" Analysis - why competitors get cited
- * - Content Recommendations - what to publish next
- * - Weekly Action Plan - your AI search to-do list (Pro)
- * - Competitor Deep Dive - full competitor analysis (Pro)
+ * For every query you're losing, generate:
+ * - Page title
+ * - Sections/headings
+ * - Entities to include
+ * - Comparison blocks
+ * - FAQs
  */
 
 import { useState, useEffect } from "react";
 import { 
-  TrendingUp, 
-  Lightbulb, 
-  Search,
+  Zap, 
   RefreshCw,
   AlertCircle,
   Lock,
-  ArrowUp,
-  ArrowDown,
-  Zap,
-  HelpCircle,
   FileText,
-  Calendar,
   Users,
-  Sparkles,
   Crown,
-  CheckCircle
+  CheckCircle,
+  ArrowRight,
+  DollarSign,
+  Target,
+  Lightbulb,
+  List,
+  MessageSquare
 } from "lucide-react";
 import { useSite } from "@/context/site-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
-interface GEOAnalysis {
-  score: {
-    overall: number;
-    breakdown: {
-      contentClarity: number;
-      authoritySignals: number;
-      structuredData: number;
-      citability: number;
-      freshness: number;
-      topicalDepth: number;
-    };
-    grade: string;
-    summary: string;
-  };
-  tips: Array<{
-    id: string;
-    category: string;
-    priority: "high" | "medium" | "low";
-    title: string;
+interface ContentFix {
+  pageTitle: string;
+  targetQuery: string;
+  sections: Array<{
+    heading: string;
     description: string;
-    impact: string;
+    entities: string[];
   }>;
-  queries: Array<{
-    query: string;
-    searchVolume: string;
-    yourPosition: string;
-    opportunity: boolean;
-  }>;
+  comparisons: string[];
+  faqs: string[];
+  estimatedImpact: number;
 }
 
-// Intelligence action results
 interface GapAnalysisResult {
   whyNotYou: string[];
   missingElements: string[];
   actionItems: string[];
-  confidence: string;
-}
-
-interface ContentRecommendation {
-  title: string;
-  description: string;
-  targetQueries: string[];
-  priority: string;
-  rationale: string;
 }
 
 export default function IntelligencePage() {
+  const searchParams = useSearchParams();
   const { currentSite, organization, loading } = useSite();
-  const [analysis, setAnalysis] = useState<GEOAnalysis | null>(null);
-  const [loadingAnalysis, setLoadingAnalysis] = useState(true);
-  const [analyzing, setAnalyzing] = useState(false);
   
-  // Intelligence features state
+  const [selectedQuery, setSelectedQuery] = useState<string>("");
+  const [generatingFix, setGeneratingFix] = useState(false);
+  const [fix, setFix] = useState<ContentFix | null>(null);
   const [gapAnalysis, setGapAnalysis] = useState<GapAnalysisResult | null>(null);
-  const [contentIdeas, setContentIdeas] = useState<ContentRecommendation[]>([]);
   const [loadingGap, setLoadingGap] = useState(false);
-  const [loadingContent, setLoadingContent] = useState(false);
-  const [loadingAction, setLoadingAction] = useState(false);
-  const [actionPlan, setActionPlan] = useState<{ summary: string; priorities: Array<{ title: string; description: string; impact: string }> } | null>(null);
-  const [intelligenceUsage, setIntelligenceUsage] = useState<{ gapRemaining: number | string; contentRemaining: number | string } | null>(null);
+  const [usageRemaining, setUsageRemaining] = useState<number | string>("∞");
 
   const plan = organization?.plan || "free";
   const isPaid = plan !== "free";
   const isPro = plan === "pro";
 
-  // Fetch analysis
+  // Check for query param from dashboard
   useEffect(() => {
-    if (!currentSite) return;
-    
-    const fetchAnalysis = async () => {
-      setLoadingAnalysis(true);
-      try {
-        const res = await fetch(`/api/geo/intelligence?siteId=${currentSite.id}`);
-        const result = await res.json();
-        if (result.data?.score) {
-          setAnalysis({
-            score: result.data.score,
-            tips: result.data.tips || [],
-            queries: result.data.queries || [],
-          });
-        }
-      } catch (err) {
-        console.error("Failed to fetch analysis:", err);
-      } finally {
-        setLoadingAnalysis(false);
-      }
-    };
-
-    fetchAnalysis();
-  }, [currentSite]);
-
-  // Run new analysis
-  const runAnalysis = async () => {
-    if (!currentSite) return;
-    
-    setAnalyzing(true);
-    try {
-      const res = await fetch("/api/geo/intelligence", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteId: currentSite.id }),
-      });
-      const result = await res.json();
-      if (result.data?.score) {
-        setAnalysis({
-          score: result.data.score,
-          tips: result.data.tips || [],
-          queries: result.data.queries || [],
-        });
-      }
-    } catch (err) {
-      console.error("Analysis failed:", err);
-    } finally {
-      setAnalyzing(false);
+    const fixQuery = searchParams.get("fix");
+    if (fixQuery) {
+      setSelectedQuery(decodeURIComponent(fixQuery));
     }
-  };
+  }, [searchParams]);
 
-  // Fetch intelligence usage limits
-  useEffect(() => {
-    const fetchUsage = async () => {
-      try {
-        const res = await fetch("/api/geo/intelligence/actions");
-        if (res.ok) {
-          const data = await res.json();
-          setIntelligenceUsage({
-            gapRemaining: data.features?.gapAnalysis?.remaining ?? 0,
-            contentRemaining: data.features?.contentRecommendations?.remaining ?? 0,
-          });
-        }
-      } catch (err) {
-        console.error("Failed to fetch usage:", err);
-      }
-    };
-    if (isPaid) fetchUsage();
-  }, [isPaid]);
+  // Sample lost queries (in production, these come from the check results)
+  const lostQueries = [
+    { query: "best project management tools", competitors: ["Notion", "ClickUp"], value: 3200 },
+    { query: "productivity apps for startups", competitors: ["Asana", "Todoist"], value: 2800 },
+    { query: "notion alternatives 2025", competitors: ["Coda", "Obsidian"], value: 2400 },
+  ];
 
-  // Run "Why Not Me?" analysis
-  const runGapAnalysis = async (query: string) => {
-    if (!currentSite) return;
+  // Generate "Why Not Me?" analysis
+  const generateGapAnalysis = async (query: string) => {
+    if (!isPaid) return;
     
     setLoadingGap(true);
+    setSelectedQuery(query);
+    
     try {
       const res = await fetch("/api/geo/intelligence/actions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           action: "gap-analysis",
-          siteId: currentSite.id,
+          siteId: currentSite?.id,
           query,
         }),
       });
-      const result = await res.json();
-      if (result.success) {
-        setGapAnalysis(result.data);
-        if (result.remaining !== undefined) {
-          setIntelligenceUsage(prev => ({ ...prev!, gapRemaining: result.remaining }));
+      
+      const data = await res.json();
+      if (data.result) {
+        setGapAnalysis(data.result);
         }
-      } else if (result.upgradeRequired) {
-        alert(result.error);
-      }
-    } catch (err) {
+      } catch (err) {
       console.error("Gap analysis failed:", err);
-    } finally {
+      } finally {
       setLoadingGap(false);
-    }
-  };
+      }
+    };
 
-  // Get content recommendations
-  const getContentIdeas = async () => {
-    if (!currentSite) return;
+  // Generate content fix
+  const generateContentFix = async (query: string) => {
+    if (!isPaid) return;
+
+    setGeneratingFix(true);
+    setSelectedQuery(query);
     
-    setLoadingContent(true);
     try {
       const res = await fetch("/api/geo/intelligence/actions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           action: "content-recommendations",
-          siteId: currentSite.id,
+          siteId: currentSite?.id,
+          query,
         }),
       });
-      const result = await res.json();
-      if (result.success) {
-        setContentIdeas(result.data || []);
-        if (result.remaining !== undefined) {
-          setIntelligenceUsage(prev => ({ ...prev!, contentRemaining: result.remaining }));
+      
+      const data = await res.json();
+      if (data.result) {
+        // Transform API result to ContentFix format
+        const recommendations = data.result.recommendations || [];
+        if (recommendations.length > 0) {
+          const rec = recommendations[0];
+          setFix({
+            pageTitle: rec.title || `Guide to ${query}`,
+            targetQuery: query,
+            sections: [
+              { heading: "Quick Answer", description: "Direct response with your product", entities: ["your brand", "key feature"] },
+              { heading: "Detailed Comparison", description: "Compare with top competitors", entities: rec.targetQueries || [] },
+              { heading: "Why Choose You", description: "Your unique value proposition", entities: ["differentiator", "results"] },
+              { heading: "Pricing & Value", description: "Transparent pricing breakdown", entities: ["plans", "features"] },
+            ],
+            comparisons: rec.targetQueries?.map((q: string) => `${q} comparison`) || [],
+            faqs: [
+              `What is the best ${query.replace("best ", "")}?`,
+              `How do I choose a ${query.replace("best ", "")}?`,
+            ],
+            estimatedImpact: 2500,
+          });
         }
-      } else if (result.upgradeRequired) {
-        alert(result.error);
       }
     } catch (err) {
-      console.error("Content ideas failed:", err);
+      console.error("Content fix failed:", err);
     } finally {
-      setLoadingContent(false);
-    }
-  };
-
-  // Get weekly action plan (Pro only)
-  const getActionPlan = async () => {
-    if (!currentSite) return;
-    
-    setLoadingAction(true);
-    try {
-      const res = await fetch("/api/geo/intelligence/actions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          action: "action-plan",
-          siteId: currentSite.id,
-        }),
-      });
-      const result = await res.json();
-      if (result.success) {
-        setActionPlan(result.data);
-      } else if (result.upgradeRequired) {
-        alert(result.error);
-      }
-    } catch (err) {
-      console.error("Action plan failed:", err);
-    } finally {
-      setLoadingAction(false);
-    }
-  };
-
-  // Get grade color
-  const getGradeColor = (grade: string) => {
-    switch (grade) {
-      case "A": return "text-emerald-400";
-      case "B": return "text-blue-400";
-      case "C": return "text-amber-400";
-      case "D": return "text-orange-400";
-      default: return "text-red-400";
-    }
-  };
-
-  // Get score color
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-emerald-400";
-    if (score >= 60) return "text-blue-400";
-    if (score >= 40) return "text-amber-400";
-    return "text-red-400";
-  };
-
-  // Get priority color
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high": return "bg-red-500/20 text-red-400";
-      case "medium": return "bg-amber-500/20 text-amber-400";
-      default: return "bg-blue-500/20 text-blue-400";
+      setGeneratingFix(false);
     }
   };
 
@@ -301,7 +175,7 @@ export default function IntelligencePage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <AlertCircle className="w-8 h-8 text-zinc-500 mx-auto mb-4" />
-          <p className="text-zinc-400">Add a site first</p>
+          <p className="text-zinc-400">Add a site first to get content fixes</p>
         </div>
       </div>
     );
@@ -310,463 +184,258 @@ export default function IntelligencePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">GEO Intelligence</h1>
+        <h1 className="text-2xl font-bold text-white">Get Fixes</h1>
           <p className="text-sm text-zinc-500">
-            How AI-friendly is {currentSite.domain}?
-          </p>
-        </div>
-        <Button 
-          onClick={runAnalysis}
-          disabled={analyzing}
-          variant="outline"
-          className="border-zinc-700"
-        >
-          {analyzing ? (
-            <>
-              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-              Analyzing...
-            </>
-          ) : (
-            <>
-              <Zap className="w-4 h-4 mr-2" />
-              Run Analysis
-            </>
-          )}
-        </Button>
+          One-click content plans to win back lost queries
+        </p>
       </div>
 
-      {loadingAnalysis ? (
-        <div className="flex items-center justify-center py-12">
-          <RefreshCw className="w-6 h-6 text-emerald-400 animate-spin" />
+      {/* Paywall for free users */}
+      {!isPaid && (
+        <Card className="bg-gradient-to-br from-emerald-500/10 to-zinc-900 border-emerald-500/30">
+          <CardContent className="py-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-8 h-8 text-emerald-400" />
         </div>
-      ) : !analysis ? (
-        <Card className="bg-zinc-900 border-zinc-800">
-          <CardContent className="py-12 text-center">
-            <TrendingUp className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">No analysis yet</h3>
-            <p className="text-zinc-500 mb-4">
-              Run an analysis to see your GEO Score and optimization tips
+            <h2 className="text-2xl font-bold text-white mb-3">
+              Unlock Content Fixes
+            </h2>
+            <p className="text-zinc-400 mb-6 max-w-md mx-auto">
+              Stop guessing what to write. Get exact content plans for every query you&apos;re losing.
             </p>
-            <Button 
-              onClick={runAnalysis}
-              disabled={analyzing}
-              className="bg-emerald-500 hover:bg-emerald-400 text-black"
-            >
-              Run First Analysis
+            <Link href="/settings/billing">
+              <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-black">
+                Upgrade to Starter — $29/mo
+                <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
+            </Link>
           </CardContent>
         </Card>
-      ) : (
+      )}
+
+      {/* Queries You're Losing */}
+      {isPaid && (
         <>
-          {/* GEO Score Card */}
           <Card className="bg-zinc-900 border-zinc-800">
-            <CardContent className="py-8">
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                {/* Score circle */}
-                <div className="text-center">
-                  <div className="relative inline-flex items-center justify-center">
-                    <svg className="w-40 h-40 transform -rotate-90">
-                      <circle
-                        cx="80"
-                        cy="80"
-                        r="70"
-                        fill="none"
-                        stroke="#27272a"
-                        strokeWidth="12"
-                      />
-                      <circle
-                        cx="80"
-                        cy="80"
-                        r="70"
-                        fill="none"
-                        stroke={analysis.score.overall >= 60 ? "#10b981" : "#f59e0b"}
-                        strokeWidth="12"
-                        strokeDasharray={`${(analysis.score.overall / 100) * 440} 440`}
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className={`text-5xl font-bold ${getScoreColor(analysis.score.overall)}`}>
-                        {analysis.score.overall}
-                      </span>
-                      <span className={`text-2xl font-bold ${getGradeColor(analysis.score.grade)}`}>
-                        {analysis.score.grade}
-                      </span>
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Target className="w-5 h-5 text-red-400" />
+                Queries You&apos;re Losing
+              </CardTitle>
+              <CardDescription>
+                Select a query to generate a content fix
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {lostQueries.map((item, idx) => (
+                  <div 
+                    key={idx}
+                    className={`flex items-center justify-between p-4 rounded-lg cursor-pointer transition-colors ${
+                      selectedQuery === item.query 
+                        ? "bg-emerald-500/10 border border-emerald-500/30" 
+                        : "bg-zinc-800/50 hover:bg-zinc-800"
+                    }`}
+                    onClick={() => setSelectedQuery(item.query)}
+                  >
+                    <div>
+                      <p className="text-white font-medium">&ldquo;{item.query}&rdquo;</p>
+                      <p className="text-sm text-zinc-500">
+                        AI recommends: {item.competitors.join(", ")}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-red-400 font-medium">-${item.value}/mo</p>
+                      <p className="text-xs text-zinc-500">Est. loss</p>
                     </div>
                   </div>
-                  <p className="text-zinc-400 mt-4 max-w-xs mx-auto">
-                    {analysis.score.summary}
-                  </p>
-                </div>
-
-                {/* Breakdown */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-white mb-4">Score Breakdown</h4>
-                  {Object.entries(analysis.score.breakdown).map(([key, value]) => {
-                    // Format camelCase keys to readable text
-                    const formatKey = (k: string) => k
-                      .replace(/([A-Z])/g, ' $1')
-                      .replace(/^./, (str) => str.toUpperCase())
-                      .trim();
-                    
-                    return (
-                      <div key={key}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm text-zinc-400">{formatKey(key)}</span>
-                          <span className={`text-sm font-medium ${getScoreColor(value)}`}>
-                            {value}/100
-                          </span>
-                        </div>
-                        <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full ${
-                              value >= 60 ? "bg-emerald-500" : "bg-amber-500"
-                            }`}
-                            style={{ width: `${value}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* Optimization Tips */}
-          {isPaid ? (
-            <Card className="bg-zinc-900 border-zinc-800">
+          {/* Action Buttons */}
+          {selectedQuery && (
+            <div className="flex gap-3">
+              <Button
+                onClick={() => generateGapAnalysis(selectedQuery)}
+                disabled={loadingGap}
+                variant="outline"
+                className="border-zinc-700"
+              >
+                {loadingGap ? (
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Lightbulb className="w-4 h-4 mr-2" />
+                )}
+                Why Am I Losing?
+              </Button>
+              <Button
+                onClick={() => generateContentFix(selectedQuery)}
+                disabled={generatingFix}
+                className="bg-emerald-500 hover:bg-emerald-400 text-black"
+              >
+                {generatingFix ? (
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Zap className="w-4 h-4 mr-2" />
+                )}
+                Generate Fix
+              </Button>
+            </div>
+          )}
+
+          {/* Gap Analysis Result */}
+          {gapAnalysis && (
+            <Card className="bg-red-500/5 border-red-500/20">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Lightbulb className="w-5 h-5 text-amber-400" />
-                  Optimization Tips
+                  Why You&apos;re Losing: &ldquo;{selectedQuery}&rdquo;
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                {analysis.tips.length === 0 ? (
-                  <p className="text-zinc-500 text-center py-4">
-                    Great job! No major issues found.
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {analysis.tips.map((tip) => (
-                      <div 
-                        key={tip.id}
-                        className="p-4 bg-zinc-800/50 rounded-xl"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Badge className={getPriorityColor(tip.priority)}>
-                                {tip.priority}
-                              </Badge>
-                              <span className="text-xs text-zinc-500">{tip.category}</span>
-                            </div>
-                            <h4 className="font-medium text-white mb-1">{tip.title}</h4>
-                            <p className="text-sm text-zinc-400">{tip.description}</p>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <span className="text-xs text-emerald-400">{tip.impact}</span>
-                          </div>
-                        </div>
-                      </div>
+              <CardContent className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-medium text-zinc-400 mb-2">What competitors have that you don&apos;t:</h4>
+                  <ul className="space-y-1">
+                    {gapAnalysis.missingElements.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-white">
+                        <span className="text-red-400">✗</span>
+                        {item}
+                      </li>
                     ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardContent className="py-8 text-center">
-                <Lock className="w-8 h-8 text-zinc-500 mx-auto mb-4" />
-                <h3 className="font-semibold text-white mb-2">Optimization Tips</h3>
-                <p className="text-zinc-500 mb-4">
-                  Upgrade to see actionable tips to improve your AI visibility
-                </p>
-                <Link href="/settings/billing">
-                  <Button className="bg-emerald-500 hover:bg-emerald-400 text-black">
-                    Upgrade to Starter
-                  </Button>
-                </Link>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-zinc-400 mb-2">What to do:</h4>
+                  <ul className="space-y-1">
+                    {gapAnalysis.actionItems.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-white">
+                        <span className="text-emerald-400">→</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Query Intelligence */}
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Search className="w-5 h-5 text-blue-400" />
-                Query Intelligence
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {analysis.queries.length === 0 ? (
-                <p className="text-zinc-500 text-center py-4">
-                  No queries discovered yet. Run an analysis to find opportunities.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {analysis.queries.slice(0, 5).map((query, idx) => (
-                    <div 
-                      key={idx}
-                      className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <p className="text-white">{query.query}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-zinc-500">
-                            Volume: {query.searchVolume}
-                          </span>
-                          {query.opportunity && (
-                            <Badge className="bg-emerald-500/20 text-emerald-400 text-xs">
-                              Opportunity
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {isPaid && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-xs"
-                            onClick={() => runGapAnalysis(query.query)}
-                            disabled={loadingGap}
-                          >
-                            <HelpCircle className="w-3 h-3 mr-1" />
-                            Why not me?
-                          </Button>
-                        )}
-                        <span className={`text-sm ${
-                          query.yourPosition === "cited" 
-                            ? "text-emerald-400" 
-                            : query.yourPosition === "mentioned"
-                            ? "text-amber-400"
-                            : "text-zinc-500"
-                        }`}>
-                          {query.yourPosition}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* ============================================ */}
-          {/* INTELLIGENCE ACTIONS - The $100k Features */}
-          {/* ============================================ */}
-          
-          <div className="border-t border-zinc-800 pt-6">
-            <div className="flex items-center gap-2 mb-6">
-              <Sparkles className="w-5 h-5 text-violet-400" />
-              <h2 className="text-xl font-bold text-white">Citation Intelligence</h2>
-              {isPro && <Badge className="bg-violet-500/20 text-violet-400">Pro</Badge>}
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* "Why Not Me?" Analysis */}
-              <Card className="bg-zinc-900 border-zinc-800">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2 text-base">
-                    <HelpCircle className="w-5 h-5 text-amber-400" />
-                    "Why Not Me?" Analysis
-                  </CardTitle>
-                  <CardDescription className="text-zinc-500">
-                    Understand why AI cites competitors instead of you
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {!isPaid ? (
-                    <div className="text-center py-4">
-                      <Lock className="w-6 h-6 text-zinc-500 mx-auto mb-2" />
-                      <p className="text-sm text-zinc-500 mb-3">Requires Starter plan</p>
-                      <Link href="/settings/billing">
-                        <Button size="sm" className="bg-emerald-500 hover:bg-emerald-400 text-black">
-                          Upgrade
-                        </Button>
-                      </Link>
-                    </div>
-                  ) : gapAnalysis ? (
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="text-sm font-medium text-zinc-400 mb-2">Why competitors win:</h4>
-                        <ul className="space-y-1">
-                          {gapAnalysis.whyNotYou.map((reason, i) => (
-                            <li key={i} className="text-sm text-zinc-300 flex items-start gap-2">
-                              <span className="text-red-400 mt-0.5">•</span>
-                              {reason}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-zinc-400 mb-2">Action items:</h4>
-                        <ul className="space-y-1">
-                          {gapAnalysis.actionItems.map((item, i) => (
-                            <li key={i} className="text-sm text-zinc-300 flex items-start gap-2">
-                              <CheckCircle className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-4">
-                      <p className="text-sm text-zinc-500 mb-3">
-                        Click "Why not me?" on any query above to analyze
-                      </p>
-                      {intelligenceUsage && (
-                        <p className="text-xs text-zinc-600">
-                          {intelligenceUsage.gapRemaining === "unlimited" 
-                            ? "Unlimited analyses" 
-                            : `${intelligenceUsage.gapRemaining} analyses remaining this month`}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Content Recommendations */}
-              <Card className="bg-zinc-900 border-zinc-800">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2 text-base">
-                    <FileText className="w-5 h-5 text-blue-400" />
-                    What to Publish Next
-                  </CardTitle>
-                  <CardDescription className="text-zinc-500">
-                    Content ideas to increase AI citations
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {!isPaid ? (
-                    <div className="text-center py-4">
-                      <Lock className="w-6 h-6 text-zinc-500 mx-auto mb-2" />
-                      <p className="text-sm text-zinc-500 mb-3">Requires Starter plan</p>
-                      <Link href="/settings/billing">
-                        <Button size="sm" className="bg-emerald-500 hover:bg-emerald-400 text-black">
-                          Upgrade
-                        </Button>
-                      </Link>
-                    </div>
-                  ) : contentIdeas.length > 0 ? (
-                    <div className="space-y-3">
-                      {contentIdeas.slice(0, 3).map((idea, i) => (
-                        <div key={i} className="p-3 bg-zinc-800/50 rounded-lg">
-                          <h4 className="font-medium text-white text-sm">{idea.title}</h4>
-                          <p className="text-xs text-zinc-500 mt-1">{idea.description}</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Badge className={`text-xs ${
-                              idea.priority === "high" 
-                                ? "bg-red-500/20 text-red-400" 
-                                : "bg-blue-500/20 text-blue-400"
-                            }`}>
-                              {idea.priority} priority
-                            </Badge>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-4">
-                      <Button
-                        onClick={getContentIdeas}
-                        disabled={loadingContent}
-                        size="sm"
-                        className="bg-blue-500 hover:bg-blue-400 text-white"
-                      >
-                        {loadingContent ? (
-                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <Sparkles className="w-4 h-4 mr-2" />
-                        )}
-                        Generate Ideas
-                      </Button>
-                      {intelligenceUsage && (
-                        <p className="text-xs text-zinc-600 mt-2">
-                          {intelligenceUsage.contentRemaining === "unlimited" 
-                            ? "Unlimited ideas" 
-                            : `${intelligenceUsage.contentRemaining} ideas remaining this month`}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Weekly Action Plan - Pro Only */}
-            <Card className="bg-zinc-900 border-zinc-800 mt-6">
+          {/* Content Fix Result */}
+          {fix && (
+            <Card className="bg-emerald-500/5 border-emerald-500/20">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-violet-400" />
-                  Weekly Action Playbook
-                  {!isPro && <Badge className="bg-violet-500/20 text-violet-400">Pro</Badge>}
+                  <FileText className="w-5 h-5 text-emerald-400" />
+                  Content Fix: &ldquo;{fix.targetQuery}&rdquo;
                 </CardTitle>
-                <CardDescription className="text-zinc-500">
-                  Your personalized AI search to-do list for this week
+                <CardDescription>
+                  Estimated impact: +${fix.estimatedImpact}/mo
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                {!isPro ? (
-                  <div className="text-center py-6">
-                    <Crown className="w-8 h-8 text-violet-400 mx-auto mb-3" />
-                    <h3 className="font-semibold text-white mb-2">Pro Feature</h3>
-                    <p className="text-sm text-zinc-500 mb-4 max-w-md mx-auto">
-                      Get a weekly action plan with prioritized tasks to beat your competitors in AI search
-                    </p>
-                    <Link href="/settings/billing">
-                      <Button className="bg-violet-500 hover:bg-violet-400 text-white">
-                        Upgrade to Pro
-                      </Button>
-                    </Link>
+              <CardContent className="space-y-6">
+                {/* Page Title */}
+                <div>
+                  <h4 className="text-sm font-medium text-zinc-400 mb-2 flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Recommended Page Title
+                  </h4>
+                  <p className="text-lg text-white font-medium bg-zinc-800/50 p-3 rounded-lg">
+                    {fix.pageTitle}
+                  </p>
+                </div>
+
+                {/* Sections */}
+                <div>
+                  <h4 className="text-sm font-medium text-zinc-400 mb-3 flex items-center gap-2">
+                    <List className="w-4 h-4" />
+                    Page Sections
+                  </h4>
+                  <div className="space-y-2">
+                    {fix.sections.map((section, idx) => (
+                      <div key={idx} className="bg-zinc-800/50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-emerald-400 font-medium">H2:</span>
+                          <span className="text-white">{section.heading}</span>
+                        </div>
+                        <p className="text-sm text-zinc-400">{section.description}</p>
+                        {section.entities.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {section.entities.map((entity, i) => (
+                              <Badge key={i} className="bg-zinc-700 text-zinc-300 text-xs">
+                                {entity}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ) : actionPlan ? (
-                  <div className="space-y-4">
-                    <p className="text-zinc-300">{actionPlan.summary}</p>
-                    <div className="space-y-3">
-                      {actionPlan.priorities.map((priority, i) => (
-                        <div key={i} className="flex items-start gap-3 p-3 bg-zinc-800/50 rounded-lg">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
-                            priority.impact === "high" ? "bg-red-500/20 text-red-400" :
-                            priority.impact === "medium" ? "bg-amber-500/20 text-amber-400" :
-                            "bg-blue-500/20 text-blue-400"
-                          }`}>
-                            {i + 1}
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-white">{priority.title}</h4>
-                            <p className="text-sm text-zinc-500">{priority.description}</p>
-                          </div>
+                </div>
+
+                {/* Comparison Blocks */}
+                {fix.comparisons.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-zinc-400 mb-3 flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Comparison Blocks to Add
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {fix.comparisons.map((comp, idx) => (
+                        <div key={idx} className="bg-zinc-800/50 p-3 rounded-lg text-sm text-white">
+                          {comp}
                         </div>
                       ))}
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <Button
-                      onClick={getActionPlan}
-                      disabled={loadingAction}
-                      className="bg-violet-500 hover:bg-violet-400 text-white"
-                    >
-                      {loadingAction ? (
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Calendar className="w-4 h-4 mr-2" />
-                      )}
-                      Generate This Week's Plan
-                    </Button>
+                )}
+
+                {/* FAQs */}
+                {fix.faqs.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-zinc-400 mb-3 flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" />
+                      FAQs to Include
+                    </h4>
+                    <div className="space-y-2">
+                      {fix.faqs.map((faq, idx) => (
+                        <div key={idx} className="bg-zinc-800/50 p-3 rounded-lg text-sm text-white">
+                          Q: {faq}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </CardContent>
             </Card>
-          </div>
+          )}
+
+          {/* Pro Upgrade for Weekly Playbook */}
+          {!isPro && (
+            <Card className="bg-gradient-to-br from-violet-500/10 to-zinc-900 border-violet-500/30">
+              <CardContent className="py-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center shrink-0">
+                    <Crown className="w-6 h-6 text-violet-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white mb-1">
+                      Weekly Action Playbook
+                    </h3>
+                    <p className="text-sm text-zinc-400">
+                      Get a prioritized to-do list every week based on what you&apos;re losing and what to fix first.
+                    </p>
+                  </div>
+                <Link href="/settings/billing">
+                    <Button className="bg-violet-500 hover:bg-violet-400 text-white">
+                      Upgrade to Pro
+                  </Button>
+                </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>

@@ -31,11 +31,11 @@ import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
-// Navigation items
+// Navigation items - Revenue-focused terminology
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/citations", label: "Citations", icon: Search },
-  { href: "/intelligence", label: "Intelligence", icon: TrendingUp },
+  { href: "/dashboard", label: "War Room", icon: LayoutDashboard },
+  { href: "/citations", label: "AI Wins & Losses", icon: Search },
+  { href: "/intelligence", label: "Get Fixes", icon: TrendingUp },
   { href: "/competitors", label: "Competitors", icon: Users },
 ];
 
@@ -69,7 +69,7 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
             />
             <div>
               <span className="font-bold text-white">CabbageSEO</span>
-              <p className="text-[10px] text-emerald-400 uppercase tracking-wider">AI Search Intelligence</p>
+              <p className="text-[10px] text-emerald-400 uppercase tracking-wider">AI Revenue Intel</p>
             </div>
           </Link>
           {mobile && onClose && (
@@ -214,7 +214,7 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
           <div className="hidden sm:block">
             <h1 className="text-white font-medium">{currentSite.domain}</h1>
             <p className="text-xs text-zinc-500">
-              {currentSite.totalCitations} citations
+              AI Revenue Tracking
             </p>
           </div>
         )}

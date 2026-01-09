@@ -1,18 +1,25 @@
 /**
- * /api/geo/citations/check - REAL Citation Checking
+ * /api/geo/citations/check - AI REVENUE INTELLIGENCE
  * 
  * NO MOCK DATA. NO SIMULATIONS.
- * Uses actual AI platform APIs to detect citations.
+ * Uses actual AI platform APIs to detect WHO AI RECOMMENDS.
  * 
- * Supported platforms:
- * - Perplexity: Real API with citation detection ✅
- * - Google AI (Gemini): With grounding feature ✅
- * - ChatGPT: Knowledge check (no web access) ⚠️
+ * This is the core of the revenue intelligence engine:
+ * - Who is AI recommending?
+ * - How much money are you losing?
+ * - What do you need to fix?
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  calculateBuyerIntent,
+  calculateQueryValue,
+  extractCompetitors,
+  analyzeCompetitiveLoss,
+  formatMoneyLoss,
+} from "@/lib/ai-revenue";
 
 function getDbClient(): SupabaseClient | null {
   try {
@@ -591,23 +598,66 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Return enriched response with query info
-    return NextResponse.json({
-      success: true,
-      results: results.map(r => ({
+    // Analyze competitive landscape for each result
+    const competitiveResults = results.map(r => {
+      const competitiveAnalysis = r.snippet 
+        ? analyzeCompetitiveLoss(r.snippet, cleanDomain)
+        : { userMentioned: r.cited, competitorsMentioned: [], isLoss: !r.cited, lossMessage: undefined };
+      
+      const buyerIntent = calculateBuyerIntent(r.query);
+      const queryValue = calculateQueryValue(r.query, category, competitiveAnalysis.competitorsMentioned.length);
+      
+      return {
         platform: r.platform,
         cited: r.cited,
         query: r.query,
         snippet: r.snippet,
         confidence: r.confidence,
         error: r.error,
-      })),
+        // NEW: Competitive intelligence
+        competitors: competitiveAnalysis.competitorsMentioned.map(c => c.name),
+        isLoss: competitiveAnalysis.isLoss,
+        lossMessage: competitiveAnalysis.lossMessage,
+        buyerIntent,
+        estimatedValue: queryValue,
+        estimatedValueFormatted: formatMoneyLoss(queryValue),
+      };
+    });
+    
+    // Calculate total estimated loss
+    const totalLoss = competitiveResults
+      .filter(r => !r.cited && !r.error)
+      .reduce((sum, r) => sum + r.estimatedValue, 0);
+    
+    // Get all unique competitors mentioned
+    const allCompetitors = [...new Set(competitiveResults.flatMap(r => r.competitors))];
+    
+    // Calculate AI market share (you vs competitors in this check)
+    const totalMentions = competitiveResults.filter(r => !r.error).length;
+    const yourMentions = competitiveResults.filter(r => r.cited).length;
+    const aiMarketShare = totalMentions > 0 ? Math.round((yourMentions / totalMentions) * 100) : 0;
+
+    // Return enriched response with REVENUE INTELLIGENCE
+    return NextResponse.json({
+      success: true,
+      results: competitiveResults,
       summary: {
         apisCalled,
         apisConfigured: apisCalled,
         apisMissing: 3 - apisCalled,
         citedCount,
         checkedAt: new Date().toISOString(),
+      },
+      // NEW: Revenue intelligence data
+      revenueIntelligence: {
+        aiMarketShare,
+        totalQueriesChecked: totalMentions,
+        queriesWon: yourMentions,
+        queriesLost: totalMentions - yourMentions,
+        estimatedMonthlyLoss: totalLoss,
+        estimatedMonthlyLossFormatted: formatMoneyLoss(totalLoss),
+        topCompetitors: allCompetitors.slice(0, 5),
+        category: category,
       },
     });
 
