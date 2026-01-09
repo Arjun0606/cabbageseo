@@ -444,7 +444,7 @@ function DashboardContent() {
                   Where AI Gets Its Information
                 </CardTitle>
                 <p className="text-sm text-zinc-500 mt-1">
-                  These sites feed AI&apos;s recommendations. Get listed to get recommended.
+                  Get listed → AI finds you → You get recommended. Track your progress.
                 </p>
               </CardHeader>
               <CardContent>
@@ -487,17 +487,41 @@ function DashboardContent() {
                             Trust: {source.trustScore}/10
                           </span>
                           {isPaid ? (
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="text-xs border-violet-500/50 text-violet-400"
-                              onClick={() => {
-                                // Show how to get listed
-                                alert(source.howToGetListed);
-                              }}
-                            >
-                              How to get listed
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="text-xs border-zinc-600 text-zinc-400 hover:border-violet-500 hover:text-violet-400"
+                                onClick={() => alert(source.howToGetListed)}
+                              >
+                                How to
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                className="text-xs bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border-0"
+                                onClick={async () => {
+                                  if (!currentSite) return;
+                                  try {
+                                    const res = await fetch("/api/sites/listings", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ 
+                                        siteId: currentSite.id, 
+                                        sourceDomain: source.domain 
+                                      }),
+                                    });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                      alert(`✅ Marked as listed on ${source.name}! We'll track your AI gains from this source.`);
+                                    }
+                                  } catch (e) {
+                                    console.error(e);
+                                  }
+                                }}
+                              >
+                                ✓ I&apos;m listed
+                              </Button>
+                            </div>
                           ) : (
                             <Lock className="w-4 h-4 text-zinc-600" />
                           )}
@@ -510,11 +534,11 @@ function DashboardContent() {
                 {!isPaid && (
                   <div className="mt-4 p-4 rounded-lg bg-violet-500/10 border border-violet-500/30 text-center">
                     <p className="text-violet-400 text-sm mb-2">
-                      🔒 Upgrade to see how to get listed on all {distributionIntel.knownTrustSources.length}+ trust sources
+                      🔒 Upgrade to track your listings and see AI gains
                     </p>
                     <Link href="/settings/billing">
                       <Button size="sm" className="bg-violet-500 hover:bg-violet-400 text-white">
-                        Unlock Distribution Roadmap
+                        Unlock Impact Tracking
                       </Button>
                     </Link>
                   </div>

@@ -185,6 +185,7 @@ CREATE TABLE "public"."citations" (
   "snippet" text,
   "page_url" text,
   "confidence" citation_confidence DEFAULT 'medium',
+  "source_domain" text,  -- Which trust source led to this citation (G2, Capterra, etc.)
   "cited_at" timestamptz NOT NULL DEFAULT now(),
   "last_checked_at" timestamptz NOT NULL DEFAULT now(),
   "created_at" timestamptz NOT NULL DEFAULT now()
@@ -233,6 +234,34 @@ CREATE TABLE "public"."notifications" (
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL DEFAULT now(),
   UNIQUE("user_id")
+);
+
+-- Source Listings (where user is listed - for AI Impact Tracking)
+CREATE TABLE "public"."source_listings" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  "site_id" uuid NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
+  "source_domain" text NOT NULL,
+  "source_name" text NOT NULL,
+  "profile_url" text,
+  "status" text DEFAULT 'pending' CHECK (status IN ('pending', 'verified', 'unverified')),
+  "listed_at" timestamptz NOT NULL DEFAULT now(),
+  "verified_at" timestamptz,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "updated_at" timestamptz NOT NULL DEFAULT now(),
+  UNIQUE("site_id", "source_domain")
+);
+
+-- Market Share Snapshots (for tracking improvement over time)
+CREATE TABLE "public"."market_share_snapshots" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  "site_id" uuid NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
+  "market_share" integer NOT NULL,
+  "total_queries" integer DEFAULT 0,
+  "queries_won" integer DEFAULT 0,
+  "queries_lost" integer DEFAULT 0,
+  "snapshot_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  UNIQUE("site_id", "snapshot_date")
 );
 
 -- GEO Analyses (site optimization analysis)

@@ -653,6 +653,21 @@ export async function POST(request: NextRequest) {
     const yourMentions = competitiveResults.filter(r => r.cited).length;
     const aiMarketShare = totalMentions > 0 ? Math.round((yourMentions / totalMentions) * 100) : 0;
     
+    // Record market share snapshot for AI Impact Tracking
+    if (db && siteId && totalMentions > 0) {
+      const today = new Date().toISOString().split("T")[0];
+      await db
+        .from("market_share_snapshots")
+        .upsert({
+          site_id: siteId,
+          market_share: aiMarketShare,
+          total_queries: totalMentions,
+          queries_won: yourMentions,
+          queries_lost: totalMentions - yourMentions,
+          snapshot_date: today,
+        } as never, { onConflict: "site_id,snapshot_date" });
+    }
+    
     // Collect all sources mentioned across results
     const allSources = [...new Set(competitiveResults.flatMap(r => r.sources.map(s => s.domain)))];
     

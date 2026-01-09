@@ -962,6 +962,9 @@ export const citations = pgTable(
     // Citation details
     snippet: text("snippet"),
     confidence: text("confidence").default("medium"), // high, medium, low
+    
+    // Source attribution (for AI Impact Tracking)
+    sourceDomain: text("source_domain"), // Which trust source led to this (g2.com, etc.)
 
     // Discovery metadata
     citedAt: timestamp("cited_at").defaultNow(),
@@ -1003,6 +1006,66 @@ export const geoAnalyses = pgTable(
   (table) => [
     index("geo_analyses_site_idx").on(table.siteId),
     index("geo_analyses_created_idx").on(table.createdAt),
+  ]
+);
+
+// ============================================
+// SOURCE LISTINGS (Where user is listed - for AI Impact Tracking)
+// ============================================
+
+export const sourceListings = pgTable(
+  "source_listings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+    
+    // Source info
+    sourceDomain: text("source_domain").notNull(), // g2.com, capterra.com, etc.
+    sourceName: text("source_name").notNull(), // G2, Capterra, etc.
+    profileUrl: text("profile_url"), // URL to user's profile on source
+    
+    // Verification status
+    status: text("status").default("pending"), // pending, verified, unverified
+    
+    // Timestamps
+    listedAt: timestamp("listed_at").defaultNow().notNull(),
+    verifiedAt: timestamp("verified_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("source_listings_site_idx").on(table.siteId),
+    uniqueIndex("source_listings_unique_idx").on(table.siteId, table.sourceDomain),
+  ]
+);
+
+// ============================================
+// MARKET SHARE SNAPSHOTS (For tracking improvement over time)
+// ============================================
+
+export const marketShareSnapshots = pgTable(
+  "market_share_snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+    
+    // Market share data
+    marketShare: integer("market_share").notNull(), // 0-100
+    totalQueries: integer("total_queries").default(0),
+    queriesWon: integer("queries_won").default(0),
+    queriesLost: integer("queries_lost").default(0),
+    
+    // Snapshot date
+    snapshotDate: timestamp("snapshot_date").defaultNow().notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("market_share_site_idx").on(table.siteId),
+    index("market_share_date_idx").on(table.snapshotDate),
   ]
 );
 
