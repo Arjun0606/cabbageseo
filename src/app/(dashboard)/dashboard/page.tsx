@@ -22,6 +22,7 @@ import {
   XCircle,
   Trophy,
   TrendingDown,
+  TrendingUp,
   DollarSign,
   Users,
   Target,
@@ -221,24 +222,28 @@ function DashboardContent() {
         <p className="text-sm text-zinc-500">AI Revenue Intelligence</p>
         </div>
 
-      {/* Trial warning */}
-      {plan === "free" && trial && !trial.expired && (
+      {/* Usage-based urgency - "X checks remaining" */}
+      {plan === "free" && (
         <div className="bg-gradient-to-r from-red-500/10 to-amber-500/10 border border-red-500/30 rounded-xl p-4">
           <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-400" />
+              <div className="relative">
+                <div className="w-12 h-12 rounded-full border-4 border-red-500/30 flex items-center justify-center">
+                  <span className="text-xl font-bold text-red-400">3</span>
+                </div>
+              </div>
               <div>
                 <p className="text-red-400 font-medium">
-                  {trial.daysRemaining} days left to see where money is going
+                  3 checks remaining
                 </p>
                 <p className="text-sm text-zinc-500">
-                  After trial, you&apos;ll lose visibility into competitor wins
+                  See who&apos;s stealing your AI recommendations before you run out
                 </p>
               </div>
             </div>
             <Link href="/settings/billing">
-              <Button size="sm" className="bg-red-500 hover:bg-red-400 text-white">
-                Keep Access
+              <Button size="sm" className="bg-emerald-500 hover:bg-emerald-400 text-black font-medium">
+                Get Unlimited
               </Button>
             </Link>
           </div>
@@ -335,6 +340,32 @@ function DashboardContent() {
             </CardContent>
           </Card>
         </div>
+
+          {/* MOMENTUM - Show progress (retention engine) */}
+          {revenueIntel.queriesWon > 0 && (
+            <div className="bg-gradient-to-r from-emerald-500/10 to-violet-500/10 border border-emerald-500/30 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <TrendingUp className="w-6 h-6 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-white font-medium flex items-center gap-2">
+                      <span className="text-emerald-400">+{revenueIntel.queriesWon}</span> AI recommendations found!
+                    </p>
+                    <p className="text-sm text-zinc-500">
+                      AI platforms are mentioning you. Keep tracking to see growth.
+                    </p>
+                  </div>
+                </div>
+                {isPaid && revenueIntel.queriesWon >= 3 && (
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/50">
+                    🔥 Gaining momentum
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* WHO IS AI RECOMMENDING - Real data from AI responses */}
           {revenueIntel.queriesLost > 0 && (
@@ -555,31 +586,59 @@ function DashboardContent() {
             </Card>
           )}
 
-          {/* THE PAYWALL - After showing real data */}
+          {/* THE PAYWALL - After showing the loss (emotional impact) */}
           {showPaywall && (
-            <Card className="bg-gradient-to-br from-emerald-500/10 to-zinc-900 border-emerald-500/30">
+            <Card className="bg-gradient-to-br from-red-500/10 via-zinc-900 to-emerald-500/10 border-red-500/30">
               <CardContent className="pt-8 pb-8 text-center">
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
-                  <Lock className="w-8 h-8 text-emerald-400" />
+                {/* Loss visual */}
+                <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
+                  <AlertTriangle className="w-10 h-10 text-red-400" />
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-3">
-                  See How To Get Recommended
+                
+                {/* Loss headline - emotional impact */}
+                <h2 className="text-3xl font-bold text-white mb-4">
+                  AI Is Sending Buyers to Your Competitors
                 </h2>
-                <p className="text-zinc-400 mb-2">
-                  AI mentioned competitors in <span className="text-red-400 font-bold">{revenueIntel.queriesLost} high-intent queries</span> instead of you.
-                </p>
-                <p className="text-zinc-400 mb-6">
-                  Upgrade to see where to get listed and track your AI visibility growth.
-                </p>
+                
+                {/* Specific loss data */}
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6 max-w-md mx-auto">
+                  <p className="text-red-400 font-medium">
+                    You&apos;re invisible in <span className="text-2xl font-bold">{revenueIntel.queriesLost}</span> high-intent queries
+                  </p>
+                  <p className="text-zinc-500 text-sm mt-1">
+                    Every day, buyers ask AI for recommendations — and AI sends them to your competitors.
+                  </p>
+                </div>
+                
+                {/* What they get */}
+                <div className="text-left max-w-md mx-auto mb-6">
+                  <p className="text-white font-medium mb-3">See exactly how to fix this:</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-zinc-400">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span>Which sources AI trusts (G2, Capterra, Product Hunt...)</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-zinc-400">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span>Step-by-step guides to get listed</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-zinc-400">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span>Track when AI starts recommending you</span>
+                    </div>
+                  </div>
+              </div>
+                
+                {/* CTA - Loss-based copy */}
                 <div className="space-y-3">
                   <Link href="/settings/billing">
-                    <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-black w-full">
-                      Unlock AI Visibility Intelligence — $29/mo
+                    <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-black w-full font-bold">
+                      Stop Losing AI Recommendations — $29/mo
                       <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-                  <p className="text-sm text-zinc-500">
-                    Includes: Trust source map • Listing guides • AI mention tracking
+                  <p className="text-xs text-zinc-600">
+                    Cancel anytime • See results in days, not months
                   </p>
             </div>
           </CardContent>
@@ -660,8 +719,8 @@ function DashboardContent() {
                 </>
               )}
             </Button>
-          </div>
-          
+        </div>
+
           {/* View Public Profile Link */}
           {currentSite && (
             <div className="text-center mt-4">
@@ -674,7 +733,7 @@ function DashboardContent() {
                 <ExternalLink className="w-3 h-3" />
               </Link>
             </div>
-          )}
+            )}
           </div>
       )}
     </div>

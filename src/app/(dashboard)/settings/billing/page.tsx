@@ -357,7 +357,7 @@ function BillingContent() {
                       <Button
                         onClick={() => handleUpgrade(planId)}
                         disabled={upgrading === planId}
-                        className={`w-full ${
+                        className={`w-full font-medium ${
                           planId === "pro" 
                             ? "bg-emerald-600 hover:bg-emerald-500" 
                             : "bg-zinc-700 hover:bg-zinc-600"
@@ -365,8 +365,10 @@ function BillingContent() {
                       >
                         {upgrading === planId ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : planId === "pro" ? (
+                          "Stop Losing AI Recommendations"
                         ) : (
-                          `Upgrade to ${planData.name}`
+                          "Start Winning AI Recommendations"
                         )}
                       </Button>
                     </div>

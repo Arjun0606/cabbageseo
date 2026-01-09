@@ -22,7 +22,7 @@ export default function PricingPage() {
       price: 0,
       period: "forever",
       description: "One-time check to see where AI is sending money in your market.",
-      cta: "Start Free",
+      cta: "See Who's Beating You",
       ctaVariant: "outline" as const,
       features: [
         { name: "1 site", included: true },
@@ -41,7 +41,7 @@ export default function PricingPage() {
       price: 29,
       period: "/month",
       description: "Daily monitoring to track your AI market share and identify opportunities.",
-      cta: "Start 7-Day Trial",
+      cta: "Start Winning — 7 Days Free",
       ctaVariant: "outline" as const,
       features: [
         { name: "3 sites", included: true },
@@ -61,7 +61,7 @@ export default function PricingPage() {
       price: 79,
       period: "/month",
       description: "Complete competitive intelligence with unlimited fixes and priority alerts.",
-      cta: "Start 7-Day Trial",
+      cta: "Stop Losing Customers",
       ctaVariant: "default" as const,
       features: [
         { name: "10 sites", included: true },
