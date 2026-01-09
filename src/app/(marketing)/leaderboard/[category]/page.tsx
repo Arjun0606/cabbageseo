@@ -83,6 +83,7 @@ interface LeaderboardSite {
   total_citations: number | null;
   geo_score_avg: number | null;
   citations_this_week: number | null;
+  public_profile_enabled: boolean | null;
 }
 
 interface MarketShareSnapshot {
@@ -94,7 +95,7 @@ async function getLeaderboardData(category: string) {
   const supabase = createServiceClient();
   const isAllCategories = category === "all";
   
-  // Get sites with the most AI mentions in this category
+  // PRIVACY-FIRST: Only show sites with public profiles enabled
   let query = supabase
     .from("sites")
     .select(`
@@ -103,8 +104,10 @@ async function getLeaderboardData(category: string) {
       category,
       total_citations,
       geo_score_avg,
-      citations_this_week
+      citations_this_week,
+      public_profile_enabled
     `)
+    .eq("public_profile_enabled", true) // Only public profiles!
     .order("total_citations", { ascending: false })
     .limit(50);
   

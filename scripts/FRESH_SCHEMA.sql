@@ -171,6 +171,9 @@ CREATE TABLE "public"."sites" (
   "citations_this_week" integer DEFAULT 0,
   "citations_last_week" integer DEFAULT 0,
   "geo_score_avg" integer,
+  -- Public profile settings (privacy-first: off by default)
+  "public_profile_enabled" boolean DEFAULT false,
+  "public_profile_bio" text, -- Optional tagline for public profile
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL DEFAULT now(),
   UNIQUE("organization_id", "domain")

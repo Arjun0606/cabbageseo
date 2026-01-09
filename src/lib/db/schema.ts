@@ -459,6 +459,10 @@ export const sites = pgTable(
     // Status
     isActive: boolean("is_active").default(true),
 
+    // Public profile (privacy-first: off by default)
+    publicProfileEnabled: boolean("public_profile_enabled").default(false),
+    publicProfileBio: text("public_profile_bio"), // Optional tagline for public profile
+
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
