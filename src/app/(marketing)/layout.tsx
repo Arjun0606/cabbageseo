@@ -41,7 +41,7 @@ function Header() {
           <Link href="/" className="flex items-center gap-2">
             <img 
               src="/apple-touch-icon.png" 
-              alt="CabbageSEO" 
+              alt="CabbageSEO logo - AI Visibility Intelligence" 
               className="h-8 w-8 rounded-lg"
             />
             <span className="font-bold text-white text-lg">CabbageSEO</span>
@@ -159,7 +159,7 @@ function Footer() {
             <Link href="/" className="flex items-center gap-2 mb-4">
               <img 
                 src="/apple-touch-icon.png" 
-                alt="CabbageSEO" 
+                alt="CabbageSEO logo - AI Visibility Intelligence" 
                 className="h-10 w-10 rounded-lg"
               />
               <span className="font-bold text-white text-xl">CabbageSEO</span>

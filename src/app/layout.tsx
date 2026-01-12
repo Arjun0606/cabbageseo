@@ -11,18 +11,20 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "CabbageSEO - SEO on Autopilot",
+    default: "CabbageSEO – AI Visibility Intelligence",
     template: "%s | CabbageSEO",
   },
   description:
-    "The AI-powered SEO platform that handles everything automatically. Keyword research, content creation, optimization, and publishing — all in one place.",
+    "See who AI recommends in your market. Track ChatGPT, Perplexity & Google AI citations. Know where competitors win — and how to take it back.",
   keywords: [
-    "SEO",
     "AI SEO",
-    "content generation",
-    "keyword research",
-    "SEO automation",
-    "organic traffic",
+    "AI visibility",
+    "AI citations",
+    "ChatGPT SEO",
+    "Perplexity tracking",
+    "AI search optimization",
+    "competitor intelligence",
+    "GEO optimization",
   ],
   authors: [{ name: "CabbageSEO" }],
   creator: "CabbageSEO",
@@ -31,25 +33,25 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://cabbageseo.com",
     siteName: "CabbageSEO",
-    title: "CabbageSEO - SEO on Autopilot",
+    title: "CabbageSEO – AI Visibility Intelligence",
     description:
-      "The AI-powered SEO platform that handles everything automatically.",
+      "See who AI recommends in your market. Track where competitors win.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "CabbageSEO",
+        alt: "CabbageSEO – AI Visibility Intelligence",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "CabbageSEO - SEO on Autopilot",
+    title: "CabbageSEO – AI Visibility Intelligence",
     description:
-      "The AI-powered SEO platform that handles everything automatically.",
+      "See who AI recommends. Track ChatGPT, Perplexity & Google AI citations.",
     images: ["/og-image.png"],
-    creator: "@cabbageseo",
+    creator: "@Arjun06061",
   },
   robots: {
     index: true,
@@ -73,6 +75,24 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
 };
 
+// JSON-LD Schema for SEO
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "CabbageSEO",
+  url: "https://cabbageseo.com",
+  logo: "https://cabbageseo.com/apple-touch-icon.png",
+  description: "AI Visibility Intelligence - See who AI recommends in your market",
+  sameAs: [
+    "https://x.com/Arjun06061",
+  ],
+  contactPoint: {
+    "@type": "ContactPoint",
+    email: "arjun@cabbageseo.com",
+    contactType: "customer support",
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -80,6 +100,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="min-h-screen bg-white font-sans antialiased dark:bg-slate-950">
         <Providers>{children}</Providers>
       </body>
