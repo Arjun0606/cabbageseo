@@ -5,27 +5,27 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Test user credentials
+// Test user credentials - using proper UUIDs
 export const TEST_USERS = {
   free: {
     email: 'test-free@cabbageseo-test.com',
     password: 'TestPass123!',
     name: 'Test Free User',
-    orgId: 'e2e-test-org-free-0001',
+    orgId: 'e2e00000-0000-0000-0000-000000000001',
     plan: 'free' as const,
   },
   starter: {
     email: 'test-starter@cabbageseo-test.com',
     password: 'TestPass123!',
     name: 'Test Starter User',
-    orgId: 'e2e-test-org-starter-0001',
+    orgId: 'e2e00000-0000-0000-0000-000000000002',
     plan: 'starter' as const,
   },
   pro: {
     email: 'test-pro@cabbageseo-test.com',
     password: 'TestPass123!',
     name: 'Test Pro User',
-    orgId: 'e2e-test-org-pro-0001',
+    orgId: 'e2e00000-0000-0000-0000-000000000003',
     plan: 'pro' as const,
   },
 };
@@ -71,14 +71,19 @@ async function globalSetup() {
     }
   }
 
-  // Create usage records for current period
+  // Create usage records for current period - using proper UUIDs
+  const usageIds = {
+    free: 'e2e00000-0000-0000-0000-000000000041',
+    starter: 'e2e00000-0000-0000-0000-000000000042',
+    pro: 'e2e00000-0000-0000-0000-000000000043',
+  };
   const currentPeriod = new Date().toISOString().slice(0, 7);
   
   for (const [tier, user] of Object.entries(TEST_USERS)) {
     const { error: usageError } = await supabase
       .from('usage')
       .upsert({
-        id: `e2e-usage-${tier}-${currentPeriod}`,
+        id: usageIds[tier as keyof typeof usageIds],
         organization_id: user.orgId,
         period: currentPeriod,
         checks_used: 0,
