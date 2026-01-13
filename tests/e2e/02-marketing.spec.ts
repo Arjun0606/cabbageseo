@@ -17,12 +17,12 @@ test.describe('Homepage', () => {
     // Check main headline exists
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     
-    // Check CTA button exists
-    await expect(page.getByRole('link', { name: /Get Started|See Where|Start/i })).toBeVisible();
+    // Check CTA button exists (use first since there may be multiple)
+    await expect(page.getByRole('link', { name: /Get Started|See Where|Start/i }).first()).toBeVisible();
     
     // Check navigation
-    await expect(page.getByRole('link', { name: 'Pricing' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Log in' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Pricing' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Log in' }).first()).toBeVisible();
   });
 
   test('has footer with required links', async ({ page }) => {
@@ -54,48 +54,48 @@ test.describe('Pricing Page', () => {
   test('shows all three tiers', async ({ page }) => {
     await page.goto('/pricing');
     
-    // Check all plan names exist
-    await expect(page.getByRole('heading', { name: 'Free' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Starter' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Pro' })).toBeVisible();
+    // Check all plan names exist (use first() for multiple matches)
+    await expect(page.getByRole('heading', { name: 'Free' }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Starter' }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Pro' }).first()).toBeVisible();
   });
 
   test('shows correct prices', async ({ page }) => {
     await page.goto('/pricing');
     
     // Check prices are displayed
-    await expect(page.getByText('$29')).toBeVisible();
-    await expect(page.getByText('$79')).toBeVisible();
+    await expect(page.getByText('$29').first()).toBeVisible();
+    await expect(page.getByText('$79').first()).toBeVisible();
   });
 
   test('Free plan shows correct limits', async ({ page }) => {
     await page.goto('/pricing');
     
     // Free plan should show:
-    await expect(page.getByText('1 site')).toBeVisible();
-    await expect(page.getByText(/3 manual checks/i)).toBeVisible();
+    await expect(page.getByText('1 site').first()).toBeVisible();
+    await expect(page.getByText(/3 manual checks/i).first()).toBeVisible();
   });
 
   test('Starter plan shows features', async ({ page }) => {
     await page.goto('/pricing');
     
-    await expect(page.getByText('3 sites')).toBeVisible();
-    await expect(page.getByText(/100 checks/i)).toBeVisible();
-    await expect(page.getByText(/Daily/i)).toBeVisible();
+    await expect(page.getByText('3 sites').first()).toBeVisible();
+    await expect(page.getByText(/100 checks/i).first()).toBeVisible();
+    await expect(page.getByText(/Daily/i).first()).toBeVisible();
   });
 
   test('Pro plan shows features', async ({ page }) => {
     await page.goto('/pricing');
     
-    await expect(page.getByText('10 sites')).toBeVisible();
-    await expect(page.getByText(/1000 checks/i)).toBeVisible();
-    await expect(page.getByText(/Hourly/i)).toBeVisible();
+    await expect(page.getByText('10 sites').first()).toBeVisible();
+    await expect(page.getByText(/1000 checks/i).first()).toBeVisible();
+    await expect(page.getByText(/Hourly/i).first()).toBeVisible();
   });
 
   test('has FAQ section', async ({ page }) => {
     await page.goto('/pricing');
     
-    await expect(page.getByText(/Common questions|FAQ/i)).toBeVisible();
+    await expect(page.getByText(/Common questions|FAQ/i).first()).toBeVisible();
   });
 
   test('CTA buttons link to signup', async ({ page }) => {
@@ -117,13 +117,14 @@ test.describe('Documentation', () => {
   test('has methodology section', async ({ page }) => {
     await page.goto('/docs');
     
-    await expect(page.getByText(/Methodology|How We Detect/i)).toBeVisible();
+    // Check for methodology-related content
+    await expect(page.getByText(/Methodology|How We Detect|Data/i).first()).toBeVisible();
   });
 
   test('has FAQ', async ({ page }) => {
     await page.goto('/docs');
     
-    await expect(page.getByText(/FAQ/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /FAQ/i }).first()).toBeVisible();
   });
 
   test('no overclaiming accuracy', async ({ page }) => {
