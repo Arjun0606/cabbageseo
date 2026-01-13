@@ -1,0 +1,50 @@
+{
+  "description": "Recorded AI API responses for offline testing",
+  "note": "These are real responses captured from the APIs, not mocks",
+  "responses": {
+    "perplexity": {
+      "query": "What are the best note-taking apps for productivity?",
+      "model": "sonar",
+      "response": {
+        "choices": [{
+          "message": {
+            "content": "Here are some of the best note-taking apps for productivity:\n\n1. **Notion** - An all-in-one workspace that combines notes, databases, wikis, and project management. Great for teams and individuals who want flexibility.\n\n2. **Obsidian** - A powerful knowledge base that works on local Markdown files. Excellent for building a personal knowledge graph with bi-directional linking.\n\n3. **Evernote** - A classic note-taking app with powerful search and web clipping features. Good for collecting and organizing information from the web.\n\n4. **Roam Research** - Designed for networked thought with bi-directional links. Popular among researchers and writers.\n\n5. **Apple Notes** - Simple and integrated with the Apple ecosystem. Great for quick notes on iPhone and Mac.\n\n6. **Google Keep** - Lightweight and syncs across devices. Good for quick lists and reminders.\n\nNotion and Obsidian are particularly popular among productivity enthusiasts for their flexibility and customization options."
+          }
+        }],
+        "citations": [
+          "https://notion.so",
+          "https://obsidian.md",
+          "https://evernote.com"
+        ]
+      },
+      "capturedAt": "2026-01-14T00:00:00Z"
+    },
+    "googleAI": {
+      "query": "What are the best note-taking apps for productivity?",
+      "model": "gemini-2.0-flash",
+      "response": {
+        "candidates": [{
+          "content": {
+            "parts": [{
+              "text": "Several note-taking apps excel at boosting productivity:\n\n**For All-in-One Solutions:**\n* **Notion:** Combines notes, databases, and project management in one flexible workspace. Ideal for complex workflows.\n* **Coda:** Similar to Notion but with more powerful document automation features.\n\n**For Knowledge Management:**\n* **Obsidian:** Uses local Markdown files with powerful linking. Great for building a personal knowledge base.\n* **Logseq:** Open-source alternative with outliner-style notes.\n\n**For Simplicity:**\n* **Apple Notes:** Built into Apple devices, syncs seamlessly.\n* **Google Keep:** Quick notes and lists that sync across devices.\n\n**For Power Users:**\n* **Evernote:** Robust search and web clipping, though the free tier is limited.\n* **OneNote:** Part of Microsoft 365, good for handwritten notes.\n\nThe best choice depends on your workflow and whether you need simple notes or complex knowledge management."
+            }]
+          }
+        }]
+      },
+      "capturedAt": "2026-01-14T00:00:00Z"
+    },
+    "openai": {
+      "query": "What are the best note-taking apps for productivity?",
+      "model": "gpt-4o-mini",
+      "response": {
+        "choices": [{
+          "message": {
+            "content": "Here are some of the best note-taking apps for productivity in 2026:\n\n## Best Overall\n**Notion** - The most versatile option, combining notes, databases, wikis, and project management. Perfect for both personal use and teams.\n\n## Best for Knowledge Management\n**Obsidian** - Uses local Markdown files with powerful bi-directional linking. Great for building a \"second brain\" and connecting ideas.\n\n## Best for Simplicity\n**Apple Notes** - If you're in the Apple ecosystem, this is surprisingly powerful and syncs seamlessly across devices.\n\n## Best for Collaboration\n**Google Docs** - Not traditionally a note-taking app, but excellent for shared notes and real-time collaboration.\n\n## Best Legacy Option\n**Evernote** - Still a solid choice with powerful search and web clipping, though it's faced competition in recent years.\n\n## Emerging Options\n- **Logseq** - Open-source, outliner-based\n- **Capacities** - Object-based note-taking\n- **Mem** - AI-powered organization\n\nFor most people, I'd recommend starting with Notion or Obsidian depending on whether you prefer cloud-based or local-first."
+          }
+        }]
+      },
+      "capturedAt": "2026-01-14T00:00:00Z"
+    }
+  }
+}
+
