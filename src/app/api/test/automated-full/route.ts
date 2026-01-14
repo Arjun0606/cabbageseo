@@ -417,10 +417,10 @@ export async function GET(request: Request) {
     });
 
     results.push({
-      test: "LIMITS: Pro - API access",
+      test: "LIMITS: Pro - Competitor deep dive",
       tier: "pro",
-      status: CITATION_PLANS.pro.features.apiAccess ? "PASS" : "FAIL",
-      message: `API access: ${CITATION_PLANS.pro.features.apiAccess}`,
+      status: CITATION_PLANS.pro.features.competitorDeepDive ? "PASS" : "FAIL",
+      message: `Competitor deep dive: ${CITATION_PLANS.pro.features.competitorDeepDive}`,
     });
 
     // Test canRunManualCheck function
