@@ -374,10 +374,10 @@ export async function GET(request: Request) {
     });
 
     results.push({
-      test: "LIMITS: Starter - 100 checks/month",
+      test: "LIMITS: Starter - 5 manual checks/day",
       tier: "starter",
-      status: CITATION_PLANS.starter.limits.checksPerMonth === 100 ? "PASS" : "FAIL",
-      message: `Checks/month: ${CITATION_PLANS.starter.limits.checksPerMonth}`,
+      status: CITATION_PLANS.starter.limits.manualChecksPerDay === 5 ? "PASS" : "FAIL",
+      message: `Manual checks/day: ${CITATION_PLANS.starter.limits.manualChecksPerDay}`,
     });
 
     results.push({
@@ -403,10 +403,10 @@ export async function GET(request: Request) {
     });
 
     results.push({
-      test: "LIMITS: Pro - 1000 checks/month",
+      test: "LIMITS: Pro - 20 manual checks/day",
       tier: "pro",
-      status: CITATION_PLANS.pro.limits.checksPerMonth === 1000 ? "PASS" : "FAIL",
-      message: `Checks/month: ${CITATION_PLANS.pro.limits.checksPerMonth}`,
+      status: CITATION_PLANS.pro.limits.manualChecksPerDay === 20 ? "PASS" : "FAIL",
+      message: `Manual checks/day: ${CITATION_PLANS.pro.limits.manualChecksPerDay}`,
     });
 
     results.push({
