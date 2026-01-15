@@ -624,8 +624,13 @@ export async function POST(request: NextRequest) {
             })
             .eq("id", siteId);
 
-          // Update usage count
-          const period = new Date().toISOString().slice(0, 7);
+          // Update usage count (only for manual checks, not auto-checks)
+          // Use daily period for free tier to track daily limits, monthly for paid
+          const isFreePlan = plan === "free";
+          const period = isFreePlan 
+            ? new Date().toISOString().split('T')[0] // Daily for free tier
+            : new Date().toISOString().slice(0, 7);  // Monthly for paid tiers
+          
           const { data: existingUsage } = await db
             .from("usage")
             .select("checks_used")
