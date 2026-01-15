@@ -76,7 +76,7 @@ export async function GET(request: Request) {
     "GOOGLE_AI_API_KEY",
     "OPENAI_API_KEY",
     "RESEND_API_KEY",
-    "DODO_API_KEY",
+    "DODO_PAYMENTS_API_KEY",
   ];
 
   for (const envVar of envVars) {
@@ -526,8 +526,8 @@ export async function GET(request: Request) {
   results.push({
     test: "BILLING: Dodo API key configured",
     tier: "all",
-    status: process.env.DODO_API_KEY ? "PASS" : "FAIL",
-    message: process.env.DODO_API_KEY ? "Set" : "NOT SET",
+    status: process.env.DODO_PAYMENTS_API_KEY ? "PASS" : "FAIL",
+    message: process.env.DODO_PAYMENTS_API_KEY ? "Set" : "NOT SET",
   });
 
   // ============================================

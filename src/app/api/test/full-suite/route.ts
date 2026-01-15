@@ -67,7 +67,7 @@ export async function GET() {
     { name: "GOOGLE_AI_API_KEY", desc: "Google AI API" },
     { name: "OPENAI_API_KEY", desc: "OpenAI API" },
     { name: "RESEND_API_KEY", desc: "Resend Email" },
-    { name: "DODO_API_KEY", desc: "Dodo Payments" },
+    { name: "DODO_PAYMENTS_API_KEY", desc: "Dodo Payments" },
   ];
 
   for (const envVar of requiredEnvVars) {
