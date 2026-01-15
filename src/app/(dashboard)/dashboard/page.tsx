@@ -53,7 +53,7 @@ interface QueryResult {
 function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { currentSite, sites, loading: siteLoading, refreshData, organization } = useSite();
+  const { currentSite, sites, loading: siteLoading, refreshData, organization, usage } = useSite();
   
   const isWelcome = searchParams.get("welcome") === "true";
   
