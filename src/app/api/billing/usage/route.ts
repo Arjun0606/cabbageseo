@@ -56,7 +56,11 @@ export async function GET() {
     const limits = getCitationPlanLimits(plan);
 
     // Get current period usage
-    const period = new Date().toISOString().slice(0, 7); // YYYY-MM
+    // Free tier uses daily period, paid tiers use monthly
+    const isFreePlan = plan === "free";
+    const period = isFreePlan 
+      ? new Date().toISOString().split('T')[0] // Daily for free tier
+      : new Date().toISOString().slice(0, 7);  // Monthly for paid tiers
     
     const { data: usageData } = await db
       .from("usage")

@@ -25,6 +25,10 @@ import {
   getTrustSourceInfo,
   TRUST_SOURCES,
 } from "@/lib/ai-revenue/sources";
+import {
+  canRunManualCheck,
+  canAccessProduct,
+} from "@/lib/billing/citation-plans";
 
 function getDbClient(): SupabaseClient | null {
   try {
@@ -477,15 +481,58 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id)
       .maybeSingle();
     
+    let orgCreatedAt: string | undefined;
+    
     if (userData?.organization_id) {
       const { data: orgData } = await db
         .from("organizations")
-        .select("plan")
+        .select("plan, created_at")
         .eq("id", userData.organization_id)
         .maybeSingle();
       
-      if (orgData?.plan) {
-        plan = orgData.plan;
+      if (orgData) {
+        plan = orgData.plan || "free";
+        orgCreatedAt = orgData.created_at;
+      }
+      
+      // ============================================
+      // PLAN ENFORCEMENT - CRITICAL
+      // ============================================
+      
+      // Check if free user's trial has expired
+      if (plan === "free" && orgCreatedAt) {
+        const access = canAccessProduct(plan, orgCreatedAt);
+        if (!access.allowed) {
+          return NextResponse.json({
+            error: access.reason || "Trial expired. Upgrade to continue.",
+            code: "TRIAL_EXPIRED",
+            upgradeRequired: true,
+          }, { status: 403 });
+        }
+      }
+      
+      // Check daily manual check limit for free users
+      if (plan === "free") {
+        // Get checks used today (count checks in current day)
+        const today = new Date().toISOString().split('T')[0];
+        const { data: todayUsage } = await db
+          .from("usage")
+          .select("checks_used")
+          .eq("organization_id", userData.organization_id)
+          .eq("period", today)
+          .maybeSingle();
+        
+        const checksToday = todayUsage?.checks_used || 0;
+        
+        // Verify can run check
+        const canCheck = canRunManualCheck(plan, checksToday, orgCreatedAt);
+        if (!canCheck.allowed) {
+          return NextResponse.json({
+            error: canCheck.reason || "Daily limit reached. Upgrade for unlimited checks.",
+            code: "PLAN_LIMIT_EXCEEDED",
+            upgradeRequired: true,
+          }, { status: 403 });
+        }
       }
       
       // If we have a siteId, get the site's category and custom queries

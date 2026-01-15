@@ -11,7 +11,7 @@
  * Pro: $79/mo - Unlimited manual + hourly auto
  */
 
-export const TRIAL_DAYS = 10;
+export const TRIAL_DAYS = 7; // Updated to match pricing page
 
 export type CitationPlanId = "free" | "starter" | "pro";
 
