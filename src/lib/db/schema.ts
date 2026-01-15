@@ -298,7 +298,7 @@ export const usage = pgTable(
     // Period (YYYY-MM)
     period: text("period").notNull(),
 
-    // Citation Intelligence usage
+    // AI Visibility Intelligence usage
     checksUsed: integer("checks_used").default(0),
     sitesUsed: integer("sites_used").default(0),
     competitorsUsed: integer("competitors_used").default(0),
@@ -413,7 +413,7 @@ export const sites = pgTable(
     description: text("description"),
     status: text("status").default("active"),
 
-    // Citation Intelligence - Core metrics
+    // AI Visibility Intelligence - Core metrics
     totalCitations: integer("total_citations").default(0),
     citationsThisWeek: integer("citations_this_week").default(0),
     citationsLastWeek: integer("citations_last_week").default(0),

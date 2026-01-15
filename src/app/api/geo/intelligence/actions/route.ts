@@ -1,5 +1,5 @@
 /**
- * Citation Intelligence API
+ * AI Visibility Intelligence API
  * 
  * POST /api/geo/intelligence/actions
  * 

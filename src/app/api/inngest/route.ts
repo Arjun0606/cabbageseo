@@ -2,7 +2,7 @@
  * Inngest API Route
  * 
  * Serves the Inngest functions for background job processing.
- * Citation Intelligence jobs run automatically:
+ * AI Visibility Intelligence jobs run automatically:
  * - Daily checks at 10 AM UTC
  * - Hourly checks for Pro users
  * - Weekly reports on Mondays

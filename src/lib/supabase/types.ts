@@ -171,7 +171,7 @@ export interface Database {
           name: string;
           description: string | null;
           status: string;
-          // Citation Intelligence metrics
+          // AI Visibility Intelligence metrics
           total_citations: number;
           citations_this_week: number;
           citations_last_week: number;
@@ -752,7 +752,7 @@ export interface Database {
           date?: string;
         };
       };
-      // Citation Intelligence usage table
+      // AI Visibility Intelligence usage table
       usage: {
         Row: {
           id: string;

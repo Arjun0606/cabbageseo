@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "CabbageSEO Pricing – AI Visibility Plans",
     description:
-      "Choose your plan: Free checks, Starter daily monitoring, or Pro hourly tracking with API access.",
+      "Choose your plan: Free checks, Starter daily monitoring, or Pro hourly tracking.",
   },
 };
 

@@ -1,5 +1,5 @@
 /**
- * Citation Intelligence Pricing Plans
+ * AI Visibility Intelligence Pricing Plans
  * 
  * HONEST PRICING - Sensible limits
  * 

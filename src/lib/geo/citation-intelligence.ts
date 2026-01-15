@@ -1,5 +1,5 @@
 /**
- * Citation Intelligence Service
+ * AI Visibility Intelligence Service
  * 
  * The $100k features - turning monitoring into actionable intelligence:
  * 

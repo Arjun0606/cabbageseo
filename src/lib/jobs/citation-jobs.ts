@@ -1,5 +1,5 @@
 /**
- * Citation Intelligence - Inngest Jobs
+ * AI Visibility Intelligence - Inngest Jobs
  * 
  * AUTOMATED CITATION TRACKING
  * - Daily checks for all users

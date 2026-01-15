@@ -4,7 +4,7 @@
  * GET: Fetch citations for a site
  * Query params:
  *   - siteId: Required site ID
- *   - full: If true, return all citations (for Citations page)
+ *   - full: If true, return all citations (for dashboard display)
  */
 
 import { NextRequest, NextResponse } from "next/server";
