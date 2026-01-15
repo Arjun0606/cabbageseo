@@ -1,217 +1,224 @@
 "use client";
 
-/**
- * HOMEPAGE - AI REVENUE INTELLIGENCE
- * 
- * Every word answers: "Where is AI sending money instead of me?"
- * 
- * NO citations. NO GEO scores. NO monitoring language.
- * Only: Money lost. Competitors winning. Take it back.
- */
-
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, DollarSign, Users, TrendingDown, Search, Zap, Lock, BarChart2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, Zap, Eye, Target, AlertTriangle } from "lucide-react";
 
 export default function HomePage() {
+  const router = useRouter();
+  const [domain, setDomain] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!domain.trim()) return;
+
+    setLoading(true);
+    setError("");
+
+    // Clean domain
+    let cleanDomain = domain.trim().toLowerCase();
+    cleanDomain = cleanDomain.replace(/^https?:\/\//, "");
+    cleanDomain = cleanDomain.replace(/^www\./, "");
+    cleanDomain = cleanDomain.split("/")[0];
+
+    // Redirect to teaser page with domain
+    router.push(`/teaser?domain=${encodeURIComponent(cleanDomain)}`);
+  };
+
   return (
-    <div className="bg-black min-h-screen">
-      {/* Hero - Lead with the fear */}
-      <section className="relative overflow-hidden">
+    <div className="min-h-screen bg-zinc-950">
+      {/* Hero Section */}
+      <section className="relative pt-20 pb-32 overflow-hidden">
         {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 via-black to-black" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-red-900/20 via-transparent to-transparent" />
-        
-        <div className="relative max-w-4xl mx-auto px-6 pt-32 pb-24">
-          {/* Alert badge */}
-          <div className="flex justify-center mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/30">
-              <DollarSign className="w-4 h-4 text-red-400" />
-              <span className="text-red-400 text-sm font-medium">
-                AI is choosing your competitors right now
-            </span>
-            </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 via-zinc-950 to-zinc-950" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-red-500/10 rounded-full blur-3xl" />
+
+        <div className="relative max-w-4xl mx-auto px-6 text-center">
+          {/* Warning badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full text-red-400 text-sm mb-8">
+            <AlertTriangle className="w-4 h-4" />
+            <span>AI is choosing your competitors right now</span>
           </div>
-          
+
           {/* Main headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-center leading-tight mb-6">
-            <span className="text-white">See exactly how much money</span>
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+            Is AI sending your
             <br />
-            <span className="text-red-400">AI is sending to your competitors</span>
+            <span className="text-red-400">customers to someone else?</span>
           </h1>
-          
-          <p className="text-xl text-zinc-400 text-center max-w-2xl mx-auto mb-8">
-            ChatGPT, Perplexity, and Google AI recommend products to millions of buyers every day. 
-            <strong className="text-white"> Are they recommending yours?</strong>
+
+          {/* Subheadline */}
+          <p className="text-xl text-zinc-400 mb-12 max-w-2xl mx-auto">
+            When someone asks ChatGPT or Google AI "what's the best tool for X",
+            AI chooses winners. If you're not on that list, you're{" "}
+            <span className="text-white font-semibold">invisible</span>.
           </p>
 
-          {/* CTA */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-            <Link href="/signup">
-              <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-8 py-6 text-lg">
-                See Where Your Money Is Going
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
-            <p className="text-sm text-zinc-500">Free check • No credit card</p>
-          </div>
-          
-          {/* The demo - TRUTHFUL, no fake data */}
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-zinc-900/90 rounded-2xl border border-zinc-800 overflow-hidden shadow-2xl">
-              {/* Header */}
-              <div className="bg-zinc-950 px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  <div className="w-3 h-3 rounded-full bg-amber-500" />
-                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                </div>
-                <span className="text-zinc-500 text-sm">Your results will appear here</span>
+          {/* Domain Input Form */}
+          <form onSubmit={handleSubmit} className="max-w-xl mx-auto mb-6">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={domain}
+                  onChange={(e) => setDomain(e.target.value)}
+                  placeholder="yourdomain.com"
+                  className="w-full px-6 py-4 bg-zinc-900 border border-zinc-700 rounded-xl text-white text-lg placeholder:text-zinc-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
+                  disabled={loading}
+                />
               </div>
-              
-              {/* Content */}
-              <div className="p-6">
-                {/* Alert banner - truthful */}
-                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <Search className="w-8 h-8 text-red-400" />
-                    <div>
-                      <div className="text-2xl font-bold text-red-400">High-Intent Queries Missed</div>
-                      <div className="text-sm text-zinc-400">Buyers ask AI for recommendations — AI sends them to competitors</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* What you'll see - truthful */}
-                <div className="mb-6">
-                  <div className="text-sm text-zinc-500 mb-3">What you&apos;ll discover:</div>
-                  <div className="space-y-2">
-                    {[
-                      { query: "best [your category] tools", info: "Which competitors AI recommends", intent: "High Intent" },
-                      { query: "alternatives to [competitor]", info: "Whether AI mentions you", intent: "High Intent" },
-                      { query: "[your industry] software", info: "Which sources AI trusts", intent: "Medium Intent" },
-                    ].map((row, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg">
-                        <div>
-                          <div className="text-white text-sm">&ldquo;{row.query}&rdquo;</div>
-                          <div className="text-zinc-500 text-xs">{row.info}</div>
-                        </div>
-                        <div className={`text-xs px-2 py-1 rounded ${
-                          row.intent === "High Intent" ? "bg-red-500/20 text-red-400" : "bg-amber-500/20 text-amber-400"
-                        }`}>{row.intent}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* AI Mention Share - truthful label */}
-                <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-xl">
-                  <div>
-                    <div className="text-zinc-500 text-sm">Your AI Mention Share</div>
-                    <div className="text-lg text-zinc-400">(tracked queries only)</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-zinc-500 text-sm">See who&apos;s winning</div>
-                    <div className="text-lg font-bold text-emerald-400">Run a check →</div>
-                  </div>
-                </div>
-              </div>
+              <button
+                type="submit"
+                disabled={loading || !domain.trim()}
+                className="px-8 py-4 bg-red-500 hover:bg-red-600 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Checking...
+                  </>
+                ) : (
+                  <>
+                    See who AI recommends
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
             </div>
-          </div>
+            {error && (
+              <p className="mt-3 text-red-400 text-sm">{error}</p>
+            )}
+          </form>
+
+          <p className="text-zinc-500 text-sm">
+            Takes ~10 seconds. No signup required.
+          </p>
         </div>
       </section>
 
-      {/* The Problem */}
-      <section className="py-24 px-6 border-t border-zinc-900">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-white mb-4">
-            AI doesn&apos;t search. AI <span className="text-red-400">recommends.</span>
+      {/* How AI Works Section */}
+      <section className="py-24 bg-zinc-900/50 border-t border-zinc-800">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-3xl font-bold text-white text-center mb-4">
+            AI doesn't search. AI <span className="text-red-400">recommends</span>.
           </h2>
-          <p className="text-lg text-zinc-400 text-center max-w-2xl mx-auto mb-16">
-            When someone asks &ldquo;what&apos;s the best CRM?&rdquo; — AI picks winners. 
-            If you&apos;re not on that list, you&apos;re invisible.
+          <p className="text-zinc-400 text-center mb-16 max-w-2xl mx-auto">
+            When someone asks "what's the best CRM?" — AI picks winners.
+            If you're not on that list, you don't exist.
           </p>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
-              <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
-                <TrendingDown className="w-8 h-8 text-red-400" />
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+              <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-6">
+                <Zap className="w-6 h-6 text-red-400" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Traffic Is Shifting</h3>
+              <h3 className="text-xl font-semibold text-white mb-3">
+                AI is the new gatekeeper
+              </h3>
               <p className="text-zinc-400">
-                A growing share of product discovery now happens in AI assistants — and it&apos;s accelerating.
+                ChatGPT, Perplexity, and Google AI now answer product questions directly. 
+                They choose who gets mentioned.
               </p>
             </div>
 
-            <div className="text-center p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
-              <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-amber-400" />
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+              <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-6">
+                <Eye className="w-6 h-6 text-red-400" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Buyers Trust AI</h3>
+              <h3 className="text-xl font-semibold text-white mb-3">
+                Buyers trust AI recommendations
+              </h3>
               <p className="text-zinc-400">
-                When ChatGPT says &ldquo;the best tool is X&rdquo; — people buy X. Period.
+                When ChatGPT says "the best tool is X" — people buy X. 
+                This is where purchase decisions happen now.
               </p>
             </div>
 
-            <div className="text-center p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
-                <Search className="w-8 h-8 text-emerald-400" />
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+              <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-6">
+                <Target className="w-6 h-6 text-red-400" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">You&apos;re Flying Blind</h3>
+              <h3 className="text-xl font-semibold text-white mb-3">
+                You're flying blind
+              </h3>
               <p className="text-zinc-400">
-                Google Analytics can&apos;t track AI. You have no idea who&apos;s winning.
+                Google Analytics can't track AI. You have no idea if you're being recommended or ignored.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* What You Get */}
-      <section className="py-24 px-6 bg-gradient-to-b from-black to-zinc-950 border-t border-zinc-900">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-white mb-4">
-            From &ldquo;I&apos;m invisible&rdquo; to &ldquo;I know how to win&rdquo;
+      {/* What We Do Section */}
+      <section className="py-24">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-3xl font-bold text-white text-center mb-4">
+            CabbageSEO shows you the truth
           </h2>
-          <p className="text-lg text-zinc-400 text-center max-w-2xl mx-auto mb-16">
-            CabbageSEO shows you exactly where AI is sending money in your market — and how to take it.
+          <p className="text-zinc-400 text-center mb-16 max-w-2xl mx-auto">
+            We query real AI platforms and show you exactly who they recommend — and whether that includes you.
           </p>
 
-          <div className="space-y-8">
-            <div className="flex gap-6 items-start p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
-              <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
-                <Search className="w-6 h-6 text-red-400" />
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
+                <span className="text-emerald-400 font-bold">1</span>
               </div>
-            <div>
-                <h3 className="text-xl font-semibold text-white mb-2">See What AI Actually Says</h3>
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  See who AI recommends
+                </h3>
                 <p className="text-zinc-400">
                   Real responses from ChatGPT, Perplexity, and Google AI. 
-                  See exactly who they recommend — and whether they mention you.
+                  See exactly who they mention.
                 </p>
               </div>
             </div>
 
-            <div className="flex gap-6 items-start p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
-                <BarChart2 className="w-6 h-6 text-amber-400" />
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
+                <span className="text-emerald-400 font-bold">2</span>
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-white mb-2">Track Your AI Mention Share</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Find where AI learns about them
+                </h3>
                 <p className="text-zinc-400">
-                  See your percentage of AI mentions in tracked queries vs competitors. 
-                  Watch it grow as you take action.
+                  Discover the sources AI trusts: G2, Capterra, Product Hunt, Reddit. 
+                  Your competitors are there. You're not.
                 </p>
               </div>
             </div>
-            
-            <div className="flex gap-6 items-start p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
-                <Zap className="w-6 h-6 text-emerald-400" />
+
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
+                <span className="text-emerald-400 font-bold">3</span>
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-white mb-2">Get One-Click Fixes</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Get your roadmap to visibility
+                </h3>
                 <p className="text-zinc-400">
-                  For every query you&apos;re losing, get an exact content plan: 
-                  page titles, headings, entities, and comparison blocks.
+                  Step-by-step instructions to get listed on the sources AI trusts, 
+                  so you start getting recommended.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
+                <span className="text-emerald-400 font-bold">4</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Track your progress
+                </h3>
+                <p className="text-zinc-400">
+                  Weekly reports show when you gain visibility. 
+                  Get alerts when competitors overtake you.
                 </p>
               </div>
             </div>
@@ -219,67 +226,108 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Pricing Teaser */}
-      <section className="py-24 px-6 border-t border-zinc-900">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Start seeing who AI recommends
-            </h2>
-          <p className="text-lg text-zinc-400 mb-12">
-            7-day free trial. Cancel anytime.
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            <div className="p-6 rounded-2xl bg-zinc-800/80 border border-zinc-700">
-              <div className="text-2xl font-bold text-white mb-1">Starter</div>
-              <div className="text-4xl font-bold text-white mb-1">$29<span className="text-lg text-zinc-400">/mo</span></div>
-              <div className="text-zinc-400 mb-6">100 checks/month • Daily monitoring</div>
-              <ul className="text-left space-y-2 text-white mb-6">
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> 3 sites</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Daily automated checks</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> 5 content fixes/month</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> CSV export</li>
-              </ul>
-              <Link href="/signup">
-                <Button className="w-full border-zinc-500 text-white hover:bg-zinc-700" variant="outline">Start Free Trial</Button>
-              </Link>
-            </div>
-            
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-zinc-800 border border-emerald-500/40">
-              <div className="text-2xl font-bold text-white mb-1">Pro</div>
-              <div className="text-4xl font-bold text-white mb-1">$79<span className="text-lg text-zinc-400">/mo</span></div>
-              <div className="text-zinc-400 mb-6">1000 checks/month • Hourly monitoring</div>
-              <ul className="text-left space-y-2 text-white mb-6">
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> 10 sites</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Hourly automated checks</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Unlimited content fixes</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> API access</li>
-              </ul>
-              <Link href="/signup">
-                <Button className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-semibold">Start Free Trial</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="py-24 px-6 bg-gradient-to-t from-zinc-950 to-black border-t border-zinc-900">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Don&apos;t let AI make you invisible
+      {/* CTA Section */}
+      <section className="py-24 bg-gradient-to-t from-red-950/20 to-transparent border-t border-zinc-800">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <h2 className="text-4xl font-bold text-white mb-4">
+            Find out in 10 seconds
           </h2>
-          <p className="text-lg text-zinc-400 mb-8">
-            Every day you wait, competitors are getting recommended instead of you.
+          <p className="text-xl text-zinc-400 mb-8">
+            Enter your domain and see if AI is recommending you — or your competitors.
           </p>
-          <Link href="/signup">
-            <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-8">
-              See Where Your Money Is Going
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </Link>
+
+          <form onSubmit={handleSubmit} className="max-w-xl mx-auto">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="text"
+                value={domain}
+                onChange={(e) => setDomain(e.target.value)}
+                placeholder="yourdomain.com"
+                className="flex-1 px-6 py-4 bg-zinc-900 border border-zinc-700 rounded-xl text-white text-lg placeholder:text-zinc-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
+                disabled={loading}
+              />
+              <button
+                type="submit"
+                disabled={loading || !domain.trim()}
+                className="px-8 py-4 bg-red-500 hover:bg-red-600 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all"
+              >
+                {loading ? "Checking..." : "Check now"}
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+          </form>
+
+          <p className="mt-6 text-zinc-500 text-sm">
+            Free check • No credit card • No signup required
+          </p>
         </div>
       </section>
+
+      {/* Pricing Preview */}
+      <section className="py-24 border-t border-zinc-800">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Simple pricing
+          </h2>
+          <p className="text-zinc-400 mb-12">
+            Start free. Upgrade when you need more.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            {/* Free */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-left">
+              <h3 className="text-lg font-semibold text-white mb-1">Free</h3>
+              <p className="text-3xl font-bold text-white mb-4">$0</p>
+              <p className="text-zinc-400 text-sm mb-6">
+                See who AI recommends. Manual checks only.
+              </p>
+              <Link
+                href="/signup"
+                className="block w-full py-3 text-center border border-zinc-700 text-zinc-300 rounded-lg hover:bg-zinc-800 transition-colors"
+              >
+                Get started
+              </Link>
+            </div>
+
+            {/* Starter */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-left">
+              <h3 className="text-lg font-semibold text-white mb-1">Starter</h3>
+              <p className="text-3xl font-bold text-white mb-4">
+                $29<span className="text-lg text-zinc-500">/mo</span>
+              </p>
+              <p className="text-zinc-400 text-sm mb-6">
+                Daily monitoring. 3 sites. Content fixes.
+              </p>
+              <Link
+                href="/signup"
+                className="block w-full py-3 text-center bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                Start free trial
+              </Link>
+            </div>
+
+            {/* Pro */}
+            <div className="bg-zinc-900 border border-red-500/50 rounded-2xl p-6 text-left relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full">
+                MOST POPULAR
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-1">Pro</h3>
+              <p className="text-3xl font-bold text-white mb-4">
+                $79<span className="text-lg text-zinc-500">/mo</span>
+              </p>
+              <p className="text-zinc-400 text-sm mb-6">
+                Hourly monitoring. 10 sites. Full roadmap.
+              </p>
+              <Link
+                href="/signup"
+                className="block w-full py-3 text-center bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Start free trial
+              </Link>
+            </div>
+          </div>
         </div>
+      </section>
+    </div>
   );
 }

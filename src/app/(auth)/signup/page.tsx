@@ -36,11 +36,18 @@ export default function SignupPage() {
       return;
     }
 
+    // Get domain from URL if user came from teaser
+    const urlParams = new URLSearchParams(window.location.search);
+    const domain = urlParams.get("domain");
+    const callbackUrl = domain 
+      ? `${window.location.origin}/auth/callback?domain=${encodeURIComponent(domain)}`
+      : `${window.location.origin}/auth/callback`;
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: callbackUrl,
         data: {
           name,
         },
@@ -67,14 +74,20 @@ export default function SignupPage() {
       return;
     }
 
-    // Get the redirect from URL params or default to onboarding
+    // Get the domain from URL params if user came from teaser
     const urlParams = new URLSearchParams(window.location.search);
-    const redirectPath = urlParams.get("redirect") || "/dashboard?welcome=true";
+    const domain = urlParams.get("domain");
+    
+    // Build callback URL with domain if present
+    let callbackUrl = `${window.location.origin}/auth/callback`;
+    if (domain) {
+      callbackUrl += `?domain=${encodeURIComponent(domain)}`;
+    }
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectPath)}`,
+        redirectTo: callbackUrl,
         queryParams: {
           access_type: "offline",
           prompt: "consent",

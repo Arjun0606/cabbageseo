@@ -71,6 +71,7 @@ export async function updateSession(request: NextRequest) {
     "/analyze",
     "/docs",
     "/feedback",
+    "/teaser",         // Teaser results page (no signup required)
     "/auth/callback",  // OAuth callback must be public
   ];
   

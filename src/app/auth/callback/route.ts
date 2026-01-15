@@ -97,8 +97,13 @@ export async function GET(request: NextRequest) {
                 console.error("[Auth Callback] User creation error:", userError);
               }
               
-              // Redirect to dashboard for new users (dashboard has onboarding flow built-in)
-              return NextResponse.redirect(`${redirectBase}/dashboard`);
+              // Redirect to onboarding for new users
+              // Check if there's a domain param to pass along
+              const domainParam = searchParams.get("domain");
+              const onboardingUrl = domainParam 
+                ? `/onboarding?domain=${encodeURIComponent(domainParam)}`
+                : `/onboarding`;
+              return NextResponse.redirect(`${redirectBase}${onboardingUrl}`);
             }
           } else {
             // User exists, check if they have any sites (for onboarding check)
@@ -111,9 +116,13 @@ export async function GET(request: NextRequest) {
                 .eq("organization_id", orgId)
                 .limit(1);
               
-              // If no sites, redirect to dashboard (has onboarding built-in)
+              // If no sites, redirect to onboarding
               if (!sites || sites.length === 0) {
-                return NextResponse.redirect(`${redirectBase}/dashboard`);
+                const domainParam = searchParams.get("domain");
+                const onboardingUrl = domainParam 
+                  ? `/onboarding?domain=${encodeURIComponent(domainParam)}`
+                  : `/onboarding`;
+                return NextResponse.redirect(`${redirectBase}${onboardingUrl}`);
               }
             }
           }
