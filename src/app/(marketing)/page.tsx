@@ -339,17 +339,15 @@ export default function HomePage() {
           <h2 className="text-2xl font-bold text-white mb-6">
             Find out in 10 seconds if you're invisible
           </h2>
-          <Link
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
+          <button
+            onClick={() => {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             className="inline-flex items-center gap-2 px-8 py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-all"
           >
             Check your domain now
             <ArrowRight className="w-5 h-5" />
-          </Link>
+          </button>
         </div>
       </section>
     </div>
