@@ -137,22 +137,39 @@ export async function POST(request: NextRequest) {
     // Get plan and check limits
     const { data: org } = await db
       .from("organizations")
-      .select("plan")
+      .select("plan, created_at")
       .eq("id", userData.organization_id)
       .single();
 
     const plan = org?.plan || "free";
-    const limits = getCitationPlanLimits(plan);
-
-    // Check competitor limit
+    const orgCreatedAt = org?.created_at;
+    
+    // Check if free user's trial has expired
+    if (plan === "free" && orgCreatedAt) {
+      const access = canAccessProduct(plan, orgCreatedAt);
+      if (!access.allowed) {
+        return NextResponse.json({
+          error: access.reason || "Trial expired. Upgrade to continue.",
+          code: "TRIAL_EXPIRED",
+          upgradeRequired: true,
+        }, { status: 403 });
+      }
+    }
+    
+    // Check competitor limit using helper function
     const { count } = await db
       .from("competitors")
       .select("id", { count: "exact", head: true })
       .eq("site_id", siteId);
 
-    if ((count || 0) >= limits.competitors) {
-      return NextResponse.json({ 
-        error: `Competitor limit reached (${limits.competitors}). Upgrade for more.` 
+    const currentCompetitors = count || 0;
+    const canAdd = canAddCompetitor(plan, currentCompetitors);
+    
+    if (!canAdd.allowed) {
+      return NextResponse.json({
+        error: canAdd.reason || `Competitor limit reached. Upgrade for more.`,
+        code: "PLAN_LIMIT_EXCEEDED",
+        upgradeRequired: true,
       }, { status: 403 });
     }
 
