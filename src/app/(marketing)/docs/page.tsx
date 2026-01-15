@@ -216,10 +216,10 @@ This is calculated only for queries you've tracked. It's labeled "AI mention sha
       {
         title: "How often are checks run?",
         content: `• **Free**: 3 manual checks per day for 7 days (then access expires)
-• **Starter**: Daily automated checks (runs automatically once per day) + up to 100 manual checks per month
-• **Pro**: Hourly automated checks (runs automatically every hour) + up to 1000 manual checks per month
+• **Starter**: Daily automated checks (runs automatically once per day) + unlimited manual checks
+• **Pro**: Hourly automated checks (runs automatically every hour) + unlimited manual checks
 
-Automated checks happen in the background and don't count against your monthly limit. You'll receive email alerts when new citations are found (Starter and Pro plans).`,
+Automated checks happen in the background and don't count against manual check limits. You'll receive email alerts when new citations are found (Starter and Pro plans).`,
       },
       {
         title: "Can I check any website?",

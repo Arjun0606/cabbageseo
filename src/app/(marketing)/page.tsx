@@ -38,9 +38,6 @@ export default function HomePage() {
     router.push(`/teaser?domain=${encodeURIComponent(cleanDomain)}`);
   };
 
-  const handleDemoClick = () => {
-    router.push(`/teaser?domain=notion.so&demo=true`);
-  };
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -111,16 +108,8 @@ export default function HomePage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
             <span className="text-zinc-500">
-              Takes 10 seconds • No signup required
+              Takes 10 seconds • Free preview (signup for full access)
             </span>
-            <span className="text-zinc-700">|</span>
-            <button
-              onClick={handleDemoClick}
-              className="text-zinc-400 hover:text-white transition-colors flex items-center gap-1"
-            >
-              <Search className="w-4 h-4" />
-              See how AI treats Notion
-            </button>
           </div>
         </div>
       </section>
@@ -267,7 +256,7 @@ export default function HomePage() {
           </form>
 
           <p className="text-zinc-500 text-sm">
-            Free check • No credit card • No signup required
+            Free preview • Sign up for full 7-day access • No credit card required
           </p>
         </div>
       </section>
