@@ -343,7 +343,7 @@ function QueryPageContent() {
           <div className="space-y-3">
             <Link
               href="/dashboard/sources"
-              className="flex items-center justify-between p-4 bg-zinc-800 rounded-lg hover:bg-zinc-750 transition-colors"
+              className="flex items-center justify-between p-4 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center">
@@ -359,7 +359,7 @@ function QueryPageContent() {
 
             <Link
               href="/dashboard/roadmap"
-              className="flex items-center justify-between p-4 bg-zinc-800 rounded-lg hover:bg-zinc-750 transition-colors"
+              className="flex items-center justify-between p-4 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center">
