@@ -90,6 +90,12 @@ export async function GET() {
       competitorsCount = count || 0;
     }
 
+    // Calculate checks limit based on plan
+    // Free: daily limit (3/day), Paid: unlimited (999999)
+    const checksLimit = limits.manualChecksPerDay === -1 
+      ? 999999  // Unlimited for paid plans
+      : limits.manualChecksPerDay; // Daily limit for free tier
+    
     return NextResponse.json({
       data: {
         usage: {
@@ -98,7 +104,7 @@ export async function GET() {
           competitorsUsed: competitorsCount,
         },
         limits: {
-          checks: limits.manualChecksPerDay === -1 ? 999999 : limits.manualChecksPerDay * 30, // Monthly limit
+          checks: checksLimit, // Daily limit for free, unlimited for paid
           checksPerDay: limits.manualChecksPerDay,
           sites: limits.sites,
           competitors: limits.competitors,
