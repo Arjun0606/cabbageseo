@@ -77,10 +77,10 @@ All numbers come from real AI responses. Citations in your dashboard represent a
       {
         title: "Check Limits by Plan",
         content: `• **Free**: 3 manual checks per day for 7 days (then access expires)
-• **Starter ($29/mo)**: Unlimited manual checks + daily automated checks (runs automatically each day)
-• **Pro ($79/mo)**: Unlimited manual checks + hourly automated checks (runs automatically every hour)
+• **Starter ($29/mo)**: 100 checks/month + daily automated checks (runs automatically each day)
+• **Pro ($79/mo)**: 1000 checks/month + hourly automated checks (runs automatically every hour)
 
-Automated checks run in the background and don't count against manual check limits. Manual checks are on-demand checks you trigger yourself.`,
+**Note**: Automated checks run in the background and don't count against your monthly check limit. Manual checks are on-demand checks you trigger yourself from the dashboard.`,
       },
     ],
   },
@@ -216,10 +216,10 @@ This is calculated only for queries you've tracked. It's labeled "AI mention sha
       {
         title: "How often are checks run?",
         content: `• **Free**: 3 manual checks per day for 7 days (then access expires)
-• **Starter**: Daily automated checks (runs automatically once per day) + unlimited manual checks
-• **Pro**: Hourly automated checks (runs automatically every hour) + unlimited manual checks
+• **Starter**: Daily automated checks (runs automatically once per day) + up to 100 manual checks per month
+• **Pro**: Hourly automated checks (runs automatically every hour) + up to 1000 manual checks per month
 
-Automated checks happen in the background. You'll receive email alerts when new citations are found (Starter and Pro plans).`,
+Automated checks happen in the background and don't count against your monthly limit. You'll receive email alerts when new citations are found (Starter and Pro plans).`,
       },
       {
         title: "Can I check any website?",
