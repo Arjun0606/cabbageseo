@@ -1,9 +1,19 @@
 "use client";
 
+/**
+ * HOMEPAGE - CONVERSION MACHINE
+ * 
+ * Design principles:
+ * 1. Fear + Agency: "You're losing AND here's how to fix it"
+ * 2. Immediate value: Check domain without signup
+ * 3. One-click demo: Let them explore a famous brand
+ * 4. Clear value ladder: What they get at each price
+ */
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Zap, Eye, Target, AlertTriangle } from "lucide-react";
+import { ArrowRight, Zap, Eye, Target, AlertTriangle, Search, TrendingDown, CheckCircle } from "lucide-react";
 
 export default function HomePage() {
   const router = useRouter();
@@ -28,37 +38,43 @@ export default function HomePage() {
     router.push(`/teaser?domain=${encodeURIComponent(cleanDomain)}`);
   };
 
+  const handleDemoClick = () => {
+    router.push(`/teaser?domain=notion.so&demo=true`);
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950">
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 overflow-hidden">
         {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 via-zinc-950 to-zinc-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-red-950/30 via-zinc-950 to-zinc-950" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-red-500/10 rounded-full blur-3xl" />
 
         <div className="relative max-w-4xl mx-auto px-6 text-center">
-          {/* Warning badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full text-red-400 text-sm mb-8">
+          {/* Warning badge - More urgent */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/40 rounded-full text-red-300 text-sm mb-8 animate-pulse">
             <AlertTriangle className="w-4 h-4" />
-            <span>AI is choosing your competitors right now</span>
+            <span className="font-medium">Right now, AI is recommending your competitors</span>
           </div>
 
-          {/* Main headline */}
+          {/* Main headline - Fear + Agency */}
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            Is AI sending your
+            AI is already sending
             <br />
-            <span className="text-red-400">customers to someone else?</span>
+            <span className="text-red-400">your customers away</span>
           </h1>
 
-          {/* Subheadline */}
-          <p className="text-xl text-zinc-400 mb-12 max-w-2xl mx-auto">
-            When someone asks ChatGPT or Google AI "what's the best tool for X",
-            AI chooses winners. If you're not on that list, you're{" "}
-            <span className="text-white font-semibold">invisible</span>.
+          {/* Subheadline - The consequence */}
+          <p className="text-xl text-zinc-300 mb-4 max-w-2xl mx-auto">
+            When someone asks ChatGPT "what's the best tool for X", 
+            <span className="text-white font-semibold"> AI picks the winners</span>.
+          </p>
+          <p className="text-lg text-red-400 font-medium mb-12">
+            If you're not on that list, you're invisible — and losing customers every day.
           </p>
 
           {/* Domain Input Form */}
-          <form onSubmit={handleSubmit} className="max-w-xl mx-auto mb-6">
+          <form onSubmit={handleSubmit} className="max-w-xl mx-auto mb-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
                 <input
@@ -66,19 +82,19 @@ export default function HomePage() {
                   value={domain}
                   onChange={(e) => setDomain(e.target.value)}
                   placeholder="yourdomain.com"
-                  className="w-full px-6 py-4 bg-zinc-900 border border-zinc-700 rounded-xl text-white text-lg placeholder:text-zinc-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
+                  className="w-full px-6 py-4 bg-zinc-900 border-2 border-zinc-700 rounded-xl text-white text-lg placeholder:text-zinc-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
                   disabled={loading}
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading || !domain.trim()}
-                className="px-8 py-4 bg-red-500 hover:bg-red-600 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all"
+                className="px-8 py-4 bg-red-500 hover:bg-red-600 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-red-500/20"
               >
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Checking...
+                    Scanning...
                   </>
                 ) : (
                   <>
@@ -93,25 +109,37 @@ export default function HomePage() {
             )}
           </form>
 
-          <p className="text-zinc-500 text-sm">
-            Takes ~10 seconds. No signup required.
-          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
+            <span className="text-zinc-500">
+              Takes 10 seconds • No signup required
+            </span>
+            <span className="text-zinc-700">|</span>
+            <button
+              onClick={handleDemoClick}
+              className="text-zinc-400 hover:text-white transition-colors flex items-center gap-1"
+            >
+              <Search className="w-4 h-4" />
+              See how AI treats Notion
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* How AI Works Section */}
-      <section className="py-24 bg-zinc-900/50 border-t border-zinc-800">
+      {/* The Problem Section */}
+      <section className="py-24 bg-gradient-to-b from-red-950/20 to-zinc-950 border-t border-red-900/30">
         <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-white text-center mb-4">
-            AI doesn't search. AI <span className="text-red-400">recommends</span>.
-          </h2>
-          <p className="text-zinc-400 text-center mb-16 max-w-2xl mx-auto">
-            When someone asks "what's the best CRM?" — AI picks winners.
-            If you're not on that list, you don't exist.
-          </p>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              AI doesn't search. AI <span className="text-red-400">decides</span>.
+            </h2>
+            <p className="text-zinc-400 max-w-2xl mx-auto">
+              When someone asks "what's the best CRM?" — AI doesn't give 10 options.
+              It picks 3. If you're not one of them, you lose that customer.
+            </p>
+          </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-8">
               <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-6">
                 <Zap className="w-6 h-6 text-red-400" />
               </div>
@@ -120,144 +148,125 @@ export default function HomePage() {
               </h3>
               <p className="text-zinc-400">
                 ChatGPT, Perplexity, and Google AI now answer product questions directly. 
-                They choose who gets mentioned.
+                They decide who gets mentioned.
               </p>
             </div>
 
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+            <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-8">
               <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-6">
-                <Eye className="w-6 h-6 text-red-400" />
+                <TrendingDown className="w-6 h-6 text-red-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">
                 Buyers trust AI recommendations
               </h3>
               <p className="text-zinc-400">
-                When ChatGPT says "the best tool is X" — people buy X. 
+                When ChatGPT says "the best tool is X" — people buy X.
                 This is where purchase decisions happen now.
               </p>
             </div>
 
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+            <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-8">
               <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-6">
-                <Target className="w-6 h-6 text-red-400" />
+                <Eye className="w-6 h-6 text-red-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">
                 You're flying blind
               </h3>
               <p className="text-zinc-400">
-                Google Analytics can't track AI. You have no idea if you're being recommended or ignored.
+                Google Analytics can't track AI. You have no idea if you're being 
+                recommended — or ignored.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* What We Do Section */}
-      <section className="py-24">
+      {/* The Solution Section */}
+      <section className="py-24 border-t border-zinc-800">
         <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-white text-center mb-4">
-            CabbageSEO shows you the truth
-          </h2>
-          <p className="text-zinc-400 text-center mb-16 max-w-2xl mx-auto">
-            We query real AI platforms and show you exactly who they recommend — and whether that includes you.
-          </p>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              CabbageSEO shows you the truth — <span className="text-emerald-400">and how to fix it</span>
+            </h2>
+            <p className="text-zinc-400 max-w-2xl mx-auto">
+              We query real AI platforms and show you exactly who they recommend,
+              why your competitors are winning, and what to do about it.
+            </p>
+          </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
-                <span className="text-emerald-400 font-bold">1</span>
+          <div className="space-y-6 max-w-3xl mx-auto">
+            {[
+              {
+                step: "1",
+                title: "See who AI recommends instead of you",
+                description: "Real responses from ChatGPT, Perplexity, and Google AI. See exactly who they mention.",
+              },
+              {
+                step: "2",
+                title: "Understand why competitors are winning",
+                description: "Discover the sources AI trusts: G2, Capterra, Product Hunt, Reddit. Your competitors are there. You're not.",
+              },
+              {
+                step: "3",
+                title: "Get your roadmap to visibility",
+                description: "Step-by-step instructions to get listed on the sources AI trusts, so you start getting recommended.",
+              },
+              {
+                step: "4",
+                title: "Track when AI starts recommending you",
+                description: "Weekly reports show when you gain visibility. Get alerts when competitors overtake you.",
+              },
+            ].map((item) => (
+              <div key={item.step} className="flex gap-6 items-start">
+                <div className="flex-shrink-0 w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center">
+                  <span className="text-emerald-400 font-bold text-lg">{item.step}</span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-zinc-400">
+                    {item.description}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  See who AI recommends
-                </h3>
-                <p className="text-zinc-400">
-                  Real responses from ChatGPT, Perplexity, and Google AI. 
-                  See exactly who they mention.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
-                <span className="text-emerald-400 font-bold">2</span>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  Find where AI learns about them
-                </h3>
-                <p className="text-zinc-400">
-                  Discover the sources AI trusts: G2, Capterra, Product Hunt, Reddit. 
-                  Your competitors are there. You're not.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
-                <span className="text-emerald-400 font-bold">3</span>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  Get your roadmap to visibility
-                </h3>
-                <p className="text-zinc-400">
-                  Step-by-step instructions to get listed on the sources AI trusts, 
-                  so you start getting recommended.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
-                <span className="text-emerald-400 font-bold">4</span>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  Track your progress
-                </h3>
-                <p className="text-zinc-400">
-                  Weekly reports show when you gain visibility. 
-                  Get alerts when competitors overtake you.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-t from-red-950/20 to-transparent border-t border-zinc-800">
+      <section className="py-24 bg-gradient-to-t from-red-950/30 to-transparent border-t border-zinc-800">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-4xl font-bold text-white mb-4">
             Find out in 10 seconds
           </h2>
           <p className="text-xl text-zinc-400 mb-8">
-            Enter your domain and see if AI is recommending you — or your competitors.
+            Enter your domain and see if AI is recommending you — or sending customers to your competitors.
           </p>
 
-          <form onSubmit={handleSubmit} className="max-w-xl mx-auto">
+          <form onSubmit={handleSubmit} className="max-w-xl mx-auto mb-6">
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
                 placeholder="yourdomain.com"
-                className="flex-1 px-6 py-4 bg-zinc-900 border border-zinc-700 rounded-xl text-white text-lg placeholder:text-zinc-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
+                className="flex-1 px-6 py-4 bg-zinc-900 border-2 border-zinc-700 rounded-xl text-white text-lg placeholder:text-zinc-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
                 disabled={loading}
               />
               <button
                 type="submit"
                 disabled={loading || !domain.trim()}
-                className="px-8 py-4 bg-red-500 hover:bg-red-600 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all"
+                className="px-8 py-4 bg-red-500 hover:bg-red-600 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all"
               >
-                {loading ? "Checking..." : "Check now"}
+                {loading ? "Scanning..." : "Check now"}
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
           </form>
 
-          <p className="mt-6 text-zinc-500 text-sm">
+          <p className="text-zinc-500 text-sm">
             Free check • No credit card • No signup required
           </p>
         </div>
@@ -270,14 +279,15 @@ export default function HomePage() {
             Simple pricing
           </h2>
           <p className="text-zinc-400 mb-12">
-            Start free. Upgrade when you need more.
+            Start free for 7 days. Upgrade when you're ready to win.
           </p>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {/* Free */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-left">
               <h3 className="text-lg font-semibold text-white mb-1">Free</h3>
-              <p className="text-3xl font-bold text-white mb-4">$0</p>
+              <p className="text-3xl font-bold text-white mb-2">$0</p>
+              <p className="text-zinc-500 text-sm mb-6">7-day access</p>
               <p className="text-zinc-400 text-sm mb-6">
                 See who AI recommends. Manual checks only.
               </p>
@@ -285,16 +295,17 @@ export default function HomePage() {
                 href="/signup"
                 className="block w-full py-3 text-center border border-zinc-700 text-zinc-300 rounded-lg hover:bg-zinc-800 transition-colors"
               >
-                Get started
+                Start free
               </Link>
             </div>
 
             {/* Starter */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-left">
               <h3 className="text-lg font-semibold text-white mb-1">Starter</h3>
-              <p className="text-3xl font-bold text-white mb-4">
+              <p className="text-3xl font-bold text-white mb-2">
                 $29<span className="text-lg text-zinc-500">/mo</span>
               </p>
+              <p className="text-zinc-500 text-sm mb-6">For solo founders</p>
               <p className="text-zinc-400 text-sm mb-6">
                 Daily monitoring. 3 sites. Content fixes.
               </p>
@@ -307,25 +318,49 @@ export default function HomePage() {
             </div>
 
             {/* Pro */}
-            <div className="bg-zinc-900 border border-red-500/50 rounded-2xl p-6 text-left relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full">
+            <div className="bg-zinc-900 border-2 border-red-500/50 rounded-2xl p-6 text-left relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full">
                 MOST POPULAR
               </div>
               <h3 className="text-lg font-semibold text-white mb-1">Pro</h3>
-              <p className="text-3xl font-bold text-white mb-4">
+              <p className="text-3xl font-bold text-white mb-2">
                 $79<span className="text-lg text-zinc-500">/mo</span>
               </p>
+              <p className="text-zinc-500 text-sm mb-6">For serious founders</p>
               <p className="text-zinc-400 text-sm mb-6">
                 Hourly monitoring. 10 sites. Full roadmap.
               </p>
               <Link
                 href="/signup"
-                className="block w-full py-3 text-center bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                className="block w-full py-3 text-center bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold"
               >
                 Get Pro
               </Link>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Final CTA - Urgency */}
+      <section className="py-16 bg-red-950/30 border-t border-red-900/30">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <p className="text-red-300 font-medium mb-2">
+            ⚠️ While you're reading this, AI is recommending your competitors
+          </p>
+          <h2 className="text-2xl font-bold text-white mb-6">
+            Find out in 10 seconds if you're invisible
+          </h2>
+          <Link
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="inline-flex items-center gap-2 px-8 py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-all"
+          >
+            Check your domain now
+            <ArrowRight className="w-5 h-5" />
+          </Link>
         </div>
       </section>
     </div>
