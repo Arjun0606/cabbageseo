@@ -58,25 +58,29 @@ All results come from actual API calls. No fake data or estimates.`,
     items: [
       {
         title: "Running an AI Check",
-        content: `From your dashboard, click "Check Now" to query AI platforms instantly. We'll show you:
+        content: `From your dashboard, click "Run Check" to query AI platforms instantly. We'll show you:
 • Which queries you're winning (AI recommends you)
 • Which queries you're losing (AI recommends competitors)
-• Who AI recommends instead of you`,
+• Who AI recommends instead of you
+
+The check queries ChatGPT, Perplexity, and Google AI with relevant questions about your product category. Results appear in real-time.`,
       },
       {
         title: "Understanding Your Results",
         content: `Each check shows:
-• **High-Intent Queries Missed** — Queries where AI recommends competitors, not you
+• **AI Mentions Found** — How many times AI recommended you across all queries
 • **AI Mention Share** — What % of tracked queries mention you vs competitors
-• **Wins vs Losses** — Visual breakdown of where you're winning and losing
+• **Wins** — Visual breakdown of queries where you were mentioned
 
-All numbers come from real AI responses. If we don't have data, we say "Run more checks."`,
+All numbers come from real AI responses. Citations in your dashboard represent actual mentions from AI platforms. If you haven't run any checks yet, you'll see a prompt to run your first check.`,
       },
       {
         title: "Check Limits by Plan",
-        content: `• **Free**: 3 manual checks per day for 7 days
-• **Starter ($29/mo)**: 100 checks/month + daily automated checks
-• **Pro ($79/mo)**: 1000 checks/month + hourly automated checks`,
+        content: `• **Free**: 3 manual checks per day for 7 days (then access expires)
+• **Starter ($29/mo)**: Unlimited manual checks + daily automated checks (runs automatically each day)
+• **Pro ($79/mo)**: Unlimited manual checks + hourly automated checks (runs automatically every hour)
+
+Automated checks run in the background and don't count against manual check limits. Manual checks are on-demand checks you trigger yourself.`,
       },
     ],
   },
@@ -121,7 +125,12 @@ All numbers come from real AI responses. If we don't have data, we say "Run more
       },
       {
         title: "Tracking progress",
-        content: `Check off actions as you complete them. As you get listed on more sources, run new AI checks to see your visibility improve. Pro users can track progress over time to see which actions had the most impact.`,
+        content: `Check off actions as you complete them. As you get listed on more sources, run new AI checks to see your visibility improve. 
+
+**Starter plan**: Basic roadmap with priority actions
+**Pro plan**: Full roadmap with progress tracking and weekly action playbook
+
+The roadmap shows which sources are most critical based on where your competitors are listed.`,
       },
     ],
   },
@@ -132,10 +141,14 @@ All numbers come from real AI responses. If we don't have data, we say "Run more
     items: [
       {
         title: "Understanding why you lose",
-        content: `For any query where AI recommends competitors instead of you, click to see the full analysis. We show you:
+        content: `For any query where AI recommends competitors instead of you, click "Why not me?" to see the full analysis. We show you:
 • Which competitors AI recommended
 • Which trusted sources they appear on (that you don't)
-• Specific content advantages they have`,
+• Specific content advantages they have
+• Missing elements in your content
+• Authority gaps compared to competitors
+
+**Note**: This feature requires running a check first. The analysis uses real AI responses and competitor data.`,
       },
       {
         title: "Content fix suggestions",
@@ -144,6 +157,9 @@ All numbers come from real AI responses. If we don't have data, we say "Run more
 • Section headings to include
 • Key entities and topics to mention
 • FAQs to answer
+
+**Starter plan**: 5 "Why Not Me?" analyses per month
+**Pro plan**: Unlimited "Why Not Me?" analyses
 
 This is your blueprint to win that specific query.`,
       },
@@ -199,13 +215,22 @@ This is calculated only for queries you've tracked. It's labeled "AI mention sha
     items: [
       {
         title: "How often are checks run?",
-        content: `• **Free**: 3 manual checks/day for 7 days
-• **Starter**: Daily automated checks + unlimited manual
-• **Pro**: Hourly automated checks + unlimited manual`,
+        content: `• **Free**: 3 manual checks per day for 7 days (then access expires)
+• **Starter**: Daily automated checks (runs automatically once per day) + unlimited manual checks
+• **Pro**: Hourly automated checks (runs automatically every hour) + unlimited manual checks
+
+Automated checks happen in the background. You'll receive email alerts when new citations are found (Starter and Pro plans).`,
       },
       {
         title: "Can I check any website?",
-        content: `Yes! You can check any public website. Enter your domain to get started. You can also add competitor domains to track who's winning in your market.`,
+        content: `Yes! You can check any public website. Enter your domain on the homepage to get started (no signup required for the initial check). 
+
+After signing up, you can:
+• Add multiple sites (up to plan limit)
+• Track competitors (Starter: 2 per site, Pro: 10 per site)
+• Set up automated monitoring (Starter: daily, Pro: hourly)
+
+The free tier allows 1 site for 7 days with 3 manual checks per day.`,
       },
       {
         title: "What makes AI recommend a product?",
@@ -222,7 +247,15 @@ This is calculated only for queries you've tracked. It's labeled "AI mention sha
       },
       {
         title: "What if I'm not getting recommended?",
-        content: `That's exactly what we help with. Use the Trust Map to see which sources you're missing, then follow the Visibility Roadmap to get listed. Most founders can significantly improve their AI visibility within 2-4 weeks of consistent action.`,
+        content: `That's exactly what we help with. 
+
+1. **Run a check** to see current status
+2. **View the Trust Map** to see which sources you're missing (where competitors are listed)
+3. **Follow the Visibility Roadmap** for step-by-step instructions
+4. **Use "Why Not Me?" analysis** to understand specific gaps (Starter+)
+5. **Get listed on sources** and run new checks to track improvement
+
+Most founders can significantly improve their AI visibility within 2-4 weeks of consistent action.`,
       },
     ],
   },
