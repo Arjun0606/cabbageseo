@@ -143,8 +143,9 @@ function DashboardContent() {
   const losses = queryResults.filter(q => !q.cited).length;
 
   // Mock week-over-week changes (would be real in production)
-  const lossesChange = -2; // negative = good (fewer losses)
-  const winsChange = 3; // positive = good (more wins)
+  // Using as number to avoid TypeScript literal type inference
+  const lossesChange: number = losses > 0 ? -2 : 0; // negative = good (fewer losses)
+  const winsChange: number = wins > 0 ? 3 : 0; // positive = good (more wins)
 
   // Plan-based limits
   const plan = organization?.plan || "free";
