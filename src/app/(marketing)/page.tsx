@@ -302,7 +302,7 @@ export default function HomePage() {
                 href="/signup"
                 className="block w-full py-3 text-center bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
               >
-                Start free trial
+                Get Starter
               </Link>
             </div>
 
@@ -322,7 +322,7 @@ export default function HomePage() {
                 href="/signup"
                 className="block w-full py-3 text-center bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
               >
-                Start free trial
+                Get Pro
               </Link>
             </div>
           </div>

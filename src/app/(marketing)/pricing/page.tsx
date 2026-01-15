@@ -20,14 +20,14 @@ export default function PricingPage() {
       name: "Free",
       tagline: "Quick check",
       price: 0,
-      period: "forever",
-      description: "Manual checks only. No automated monitoring, no exports, no API access.",
-      cta: "Run Free Check",
+      period: "for 7 days",
+      description: "See who AI recommends. Manual checks only. 7-day access to explore.",
+      cta: "Start Free",
       ctaVariant: "outline" as const,
       features: [
         { name: "1 site", included: true },
         { name: "3 manual checks/day", included: true },
-        { name: "7-day history", included: true },
+        { name: "7-day access", included: true },
         { name: "View raw AI responses", included: true },
         { name: "Automated monitoring", included: false },
         { name: "CSV export", included: false },
@@ -41,7 +41,7 @@ export default function PricingPage() {
       price: 29,
       period: "/month",
       description: "Daily automated monitoring with 100 checks/month. 30-day history.",
-      cta: "Start Winning — 7 Days Free",
+      cta: "Get Starter",
       ctaVariant: "outline" as const,
       features: [
         { name: "3 sites", included: true },
@@ -61,7 +61,7 @@ export default function PricingPage() {
       price: 79,
       period: "/month",
       description: "Hourly monitoring with 1000 checks/month. Full API access. 1-year history.",
-      cta: "Stop Losing Customers",
+      cta: "Get Pro",
       ctaVariant: "default" as const,
       features: [
         { name: "10 sites", included: true },
@@ -85,7 +85,7 @@ export default function PricingPage() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 mb-8">
             <DollarSign className="w-4 h-4 text-emerald-400" />
             <span className="text-emerald-400 text-sm font-medium">
-              7-day free trial on all paid plans
+              Free tier available • No credit card required
           </span>
           </div>
 
@@ -293,11 +293,11 @@ export default function PricingPage() {
             
             <div>
               <h3 className="text-lg font-semibold text-white mb-2">
-                Is there a free trial?
+                How does the free tier work?
               </h3>
               <p className="text-zinc-400">
-                Yes, all paid plans include a 7-day free trial. You won&apos;t be charged until the trial ends. 
-                Cancel anytime during the trial to avoid charges.
+                The free tier gives you 7 days to explore with 3 manual checks per day. 
+                After 7 days, upgrade to Starter or Pro to continue monitoring. No credit card required to start.
               </p>
             </div>
           </div>
@@ -315,7 +315,7 @@ export default function PricingPage() {
           </p>
           <Link href="/signup">
             <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-8">
-              Start Your Free Trial
+              Start Free — No Credit Card
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
