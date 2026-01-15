@@ -39,7 +39,7 @@ interface QueryResult {
 function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { currentSite, sites, loading: siteLoading, refreshSites } = useSite();
+  const { currentSite, sites, loading: siteLoading, refreshData } = useSite();
   
   const isWelcome = searchParams.get("welcome") === "true";
   
@@ -92,7 +92,7 @@ function DashboardContent() {
       
       // Refresh citations
       await fetchCitations();
-      await refreshSites();
+      await refreshData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Check failed");
     } finally {
