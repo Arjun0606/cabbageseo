@@ -306,9 +306,20 @@ export default function DocsPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-zinc-400 whitespace-pre-wrap">
-                          {item.content.split('\n').map((line, j) => (
-                            <p key={j} className="mb-2">{line}</p>
-                          ))}
+                          {item.content.split('\n').map((line, j) => {
+                            // Parse markdown bold syntax and convert to HTML
+                            const parts = line.split(/(\*\*.*?\*\*)/g);
+                            return (
+                              <p key={j} className="mb-2">
+                                {parts.map((part, k) => {
+                                  if (part.startsWith('**') && part.endsWith('**')) {
+                                    return <strong key={k} className="text-white font-semibold">{part.slice(2, -2)}</strong>;
+                                  }
+                                  return <span key={k}>{part}</span>;
+                                })}
+                              </p>
+                            );
+                          })}
                         </div>
                       </CardContent>
                     </Card>
