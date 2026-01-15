@@ -129,17 +129,76 @@ export default function SourcesPage() {
   const isProPlan = organization?.plan === "pro";
 
   useEffect(() => {
-    // Simulate loading sources data
-    setTimeout(() => {
-      // For demo, show sources with mock competitor data
-      const mockSources: TrustSource[] = TRUST_SOURCES.map(source => ({
-        ...source,
-        competitorsListed: ["notion.so", "clickup.com", "asana.com"].slice(0, Math.floor(Math.random() * 3) + 1),
-        youListed: false,
-      }));
-      setSources(mockSources);
-      setLoading(false);
-    }, 1000);
+    const fetchSources = async () => {
+      if (!currentSite?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch source listings from database
+        const response = await fetch(`/api/sites/listings?siteId=${currentSite.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          const listings = data.listings || [];
+          
+          // Build sources map from listings
+          const listingsByDomain = new Map<string, { youListed: boolean; profileUrl?: string }>();
+          listings.forEach((l: any) => {
+            listingsByDomain.set(l.source_domain, {
+              youListed: l.status === "verified",
+              profileUrl: l.profile_url,
+            });
+          });
+
+          // Get competitors from citations (extract from source_domain in citations)
+          const citationsRes = await fetch(`/api/geo/citations?siteId=${currentSite.id}&full=true`);
+          const citationsData = await citationsRes.ok ? await citationsRes.json() : null;
+          const citations = citationsData?.citations || citationsData?.data?.citations || [];
+          
+          // Extract competitor domains from citations that mention sources
+          const competitorDomains = new Set<string>();
+          citations.forEach((c: any) => {
+            if (c.sourceDomain && c.sourceDomain !== currentSite.domain) {
+              // Extract competitor domains from snippet or source
+              // This is simplified - real implementation would parse better
+            }
+          });
+
+          // Build sources with real data
+          const sourcesWithData: TrustSource[] = TRUST_SOURCES.map(source => {
+            const listing = listingsByDomain.get(source.domain);
+            return {
+              ...source,
+              competitorsListed: [], // Would need competitor tracking API
+              youListed: listing?.youListed || false,
+              profileUrl: listing?.profileUrl,
+            };
+          });
+
+          setSources(sourcesWithData);
+        } else {
+          // If API fails, show sources without competitor data (not mock)
+          setSources(TRUST_SOURCES.map(source => ({
+            ...source,
+            competitorsListed: [],
+            youListed: false,
+          })));
+        }
+      } catch (err) {
+        console.error("Failed to fetch sources:", err);
+        // Show empty state, not mock data
+        setSources(TRUST_SOURCES.map(source => ({
+          ...source,
+          competitorsListed: [],
+          youListed: false,
+        })));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSources();
   }, [currentSite?.id]);
 
   const sourcesWithCompetitors = sources.filter(s => s.competitorsListed.length > 0);

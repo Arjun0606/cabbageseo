@@ -74,10 +74,17 @@ function DashboardContent() {
     
     setLoading(true);
     try {
-      const response = await fetch(`/api/geo/citations?siteId=${currentSite.id}`);
+      const response = await fetch(`/api/geo/citations?siteId=${currentSite.id}&full=true`);
       if (response.ok) {
         const data = await response.json();
-        setCitations(data.citations || []);
+        // API returns { success: true, data: { citations: [...], recent: [...] } }
+        const citationsData = data.data?.citations || data.data?.recent || data.citations || [];
+        // Citations in table = WINS (user WAS mentioned)
+        // Add cited: true to all citations since they exist in the table
+        setCitations(citationsData.map((c: any) => ({
+          ...c,
+          cited: true, // If citation exists, user was cited
+        })));
       }
     } catch (err) {
       console.error("Failed to fetch citations:", err);
@@ -115,6 +122,7 @@ function DashboardContent() {
   };
 
   // Group citations by query
+  // Citations in table = WINS (user WAS mentioned)
   const queryResults: QueryResult[] = [];
   const queryMap = new Map<string, QueryResult>();
   
@@ -124,33 +132,41 @@ function DashboardContent() {
       queryMap.set(key, {
         query: citation.query,
         platform: citation.platform,
-        cited: false,
+        cited: true, // Citation exists = user was cited (WIN)
         competitors: [],
-        snippet: citation.snippet,
+        snippet: citation.snippet || "",
       });
     }
-    const result = queryMap.get(key)!;
-    if (citation.cited) {
-      result.cited = true;
-    }
+    // If multiple citations for same query, keep the first one
   }
   
   queryMap.forEach(v => queryResults.push(v));
+  
+  // NOTE: To show LOSSES, we'd need to track which queries were checked
+  // but didn't result in citations. Currently we only show WINS (citations that exist).
+  // This is a limitation - we can't show historical losses without query history.
 
   // Calculate stats
+  // All citations = wins (since citations table only stores wins)
   const totalQueries = queryResults.length;
-  const wins = queryResults.filter(q => q.cited).length;
-  const losses = queryResults.filter(q => !q.cited).length;
+  const wins = queryResults.length; // All citations are wins
+  // NOTE: Losses can't be calculated from citations table alone
+  // We'd need query history. For now, show 0 losses if we only have wins.
+  const losses = 0; // Can't determine losses without query history
 
-  // Mock week-over-week changes (would be real in production)
-  // Using as number to avoid TypeScript literal type inference
-  const lossesChange: number = losses > 0 ? -2 : 0; // negative = good (fewer losses)
-  const winsChange: number = wins > 0 ? 3 : 0; // positive = good (more wins)
+  // Calculate real week-over-week changes from site data
+  const citationsThisWeek = currentSite?.citationsThisWeek || 0;
+  const citationsLastWeek = currentSite?.citationsLastWeek || 0;
+  const winsChange = citationsThisWeek - citationsLastWeek; // positive = good (more wins)
+  // For losses, we'd need to track queries checked, but for now use wins as proxy
+  // (if wins increased, losses likely decreased)
+  const lossesChange = citationsLastWeek > 0 && citationsThisWeek > citationsLastWeek 
+    ? -(citationsThisWeek - citationsLastWeek) // negative = good (fewer losses)
+    : 0;
 
-  // Plan-based limits
-  const plan = organization?.plan || "free";
-  const checksRemaining = plan === "free" ? 3 : plan === "starter" ? 87 : 872;
-  const checksMax = plan === "free" ? 3 : plan === "starter" ? 100 : 1000;
+  // Use real usage data from context
+  const checksRemaining = Math.max(0, usage.checksLimit - usage.checksUsed);
+  const checksMax = usage.checksLimit;
 
   // No site yet - compelling onboarding
   if (!siteLoading && (!sites || sites.length === 0)) {
@@ -241,45 +257,65 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* THE ONE KPI - Giant, scary, front and center */}
-        <div className="bg-gradient-to-r from-red-950/80 to-red-900/50 border-2 border-red-500/50 rounded-2xl p-8 mb-8">
+        {/* THE ONE KPI - Show wins prominently, encourage more checks */}
+        <div className={`bg-gradient-to-r rounded-2xl p-8 mb-8 border-2 ${
+          wins === 0
+            ? "from-red-950/80 to-red-900/50 border-red-500/50"
+            : "from-emerald-950/50 to-zinc-900 border-emerald-500/30"
+        }`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 text-red-400 text-sm font-medium mb-2">
-                <AlertTriangle className="w-5 h-5" />
-                HIGH-INTENT QUERIES YOU'RE MISSING
+              <div className={`flex items-center gap-2 text-sm font-medium mb-2 ${
+                wins === 0 ? "text-red-400" : "text-emerald-400"
+              }`}>
+                {wins === 0 ? (
+                  <>
+                    <AlertTriangle className="w-5 h-5" />
+                    NO AI MENTIONS YET
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-5 h-5" />
+                    AI MENTIONS FOUND
+                  </>
+                )}
               </div>
               <div className="flex items-baseline gap-4">
-                <span className="text-6xl font-bold text-white">{losses}</span>
-                {lossesChange !== 0 && (
+                <span className="text-6xl font-bold text-white">{wins}</span>
+                {winsChange !== 0 && (
                   <span className={`flex items-center gap-1 text-lg font-medium ${
-                    lossesChange < 0 ? "text-emerald-400" : "text-red-400"
+                    winsChange > 0 ? "text-emerald-400" : "text-red-400"
                   }`}>
-                    {lossesChange < 0 ? (
-                      <ArrowDown className="w-5 h-5" />
-                    ) : (
+                    {winsChange > 0 ? (
                       <ArrowUp className="w-5 h-5" />
+                    ) : (
+                      <ArrowDown className="w-5 h-5" />
                     )}
-                    {Math.abs(lossesChange)} this week
+                    {Math.abs(winsChange)} this week
                   </span>
                 )}
               </div>
-              <p className="text-red-300/80 mt-2">
-                {losses === 0 
-                  ? "AI is recommending you! Keep monitoring."
-                  : `AI is sending customers to your competitors for ${losses} queries where you should be mentioned.`
+              <p className={`mt-2 ${
+                wins === 0 ? "text-red-300/80" : "text-emerald-300/80"
+              }`}>
+                {wins === 0
+                  ? "Run your first check to see if AI is recommending you."
+                  : wins === 1
+                  ? "AI mentioned you once. Run more checks to discover where you're missing."
+                  : `You have ${wins} AI mentions. Run a check to see if you're missing opportunities.`
                 }
               </p>
             </div>
             
-            {losses > 0 && (
-              <Link
-                href="#losses"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-red-600 font-semibold rounded-xl hover:bg-zinc-100 transition-colors whitespace-nowrap"
+            {wins === 0 && (
+              <button
+                onClick={runCheck}
+                disabled={checking}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-red-600 font-semibold rounded-xl hover:bg-zinc-100 transition-colors whitespace-nowrap disabled:opacity-50"
               >
-                See what you're losing
-                <ArrowDown className="w-5 h-5" />
-              </Link>
+                {checking ? "Checking..." : "Run your first check"}
+                <ArrowRight className="w-5 h-5" />
+              </button>
             )}
           </div>
         </div>
@@ -355,87 +391,21 @@ function DashboardContent() {
           </div>
         ) : (
           <>
-            {/* LOSSES SECTION - BIG, RED, SCARY - Always first */}
-            {losses > 0 && (
-              <div id="losses" className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
-                      <AlertTriangle className="w-5 h-5 text-red-400" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-white">
-                        AI is choosing your competitors
-                      </h2>
-                      <p className="text-red-400 text-sm">
-                        {losses} queries where you should be mentioned but aren't
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-zinc-900 border-2 border-red-500/30 rounded-xl overflow-hidden">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-zinc-800 bg-red-950/30">
-                        <th className="text-left px-6 py-4 text-red-300 font-semibold">Query</th>
-                        <th className="text-left px-6 py-4 text-red-300 font-semibold">Platform</th>
-                        <th className="text-left px-6 py-4 text-red-300 font-semibold">Status</th>
-                        <th className="text-right px-6 py-4 text-red-300 font-semibold">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {queryResults.filter(q => !q.cited).map((result, i) => (
-                        <tr 
-                          key={i} 
-                          className="border-b border-zinc-800 last:border-b-0 hover:bg-red-950/20 transition-colors"
-                        >
-                          <td className="px-6 py-4">
-                            <p className="text-white font-medium">"{result.query}"</p>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="px-2 py-1 bg-zinc-800 text-zinc-300 rounded text-sm">
-                              {result.platform}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="inline-flex items-center gap-1 text-red-400 font-medium">
-                              <X className="w-4 h-4" />
-                              NOT MENTIONED
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <Link
-                              href={`/dashboard/query?q=${encodeURIComponent(result.query)}`}
-                              className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg text-sm font-semibold transition-colors"
-                            >
-                              Why not me?
-                              <ArrowRight className="w-4 h-4" />
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Trust Map CTA - Prominent for losses */}
-            {losses > 0 && (
-              <div className="bg-gradient-to-r from-red-950/50 to-zinc-900 border border-red-500/20 rounded-xl p-6 mb-8">
+            {/* Trust Map CTA - Show when user has wins but wants to improve */}
+            {wins > 0 && (
+              <div className="bg-gradient-to-r from-emerald-950/30 to-zinc-900 border border-emerald-500/20 rounded-xl p-6 mb-8">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-lg font-bold text-white mb-1">
-                      Where does AI learn about your competitors?
+                      Want more AI mentions?
                     </h3>
                     <p className="text-zinc-400">
-                      See the sources AI trusts (G2, Capterra, Reddit) — and get listed.
+                      See where AI learns about products (G2, Capterra, Reddit) — and get listed on those sources.
                     </p>
                   </div>
                   <Link
                     href="/dashboard/sources"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors whitespace-nowrap"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors whitespace-nowrap"
                   >
                     View Trust Map
                     <ArrowRight className="w-5 h-5" />
@@ -490,8 +460,8 @@ function DashboardContent() {
               </div>
             )}
 
-            {/* First win guidance - show when user has all losses */}
-            {losses > 0 && wins === 0 && (
+            {/* First win guidance - show when user has no wins yet */}
+            {wins === 0 && (
               <div className="bg-gradient-to-r from-emerald-950/30 to-zinc-900 border border-emerald-500/20 rounded-xl p-6">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -499,7 +469,7 @@ function DashboardContent() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-white mb-1">
-                      Your first win is closer than you think
+                      Your first AI mention is closer than you think
                     </h3>
                     <p className="text-zinc-400 mb-4">
                       Most founders can get their first AI mention within 2 weeks by getting listed on the right sources.

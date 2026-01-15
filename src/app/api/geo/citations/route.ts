@@ -138,6 +138,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Return consistent format - always include citations array for dashboard
     return NextResponse.json({
       success: true,
       data: {
@@ -145,9 +146,11 @@ export async function GET(request: NextRequest) {
         thisWeek: site.citations_this_week || 0,
         lastWeek: site.citations_last_week || 0,
         byPlatform,
-        citations: full ? formattedCitations : undefined,
+        citations: formattedCitations, // Always return citations array
         recent: formattedCitations.slice(0, 10),
       },
+      // Also return flat citations for backward compatibility
+      citations: formattedCitations,
     });
 
   } catch (error) {

@@ -82,47 +82,15 @@ function QueryPageContent() {
       }
 
       const data = await response.json();
-      setAnalysis(data.analysis);
+      if (data.analysis) {
+        setAnalysis(data.analysis);
+      } else {
+        throw new Error("No analysis data returned");
+      }
     } catch (err) {
       console.error("Analysis error:", err);
-      // For demo, show mock analysis
-      setAnalysis({
-        query,
-        yourSite: currentSite?.domain || "",
-        competitors: ["notion.so", "clickup.com", "asana.com"],
-        reasons: [
-          "Competitors are listed on G2 with 500+ reviews",
-          "Competitors have dedicated comparison pages",
-          "Competitors appear in multiple Reddit discussions",
-          "Competitors have Schema.org structured data",
-        ],
-        trustedSources: [
-          { source: "G2", hasCompetitor: true, hasYou: false },
-          { source: "Capterra", hasCompetitor: true, hasYou: false },
-          { source: "Product Hunt", hasCompetitor: true, hasYou: false },
-          { source: "Reddit", hasCompetitor: true, hasYou: false },
-        ],
-        contentFix: {
-          title: `Best ${query.replace("best ", "")} - Complete Guide`,
-          headings: [
-            "What makes a great solution",
-            "Key features to look for",
-            "How we compare",
-            "Pricing comparison",
-          ],
-          entities: [
-            "project management",
-            "team collaboration",
-            "task tracking",
-            "productivity",
-          ],
-          faqs: [
-            `What is the best ${query.replace("best ", "")}?`,
-            "How do the top solutions compare?",
-            "Which option offers the best value?",
-          ],
-        },
-      });
+      setError(err instanceof Error ? err.message : "Failed to analyze query. Please try running a check first.");
+      // NO MOCK DATA - Show error state instead
     } finally {
       setLoading(false);
     }
