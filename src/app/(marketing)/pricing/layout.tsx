@@ -3,7 +3,7 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Pricing – AI Visibility Plans",
   description:
-    "Free, Starter ($29/mo), and Pro ($79/mo) plans. Track AI citations, monitor competitors, and get content fixes. 7-day free trial.",
+    "Free, Starter ($29/mo), and Pro ($79/mo) plans. Track AI citations, monitor competitors, and get content fixes. No credit card required to start.",
   openGraph: {
     title: "CabbageSEO Pricing – AI Visibility Plans",
     description:
