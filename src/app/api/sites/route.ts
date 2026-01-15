@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getCitationPlanLimits } from "@/lib/billing/citation-plans";
+import { getCitationPlanLimits, canAddSite, canAccessProduct } from "@/lib/billing/citation-plans";
 
 function getDbClient(): SupabaseClient | null {
   try {
@@ -139,17 +139,34 @@ export async function POST(request: NextRequest) {
       .single();
 
     const plan = org?.plan || "free";
-    const limits = getCitationPlanLimits(plan);
-
-    // Check site limit
+    const orgCreatedAt = org?.created_at;
+    
+    // Check if free user's trial has expired
+    if (plan === "free" && orgCreatedAt) {
+      const access = canAccessProduct(plan, orgCreatedAt);
+      if (!access.allowed) {
+        return NextResponse.json({
+          error: access.reason || "Trial expired. Upgrade to continue.",
+          code: "TRIAL_EXPIRED",
+          upgradeRequired: true,
+        }, { status: 403 });
+      }
+    }
+    
+    // Check site limit using helper function
     const { count } = await db
       .from("sites")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", orgId);
 
-    if ((count || 0) >= limits.sites) {
+    const currentSites = count || 0;
+    const canAdd = canAddSite(plan, currentSites);
+    
+    if (!canAdd.allowed) {
       return NextResponse.json({ 
-        error: `Site limit reached (${limits.sites}). Upgrade for more.` 
+        error: canAdd.reason || `Site limit reached. Upgrade for more.`,
+        code: "PLAN_LIMIT_EXCEEDED",
+        upgradeRequired: true,
       }, { status: 403 });
     }
 
