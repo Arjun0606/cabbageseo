@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getCitationPlanLimits } from "@/lib/billing/citation-plans";
+import { getCitationPlanLimits, canAddCompetitor, canAccessProduct } from "@/lib/billing/citation-plans";
 
 function getDbClient(): SupabaseClient | null {
   try {
