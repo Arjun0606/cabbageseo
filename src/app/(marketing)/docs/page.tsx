@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 // ============================================
-// CITATION INTELLIGENCE DOCUMENTATION
+// AI VISIBILITY INTELLIGENCE DOCUMENTATION
 // ============================================
 
 const sections = [
@@ -33,8 +33,8 @@ const sections = [
     icon: Eye,
     items: [
       {
-        title: "What is Citation Intelligence?",
-        content: `Citation Intelligence tracks when AI platforms (ChatGPT, Perplexity, Google AI) mention or cite your website in their responses. Unlike traditional SEO which focuses on Google search rankings, we monitor the new AI search landscape.`,
+        title: "What is AI Visibility Intelligence?",
+        content: `AI Visibility Intelligence tracks when AI platforms (ChatGPT, Perplexity, Google AI) recommend your product in their responses. Unlike traditional SEO which focuses on Google search rankings, we monitor the new AI search landscape where recommendations drive purchases.`,
       },
       {
         title: "How does it work?",
@@ -182,7 +182,7 @@ export default function DocsPage() {
           {/* Title */}
           <div className="text-center mb-12">
             <Badge className="bg-emerald-500/10 text-emerald-400 mb-4">Documentation</Badge>
-            <h1 className="text-4xl font-bold text-white mb-4">Citation Intelligence Docs</h1>
+            <h1 className="text-4xl font-bold text-white mb-4">AI Visibility Intelligence Docs</h1>
             <p className="text-xl text-zinc-400">
               Everything you need to know about tracking your AI visibility
             </p>

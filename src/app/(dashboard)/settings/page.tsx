@@ -10,7 +10,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   User,
-  Bell,
   CreditCard,
   Shield,
   ChevronRight,
@@ -28,7 +27,6 @@ import { Label } from "@/components/ui/label";
 import { useSite } from "@/context/site-context";
 
 const settingsNav = [
-  { href: "/settings/notifications", label: "Notifications", icon: Bell, description: "Email alerts & preferences" },
   { href: "/settings/billing", label: "Billing", icon: CreditCard, description: "Subscription & invoices" },
 ];
 

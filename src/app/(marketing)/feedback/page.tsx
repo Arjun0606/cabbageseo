@@ -202,7 +202,7 @@ export default function FeedbackPage() {
                   <span className="text-emerald-400 font-mono text-sm">1.</span>
                   <p className="text-zinc-300 text-sm">
                     <strong className="text-white">What were you trying to do?</strong><br />
-                    <span className="text-zinc-400">"I was trying to generate a new article about..."</span>
+                    <span className="text-zinc-400">"I was trying to run a citation check for my site..."</span>
                   </p>
                 </div>
                 <div className="flex items-start gap-3">

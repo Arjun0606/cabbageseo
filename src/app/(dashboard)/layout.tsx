@@ -16,7 +16,6 @@ import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard,
   Search,
-  Users,
   TrendingUp,
   Settings,
   Menu,
@@ -34,9 +33,8 @@ import { useRouter } from "next/navigation";
 // Navigation items - Revenue-focused terminology
 const navItems = [
   { href: "/dashboard", label: "War Room", icon: LayoutDashboard },
-  { href: "/citations", label: "AI Wins & Losses", icon: Search },
-  { href: "/intelligence", label: "Get Fixes", icon: TrendingUp },
-  { href: "/competitors", label: "Competitors", icon: Users },
+  { href: "/dashboard/sources", label: "AI Trust Map", icon: Search },
+  { href: "/dashboard/roadmap", label: "Visibility Roadmap", icon: TrendingUp },
 ];
 
 // Sidebar component

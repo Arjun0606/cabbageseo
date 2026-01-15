@@ -37,9 +37,9 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-semibold text-zinc-100 mb-3">2. How We Use Your Information</h2>
             <p>We use your information to:</p>
             <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>Provide and improve our SEO services</li>
-              <li>Analyze websites and generate content on your behalf</li>
-              <li>Send you service updates and notifications</li>
+              <li>Provide and improve our AI visibility intelligence services</li>
+              <li>Track AI platform mentions and recommendations for your websites</li>
+              <li>Send you service updates, alerts, and weekly reports</li>
               <li>Protect against fraud and abuse</li>
             </ul>
           </section>
@@ -48,7 +48,7 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-semibold text-zinc-100 mb-3">3. Data Sharing</h2>
             <p>
               We share data only with third-party services necessary to provide our product 
-              (e.g., third-party APIs for keyword research and AI content generation). 
+              (e.g., AI platform APIs for monitoring recommendations). 
               We do not sell your personal data.
             </p>
           </section>
@@ -72,7 +72,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-xl font-semibold text-zinc-100 mb-3">6. Contact</h2>
             <p>
-              Questions about this policy? Email us at privacy@cabbageseo.com.
+              Questions about this policy? Email us at arjun@cabbageseo.com.
             </p>
           </section>
         </div>
