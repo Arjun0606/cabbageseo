@@ -70,6 +70,8 @@ export async function updateSession(request: NextRequest) {
     "/pricing",
     "/analyze",
     "/docs",
+    "/feedback",
+    "/auth/callback",  // OAuth callback must be public
   ];
   
   // Define public API route prefixes (these handle their own auth)
