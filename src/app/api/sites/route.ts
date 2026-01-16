@@ -137,12 +137,14 @@ export async function POST(request: NextRequest) {
         plan = testPlan || existingOrg.plan || "free";
       } else {
         // Create test organization
+        const planName = testPlan || "free";
+        const planDisplayName = planName.charAt(0).toUpperCase() + planName.slice(1);
         const { data: newOrg } = await db
           .from("organizations")
           .insert({
-            name: `Test ${testPlan.charAt(0).toUpperCase() + testPlan.slice(1)} Organization`,
+            name: `Test ${planDisplayName} Organization`,
             slug: testOrgSlug,
-            plan: testPlan || "free",
+            plan: planName,
             subscription_status: "active",
           })
           .select("id, created_at")
