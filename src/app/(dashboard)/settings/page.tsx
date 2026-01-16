@@ -68,18 +68,23 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
+          <Loader2 className="w-8 h-8 text-red-400 animate-spin mx-auto mb-4" />
+          <p className="text-zinc-400">Loading settings...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Settings</h1>
-        <p className="text-zinc-500 text-sm mt-1">Manage your account and preferences</p>
-      </div>
+    <div className="min-h-screen bg-zinc-950 p-6">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
+          <p className="text-xl text-zinc-400">Manage your account and preferences</p>
+        </div>
 
       {/* Quick Nav */}
       <div className="grid sm:grid-cols-2 gap-4">

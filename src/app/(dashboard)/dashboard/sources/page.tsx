@@ -207,8 +207,8 @@ export default function SourcesPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-red-400 animate-spin mx-auto mb-4" />
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
+          <Loader2 className="w-8 h-8 text-red-400 animate-spin mx-auto mb-4" />
           <p className="text-zinc-400">Mapping trusted sources...</p>
         </div>
       </div>

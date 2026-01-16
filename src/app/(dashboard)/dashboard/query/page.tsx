@@ -99,8 +99,8 @@ function QueryPageContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-red-400 animate-spin mx-auto mb-4" />
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
+          <Loader2 className="w-8 h-8 text-red-400 animate-spin mx-auto mb-4" />
           <p className="text-zinc-400">Analyzing why AI prefers competitors...</p>
         </div>
       </div>
@@ -110,17 +110,25 @@ function QueryPageContent() {
   if (!analysis) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6">
-        <div className="text-center">
-          <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-white mb-2">Analysis failed</h2>
-          <p className="text-zinc-400 mb-6">{error || "Could not analyze this query"}</p>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-zinc-800 text-white rounded-xl hover:bg-zinc-700"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back to dashboard
-          </Link>
+        <div className="bg-gradient-to-br from-red-950/30 to-zinc-900 border-2 border-red-500/30 rounded-xl p-12 text-center max-w-md">
+          <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">Analysis failed</h2>
+          <p className="text-zinc-400 mb-6">{error || "Could not analyze this query. Please run a check first."}</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-zinc-800 text-white rounded-xl hover:bg-zinc-700 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Back to dashboard
+            </Link>
+            <button
+              onClick={() => analyzeQuery()}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors"
+            >
+              Try again
+            </button>
+          </div>
         </div>
       </div>
     );

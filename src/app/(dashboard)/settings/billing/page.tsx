@@ -109,8 +109,11 @@ function BillingContent() {
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
+          <Loader2 className="w-8 h-8 text-red-400 animate-spin mx-auto mb-4" />
+          <p className="text-zinc-400">Loading billing information...</p>
+        </div>
       </div>
     );
   }
@@ -118,19 +121,22 @@ function BillingContent() {
   const plan = CITATION_PLANS[currentPlan as keyof typeof CITATION_PLANS] || CITATION_PLANS.free;
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/settings">
-          <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
+    <div className="min-h-screen bg-zinc-950 p-6">
+      <div className="max-w-4xl mx-auto">
+        {/* Back link */}
+        <Link
+          href="/settings"
+          className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-6"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Back to settings
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-white">Billing</h1>
-          <p className="text-zinc-500 text-sm">Manage your subscription</p>
+
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Billing</h1>
+          <p className="text-xl text-zinc-400">Manage your subscription</p>
         </div>
-      </div>
 
       {/* Error Message */}
       {error && (
@@ -379,13 +385,7 @@ function BillingContent() {
         </Card>
       )}
 
-      {/* Back Link */}
-      <Link href="/settings">
-        <Button variant="ghost" className="text-zinc-400">
-          <ChevronLeft className="w-4 h-4 mr-2" />
-          Back to Settings
-        </Button>
-      </Link>
+      </div>
     </div>
   );
 }
@@ -394,8 +394,11 @@ function BillingContent() {
 export default function BillingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
+          <Loader2 className="w-8 h-8 text-red-400 animate-spin mx-auto mb-4" />
+          <p className="text-zinc-400">Loading billing information...</p>
+        </div>
       </div>
     }>
       <BillingContent />
