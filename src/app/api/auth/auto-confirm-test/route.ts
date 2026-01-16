@@ -38,20 +38,38 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Get user by email
-    const { data: userData, error: getUserError } = await adminClient.auth.admin.getUserByEmail(email);
+    // List users and find by email (getUserByEmail doesn't exist in Supabase admin API)
+    const { data: usersData, error: listError } = await adminClient.auth.admin.listUsers();
 
-    if (getUserError || !userData?.user) {
+    if (listError) {
+      return NextResponse.json(
+        { error: listError.message },
+        { status: 500 }
+      );
+    }
+
+    const user = usersData.users.find(u => u.email === email.toLowerCase());
+
+    if (!user) {
       return NextResponse.json(
         { error: "User not found" },
         { status: 404 }
       );
     }
 
-    // Auto-confirm email
-    const { error: updateError } = await adminClient.auth.admin.updateUserById(userData.user.id, {
-      email_confirm: true,
-    });
+    // Auto-confirm email if not already confirmed
+    if (!user.email_confirmed_at) {
+      const { error: updateError } = await adminClient.auth.admin.updateUserById(user.id, {
+        email_confirm: true,
+      });
+
+      if (updateError) {
+        return NextResponse.json(
+          { error: updateError.message },
+          { status: 500 }
+        );
+      }
+    }
 
     if (updateError) {
       return NextResponse.json(

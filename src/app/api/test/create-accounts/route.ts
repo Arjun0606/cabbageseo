@@ -50,15 +50,14 @@ export async function POST() {
 
     for (const testAccount of TEST_ACCOUNTS) {
       try {
-        // Check if user already exists
-        const { data: existingUser } = await adminClient.auth.admin.getUserByEmail(
-          testAccount.email
-        );
+        // Check if user already exists - list users and find by email
+        const { data: usersData } = await adminClient.auth.admin.listUsers();
+        const existingUser = usersData?.users.find(u => u.email === testAccount.email.toLowerCase());
 
-        if (existingUser?.user) {
+        if (existingUser) {
           // User exists - confirm email if not already confirmed
-          if (!existingUser.user.email_confirmed_at) {
-            await adminClient.auth.admin.updateUserById(existingUser.user.id, {
+          if (!existingUser.email_confirmed_at) {
+            await adminClient.auth.admin.updateUserById(existingUser.id, {
               email_confirm: true,
             });
             results.push({
