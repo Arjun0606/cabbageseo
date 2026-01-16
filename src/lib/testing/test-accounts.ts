@@ -1,0 +1,90 @@
+/**
+ * TEST ACCOUNT BYPASS SYSTEM
+ * 
+ * ⚠️ TEMPORARY: For testing only. Remove before production launch.
+ * 
+ * This file provides credential-based access bypass for test accounts.
+ * Test accounts can access features without payment, but limits are still
+ * enforced based on their assigned test plan.
+ * 
+ * To re-enable paywalls: Remove all calls to isTestAccount() and getTestPlan()
+ */
+
+// ============================================
+// TEST ACCOUNT CREDENTIALS
+// ============================================
+
+export interface TestAccount {
+  email: string;
+  password: string;
+  plan: "free" | "starter" | "pro";
+  description: string;
+}
+
+export const TEST_ACCOUNTS: TestAccount[] = [
+  {
+    email: "test-free@cabbageseo.test",
+    password: "TestFree123!",
+    plan: "free",
+    description: "Free tier test account - 3 checks/day, 1 site, 0 competitors",
+  },
+  {
+    email: "test-starter@cabbageseo.test",
+    password: "TestStarter123!",
+    plan: "starter",
+    description: "Starter tier test account - Unlimited checks, 3 sites, 2 competitors",
+  },
+  {
+    email: "test-pro@cabbageseo.test",
+    password: "TestPro123!",
+    plan: "pro",
+    description: "Pro tier test account - Unlimited checks, 10 sites, 10 competitors",
+  },
+];
+
+// ============================================
+// TEST ACCOUNT HELPERS
+// ============================================
+
+/**
+ * Check if an email is a test account
+ */
+export function isTestAccount(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return TEST_ACCOUNTS.some(account => account.email === email.toLowerCase());
+}
+
+/**
+ * Get the test plan for a test account email
+ * Returns null if not a test account
+ */
+export function getTestPlan(email: string | null | undefined): "free" | "starter" | "pro" | null {
+  if (!email) return null;
+  const account = TEST_ACCOUNTS.find(acc => acc.email === email.toLowerCase());
+  return account?.plan || null;
+}
+
+/**
+ * Get test account info by email
+ */
+export function getTestAccount(email: string | null | undefined): TestAccount | null {
+  if (!email) return null;
+  return TEST_ACCOUNTS.find(acc => acc.email === email.toLowerCase()) || null;
+}
+
+/**
+ * Check if testing mode is enabled
+ * Set TESTING_MODE=true in .env to enable
+ */
+export function isTestingModeEnabled(): boolean {
+  return process.env.TESTING_MODE === "true" || process.env.NEXT_PUBLIC_TESTING_MODE === "true";
+}
+
+/**
+ * Bypass paywall check for test accounts
+ * Returns true if account should bypass paywalls
+ */
+export function shouldBypassPaywall(email: string | null | undefined): boolean {
+  return isTestingModeEnabled() && isTestAccount(email);
+}
+
