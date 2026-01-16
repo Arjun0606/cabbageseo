@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isTestAccount } from "@/lib/testing/test-accounts";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -43,7 +44,7 @@ export default function SignupPage() {
       ? `${window.location.origin}/auth/callback?domain=${encodeURIComponent(domain)}`
       : `${window.location.origin}/auth/callback`;
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -58,6 +59,32 @@ export default function SignupPage() {
       setError(error.message);
       setLoading(false);
       return;
+    }
+
+    // Auto-confirm test accounts
+    if (data.user && isTestAccount(email)) {
+      try {
+        await fetch("/api/auth/auto-confirm-test", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        
+        // Auto-login test accounts after confirmation
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (!signInError) {
+          // Redirect to dashboard immediately for test accounts
+          router.push("/dashboard");
+          return;
+        }
+      } catch (confirmError) {
+        console.error("Failed to auto-confirm test account:", confirmError);
+        // Continue with normal flow
+      }
     }
 
     setSuccess(true);
