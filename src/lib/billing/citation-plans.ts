@@ -222,8 +222,18 @@ export function checkTrialStatus(createdAt: string | Date): {
 
 export function canAccessProduct(
   planId: CitationPlanId | string,
-  createdAt: string | Date
+  createdAt: string | Date,
+  userEmail?: string | null
 ): { allowed: boolean; reason?: string; upgradeRequired?: boolean } {
+  // ⚠️ TEST ACCOUNT BYPASS - Remove before production
+  if (userEmail) {
+    // Dynamic import to avoid circular dependency issues
+    const { shouldBypassPaywall } = require("@/lib/testing/test-accounts");
+    if (shouldBypassPaywall(userEmail)) {
+      return { allowed: true };
+    }
+  }
+  
   if (planId !== "free") {
     return { allowed: true };
   }

@@ -58,6 +58,14 @@ function DashboardContent() {
   const isWelcome = searchParams.get("welcome") === "true";
   
   const [citations, setCitations] = useState<Citation[]>([]);
+  const [recentCheckResults, setRecentCheckResults] = useState<Array<{
+    query: string;
+    platform: string;
+    cited: boolean;
+    competitors: string[];
+    snippet: string;
+    isLoss: boolean;
+  }>>([]);
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState("");
@@ -66,6 +74,19 @@ function DashboardContent() {
   useEffect(() => {
     if (currentSite?.id) {
       fetchCitations();
+      // Load recent check results from localStorage
+      const stored = localStorage.getItem(`recent_check_${currentSite.id}`);
+      if (stored) {
+        try {
+          const data = JSON.parse(stored);
+          // Only use if less than 24 hours old
+          if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+            setRecentCheckResults(data.results || []);
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
     }
   }, [currentSite?.id]);
 
@@ -111,6 +132,26 @@ function DashboardContent() {
         throw new Error(data.error || "Check failed");
       }
       
+      // Get check results to show losses
+      const checkData = await response.json();
+      if (checkData.results) {
+        // Store recent check results (including losses) for display
+        const results = checkData.results.map((r: any) => ({
+          query: r.query,
+          platform: r.platform,
+          cited: r.cited,
+          competitors: r.competitors || [],
+          snippet: r.snippet || "",
+          isLoss: !r.cited && !r.error,
+        }));
+        setRecentCheckResults(results);
+        // Store in localStorage for persistence
+        localStorage.setItem(`recent_check_${currentSite.id}`, JSON.stringify({
+          results,
+          timestamp: Date.now(),
+        }));
+      }
+      
       // Refresh citations
       await fetchCitations();
       await refreshData();
@@ -146,23 +187,22 @@ function DashboardContent() {
   // but didn't result in citations. Currently we only show WINS (citations that exist).
   // This is a limitation - we can't show historical losses without query history.
 
-  // Calculate stats
-  // All citations = wins (since citations table only stores wins)
-  const totalQueries = queryResults.length;
-  const wins = queryResults.length; // All citations are wins
-  // NOTE: Losses can't be calculated from citations table alone
-  // We'd need query history. For now, show 0 losses if we only have wins.
-  const losses = 0; // Can't determine losses without query history
-
+  // Calculate stats from recent check results (includes losses)
+  const losses = recentCheckResults.filter(r => r.isLoss).length;
+  const wins = recentCheckResults.filter(r => r.cited).length;
+  const totalQueries = recentCheckResults.length || queryResults.length;
+  
+  // If no recent check results, use citations (wins only)
+  const effectiveWins = recentCheckResults.length > 0 ? wins : queryResults.length;
+  const effectiveLosses = recentCheckResults.length > 0 ? losses : 0;
+  
   // Calculate real week-over-week changes from site data
   const citationsThisWeek = currentSite?.citationsThisWeek || 0;
   const citationsLastWeek = currentSite?.citationsLastWeek || 0;
-  const winsChange = citationsThisWeek - citationsLastWeek; // positive = good (more wins)
-  // For losses, we'd need to track queries checked, but for now use wins as proxy
-  // (if wins increased, losses likely decreased)
-  const lossesChange = citationsLastWeek > 0 && citationsThisWeek > citationsLastWeek 
-    ? -(citationsThisWeek - citationsLastWeek) // negative = good (fewer losses)
-    : 0;
+  const winsChange = citationsThisWeek - citationsLastWeek;
+  
+  // Losses change (if we have recent check data, compare to previous)
+  const lossesChange = 0; // TODO: Track losses over time
 
   // Use real usage data from context
   const checksRemaining = Math.max(0, usage.checksLimit - usage.checksUsed);
@@ -257,98 +297,44 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* THE ONE KPI - Show wins prominently, encourage more checks */}
-        <div className={`bg-gradient-to-r rounded-2xl p-8 mb-8 border-2 ${
-          wins === 0
-            ? "from-red-950/80 to-red-900/50 border-red-500/50"
-            : "from-emerald-950/50 to-zinc-900 border-emerald-500/30"
-        }`}>
+        {/* THE ONE KPI - High-Intent Queries Missed (LOSSES FIRST) */}
+        <div className="bg-gradient-to-r from-red-950/80 to-red-900/50 rounded-2xl p-8 mb-8 border-2 border-red-500/50">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <div className={`flex items-center gap-2 text-sm font-medium mb-2 ${
-                wins === 0 ? "text-red-400" : "text-emerald-400"
-              }`}>
-                {wins === 0 ? (
-                  <>
-                    <AlertTriangle className="w-5 h-5" />
-                    NO AI MENTIONS YET
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-5 h-5" />
-                    AI MENTIONS FOUND
-                  </>
-                )}
+              <div className="flex items-center gap-2 text-sm font-medium mb-2 text-red-400">
+                <AlertTriangle className="w-5 h-5" />
+                HIGH-INTENT QUERIES MISSED
               </div>
               <div className="flex items-baseline gap-4">
-                <span className="text-6xl font-bold text-white">{wins}</span>
-                {winsChange !== 0 && (
-                  <span className={`flex items-center gap-1 text-lg font-medium ${
-                    winsChange > 0 ? "text-emerald-400" : "text-red-400"
-                  }`}>
-                    {winsChange > 0 ? (
-                      <ArrowUp className="w-5 h-5" />
-                    ) : (
-                      <ArrowDown className="w-5 h-5" />
-                    )}
-                    {Math.abs(winsChange)} this week
+                <span className="text-6xl font-bold text-white">
+                  {effectiveLosses > 0 ? effectiveLosses : recentCheckResults.length === 0 ? "?" : 0}
+                </span>
+                {recentCheckResults.length === 0 && (
+                  <span className="text-lg text-red-300/80">
+                    Run a check to see
                   </span>
                 )}
               </div>
-              <p className={`mt-2 ${
-                wins === 0 ? "text-red-300/80" : "text-emerald-300/80"
-              }`}>
-                {wins === 0
-                  ? "Run your first check to see if AI is recommending you."
-                  : wins === 1
-                  ? "AI mentioned you once. Run more checks to discover where you're missing."
-                  : `You have ${wins} AI mentions. Run a check to see if you're missing opportunities.`
+              <p className="mt-2 text-red-300/80">
+                {recentCheckResults.length === 0
+                  ? "Buyer-intent queries where AI recommends competitors instead of you"
+                  : effectiveLosses === 0
+                  ? "Great! AI is recommending you in all checked queries."
+                  : `${effectiveLosses} buyer-intent ${effectiveLosses === 1 ? "query" : "queries"} where AI chose competitors`
                 }
               </p>
             </div>
             
-            {wins === 0 && (
+            {recentCheckResults.length === 0 && (
               <button
                 onClick={runCheck}
                 disabled={checking}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white text-red-600 font-semibold rounded-xl hover:bg-zinc-100 transition-colors whitespace-nowrap disabled:opacity-50"
               >
-                {checking ? "Checking..." : "Run your first check"}
+                {checking ? "Checking..." : "Run Check Now"}
                 <ArrowRight className="w-5 h-5" />
               </button>
             )}
-          </div>
-        </div>
-
-        {/* Secondary stats - smaller, less prominent */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="bg-zinc-900 border border-emerald-500/20 rounded-xl p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-emerald-400 mb-1">Queries Won</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-white">{wins}</span>
-                  {winsChange !== 0 && (
-                    <span className={`text-sm ${winsChange > 0 ? "text-emerald-400" : "text-red-400"}`}>
-                      {winsChange > 0 ? "+" : ""}{winsChange}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <Check className="w-8 h-8 text-emerald-400/30" />
-            </div>
-          </div>
-
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-zinc-400 mb-1">AI Mention Rate</p>
-                <span className="text-3xl font-bold text-white">
-                  {totalQueries > 0 ? Math.round((wins / totalQueries) * 100) : 0}%
-                </span>
-              </div>
-              <TrendingUp className="w-8 h-8 text-zinc-700" />
-            </div>
           </div>
         </div>
 
@@ -358,15 +344,15 @@ function DashboardContent() {
             <Loader2 className="w-8 h-8 text-red-400 animate-spin mx-auto mb-4" />
             <p className="text-zinc-400">Loading your AI visibility data...</p>
           </div>
-        ) : queryResults.length === 0 ? (
+        ) : recentCheckResults.length === 0 && queryResults.length === 0 ? (
           /* NO BLANK STATES - Compelling CTA instead */
-          <div className="bg-gradient-to-br from-red-950/30 to-zinc-900 border border-red-500/20 rounded-xl p-12 text-center">
+          <div className="bg-gradient-to-br from-red-950/30 to-zinc-900 border-2 border-red-500/30 rounded-xl p-12 text-center">
             <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
             <h3 className="text-2xl font-bold text-white mb-2">
-              Are you invisible to AI?
+              AI is choosing your competitors right now
             </h3>
             <p className="text-zinc-400 mb-6 max-w-md mx-auto">
-              Run your first check to discover if ChatGPT, Perplexity, and Google AI are sending customers to your competitors instead of you.
+              Run a check to see which buyer-intent queries AI is answering with your competitors' names instead of yours.
             </p>
             <button
               onClick={runCheck}
@@ -381,52 +367,93 @@ function DashboardContent() {
               ) : (
                 <>
                   <Target className="w-5 h-5" />
-                  Scan AI now
+                  Run Check Now
                 </>
               )}
             </button>
             <p className="text-zinc-500 text-sm mt-4">
-              Takes about 30 seconds
+              Takes about 30 seconds • See results immediately
             </p>
           </div>
         ) : (
           <>
-            {/* Trust Map CTA - Show when user has wins but wants to improve */}
-            {wins > 0 && (
-              <div className="bg-gradient-to-r from-emerald-950/30 to-zinc-900 border border-emerald-500/20 rounded-xl p-6 mb-8">
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-white mb-1">
-                      Want more AI mentions?
-                    </h3>
-                    <p className="text-zinc-400">
-                      See where AI learns about products (G2, Capterra, Reddit) — and get listed on those sources.
-                    </p>
+            {/* LOSSES SECTION FIRST - Visually Dominant, Red, Urgent */}
+            {effectiveLosses > 0 && (
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+                    <AlertTriangle className="w-6 h-6 text-red-400" />
                   </div>
-                  <Link
-                    href="/dashboard/sources"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors whitespace-nowrap"
-                  >
-                    View Trust Map
-                    <ArrowRight className="w-5 h-5" />
-                  </Link>
+                  <h2 className="text-xl font-bold text-white">
+                    ⚠️ AI is choosing your competitors ({effectiveLosses})
+                  </h2>
+                </div>
+                
+                <div className="bg-gradient-to-br from-red-950/30 to-zinc-900 border-2 border-red-500/30 rounded-xl overflow-hidden">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-red-500/20 bg-red-950/20">
+                        <th className="text-left px-6 py-4 text-red-300 font-semibold text-sm">Query</th>
+                        <th className="text-left px-6 py-4 text-red-300 font-semibold text-sm">Platform</th>
+                        <th className="text-left px-6 py-4 text-red-300 font-semibold text-sm">AI Recommended</th>
+                        <th className="text-left px-6 py-4 text-red-300 font-semibold text-sm">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentCheckResults.filter(r => r.isLoss).map((result, i) => (
+                        <tr key={i} className="border-b border-red-500/10 last:border-b-0 hover:bg-red-950/10">
+                          <td className="px-6 py-4">
+                            <p className="text-white font-medium">"{result.query}"</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="px-2 py-1 bg-zinc-800 text-zinc-300 rounded text-sm">
+                              {result.platform}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-wrap gap-2">
+                              {result.competitors.slice(0, 3).map((comp, idx) => (
+                                <span key={idx} className="px-2 py-1 bg-red-500/20 text-red-300 rounded text-sm">
+                                  {comp}
+                                </span>
+                              ))}
+                              {result.competitors.length > 3 && (
+                                <span className="px-2 py-1 bg-zinc-800 text-zinc-400 rounded text-sm">
+                                  +{result.competitors.length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Link
+                              href={`/dashboard/query?q=${encodeURIComponent(result.query)}`}
+                              className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 font-semibold text-sm"
+                            >
+                              Why not me?
+                              <ArrowRight className="w-4 h-4" />
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
 
-            {/* Wins section - Secondary, below losses */}
-            {wins > 0 && (
+            {/* WINS SECTION SECONDARY - Smaller, Muted Green */}
+            {effectiveWins > 0 && (
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
                     <Check className="w-4 h-4 text-emerald-400" />
                   </div>
-                  <h2 className="text-lg font-semibold text-white">
-                    AI is recommending you ({wins})
+                  <h2 className="text-lg font-semibold text-zinc-300">
+                    AI is recommending you ({effectiveWins})
                   </h2>
                 </div>
                 
-                <div className="bg-zinc-900 border border-emerald-500/20 rounded-xl overflow-hidden">
+                <div className="bg-zinc-900 border border-emerald-500/10 rounded-xl overflow-hidden">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-zinc-800">
@@ -436,26 +463,69 @@ function DashboardContent() {
                       </tr>
                     </thead>
                     <tbody>
-                      {queryResults.filter(q => q.cited).map((result, i) => (
-                        <tr key={i} className="border-b border-zinc-800 last:border-b-0">
-                          <td className="px-6 py-3">
-                            <p className="text-zinc-300">"{result.query}"</p>
-                          </td>
-                          <td className="px-6 py-3">
-                            <span className="px-2 py-1 bg-zinc-800 text-zinc-400 rounded text-sm">
-                              {result.platform}
-                            </span>
-                          </td>
-                          <td className="px-6 py-3">
-                            <span className="inline-flex items-center gap-1 text-emerald-400 text-sm">
-                              <Check className="w-4 h-4" />
-                              Mentioned
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      {recentCheckResults.length > 0 
+                        ? recentCheckResults.filter(r => r.cited).map((result, i) => (
+                            <tr key={i} className="border-b border-zinc-800 last:border-b-0">
+                              <td className="px-6 py-3">
+                                <p className="text-zinc-300">"{result.query}"</p>
+                              </td>
+                              <td className="px-6 py-3">
+                                <span className="px-2 py-1 bg-zinc-800 text-zinc-400 rounded text-sm">
+                                  {result.platform}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3">
+                                <span className="inline-flex items-center gap-1 text-emerald-400 text-sm">
+                                  <Check className="w-4 h-4" />
+                                  Mentioned
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        : queryResults.filter(q => q.cited).map((result, i) => (
+                            <tr key={i} className="border-b border-zinc-800 last:border-b-0">
+                              <td className="px-6 py-3">
+                                <p className="text-zinc-300">"{result.query}"</p>
+                              </td>
+                              <td className="px-6 py-3">
+                                <span className="px-2 py-1 bg-zinc-800 text-zinc-400 rounded text-sm">
+                                  {result.platform}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3">
+                                <span className="inline-flex items-center gap-1 text-emerald-400 text-sm">
+                                  <Check className="w-4 h-4" />
+                                  Mentioned
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                      }
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+            {/* Trust Map CTA - Show when user has losses */}
+            {effectiveLosses > 0 && (
+              <div className="bg-gradient-to-r from-red-950/30 to-zinc-900 border border-red-500/20 rounded-xl p-6 mb-8">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-1">
+                      See where AI learns about your competitors
+                    </h3>
+                    <p className="text-zinc-400">
+                      Get listed on the same sources (G2, Capterra, Reddit) and start winning these queries.
+                    </p>
+                  </div>
+                  <Link
+                    href="/dashboard/sources"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors whitespace-nowrap"
+                  >
+                    View Trust Map
+                    <ArrowRight className="w-5 h-5" />
+                  </Link>
                 </div>
               </div>
             )}

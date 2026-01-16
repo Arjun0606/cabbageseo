@@ -297,57 +297,192 @@
 
 ## 🔍 PENDING / TESTING REQUIRED
 
-### 1. End-to-End Testing (CRITICAL)
+### 1. Authentication Testing (CRITICAL - DO FIRST)
+
+#### ⚠️ Signup Flow
+**Status:** Needs testing  
+**Tests Required:**
+- [ ] Email/password signup works
+- [ ] Google OAuth signup works
+- [ ] Email validation works (invalid emails rejected)
+- [ ] Password strength validation (if implemented)
+- [ ] Duplicate email detection
+- [ ] Organization created on signup
+- [ ] User redirected to onboarding after signup
+
+#### ⚠️ Login Flow
+**Status:** Needs testing  
+**Tests Required:**
+- [ ] Email/password login works
+- [ ] Google OAuth login works
+- [ ] Wrong password shows error
+- [ ] Non-existent email shows error
+- [ ] Session persists after page refresh
+- [ ] Logout works correctly
+
+#### ⚠️ Password Reset Flow
+**Status:** Needs testing  
+**Tests Required:**
+- [ ] "Forgot password" sends email
+- [ ] Reset link works
+- [ ] Password can be changed
+- [ ] Login works with new password
+- [ ] Expired reset tokens rejected
+
+### 2. Payment Testing (CRITICAL - USE DODO TEST CARDS)
+
+#### ⚠️ Dodo Payments Setup
+**Status:** Needs verification  
+**Requirements:**
+- [ ] Dodo Payments API key configured (test mode)
+- [ ] Webhook secret configured
+- [ ] Webhook URL set in Dodo dashboard: `https://yourdomain.com/api/webhooks/dodo`
+- [ ] Product IDs configured for all plans:
+  - `DODO_STARTER_MONTHLY_ID`
+  - `DODO_STARTER_YEARLY_ID`
+  - `DODO_PRO_MONTHLY_ID`
+  - `DODO_PRO_YEARLY_ID`
+
+#### ⚠️ Test Cards (Dodo Payments)
+**Use these test cards in test mode:**
+
+| Card Number | Type | Result | Use Case |
+|-------------|------|--------|----------|
+| `4242 4242 4242 4242` | Visa | Success | Normal checkout |
+| `5555 5555 5555 4444` | Mastercard | Success | Alternative card |
+| `4000 0000 0000 0002` | Visa | Declined | Payment failure |
+| `4000 0000 0000 9995` | Mastercard | Declined | Payment failure |
+
+**Card Details (all test cards):**
+- Expiry: Any future date (e.g., `12/34`)
+- CVV: Any 3 digits (e.g., `123`)
+- ZIP: Any 5 digits (e.g., `12345`)
+
+#### ⚠️ Checkout Flow Testing
+**Status:** Needs manual testing  
+**Tests Required:**
+- [ ] Click "Upgrade to Starter" → Redirects to Dodo checkout
+- [ ] Click "Upgrade to Pro" → Redirects to Dodo checkout
+- [ ] Monthly/yearly toggle works
+- [ ] Enter test card `4242 4242 4242 4242` → Payment succeeds
+- [ ] Enter declined card `4000 0000 0000 0002` → Shows error
+- [ ] After successful payment → Redirects back to billing page
+- [ ] Organization plan updates in database
+- [ ] Features unlock immediately
+
+#### ⚠️ Webhook Testing
+**Status:** Needs verification  
+**Tests Required:**
+- [ ] Webhook receives `subscription.active` event
+- [ ] Organization `plan` field updates correctly
+- [ ] Organization `subscription_status` updates to `active`
+- [ ] `dodo_subscription_id` and `dodo_customer_id` saved
+- [ ] `current_period_start` and `current_period_end` set correctly
+- [ ] Notification created in database
+- [ ] Test webhook signature verification (currently disabled for debugging)
+
+#### ⚠️ Billing Portal Testing
+**Status:** Needs testing  
+**Tests Required:**
+- [ ] Access billing portal from `/settings/billing`
+- [ ] View subscription details
+- [ ] View invoices
+- [ ] Update payment method
+- [ ] Cancel subscription
+- [ ] Verify cancellation updates `cancel_at_period_end`
+
+### 3. End-to-End Tier Testing (CRITICAL)
 
 #### ⚠️ Free Tier Workflow Testing
 **Status:** Needs manual testing  
+**Create test account:** `test-free@example.com`  
 **Tests Required:**
-- [ ] Sign up → Run 3 checks → Verify 4th fails
-- [ ] Wait 7 days → Verify checks blocked with trial expired message
-- [ ] Try to add 2nd site → Verify fails with proper error
+- [ ] Sign up → Run 3 checks → Verify 4th fails with "Upgrade to Starter" message
+- [ ] Try to add 2nd site → Verify fails with "Free plan allows 1 site" error
 - [ ] Try to add competitor → Verify fails (free has 0 competitors)
 - [ ] Try to access roadmap → Verify paywall shown
 - [ ] Try to access gap analysis → Verify paywall shown
+- [ ] Try to access Trust Map instructions → Verify paywall shown
+- [ ] Wait 7 days → Verify checks blocked with trial expired message
+- [ ] Verify manual checks only (no automated checks)
 
 #### ⚠️ Starter Tier Workflow Testing
 **Status:** Needs manual testing  
+**Create test account:** `test-starter@example.com`  
+**Upgrade using test card:** `4242 4242 4242 4242`  
 **Tests Required:**
-- [ ] Run 10+ manual checks → Verify all succeed
-- [ ] Run 5 gap analyses → Verify 6th fails with limit message
-- [ ] Run 3 content ideas → Verify 4th fails with limit message
-- [ ] Add 3 sites → Verify 4th fails
-- [ ] Add 2 competitors per site → Verify 3rd fails
-- [ ] Verify daily auto-checks run (Inngest cron)
+- [ ] Upgrade to Starter → Plan updates, features unlock
+- [ ] Run 10+ manual checks → Verify all succeed (unlimited)
+- [ ] Run 5 gap analyses → Verify all succeed
+- [ ] Run 6th gap analysis → Verify fails with "5/month limit reached" message
+- [ ] Run 3 content ideas → Verify all succeed
+- [ ] Run 4th content idea → Verify fails with "3/month limit reached" message
+- [ ] Add 3 sites → Verify all succeed
+- [ ] Add 4th site → Verify fails with "Starter plan allows 3 sites" error
+- [ ] Add 2 competitors per site → Verify all succeed
+- [ ] Add 3rd competitor → Verify fails with "Starter plan allows 2 competitors per site" error
+- [ ] Verify daily auto-checks run (check Inngest dashboard)
 - [ ] Try to access action plan → Verify "Pro only" message
+- [ ] Verify Trust Map shows top 5 sources (not all)
 
 #### ⚠️ Pro Tier Workflow Testing
 **Status:** Needs manual testing  
+**Create test account:** `test-pro@example.com`  
+**Upgrade using test card:** `4242 4242 4242 4242`  
 **Tests Required:**
+- [ ] Upgrade to Pro → Plan updates, features unlock
 - [ ] Run unlimited manual checks → Verify all succeed
-- [ ] Run unlimited gap analyses → Verify all succeed
+- [ ] Run unlimited gap analyses → Verify all succeed (no limit message)
 - [ ] Run unlimited content ideas → Verify all succeed
 - [ ] Access all intelligence features → Verify all work
-- [ ] Add 10 sites → Verify 11th fails
-- [ ] Add 10 competitors per site → Verify 11th fails
-- [ ] Verify hourly auto-checks run (Inngest cron)
+- [ ] Add 10 sites → Verify all succeed
+- [ ] Add 11th site → Verify fails with "Pro plan allows 10 sites" error
+- [ ] Add 10 competitors per site → Verify all succeed
+- [ ] Add 11th competitor → Verify fails with "Pro plan allows 10 competitors per site" error
+- [ ] Verify hourly auto-checks run (check Inngest dashboard)
+- [ ] Verify Trust Map shows all sources (full access)
+- [ ] Verify Roadmap shows full action plan with progress tracking
 
-#### ⚠️ Upgrade Flow Testing
+#### ⚠️ Upgrade/Downgrade Flow Testing
 **Status:** Needs manual testing  
 **Tests Required:**
 - [ ] Free → Starter upgrade (checkout → webhook → plan update)
 - [ ] Starter → Pro upgrade (checkout → webhook → plan update)
 - [ ] Verify features unlock immediately after upgrade
-- [ ] Verify limits update correctly
+- [ ] Verify limits update correctly (sites, competitors, intelligence)
+- [ ] Test downgrade (Pro → Starter) via billing portal
+- [ ] Verify features lock correctly after downgrade
+- [ ] Verify prorated billing (if applicable)
 
-#### ⚠️ Billing Flow Testing
-**Status:** Needs manual testing  
+### 4. Background Jobs Testing (Inngest)
+
+#### ⚠️ Automated Checks
+**Status:** Needs verification  
+**Files:** `src/lib/jobs/citation-jobs.ts`  
 **Tests Required:**
-- [ ] Checkout redirects to Dodo Payments
-- [ ] Payment completes successfully
-- [ ] Webhook updates organization plan
-- [ ] Billing portal access works
-- [ ] Subscription cancellation works
-- [ ] Trial expiration handling
+- [ ] Daily auto-checks run for Starter plan (check Inngest dashboard)
+- [ ] Hourly auto-checks run for Pro plan (check Inngest dashboard)
+- [ ] Auto-checks don't count against manual limits
+- [ ] Citations saved correctly from auto-checks
+- [ ] Auto-checks don't run for Free tier
+
+#### ⚠️ Weekly Reports
+**Status:** Needs verification  
+**Files:** `src/lib/jobs/citation-jobs.ts`  
+**Tests Required:**
+- [ ] Weekly reports sent to Starter/Pro users
+- [ ] Email content is correct
+- [ ] Reports include real data (no mock data)
+- [ ] Reports sent via Resend
+
+#### ⚠️ Email Alerts
+**Status:** Needs verification  
+**Tests Required:**
+- [ ] New citation alerts sent
+- [ ] Competitor overtake alerts sent
+- [ ] Email formatting correct
+- [ ] Resend domain verified
+- [ ] Emails delivered successfully
 
 ---
 
@@ -584,6 +719,23 @@ INNGEST_SIGNING_KEY=
 
 ## 📚 Documentation Files
 
+### Testing Documentation (START HERE)
+- `TESTING_PROGRESS_TRACKER.md` - **⭐ LIVE TRACKER** - Track testing progress together
+- `TESTING_COLLABORATION_GUIDE.md` - **⭐ HOW TO WORK TOGETHER** - Screenshot sharing, observations format
+- `REVENUE_TESTING_CHECKLIST.md` - Complete revenue optimization testing checklist
+- `MASTER_TESTING_REFERENCE.md` - All revenue points in one place
+- `TESTING_SESSION_NOTES.md` - Template for documenting test results
+
+### Technical Testing
+- `COMPLETE_TESTING_GUIDE.md` - Step-by-step testing for auth, payments, and all tiers
+- `TEST_ACCOUNTS_SETUP.md` - Test account setup guide
+- `TESTING_SUMMARY.md` - Quick reference
+
+### Revenue Optimization
+- `REVENUE_OPTIMIZATION_PLAN.md` - Full revenue strategy ($100k MRR by June)
+- `REVENUE_TESTING_CHECKLIST.md` - Revenue-focused testing
+
+### Product Documentation
 - `WORKFLOW_VERIFICATION.md` - Detailed test cases for all tiers
 - `WORKFLOW_ENFORCEMENT_SUMMARY.md` - Complete enforcement summary
 - `DASHBOARD_AUDIT_REPORT.md` - Dashboard audit results
@@ -637,11 +789,13 @@ INNGEST_SIGNING_KEY=
 ## 💡 Quick Start for New Chat
 
 1. Read this `HANDOFF_REPORT.md` file
-2. Review `WORKFLOW_VERIFICATION.md` for test cases
-3. Review `WORKFLOW_ENFORCEMENT_SUMMARY.md` for enforcement details
-4. Test workflows with real accounts
-5. Fix any issues found during testing
-6. Monitor production metrics
+2. **Follow `COMPLETE_TESTING_GUIDE.md`** for step-by-step testing instructions
+3. Review `WORKFLOW_VERIFICATION.md` for test cases
+4. Review `WORKFLOW_ENFORCEMENT_SUMMARY.md` for enforcement details
+5. Create test accounts for all three tiers (see testing guide)
+6. Test authentication, payments, and all tier limits
+7. Fix any issues found during testing
+8. Monitor production metrics
 
 ---
 

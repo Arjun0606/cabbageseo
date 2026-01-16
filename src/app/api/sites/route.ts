@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
     
     // Check if free user's trial has expired (bypass for test accounts)
     if (plan === "free" && orgCreatedAt) {
-      const access = canAccessProduct(plan, orgCreatedAt, user.email);
+      const access = canAccessProduct(plan, orgCreatedAt, user.email || null);
       if (!access.allowed) {
         return NextResponse.json({
           error: access.reason || "Trial expired. Upgrade to continue.",
