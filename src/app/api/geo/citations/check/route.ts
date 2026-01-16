@@ -29,6 +29,7 @@ import {
   canRunManualCheck,
   canAccessProduct,
 } from "@/lib/billing/citation-plans";
+import { getTestPlan } from "@/lib/testing/test-accounts";
 
 function getDbClient(): SupabaseClient | null {
   try {
@@ -495,13 +496,20 @@ export async function POST(request: NextRequest) {
         orgCreatedAt = orgData.created_at;
       }
       
+      // ⚠️ TEST ACCOUNT BYPASS - Use test account plan if applicable
+      const testPlan = getTestPlan(user.email);
+      if (testPlan) {
+        plan = testPlan;
+        console.log(`[Test Account] Using test plan: ${testPlan} for ${user.email}`);
+      }
+      
       // ============================================
       // PLAN ENFORCEMENT - CRITICAL
       // ============================================
       
-      // Check if free user's trial has expired
+      // Check if free user's trial has expired (bypass for test accounts)
       if (plan === "free" && orgCreatedAt) {
-        const access = canAccessProduct(plan, orgCreatedAt);
+        const access = canAccessProduct(plan, orgCreatedAt, user.email);
         if (!access.allowed) {
           return NextResponse.json({
             error: access.reason || "Trial expired. Upgrade to continue.",

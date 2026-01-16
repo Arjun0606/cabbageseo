@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCitationPlanLimits, canAddSite, canAccessProduct } from "@/lib/billing/citation-plans";
+import { getTestPlan } from "@/lib/testing/test-accounts";
 
 function getDbClient(): SupabaseClient | null {
   try {
@@ -142,7 +143,6 @@ export async function POST(request: NextRequest) {
     const orgCreatedAt = org?.created_at;
     
     // ⚠️ TEST ACCOUNT BYPASS - Use test account plan if applicable
-    const { getTestPlan } = require("@/lib/testing/test-accounts");
     const testPlan = getTestPlan(user.email);
     if (testPlan) {
       plan = testPlan;

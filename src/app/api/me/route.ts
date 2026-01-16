@@ -11,6 +11,7 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getTestPlan } from "@/lib/testing/test-accounts";
 
 // Safe service client
 function getDbClient(): SupabaseClient | null {
@@ -99,6 +100,14 @@ export async function GET() {
       
       orgData = org as { plan: string; subscription_status: string; created_at: string } | null;
     }
+    
+    // ⚠️ TEST ACCOUNT BYPASS - Override plan with test account plan if applicable
+    let finalPlan = orgData?.plan || "free";
+    const testPlan = getTestPlan(user.email);
+    if (testPlan) {
+      finalPlan = testPlan;
+      console.log(`[Test Account] Overriding plan to ${testPlan} for ${user.email}`);
+    }
 
     // Get sites with citation data
     interface SiteRecord {
@@ -155,7 +164,7 @@ export async function GET() {
       },
       organization: orgId ? {
         id: orgId,
-        plan: orgData?.plan || "free",
+        plan: finalPlan,
         status: orgData?.subscription_status || "active",
         createdAt: orgData?.created_at || new Date().toISOString(),
       } : null,

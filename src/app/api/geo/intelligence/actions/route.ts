@@ -26,6 +26,7 @@ import {
   generateWeeklyActionPlan,
   analyzeCompetitorDeepDive,
 } from "@/lib/geo/citation-intelligence";
+import { getTestPlan } from "@/lib/testing/test-accounts";
 
 type ActionType = "gap-analysis" | "content-recommendations" | "action-plan" | "competitor-deep-dive";
 
@@ -73,7 +74,15 @@ export async function POST(request: NextRequest) {
       .eq("id", profile.organization_id)
       .single();
 
-    const plan = getCitationPlan(org?.plan || "free");
+    // ⚠️ TEST ACCOUNT BYPASS - Use test account plan if applicable
+    let planId = org?.plan || "free";
+    const testPlan = getTestPlan(user.email);
+    if (testPlan) {
+      planId = testPlan;
+      console.log(`[Test Account] Using test plan: ${testPlan} for ${user.email}`);
+    }
+    
+    const plan = getCitationPlan(planId);
     const body: RequestBody = await request.json();
     const { action, siteId, query, competitorId } = body;
 
