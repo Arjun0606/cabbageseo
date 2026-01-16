@@ -236,6 +236,7 @@ export default function SettingsPage() {
           </Link>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
