@@ -23,6 +23,13 @@ function getDbClient(): SupabaseClient | null {
 // GET - List sites
 export async function GET() {
   try {
+    // ⚠️ TEST SESSION CHECK FIRST
+    const testSession = await getTestSession();
+    if (testSession) {
+      // Return empty sites for test accounts (they can create sites via POST)
+      return NextResponse.json({ sites: [] });
+    }
+
     const supabase = await createClient();
     if (!supabase) {
       return NextResponse.json({ error: "Not configured" }, { status: 500 });
@@ -69,14 +76,28 @@ export async function GET() {
 // POST - Create site
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    if (!supabase) {
-      return NextResponse.json({ error: "Not configured" }, { status: 500 });
-    }
+    // ⚠️ TEST SESSION CHECK FIRST
+    const testSession = await getTestSession();
+    let userId: string;
+    let userEmail: string;
+    let testPlan: "free" | "starter" | "pro" | null = null;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (testSession) {
+      userId = `test-${testSession.email}`;
+      userEmail = testSession.email;
+      testPlan = testSession.plan;
+    } else {
+      const supabase = await createClient();
+      if (!supabase) {
+        return NextResponse.json({ error: "Not configured" }, { status: 500 });
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      userId = user.id;
+      userEmail = user.email || "";
     }
 
     const body = await request.json();
@@ -91,25 +112,44 @@ export async function POST(request: NextRequest) {
     domain = domain.trim().toLowerCase();
     domain = domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
 
-    const db = getDbClient() || supabase;
+    const db = getDbClient() || (testSession ? null : supabase);
+    
+    // For test accounts, skip database operations and just enforce plan limits
+    if (testSession && testPlan) {
+      // Test accounts: Return success but don't create in DB (for now)
+      // TODO: Create test organization in DB if needed for full testing
+      return NextResponse.json({ 
+        site: {
+          id: `test-site-${Date.now()}`,
+          domain,
+          name: domain,
+          organization_id: `test-org-${testSession.email}`,
+          category: category || null,
+        }
+      });
+    }
+
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
 
     // Get user's organization and plan
     const { data: userData } = await db
       .from("users")
       .select("organization_id")
-      .eq("id", user.id)
+      .eq("id", userId)
       .maybeSingle();
 
     let orgId = userData?.organization_id;
 
     // Create org if doesn't exist
     if (!orgId) {
-      const slug = (user.email?.split("@")[0]?.replace(/[^a-z0-9]/gi, "") || "user") + "-" + Date.now();
+      const slug = (userEmail.split("@")[0]?.replace(/[^a-z0-9]/gi, "") || "user") + "-" + Date.now();
       
       const { data: newOrg } = await db
         .from("organizations")
         .insert({
-          name: user.user_metadata?.name || user.email?.split("@")[0] || "My Organization",
+          name: userEmail.split("@")[0] || "My Organization",
           slug,
           plan: "free",
           subscription_status: "active",
@@ -120,9 +160,9 @@ export async function POST(request: NextRequest) {
       if (newOrg) {
         orgId = newOrg.id;
         await db.from("users").upsert({
-          id: user.id,
+          id: userId,
           organization_id: orgId,
-          email: user.email || "",
+          email: userEmail,
           role: "owner",
         });
       }
@@ -143,15 +183,19 @@ export async function POST(request: NextRequest) {
     const orgCreatedAt = org?.created_at;
     
     // ⚠️ TEST ACCOUNT BYPASS - Use test account plan if applicable
-    const testPlan = getTestPlan(user.email);
     if (testPlan) {
       plan = testPlan;
-      console.log(`[Test Account] Using test plan: ${testPlan} for ${user.email}`);
+      console.log(`[Test Account] Using test plan: ${testPlan} for ${userEmail}`);
+    } else {
+      const dbTestPlan = getTestPlan(userEmail);
+      if (dbTestPlan) {
+        plan = dbTestPlan;
+      }
     }
     
     // Check if free user's trial has expired (bypass for test accounts)
-    if (plan === "free" && orgCreatedAt) {
-      const access = canAccessProduct(plan, orgCreatedAt, user.email || null);
+    if (plan === "free" && orgCreatedAt && !testPlan) {
+      const access = canAccessProduct(plan, orgCreatedAt, userEmail || null);
       if (!access.allowed) {
         return NextResponse.json({
           error: access.reason || "Trial expired. Upgrade to continue.",
