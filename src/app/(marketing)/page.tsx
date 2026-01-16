@@ -110,13 +110,6 @@ export default function HomePage() {
             <span className="text-zinc-500">
               Takes 10 seconds • Free preview (signup for full access)
             </span>
-            <span className="text-zinc-600">•</span>
-            <button
-              onClick={() => router.push("/teaser?domain=notion.so&demo=true")}
-              className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
-            >
-              See how AI treats Notion →
-            </button>
           </div>
         </div>
       </section>
