@@ -69,6 +69,11 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
+
+      return NextResponse.json({
+        success: true,
+        message: "Test account auto-confirmed",
+      });
     } else {
       // User already confirmed
       return NextResponse.json({
@@ -76,18 +81,6 @@ export async function POST(request: NextRequest) {
         message: "Test account already confirmed",
       });
     }
-
-    if (updateError) {
-      return NextResponse.json(
-        { error: updateError.message },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: "Test account auto-confirmed",
-    });
   } catch (error: any) {
     console.error("[Auto-confirm test] Error:", error);
     return NextResponse.json(
