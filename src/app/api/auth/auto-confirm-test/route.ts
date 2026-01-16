@@ -69,6 +69,12 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
+    } else {
+      // User already confirmed
+      return NextResponse.json({
+        success: true,
+        message: "Test account already confirmed",
+      });
     }
 
     if (updateError) {
