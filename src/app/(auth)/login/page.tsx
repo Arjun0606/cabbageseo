@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { isTestAccount } from "@/lib/testing/test-accounts";
 
 function LoginPageContent() {
   const router = useRouter();
@@ -24,6 +25,35 @@ function LoginPageContent() {
     setLoading(true);
     setError(null);
 
+    // Check if this is a test account - use simple test login
+    if (isTestAccount(email)) {
+      try {
+        const response = await fetch("/api/test/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || "Invalid credentials");
+          setLoading(false);
+          return;
+        }
+
+        // Test login successful - redirect
+        router.push(redirectTo);
+        router.refresh();
+        return;
+      } catch (err: any) {
+        setError(err.message || "Login failed");
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Regular Supabase auth for non-test accounts
     const supabase = createClient();
     if (!supabase) {
       setError("Authentication is not configured");

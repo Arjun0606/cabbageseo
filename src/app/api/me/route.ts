@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getTestPlan } from "@/lib/testing/test-accounts";
+import { getTestSession } from "@/lib/testing/test-session";
 
 // Safe service client
 function getDbClient(): SupabaseClient | null {
@@ -24,7 +25,29 @@ function getDbClient(): SupabaseClient | null {
 
 export async function GET() {
   try {
-    // Get auth client
+    // ⚠️ TEST SESSION CHECK FIRST - Simple credential-based testing
+    const testSession = await getTestSession();
+    if (testSession) {
+      // Return test session data - no Supabase needed
+      return NextResponse.json({
+        authenticated: true,
+        user: {
+          id: `test-${testSession.email}`,
+          email: testSession.email,
+          name: testSession.name,
+        },
+        organization: {
+          id: `test-org-${testSession.email}`,
+          plan: testSession.plan,
+          status: "active",
+          createdAt: new Date().toISOString(),
+        },
+        sites: [],
+        currentSite: null,
+      });
+    }
+
+    // Regular Supabase auth for non-test accounts
     const supabase = await createClient();
     if (!supabase) {
       return NextResponse.json({ 
