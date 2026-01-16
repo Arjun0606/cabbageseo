@@ -134,16 +134,24 @@ export async function POST(request: NextRequest) {
     // Get plan limits
     const { data: org } = await db
       .from("organizations")
-      .select("plan")
+      .select("plan, created_at")
       .eq("id", orgId)
       .single();
 
-    const plan = org?.plan || "free";
+    let plan = org?.plan || "free";
     const orgCreatedAt = org?.created_at;
     
-    // Check if free user's trial has expired
+    // ⚠️ TEST ACCOUNT BYPASS - Use test account plan if applicable
+    const { getTestPlan } = require("@/lib/testing/test-accounts");
+    const testPlan = getTestPlan(user.email);
+    if (testPlan) {
+      plan = testPlan;
+      console.log(`[Test Account] Using test plan: ${testPlan} for ${user.email}`);
+    }
+    
+    // Check if free user's trial has expired (bypass for test accounts)
     if (plan === "free" && orgCreatedAt) {
-      const access = canAccessProduct(plan, orgCreatedAt);
+      const access = canAccessProduct(plan, orgCreatedAt, user.email);
       if (!access.allowed) {
         return NextResponse.json({
           error: access.reason || "Trial expired. Upgrade to continue.",
