@@ -6,38 +6,45 @@
 
 ## 🎯 Best Test Websites
 
-These websites are perfect for testing because:
-- ✅ AI frequently recommends them
-- ✅ They have clear competitors
-- ✅ They show up in ChatGPT, Perplexity, Google AI responses
-- ✅ You'll see real citations and competitive analysis
+**Important:** These are realistic test sites that represent your ACTUAL target customers:
+- ✅ Small/medium SaaS products
+- ✅ Online marketplaces
+- ✅ Tools that AI probably WON'T recommend (yet)
+- ✅ Have clear competitors that AI DOES recommend
+- ✅ Perfect for seeing the "loss" scenario
 
 ### Recommended Test Websites:
 
-#### 1. **Notion** (`notion.so`)
-- **Why:** Very popular, AI recommends it often
-- **Competitors:** Obsidian, Roam Research, Coda, Airtable
-- **What to expect:** High citation rate, many competitors mentioned
+#### 1. **Small SaaS Products** (Realistic targets)
+- **Example:** `your-saas-tool.com` or `indie-product.com`
+- **Why:** Represents actual customers - small founders
+- **Competitors:** AI will recommend bigger players instead
+- **What to expect:** "Not cited" results, competitors mentioned
+- **Use your own domain** or a friend's small SaaS
 
-#### 2. **Figma** (`figma.com`)
-- **Why:** Industry standard, AI always recommends it
-- **Competitors:** Adobe XD, Sketch, Framer, Canva
-- **What to expect:** Strong citations, competitive mentions
+#### 2. **Niche Marketplaces** (Realistic targets)
+- **Example:** `niche-marketplace.com` or `specialized-platform.com`
+- **Why:** Small marketplaces compete with big players
+- **Competitors:** Etsy, Amazon, eBay (AI recommends these)
+- **What to expect:** Clear competitive losses
 
-#### 3. **Stripe** (`stripe.com`)
-- **Why:** Payment processing leader, AI recommends frequently
-- **Competitors:** PayPal, Square, Braintree, Adyen
-- **What to expect:** High citations, clear competitive landscape
+#### 3. **Indie Tools** (Realistic targets)
+- **Example:** `indie-tool.com` or `small-product.com`
+- **Why:** Small tools compete with established players
+- **Competitors:** Bigger, well-known alternatives
+- **What to expect:** "AI chose competitors" scenarios
 
-#### 4. **Shopify** (`shopify.com`)
-- **Why:** E-commerce platform, AI recommends often
-- **Competitors:** WooCommerce, BigCommerce, Squarespace, Wix
-- **What to expect:** Good citations, competitive analysis
+#### 4. **Your Own Product** (Best for testing!)
+- **Use your actual domain** if you have a SaaS/marketplace
+- **Why:** Most realistic - see what AI says about YOUR product
+- **Competitors:** Your actual competitors
+- **What to expect:** Real insights into your competitive position
 
-#### 5. **Slack** (`slack.com`)
-- **Why:** Team communication leader
-- **Competitors:** Microsoft Teams, Discord, Zoom, Mattermost
-- **What to expect:** Strong citations, many competitors
+#### 5. **Friend's/Client's Product** (Realistic)
+- **Use a small SaaS you know**
+- **Why:** Real-world scenario
+- **Competitors:** Their actual competitors
+- **What to expect:** Actionable competitive intelligence
 
 ---
 
@@ -51,9 +58,10 @@ Email: test-free@cabbageseo.test
 Password: TestFree123!
 ```
 
-#### Test 1: Add Site
+#### Test 1: Add Site (Use a small SaaS/marketplace)
 1. Click "Scan my site now" on dashboard
-2. Enter: `notion.so`
+2. Enter: Your small SaaS domain (or use a realistic test domain)
+   - Example: `your-indie-tool.com` or `small-marketplace.com`
 3. Click "Add & Scan"
 4. ✅ **Expected:** Site added successfully
 5. ✅ **Verify:** Dashboard shows site
@@ -64,19 +72,20 @@ Password: TestFree123!
 3. Wait for results (may take 30-60 seconds)
 4. ✅ **Expected:** See results from ChatGPT, Perplexity, Google AI
 5. ✅ **Verify:** 
-   - Shows whether Notion was cited
-   - Shows competitors mentioned (Obsidian, Coda, etc.)
-   - Shows estimated loss if not cited
+   - Shows whether YOUR site was cited (probably NOT - that's the point!)
+   - Shows competitors mentioned (bigger players AI recommends instead)
+   - Shows estimated loss (this is the value - seeing what you're missing)
+   - Shows "AI chose competitors" message
 
 #### Test 3: Test Daily Limit (3 checks/day)
-1. Run check #1 ✅
-2. Run check #2 ✅
+1. Run check #1 ✅ (on your small SaaS)
+2. Run check #2 ✅ (on same site or different query)
 3. Run check #3 ✅
 4. Try to run check #4 ❌
 5. ✅ **Expected:** Error message "Daily limit reached. Upgrade for unlimited checks."
 
 #### Test 4: Test Site Limit (1 site max)
-1. Try to add second site: `figma.com`
+1. Try to add second site: Another small SaaS domain
 2. ✅ **Expected:** Error "Site limit reached. Upgrade for more sites."
 
 #### Test 5: Test Competitor Limit (0 competitors)
@@ -100,17 +109,17 @@ Password: TestStarter123!
 ```
 
 #### Test 1: Add Multiple Sites (3 max)
-1. Add site #1: `notion.so` ✅
-2. Add site #2: `figma.com` ✅
-3. Add site #3: `stripe.com` ✅
-4. Try to add site #4: `shopify.com` ❌
+1. Add site #1: Your small SaaS #1 ✅
+2. Add site #2: Your small SaaS #2 ✅
+3. Add site #3: Your small SaaS #3 ✅
+4. Try to add site #4: Another domain ❌
 5. ✅ **Expected:** Error "Site limit reached. Upgrade to Pro for more sites."
 
 #### Test 2: Add Competitors (2 per site)
-1. Select `notion.so`
-2. Add competitor #1: `obsidian.md` ✅
-3. Add competitor #2: `roamresearch.com` ✅
-4. Try to add competitor #3: `coda.io` ❌
+1. Select your first site
+2. Add competitor #1: A bigger competitor AI recommends ✅
+3. Add competitor #2: Another competitor ✅
+4. Try to add competitor #3: Another competitor ❌
 5. ✅ **Expected:** Error "Competitor limit reached. Upgrade to Pro for more."
 
 #### Test 3: Unlimited Checks
@@ -138,23 +147,23 @@ Password: TestPro123!
 ```
 
 #### Test 1: Add Many Sites (10 max)
-1. Add sites 1-10 ✅
-   - `notion.so`
-   - `figma.com`
-   - `stripe.com`
-   - `shopify.com`
-   - `slack.com`
-   - `github.com`
-   - `vercel.com`
-   - `linear.app`
-   - `airtable.com`
-   - `zapier.com`
+1. Add sites 1-10 ✅ (Use multiple small SaaS/marketplace domains)
+   - Your SaaS #1
+   - Your SaaS #2
+   - Your SaaS #3
+   - Friend's SaaS #1
+   - Friend's SaaS #2
+   - Small marketplace #1
+   - Small marketplace #2
+   - Indie tool #1
+   - Indie tool #2
+   - Indie tool #3
 2. Try to add site #11 ❌
 3. ✅ **Expected:** Error "Site limit reached. You've reached the Pro plan limit."
 
 #### Test 2: Add Many Competitors (10 per site)
-1. Select `notion.so`
-2. Add competitors 1-10 ✅
+1. Select your first site
+2. Add competitors 1-10 ✅ (All the bigger players AI recommends instead)
 3. Try to add competitor #11 ❌
 4. ✅ **Expected:** Error "Competitor limit reached."
 
@@ -169,27 +178,32 @@ Password: TestPro123!
 
 ## 🔍 What to Look For in Results
 
-### Good Results Should Show:
+### Realistic Results for Small SaaS/Marketplaces:
 
 1. **Citation Status:**
-   - ✅ "Cited" = AI mentioned your site
-   - ❌ "Not Cited" = AI mentioned competitors instead
+   - ❌ "Not Cited" = **This is EXPECTED and GOOD for testing!**
+   - This shows the product is working - it's detecting that AI chose competitors
+   - ✅ "Cited" = Your site IS being recommended (rare for small SaaS)
 
 2. **Competitors Mentioned:**
-   - List of competitors AI recommended
-   - Example: "AI recommends: Obsidian, Coda, Roam Research"
+   - List of bigger players AI recommended instead
+   - Example: "AI recommends: BigPlayer1, BigPlayer2, BigPlayer3"
+   - **This is the value** - seeing who's getting your customers
 
 3. **Estimated Loss:**
-   - Dollar amount you're losing
+   - Dollar amount you're losing to competitors
    - Example: "$2,400/month estimated loss"
+   - **This creates urgency** - the "gut punch" moment
 
 4. **Query Analysis:**
    - What queries were checked
-   - Example: "best note-taking apps", "Notion alternatives"
+   - Example: "best [your category] tools", "[your category] alternatives"
+   - Shows where you're missing out
 
 5. **Sources:**
-   - Where AI found information
+   - Where AI found information about competitors
    - Example: "Product Hunt", "G2", "Reddit"
+   - Shows where you need to get listed
 
 ---
 
@@ -226,31 +240,35 @@ Password: TestPro123!
 
 ## 🎯 Quick Test Scenarios
 
-### Scenario 1: "I want to see competitors"
+### Scenario 1: "I want to see competitors" (Realistic)
 ```
 1. Login: test-starter@cabbageseo.test
-2. Add site: notion.so
-3. Add competitor: obsidian.md
+2. Add site: your-small-saas.com
+3. Add competitor: bigger-competitor.com (who AI recommends)
 4. Run check
-5. ✅ Should see: Obsidian mentioned as competitor
+5. ✅ Should see: Bigger competitor mentioned, your site NOT mentioned
+6. ✅ Should see: "AI chose competitors" message
+7. ✅ Should see: Estimated loss amount
 ```
 
 ### Scenario 2: "I want to test limits"
 ```
 1. Login: test-free@cabbageseo.test
-2. Add site: figma.com
+2. Add site: your-indie-tool.com
 3. Run check 3 times ✅
 4. Try 4th check ❌
 5. ✅ Should see: "Daily limit reached"
 ```
 
-### Scenario 3: "I want to see real citations"
+### Scenario 3: "I want to see competitive losses" (Realistic)
 ```
 1. Login: test-pro@cabbageseo.test
-2. Add site: stripe.com
+2. Add site: your-small-marketplace.com
 3. Run check
-4. ✅ Should see: Real citations from ChatGPT, Perplexity, Google AI
-5. ✅ Should see: Competitors like PayPal, Square
+4. ✅ Should see: "Not cited" results (expected for small products)
+5. ✅ Should see: Competitors AI recommends instead
+6. ✅ Should see: Estimated monthly loss
+7. ✅ Should see: Sources where competitors are listed (but you're not)
 ```
 
 ---
@@ -263,9 +281,10 @@ Password: TestPro123!
 - **Wait:** Checks can take 30-60 seconds
 
 ### "All results show 'Not Cited'"
-- **Normal:** If site isn't well-known, AI might not cite it
-- **Try:** Use popular sites like Notion, Figma, Stripe
-- **Check:** API responses in Network tab
+- **This is EXPECTED and GOOD!** For small SaaS/marketplaces, this is realistic
+- **This is the value prop:** Showing founders that AI is choosing competitors
+- **What matters:** Are competitors being mentioned? Are you seeing estimated losses?
+- **Check:** API responses in Network tab to verify competitors are detected
 
 ### "Limits not enforced"
 - **Check:** Plan detection in `/api/me` response
@@ -285,5 +304,7 @@ Once you've verified everything works:
 
 ---
 
-**Start testing with `notion.so` - it's perfect for seeing real results! 🎯**
+**Start testing with YOUR actual small SaaS or marketplace domain - that's the real value! 🎯**
+
+**Remember:** The product is FOR small founders who AREN'T being recommended. Seeing "Not Cited" with competitors mentioned is the EXACT scenario your customers face. That's the "gut punch" moment that drives upgrades!
 
