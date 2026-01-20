@@ -304,6 +304,34 @@ function DashboardContent() {
               </span>
             </div>
           </div>
+
+          {/* Starter Tier Progress Summary */}
+          {organization?.plan === "starter" && effectiveLosses > 0 && (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 min-w-[280px]">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-4 h-4 text-emerald-400" />
+                <span className="text-white font-medium text-sm">Your AI Visibility Progress</span>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-zinc-400">Steps completed:</span>
+                  <span className="text-white font-medium">1 / 6</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-400">Sources covered:</span>
+                  <span className="text-white font-medium">1 / 5</span>
+                </div>
+                <div className="flex justify-between mb-3">
+                  <span className="text-zinc-400">Queries targeted:</span>
+                  <span className="text-white font-medium">{recentCheckResults.length}</span>
+                </div>
+                <div className="pt-3 border-t border-zinc-800">
+                  <p className="text-emerald-400 text-xs font-medium mb-1">Next best action:</p>
+                  <p className="text-zinc-300 text-xs">→ Finish G2 listing (30–60 min)</p>
+                </div>
+              </div>
+            </div>
+          )}
           
           <button
             onClick={runCheck}
