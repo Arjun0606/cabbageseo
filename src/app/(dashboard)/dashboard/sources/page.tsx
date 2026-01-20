@@ -340,7 +340,37 @@ export default function SourcesPage() {
                   {/* Expanded content - How to get listed */}
                   {expandedSource === source.name && (
                     <div className="border-t border-zinc-800 p-6 bg-zinc-950/50">
-                      {isPaidPlan ? (
+                      {/* Free tier: Show basic info + upgrade CTA */}
+                      {!isPaidPlan ? (
+                        <>
+                          <div className="mb-4">
+                            <p className="text-zinc-400 text-sm mb-3">
+                              <strong className="text-white">{source.name}</strong> is one of the most important sources AI uses. 
+                              Your competitors are listed here, which is why AI recommends them.
+                            </p>
+                            <p className="text-zinc-400 text-sm">
+                              Time to get listed: ~{source.timeToList}
+                            </p>
+                          </div>
+                          
+                          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
+                            <p className="text-red-300 text-sm font-medium mb-2">
+                              ⚠️ You're not listed on {source.name}
+                            </p>
+                            <p className="text-zinc-400 text-sm">
+                              Upgrade to Starter to get step-by-step instructions on how to get listed.
+                            </p>
+                          </div>
+
+                          <Link
+                            href="/settings/billing"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors w-full justify-center"
+                          >
+                            Upgrade to Starter ($29/mo) to see how
+                            <ArrowRight className="w-5 h-5" />
+                          </Link>
+                        </>
+                      ) : (
                         <>
                           <div className="flex items-center gap-2 mb-4">
                             <span className="text-sm text-zinc-400">
@@ -372,23 +402,6 @@ export default function SourcesPage() {
                             <ExternalLink className="w-4 h-4" />
                           </a>
                         </>
-                      ) : (
-                        <div className="text-center py-6">
-                          <Lock className="w-8 h-8 text-zinc-400 mx-auto mb-3" />
-                          <p className="text-white font-medium mb-2">
-                            Upgrade to see how to get listed
-                          </p>
-                          <p className="text-zinc-400 text-sm mb-4">
-                            Get step-by-step instructions for each source
-                          </p>
-                          <Link
-                            href="/settings/billing"
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors"
-                          >
-                            Upgrade to Starter
-                            <ArrowRight className="w-5 h-5" />
-                          </Link>
-                        </div>
                       )}
                     </div>
                   )}

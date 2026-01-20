@@ -45,40 +45,57 @@ function OnboardingContent() {
 
   const startScan = async (domainToScan: string) => {
     try {
-      // Progressive animation
-      for (let i = 0; i < scanSteps.length; i++) {
-        setScanStep(i);
-        await new Promise(resolve => setTimeout(resolve, 1200));
-      }
-
-      // Create site via API
-      const response = await fetch("/api/sites", {
+      // Create site FIRST (so we have siteId for check)
+      const siteResponse = await fetch("/api/sites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ domain: domainToScan }),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
+      if (!siteResponse.ok) {
+        const data = await siteResponse.json();
         throw new Error(data.error || "Failed to create site");
       }
 
-      const site = await response.json();
+      const site = await siteResponse.json();
       setSiteId(site.id);
 
-      // Trigger initial check
-      await fetch("/api/geo/citations/check", {
+      // Progressive animation WHILE check runs
+      // Show steps 1-3 quickly (site creation)
+      for (let i = 0; i < 3; i++) {
+        setScanStep(i);
+        await new Promise(resolve => setTimeout(resolve, 400));
+      }
+
+      // Start the actual check (this takes time)
+      const checkPromise = fetch("/api/geo/citations/check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteId: site.id }),
+        body: JSON.stringify({ siteId: site.id, domain: domainToScan }),
       });
+
+      // Continue animation while check runs
+      for (let i = 3; i < scanSteps.length - 1; i++) {
+        setScanStep(i);
+        await new Promise(resolve => setTimeout(resolve, 800));
+      }
+
+      // Wait for check to complete
+      const checkResponse = await checkPromise;
+      
+      if (!checkResponse.ok) {
+        // Still redirect even if check fails - they can run it again
+        console.error("Check failed but continuing:", await checkResponse.text());
+      }
+
+      // Final step
+      setScanStep(scanSteps.length - 1);
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       setStep("complete");
 
-      // Redirect to dashboard after brief pause
-      setTimeout(() => {
-        router.push(`/dashboard?welcome=true&siteId=${site.id}`);
-      }, 2000);
+      // Redirect IMMEDIATELY to dashboard with results
+      router.push(`/dashboard?welcome=true&siteId=${site.id}&justScanned=true`);
     } catch (err) {
       console.error("Onboarding error:", err);
       setError(err instanceof Error ? err.message : "Something went wrong");

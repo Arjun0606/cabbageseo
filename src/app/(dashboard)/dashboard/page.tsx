@@ -56,6 +56,7 @@ function DashboardContent() {
   const { currentSite, sites, loading: siteLoading, refreshData, organization, usage } = useSite();
   
   const isWelcome = searchParams.get("welcome") === "true";
+  const justScanned = searchParams.get("justScanned") === "true";
   
   const [citations, setCitations] = useState<Citation[]>([]);
   const [recentCheckResults, setRecentCheckResults] = useState<Array<{
@@ -82,13 +83,41 @@ function DashboardContent() {
           // Only use if less than 24 hours old
           if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
             setRecentCheckResults(data.results || []);
+            setLoading(false);
+          } else {
+            setLoading(false);
           }
         } catch (e) {
-          // Ignore parse errors
+          setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
+    } else {
+      setLoading(false);
     }
   }, [currentSite?.id]);
+
+  // If user just scanned, fetch fresh results immediately
+  useEffect(() => {
+    if (justScanned && currentSite?.id) {
+      // Small delay to ensure check completed
+      setTimeout(() => {
+        fetchCitations();
+        refreshData();
+        // Reload from localStorage (check saves there)
+        const stored = localStorage.getItem(`recent_check_${currentSite.id}`);
+        if (stored) {
+          try {
+            const data = JSON.parse(stored);
+            setRecentCheckResults(data.results || []);
+          } catch (e) {
+            // Ignore
+          }
+        }
+      }, 2000);
+    }
+  }, [justScanned, currentSite?.id]);
 
   const fetchCitations = async () => {
     if (!currentSite?.id) return;
@@ -533,8 +562,8 @@ function DashboardContent() {
               </div>
             )}
 
-            {/* First win guidance - show when user has no wins yet */}
-            {wins === 0 && (
+            {/* First win guidance - show when user has no wins yet AND no losses (just signed up) */}
+            {wins === 0 && effectiveLosses === 0 && recentCheckResults.length === 0 && (
               <div className="bg-gradient-to-r from-emerald-950/30 to-zinc-900 border border-emerald-500/20 rounded-xl p-6">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -542,18 +571,28 @@ function DashboardContent() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-white mb-1">
-                      AI doesn't even know you exist — but it clearly knows your competitors
+                      Run your first check to see if AI recommends you
                     </h3>
                     <p className="text-zinc-400 mb-4">
-                      Get listed on the sources AI trusts (G2, Capterra, Product Hunt) and start being recommended.
+                      We'll check ChatGPT, Perplexity, and Google AI to see who they mention for queries about your product.
                     </p>
-                    <Link
-                      href="/dashboard/roadmap"
-                      className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-semibold"
+                    <button
+                      onClick={runCheck}
+                      disabled={checking}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-50"
                     >
-                      Get your roadmap
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
+                      {checking ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Checking...
+                        </>
+                      ) : (
+                        <>
+                          Run Check Now
+                          <ArrowRight className="w-5 h-5" />
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
