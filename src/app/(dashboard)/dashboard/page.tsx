@@ -30,7 +30,6 @@ import {
   Loader2,
   Target,
   Zap,
-  Target,
   Clock,
 } from "lucide-react";
 
