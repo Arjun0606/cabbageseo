@@ -361,9 +361,20 @@ export default function SourcesPage() {
                                 <p className="text-zinc-300 text-sm">
                                   {source.howToGetListed[0]}
                                 </p>
-                                {source.link && (
+                                {source.name === "G2" && (
                                   <a
-                                    href={source.link}
+                                    href="https://sell.g2.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors text-sm"
+                                  >
+                                    Get started
+                                    <ExternalLink className="w-4 h-4" />
+                                  </a>
+                                )}
+                                {source.name === "Capterra" && (
+                                  <a
+                                    href="https://vendors.capterra.com"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors text-sm"
