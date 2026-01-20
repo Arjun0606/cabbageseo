@@ -153,7 +153,7 @@ function QueryPageContent() {
             You were not mentioned
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">
-            Why AI prefers your competitors
+            Why AI didn't recommend you
           </h1>
           <p className="text-xl text-zinc-400">
             Query: "{analysis.query}"
@@ -162,8 +162,8 @@ function QueryPageContent() {
 
         {/* Who AI recommended */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
-          <h2 className="text-lg font-semibold text-white mb-4">
-            Who AI recommended instead
+            <h2 className="text-lg font-semibold text-white mb-4">
+            Who AI trusts instead
           </h2>
           <div className="flex flex-wrap gap-2">
             {analysis.competitors.map((competitor, i) => (
@@ -200,7 +200,7 @@ function QueryPageContent() {
           <div className="flex items-center gap-2 mb-4">
             <ExternalLink className="w-5 h-5 text-red-400" />
             <h2 className="text-lg font-semibold text-white">
-              Where AI learns about them
+              Where AI learned about them
             </h2>
           </div>
           <p className="text-zinc-400 mb-4">

@@ -230,11 +230,10 @@ export default function SourcesPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">
-            AI Trust Map
+            Where AI gets its answers
           </h1>
           <p className="text-xl text-zinc-400">
-            These are the sources AI uses to make recommendations. 
-            Your competitors are on them. You're not.
+            Your competitors are here. You're not.
           </p>
         </div>
 

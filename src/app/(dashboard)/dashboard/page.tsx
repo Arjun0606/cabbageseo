@@ -253,8 +253,11 @@ function DashboardContent() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">
-              {currentSite?.domain || "Your Site"}
+              Is AI recommending you?
             </h1>
+            <p className="text-sm text-zinc-500 mb-2">
+              {currentSite?.domain || "Add a site to check"}
+            </p>
             <div className="flex items-center gap-4 text-sm text-zinc-400">
               <span className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
@@ -303,7 +306,7 @@ function DashboardContent() {
             <div>
               <div className="flex items-center gap-2 text-sm font-medium mb-2 text-red-400">
                 <AlertTriangle className="w-5 h-5" />
-                HIGH-INTENT QUERIES MISSED
+                QUERIES WHERE YOU'RE INVISIBLE
               </div>
               <div className="flex items-baseline gap-4">
                 <span className="text-6xl font-bold text-white">
@@ -317,10 +320,10 @@ function DashboardContent() {
               </div>
               <p className="mt-2 text-red-300/80">
                 {recentCheckResults.length === 0
-                  ? "Buyer-intent queries where AI recommends competitors instead of you"
+                  ? "AI recommended competitors instead of you"
                   : effectiveLosses === 0
                   ? "Great! AI is recommending you in all checked queries."
-                  : `${effectiveLosses} buyer-intent ${effectiveLosses === 1 ? "query" : "queries"} where AI chose competitors`
+                  : `AI recommended ${effectiveLosses === 1 ? "a competitor" : `${effectiveLosses} competitors`} instead of you`
                 }
               </p>
             </div>
@@ -342,7 +345,7 @@ function DashboardContent() {
         {loading ? (
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
             <Loader2 className="w-8 h-8 text-red-400 animate-spin mx-auto mb-4" />
-            <p className="text-zinc-400">Loading your AI visibility data...</p>
+            <p className="text-zinc-400">Checking if AI recommends you...</p>
           </div>
         ) : recentCheckResults.length === 0 && queryResults.length === 0 ? (
           /* NO BLANK STATES - Compelling CTA instead */
@@ -352,7 +355,7 @@ function DashboardContent() {
               AI is choosing your competitors right now
             </h3>
             <p className="text-zinc-400 mb-6 max-w-md mx-auto">
-              Run a check to see which buyer-intent queries AI is answering with your competitors' names instead of yours.
+              Run a check to see which queries AI answers with your competitors' names instead of yours.
             </p>
             <button
               onClick={runCheck}
@@ -385,7 +388,7 @@ function DashboardContent() {
                     <AlertTriangle className="w-6 h-6 text-red-400" />
                   </div>
                   <h2 className="text-xl font-bold text-white">
-                    ⚠️ AI is choosing your competitors ({effectiveLosses})
+                    ⚠️ Where AI ignores you ({effectiveLosses})
                   </h2>
                 </div>
                 
@@ -395,8 +398,8 @@ function DashboardContent() {
                       <tr className="border-b border-red-500/20 bg-red-950/20">
                         <th className="text-left px-6 py-4 text-red-300 font-semibold text-sm">Query</th>
                         <th className="text-left px-6 py-4 text-red-300 font-semibold text-sm">Platform</th>
-                        <th className="text-left px-6 py-4 text-red-300 font-semibold text-sm">AI Recommended</th>
-                        <th className="text-left px-6 py-4 text-red-300 font-semibold text-sm">Action</th>
+                        <th className="text-left px-6 py-4 text-red-300 font-semibold text-sm">Who AI recommends instead</th>
+                        <th className="text-left px-6 py-4 text-red-300 font-semibold text-sm">Why?</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -513,17 +516,17 @@ function DashboardContent() {
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-lg font-bold text-white mb-1">
-                      See where AI learns about your competitors
+                      See where AI gets its answers
                     </h3>
                     <p className="text-zinc-400">
-                      Get listed on the same sources (G2, Capterra, Reddit) and start winning these queries.
+                      Your competitors are on these sources. You're not. Get listed and start being recommended.
                     </p>
                   </div>
                   <Link
                     href="/dashboard/sources"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors whitespace-nowrap"
                   >
-                    View Trust Map
+                    View AI Trust Map
                     <ArrowRight className="w-5 h-5" />
                   </Link>
                 </div>
@@ -539,16 +542,16 @@ function DashboardContent() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-white mb-1">
-                      Your first AI mention is closer than you think
+                      AI doesn't even know you exist — but it clearly knows your competitors
                     </h3>
                     <p className="text-zinc-400 mb-4">
-                      Most founders can get their first AI mention within 2 weeks by getting listed on the right sources.
+                      Get listed on the sources AI trusts (G2, Capterra, Product Hunt) and start being recommended.
                     </p>
                     <Link
                       href="/dashboard/roadmap"
                       className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-semibold"
                     >
-                      Get your visibility roadmap
+                      Get your roadmap
                       <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>

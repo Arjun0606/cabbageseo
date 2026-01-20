@@ -54,20 +54,20 @@ export default function HomePage() {
             <span className="font-medium">Right now, AI is recommending your competitors</span>
           </div>
 
-          {/* Main headline - Fear + Agency */}
+          {/* Main headline - Personal, direct */}
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            AI is already sending
+            AI is recommending your competitors
             <br />
-            <span className="text-red-400">your customers away</span>
+            <span className="text-red-400">— not you</span>
           </h1>
 
-          {/* Subheadline - The consequence */}
+          {/* Subheadline - The reality */}
           <p className="text-xl text-zinc-300 mb-4 max-w-2xl mx-auto">
-            When someone asks ChatGPT "what's the best tool for X", 
-            <span className="text-white font-semibold"> AI picks the winners</span>.
+            When people ask ChatGPT or Google AI for the best tools, 
+            <span className="text-white font-semibold"> your product isn't even mentioned</span>.
           </p>
           <p className="text-lg text-red-400 font-medium mb-12">
-            If you're not on that list, you're invisible — and losing customers every day.
+            CabbageSEO shows you who AI recommends instead — and why.
           </p>
 
           {/* Domain Input Form */}
@@ -78,7 +78,7 @@ export default function HomePage() {
                   type="text"
                   value={domain}
                   onChange={(e) => setDomain(e.target.value)}
-                  placeholder="yourdomain.com"
+                  placeholder="yoursaas.com"
                   className="w-full px-6 py-4 bg-zinc-900 border-2 border-zinc-700 rounded-xl text-white text-lg placeholder:text-zinc-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
                   disabled={loading}
                 />
@@ -108,8 +108,11 @@ export default function HomePage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
             <span className="text-zinc-500">
-              Takes 10 seconds • Free preview (signup for full access)
+              Takes ~10 seconds • No signup required
             </span>
+            <p className="text-zinc-500 text-sm mt-2">
+              Works best for SaaS, micro-SaaS, and online tools
+            </p>
           </div>
         </div>
       </section>
@@ -119,11 +122,13 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white mb-4">
-              AI doesn't search. AI <span className="text-red-400">decides</span>.
+              This is the new gatekeeper
             </h2>
             <p className="text-zinc-400 max-w-2xl mx-auto">
-              When someone asks "what's the best CRM?" — AI doesn't give 10 options.
-              It picks 3. If you're not one of them, you lose that customer.
+              People don't Google like they used to. They ask AI: "What's the best CRM?" 
+              "What's the best alternative to Notion?" "Which tool should I use?"
+              <br /><br />
+              AI gives one answer. If it's not you, you don't exist.
             </p>
           </div>
 
@@ -175,11 +180,12 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white mb-4">
-              CabbageSEO shows you the truth — <span className="text-emerald-400">and how to fix it</span>
+              CabbageSEO shows you the truth
             </h2>
             <p className="text-zinc-400 max-w-2xl mx-auto">
-              We query real AI platforms and show you exactly who they recommend,
-              why your competitors are winning, and what to do about it.
+              See exactly what ChatGPT, Perplexity, and Google AI say. 
+              See which competitors AI recommends instead of you. 
+              See where AI learned about them. Get clear steps to stop being invisible.
             </p>
           </div>
 
@@ -187,23 +193,23 @@ export default function HomePage() {
             {[
               {
                 step: "1",
-                title: "See who AI recommends instead of you",
-                description: "Real responses from ChatGPT, Perplexity, and Google AI. See exactly who they mention.",
+                title: "See exactly what ChatGPT, Perplexity, and Google AI say",
+                description: "Real responses. No estimates. No fake data. Just what AI actually said.",
               },
               {
                 step: "2",
-                title: "Understand why competitors are winning",
-                description: "Discover the sources AI trusts: G2, Capterra, Product Hunt, Reddit. Your competitors are there. You're not.",
+                title: "See which competitors AI recommends instead of you",
+                description: "Know exactly who's getting your customers. See the names AI mentions.",
               },
               {
                 step: "3",
-                title: "Get your roadmap to visibility",
-                description: "Step-by-step instructions to get listed on the sources AI trusts, so you start getting recommended.",
+                title: "See where AI learned about them",
+                description: "G2, Product Hunt, Reddit, etc. Your competitors are on these sources. You're not.",
               },
               {
                 step: "4",
-                title: "Track when AI starts recommending you",
-                description: "Weekly reports show when you gain visibility. Get alerts when competitors overtake you.",
+                title: "Get clear steps to stop being invisible",
+                description: "Step-by-step instructions. What to add. Where to get listed. How to fix it.",
               },
             ].map((item) => (
               <div key={item.step} className="flex gap-6 items-start">
@@ -231,7 +237,7 @@ export default function HomePage() {
             Find out in 10 seconds
           </h2>
           <p className="text-xl text-zinc-400 mb-8">
-            Enter your domain and see if AI is recommending you — or sending customers to your competitors.
+            Enter your domain and see who AI recommends — you or your competitors.
           </p>
 
           <form onSubmit={handleSubmit} className="max-w-xl mx-auto mb-6">
@@ -240,7 +246,7 @@ export default function HomePage() {
                 type="text"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
-                placeholder="yourdomain.com"
+                placeholder="yoursaas.com"
                 className="flex-1 px-6 py-4 bg-zinc-900 border-2 border-zinc-700 rounded-xl text-white text-lg placeholder:text-zinc-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
                 disabled={loading}
               />
@@ -256,7 +262,7 @@ export default function HomePage() {
           </form>
 
           <p className="text-zinc-500 text-sm">
-            Free preview • Sign up for full 7-day access • No credit card required
+            No fake data. No estimates pretending to be revenue. Just what AI actually said.
           </p>
         </div>
       </section>
@@ -268,7 +274,7 @@ export default function HomePage() {
             Simple pricing
           </h2>
           <p className="text-zinc-400 mb-12">
-            Start free for 7 days. Upgrade when you're ready to win.
+            Start free. Upgrade when you're ready to fix it.
           </p>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
@@ -294,7 +300,7 @@ export default function HomePage() {
               <p className="text-3xl font-bold text-white mb-2">
                 $29<span className="text-lg text-zinc-500">/mo</span>
               </p>
-              <p className="text-zinc-500 text-sm mb-6">For solo founders</p>
+              <p className="text-zinc-500 text-sm mb-6">For solo founders & indie hackers</p>
               <p className="text-zinc-400 text-sm mb-6">
                 Daily monitoring. 3 sites. Content fixes.
               </p>
@@ -337,7 +343,7 @@ export default function HomePage() {
             ⚠️ While you're reading this, AI is recommending your competitors
           </p>
           <h2 className="text-2xl font-bold text-white mb-6">
-            Find out in 10 seconds if you're invisible
+            Find out in 10 seconds who AI recommends
           </h2>
           <button
             onClick={() => {
