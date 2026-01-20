@@ -285,16 +285,29 @@ export default function RoadmapPage() {
           </div>
         </div>
 
-        {/* Pro tip */}
+        {/* Pro Weekly Action Playbook */}
         {isProPlan && (
           <div className="bg-gradient-to-r from-emerald-950/50 to-zinc-900 border border-emerald-500/20 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-white mb-2">
-              Pro tip: Track your progress
+              This Week's AI Visibility Moves
             </h3>
-            <p className="text-zinc-400">
-              As you complete each step, we'll automatically track when AI starts 
-              mentioning you more. Check your dashboard daily to see improvements!
+            <p className="text-zinc-400 mb-4">
+              Your top 3 actions this week to improve AI visibility:
             </p>
+            <ol className="space-y-2 text-sm text-zinc-300">
+              <li className="flex items-start gap-2">
+                <span className="text-emerald-400 font-medium">1.</span>
+                <span>Complete G2 listing (highest impact)</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-emerald-400 font-medium">2.</span>
+                <span>Create comparison page for your top query</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-emerald-400 font-medium">3.</span>
+                <span>Get listed on Capterra (next critical source)</span>
+              </li>
+            </ol>
           </div>
         )}
       </div>
