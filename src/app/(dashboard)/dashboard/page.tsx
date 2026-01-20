@@ -224,7 +224,7 @@ function DashboardContent() {
   // If no recent check results, use citations (wins only)
   const effectiveWins = recentCheckResults.length > 0 ? wins : queryResults.length;
   const effectiveLosses = recentCheckResults.length > 0 ? losses : 0;
-  
+
   // Calculate real week-over-week changes from site data
   const citationsThisWeek = currentSite?.citationsThisWeek || 0;
   const citationsLastWeek = currentSite?.citationsLastWeek || 0;
@@ -334,7 +334,7 @@ function DashboardContent() {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 text-sm font-medium mb-2 text-red-400">
-                <AlertTriangle className="w-5 h-5" />
+                    <AlertTriangle className="w-5 h-5" />
                 QUERIES WHERE YOU'RE INVISIBLE
               </div>
               <div className="flex items-baseline gap-4">
@@ -457,13 +457,13 @@ function DashboardContent() {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <Link
+                  <Link
                               href={`/dashboard/query?q=${encodeURIComponent(result.query)}`}
                               className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 font-semibold text-sm"
-                            >
+                  >
                               Why not me?
                               <ArrowRight className="w-4 h-4" />
-                            </Link>
+                  </Link>
                           </td>
                         </tr>
                       ))}
@@ -515,22 +515,22 @@ function DashboardContent() {
                             </tr>
                           ))
                         : queryResults.filter(q => q.cited).map((result, i) => (
-                            <tr key={i} className="border-b border-zinc-800 last:border-b-0">
-                              <td className="px-6 py-3">
-                                <p className="text-zinc-300">"{result.query}"</p>
-                              </td>
-                              <td className="px-6 py-3">
-                                <span className="px-2 py-1 bg-zinc-800 text-zinc-400 rounded text-sm">
-                                  {result.platform}
-                                </span>
-                              </td>
-                              <td className="px-6 py-3">
-                                <span className="inline-flex items-center gap-1 text-emerald-400 text-sm">
-                                  <Check className="w-4 h-4" />
-                                  Mentioned
-                                </span>
-                              </td>
-                            </tr>
+                        <tr key={i} className="border-b border-zinc-800 last:border-b-0">
+                          <td className="px-6 py-3">
+                            <p className="text-zinc-300">"{result.query}"</p>
+                          </td>
+                          <td className="px-6 py-3">
+                            <span className="px-2 py-1 bg-zinc-800 text-zinc-400 rounded text-sm">
+                              {result.platform}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3">
+                            <span className="inline-flex items-center gap-1 text-emerald-400 text-sm">
+                              <Check className="w-4 h-4" />
+                              Mentioned
+                            </span>
+                          </td>
+                        </tr>
                           ))
                       }
                     </tbody>
@@ -539,26 +539,110 @@ function DashboardContent() {
               </div>
             )}
 
-            {/* Trust Map CTA - Show when user has losses */}
+            {/* INSTANT VALUE - Show clear next steps based on plan */}
             {effectiveLosses > 0 && (
-              <div className="bg-gradient-to-r from-red-950/30 to-zinc-900 border border-red-500/20 rounded-xl p-6 mb-8">
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-white mb-1">
-                      See where AI gets its answers
-                    </h3>
-                    <p className="text-zinc-400">
-                      Your competitors are on these sources. You're not. Get listed and start being recommended.
-                    </p>
+              <div className="space-y-4 mb-8">
+                {/* Free Tier - Show ONE actionable step + upgrade path */}
+                {organization?.plan === "free" && (
+                  <div className="space-y-4">
+                    {/* ONE ACTIONABLE STEP - Free users can do this NOW */}
+                    <div className="bg-gradient-to-r from-emerald-950/30 to-zinc-900 border border-emerald-500/20 rounded-xl p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Target className="w-6 h-6 text-emerald-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-white mb-2">
+                            Start here: Get listed on G2 (free, takes 2-3 hours)
+                          </h3>
+                          <p className="text-zinc-400 mb-4">
+                            G2 is the #1 source AI uses. Your competitors are listed here. You're not. 
+                            This is why AI recommends them instead of you.
+                          </p>
+                          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 mb-4">
+                            <p className="text-white font-medium mb-2">Step 1: Create a G2 seller account</p>
+                            <ol className="space-y-2 text-sm text-zinc-300 ml-4">
+                              <li className="list-decimal">Go to <a href="https://sell.g2.com" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">g2.com/sellers</a></li>
+                              <li className="list-decimal">Sign up with your work email</li>
+                              <li className="list-decimal">Claim or create your product listing</li>
+                            </ol>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <a
+                              href="https://sell.g2.com"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors"
+                            >
+                              Get started on G2
+                              <ArrowRight className="w-5 h-5" />
+                            </a>
+                            <Link
+                              href="/settings/billing"
+                              className="inline-flex items-center gap-2 px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-xl transition-colors"
+                            >
+                              See full roadmap ($29/mo)
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Tease: Show what they're missing */}
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                      <p className="text-zinc-400 text-sm">
+                        <strong className="text-white">Starter plan includes:</strong> Full step-by-step roadmap for G2, Capterra, Product Hunt, Reddit, and 10+ more sources. 
+                        Plus "Why Not Me?" analysis to see exactly what competitors did that you didn't.
+                      </p>
+                    </div>
                   </div>
-                  <Link
-                    href="/dashboard/sources"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors whitespace-nowrap"
-                  >
-                    View AI Trust Map
-                    <ArrowRight className="w-5 h-5" />
-                  </Link>
-                </div>
+                )}
+
+                {/* Starter Tier - Show Trust Map access */}
+                {(organization?.plan === "starter" || organization?.plan === "pro") && (
+                  <div className="bg-gradient-to-r from-red-950/30 to-zinc-900 border border-red-500/20 rounded-xl p-6">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-white mb-1">
+                          See where AI gets its answers
+                        </h3>
+                        <p className="text-zinc-400">
+                          Your competitors are on these sources. You're not. Get listed and start being recommended.
+                        </p>
+                      </div>
+                      <Link
+                        href="/dashboard/sources"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors whitespace-nowrap"
+                      >
+                        View AI Trust Map
+                        <ArrowRight className="w-5 h-5" />
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {/* Pro Tier - Show full roadmap */}
+                {organization?.plan === "pro" && (
+                  <div className="bg-gradient-to-r from-emerald-950/30 to-zinc-900 border border-emerald-500/20 rounded-xl p-6">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-white mb-1">
+                          Get your complete visibility roadmap
+                        </h3>
+                        <p className="text-zinc-400">
+                          Step-by-step instructions to get listed on every source AI trusts. Track your progress as you go.
+                        </p>
+                      </div>
+                      <Link
+                        href="/dashboard/roadmap"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors whitespace-nowrap"
+                      >
+                        View Full Roadmap
+                        <ArrowRight className="w-5 h-5" />
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
