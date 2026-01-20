@@ -54,20 +54,25 @@ export default function HomePage() {
             <span className="font-medium">Right now, AI is recommending your competitors</span>
           </div>
 
-          {/* Main headline - Personal, direct */}
+          {/* Main headline - Urgent but empowering */}
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            AI is recommending your competitors
-            <br />
-            <span className="text-red-400">— not you</span>
+            AI is choosing your competitors.
           </h1>
 
           {/* Subheadline - The reality */}
           <p className="text-xl text-zinc-300 mb-4 max-w-2xl mx-auto">
-            When people ask ChatGPT or Google AI for the best tools, 
-            <span className="text-white font-semibold"> your product isn't even mentioned</span>.
+            When someone asks ChatGPT <span className="text-white font-semibold">"what's the best [your category]?"</span>
+            <br />
+            AI names them — not you.
           </p>
-          <p className="text-lg text-red-400 font-medium mb-12">
-            CabbageSEO shows you who AI recommends instead — and why.
+          <p className="text-lg text-zinc-400 mb-12 max-w-2xl mx-auto">
+            CabbageSEO shows you:
+            <br />
+            <span className="text-white">• who AI recommends</span>
+            <br />
+            <span className="text-white">• where it gets that information</span>
+            <br />
+            <span className="text-white">• what to fix to get included</span>
           </p>
 
           {/* Domain Input Form */}

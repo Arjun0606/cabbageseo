@@ -544,9 +544,33 @@ function DashboardContent() {
             {/* INSTANT VALUE - Show clear next steps based on plan */}
             {effectiveLosses > 0 && (
               <div className="space-y-4 mb-8">
-                {/* Free Tier - Show ONE actionable step + upgrade path */}
+                {/* Free Tier - Show ONE actionable step + micro-win indicator */}
                 {organization?.plan === "free" && (
                   <div className="space-y-4">
+                    {/* Micro-win indicator */}
+                    <div className="bg-gradient-to-r from-emerald-950/30 to-zinc-900 border border-emerald-500/20 rounded-xl p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Target className="w-6 h-6 text-emerald-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-white mb-2">
+                            🎯 Your Fastest Path to First AI Mention
+                          </h3>
+                          <p className="text-zinc-300 mb-3">
+                            Most solo founders get their first AI mention by:
+                          </p>
+                          <ul className="space-y-2 text-sm text-zinc-300 mb-4 ml-4">
+                            <li className="list-disc">Getting listed on 1 review site (G2 or Capterra)</li>
+                            <li className="list-disc">Creating 1 comparison-style page</li>
+                          </ul>
+                          <p className="text-emerald-400 font-medium text-sm">
+                            You can finish Step 1 today.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* ONE ACTIONABLE STEP - Free users can do this NOW */}
                     <div className="bg-gradient-to-r from-emerald-950/30 to-zinc-900 border border-emerald-500/20 rounded-xl p-6">
                       <div className="flex items-start gap-4">
@@ -583,19 +607,11 @@ function DashboardContent() {
                               href="/settings/billing"
                               className="inline-flex items-center gap-2 px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-xl transition-colors"
                             >
-                              See full roadmap ($29/mo)
+                              Show me the full checklist
                             </Link>
                           </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    {/* Tease: Show what they're missing */}
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                      <p className="text-zinc-400 text-sm">
-                        <strong className="text-white">Starter plan includes:</strong> Full step-by-step roadmap for G2, Capterra, Product Hunt, Reddit, and 10+ more sources. 
-                        Plus "Why Not Me?" analysis to see exactly what competitors did that you didn't.
-                      </p>
                     </div>
                   </div>
                 )}
@@ -623,25 +639,45 @@ function DashboardContent() {
                   </div>
                 )}
 
-                {/* Pro Tier - Show full roadmap */}
+                {/* Pro Tier - Show control room status */}
                 {organization?.plan === "pro" && (
-                  <div className="bg-gradient-to-r from-emerald-950/30 to-zinc-900 border border-emerald-500/20 rounded-xl p-6">
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                      <div>
-                        <h3 className="text-lg font-bold text-white mb-1">
-                          Get your complete visibility roadmap
-                        </h3>
-                        <p className="text-zinc-400">
-                          Step-by-step instructions to get listed on every source AI trusts. Track your progress as you go.
-                        </p>
+                  <div className="space-y-4">
+                    {/* AI Visibility Mode Status */}
+                    <div className="bg-gradient-to-r from-emerald-950/30 to-zinc-900 border border-emerald-500/20 rounded-xl p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                          <Zap className="w-5 h-5 text-emerald-400" />
+                        </div>
+                        <div>
+                          <p className="text-white font-semibold">
+                            🧠 AI Visibility Mode: Active
+                          </p>
+                          <p className="text-zinc-400 text-sm">
+                            Monitoring competitors every hour.
+                          </p>
+                        </div>
                       </div>
-                      <Link
-                        href="/dashboard/roadmap"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors whitespace-nowrap"
-                      >
-                        View Full Roadmap
-                        <ArrowRight className="w-5 h-5" />
-                      </Link>
+                    </div>
+
+                    {/* Full roadmap CTA */}
+                    <div className="bg-gradient-to-r from-emerald-950/30 to-zinc-900 border border-emerald-500/20 rounded-xl p-6">
+                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div>
+                          <h3 className="text-lg font-bold text-white mb-1">
+                            Get your complete visibility roadmap
+                          </h3>
+                          <p className="text-zinc-400">
+                            Step-by-step instructions to get listed on every source AI trusts. Track your progress as you go.
+                          </p>
+                        </div>
+                        <Link
+                          href="/dashboard/roadmap"
+                          className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors whitespace-nowrap"
+                        >
+                          View Full Roadmap
+                          <ArrowRight className="w-5 h-5" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 )}

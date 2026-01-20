@@ -359,6 +359,16 @@ function RoadmapStepCard({ step, onToggle }: { step: RoadmapStep; onToggle: () =
 
       {expanded && (
         <div className="border-t border-zinc-800 p-6 bg-zinc-950/50">
+          {/* Expected Outcome for Starter+ */}
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 mb-4">
+            <p className="text-emerald-300 text-sm font-medium mb-1">Why this matters:</p>
+            <p className="text-zinc-300 text-sm">
+              {step.priority === "critical" 
+                ? `AI frequently cites ${step.title.includes("G2") ? "G2" : step.title.includes("Capterra") ? "Capterra" : "this source"} when recommending tools in your category. Completing this increases your chance of being mentioned.`
+                : `Getting listed here helps AI discover your product when answering relevant queries.`}
+            </p>
+          </div>
+
           <h4 className="font-medium text-white mb-3">Steps:</h4>
           <ol className="space-y-2 mb-4">
             {step.steps.map((s, i) => (
