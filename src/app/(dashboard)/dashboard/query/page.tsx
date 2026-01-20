@@ -303,39 +303,42 @@ function QueryPageContent() {
             </>
           ) : (
             <>
-              {/* Blurred content for free users */}
-              <div className="relative">
-                <div className="blur-sm pointer-events-none">
-                  <div className="mb-4">
-                    <p className="text-sm text-zinc-500 mb-2">Recommended page title:</p>
-                    <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3">
-                      <p className="text-white">Complete guide to winning this query...</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-6 bg-zinc-800 rounded w-3/4"></div>
-                    <div className="h-6 bg-zinc-800 rounded w-2/3"></div>
-                    <div className="h-6 bg-zinc-800 rounded w-1/2"></div>
-                  </div>
+              {/* Free tier: Show ONE actionable insight + upgrade CTA */}
+              <div className="space-y-4">
+                {/* Show ONE actionable tip they can use NOW */}
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4">
+                  <p className="text-emerald-300 text-sm font-medium mb-2">
+                    💡 Quick win you can do now:
+                  </p>
+                  <p className="text-zinc-300 text-sm mb-3">
+                    Create a page titled "{analysis.contentFix.title}" on your website. 
+                    This matches what AI is looking for when answering "{query}".
+                  </p>
+                  <p className="text-zinc-400 text-xs">
+                    Include: Clear headings, FAQ section, and mention key terms AI associates with this query.
+                  </p>
                 </div>
 
-                {/* Upgrade overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/50">
-                  <div className="text-center">
-                    <Lock className="w-8 h-8 text-zinc-400 mx-auto mb-3" />
-                    <p className="text-white font-semibold mb-2">
-                      Unlock content fixes
-                    </p>
-                    <p className="text-zinc-400 text-sm mb-4">
-                      Get step-by-step instructions to win this query
-                    </p>
-                    <Link
-                      href="/settings/billing"
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors"
-                    >
-                      Upgrade to Starter
-                      <ArrowRight className="w-5 h-5" />
-                    </Link>
+                {/* Show what they're missing */}
+                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <Lock className="w-5 h-5 text-zinc-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-white font-medium mb-1">
+                        Unlock full content strategy
+                      </p>
+                      <p className="text-zinc-400 text-sm mb-3">
+                        Starter plan includes: Exact page structure, section headings, key entities to mention, 
+                        FAQs to answer, and competitor analysis showing what they did that you didn't.
+                      </p>
+                      <Link
+                        href="/settings/billing"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors"
+                      >
+                        Upgrade to Starter ($29/mo)
+                        <ArrowRight className="w-5 h-5" />
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
