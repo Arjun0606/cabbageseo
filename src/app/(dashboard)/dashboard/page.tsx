@@ -77,23 +77,27 @@ function DashboardContent() {
     if (currentSite?.id) {
       // Load recent check results from localStorage FIRST (synchronous, prevents flicker)
       const stored = localStorage.getItem(`recent_check_${currentSite.id}`);
+      let hasStoredData = false;
+      
       if (stored) {
         try {
           const data = JSON.parse(stored);
           // Only use if less than 24 hours old
           if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
             setRecentCheckResults(data.results || []);
-            setLoading(false);
-            // Still fetch citations in background, but don't block UI
-            fetchCitations();
-            return;
+            hasStoredData = true;
+            setLoading(false); // Set loading false immediately if we have stored data
           }
         } catch (e) {
           // Continue to fetch
         }
       }
-      // No stored results or expired - fetch from API
-      setLoading(true);
+      
+      // Fetch citations (will set loading false in finally block)
+      // But if we have stored data, don't show loading spinner
+      if (!hasStoredData) {
+        setLoading(true);
+      }
       fetchCitations();
     } else {
       setLoading(false);
