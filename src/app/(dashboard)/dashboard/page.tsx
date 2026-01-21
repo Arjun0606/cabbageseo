@@ -75,7 +75,7 @@ function DashboardContent() {
   // Fetch citations when site changes
   useEffect(() => {
     if (currentSite?.id) {
-      // Load recent check results from localStorage FIRST (synchronous)
+      // Load recent check results from localStorage FIRST (synchronous, prevents flicker)
       const stored = localStorage.getItem(`recent_check_${currentSite.id}`);
       if (stored) {
         try {
@@ -93,6 +93,7 @@ function DashboardContent() {
         }
       }
       // No stored results or expired - fetch from API
+      setLoading(true);
       fetchCitations();
     } else {
       setLoading(false);
