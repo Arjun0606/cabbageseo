@@ -75,8 +75,7 @@ function DashboardContent() {
   // Fetch citations when site changes
   useEffect(() => {
     if (currentSite?.id) {
-      fetchCitations();
-      // Load recent check results from localStorage
+      // Load recent check results from localStorage FIRST (synchronous)
       const stored = localStorage.getItem(`recent_check_${currentSite.id}`);
       if (stored) {
         try {
@@ -85,15 +84,16 @@ function DashboardContent() {
           if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
             setRecentCheckResults(data.results || []);
             setLoading(false);
-          } else {
-            setLoading(false);
+            // Still fetch citations in background, but don't block UI
+            fetchCitations();
+            return;
           }
         } catch (e) {
-          setLoading(false);
+          // Continue to fetch
         }
-      } else {
-        setLoading(false);
       }
+      // No stored results or expired - fetch from API
+      fetchCitations();
     } else {
       setLoading(false);
     }
