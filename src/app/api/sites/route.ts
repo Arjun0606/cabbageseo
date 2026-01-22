@@ -24,41 +24,58 @@ function getDbClient(): SupabaseClient | null {
 // GET - List sites
 export async function GET() {
   try {
+    const db = getDbClient();
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
+
     // ⚠️ TEST SESSION CHECK FIRST
     const testSession = await getTestSession();
+    let orgId: string | null = null;
+
     if (testSession) {
-      // Return empty sites for test accounts (they can create sites via POST)
-      return NextResponse.json({ sites: [] });
-    }
+      // For test accounts, find the test organization
+      const testOrgSlug = `test-${testSession.email.split("@")[0]}`;
+      const { data: testOrg } = await db
+        .from("organizations")
+        .select("id")
+        .eq("slug", testOrgSlug)
+        .maybeSingle();
+      
+      if (!testOrg) {
+        // No org created yet - return empty
+        return NextResponse.json({ sites: [] });
+      }
+      orgId = testOrg.id;
+    } else {
+      const supabase = await createClient();
+      if (!supabase) {
+        return NextResponse.json({ error: "Not configured" }, { status: 500 });
+      }
 
-    const supabase = await createClient();
-    if (!supabase) {
-      return NextResponse.json({ error: "Not configured" }, { status: 500 });
-    }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+      // Get user's organization
+      const { data: userData } = await db
+        .from("users")
+        .select("organization_id")
+        .eq("id", user.id)
+        .maybeSingle();
 
-    const db = getDbClient() || supabase;
-
-    // Get user's organization
-    const { data: userData } = await db
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (!userData?.organization_id) {
-      return NextResponse.json({ sites: [] });
+      if (!userData?.organization_id) {
+        return NextResponse.json({ sites: [] });
+      }
+      orgId = userData.organization_id;
     }
 
     // Get sites with geo_score_avg, category, and custom_queries
     const { data: sites, error } = await db
       .from("sites")
       .select("id, domain, name, total_citations, citations_this_week, citations_last_week, last_checked_at, geo_score_avg, category, custom_queries, created_at")
-      .eq("organization_id", userData.organization_id)
+      .eq("organization_id", orgId)
       .order("created_at", { ascending: false });
 
     if (error) {
