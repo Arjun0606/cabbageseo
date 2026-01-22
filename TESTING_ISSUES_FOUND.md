@@ -5,6 +5,17 @@
 
 ---
 
+## 🔧 Fixes Deployed (Pending Verification)
+
+1. **Sites API GET** - Now queries database for test accounts (was returning empty array)
+2. **Billing Usage API** - Now handles test sessions (was returning 401)
+3. **Notifications Page** - Created missing `/settings/notifications` page
+
+**Commit:** a0c8951
+**Status:** Waiting for Vercel deployment
+
+---
+
 ## ✅ Passed Tests
 
 ### Marketing Pages
@@ -162,4 +173,49 @@ Create or remove references to `/settings/notifications`.
 ---
 
 **CRITICAL:** The site creation issue must be fixed before launch.
+
+---
+
+## 📊 Full Testing Progress
+
+### Completed Tests
+| Page/Feature | Status | Notes |
+|--------------|--------|-------|
+| Homepage | ✅ Passed | Domain check, CTAs, links all work |
+| Teaser page | ✅ Passed | Real AI results from Perplexity |
+| Pricing page | ✅ Passed | All 3 tiers, features, FAQ |
+| Docs page | ✅ Passed | Full documentation |
+| Login page | ✅ Passed | Test account login works |
+| Dashboard layout | ✅ Passed | Navigation, sidebar |
+| Settings page | ✅ Passed | Account info displayed |
+| Site limit | ✅ Passed | "Site limit reached (1)" shown |
+| Plan display | ✅ Passed | Shows "Free" correctly |
+
+### Pending Tests (After Fix Deployment)
+- [ ] Dashboard with site data
+- [ ] Run Check with results
+- [ ] Starter tier features
+- [ ] Pro tier features
+- [ ] Trust Map page
+- [ ] Roadmap page
+- [ ] Billing page
+- [ ] Payment flow
+
+### Test Accounts Used
+- `test-free@cabbageseo.test` / `TestFree123!`
+- `test-starter@cabbageseo.test` / `TestStarter123!` (not yet tested)
+- `test-pro@cabbageseo.test` / `TestPro123!` (not yet tested)
+
+---
+
+## 🔄 Deployment Status
+
+**Commit:** a0c8951
+**Pushed:** ~5 minutes ago
+**Status:** Waiting for Vercel build
+
+Once deployment completes, re-verify:
+1. `/settings/notifications` returns 200 (not 404)
+2. Dashboard shows site data (not "Add a site to check")
+3. `/api/billing/usage` returns 200 (not 401)
 
