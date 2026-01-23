@@ -56,8 +56,11 @@ function QueryPageContent() {
       return;
     }
 
-    analyzeQuery();
-  }, [query]);
+    // Only analyze when we have both query and currentSite
+    if (currentSite?.id) {
+      analyzeQuery();
+    }
+  }, [query, currentSite?.id]);
 
   const analyzeQuery = async () => {
     if (!currentSite?.id || !query) return;
