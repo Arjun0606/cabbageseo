@@ -1,0 +1,17 @@
+{
+  "name": "CabbageSEO",
+  "short_name": "CabbageSEO",
+  "description": "AI Visibility Intelligence - See who AI recommends and how to win",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#16a34a",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
