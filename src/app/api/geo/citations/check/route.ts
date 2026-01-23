@@ -447,14 +447,31 @@ async function checkChatGPT(domain: string, queries: string[]): Promise<CheckRes
 // ============================================
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    if (!supabase) {
-      return NextResponse.json({ error: "Not configured" }, { status: 500 });
-    }
+    // ⚠️ TEST SESSION CHECK FIRST
+    const { getTestSession } = await import("@/lib/testing/test-session");
+    const testSession = await getTestSession();
+    
+    let userId: string;
+    let userEmail: string | null = null;
+    
+    if (testSession) {
+      // Test account - use test session data
+      userId = `test-${testSession.email}`;
+      userEmail = testSession.email;
+      console.log(`[Test Session] Citations check for ${testSession.email} (${testSession.plan})`);
+    } else {
+      // Regular auth
+      const supabase = await createClient();
+      if (!supabase) {
+        return NextResponse.json({ error: "Not configured" }, { status: 500 });
+      }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      userId = user.id;
+      userEmail = user.email || null;
     }
 
     const body = await request.json();
@@ -468,39 +485,53 @@ export async function POST(request: NextRequest) {
     let cleanDomain = domain.trim().toLowerCase();
     cleanDomain = cleanDomain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
 
-    const db = getDbClient() || supabase;
+    const db = getDbClient();
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
     
     // Get user's plan and site data for smart query generation
     let plan = "free";
     let category: string | null = null;
     let customQueries: string[] = [];
+    let orgId: string | null = null;
     
-    // Fetch user's organization and plan
-    const { data: userData } = await db
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .maybeSingle();
+    // Check if test session - use test data directly
+    if (testSession) {
+      plan = testSession.plan;
+      orgId = testSession.organizationId;
+    } else {
+      // Fetch user's organization and plan from database
+      const { data: userData } = await db
+        .from("users")
+        .select("organization_id")
+        .eq("id", userId)
+        .maybeSingle();
+      orgId = userData?.organization_id || null;
+    }
     
     let orgCreatedAt: string | undefined;
     
-    if (userData?.organization_id) {
-      const { data: orgData } = await db
-        .from("organizations")
-        .select("plan, created_at")
-        .eq("id", userData.organization_id)
-        .maybeSingle();
-      
-      if (orgData) {
-        plan = orgData.plan || "free";
-        orgCreatedAt = orgData.created_at;
-      }
-      
-      // ⚠️ TEST ACCOUNT BYPASS - Use test account plan if applicable
-      const testPlan = getTestPlan(user.email);
-      if (testPlan) {
-        plan = testPlan;
-        console.log(`[Test Account] Using test plan: ${testPlan} for ${user.email}`);
+    if (orgId) {
+      // Only fetch from DB if not a test session (test session already set plan)
+      if (!testSession) {
+        const { data: orgData } = await db
+          .from("organizations")
+          .select("plan, created_at")
+          .eq("id", orgId)
+          .maybeSingle();
+        
+        if (orgData) {
+          plan = orgData.plan || "free";
+          orgCreatedAt = orgData.created_at;
+        }
+        
+        // ⚠️ TEST ACCOUNT BYPASS - Use test account plan if applicable
+        const testPlan = getTestPlan(userEmail);
+        if (testPlan) {
+          plan = testPlan;
+          console.log(`[Test Account] Using test plan: ${testPlan} for ${userEmail}`);
+        }
       }
       
       // ============================================
@@ -509,7 +540,7 @@ export async function POST(request: NextRequest) {
       
       // Check if free user's trial has expired (bypass for test accounts)
       if (plan === "free" && orgCreatedAt) {
-        const access = canAccessProduct(plan, orgCreatedAt, user.email || null);
+        const access = canAccessProduct(plan, orgCreatedAt, userEmail);
         if (!access.allowed) {
           return NextResponse.json({
             error: access.reason || "Trial expired. Upgrade to continue.",
