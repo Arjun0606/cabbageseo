@@ -475,7 +475,25 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { siteId, domain } = body;
+    let { siteId, domain } = body;
+
+    const db = getDbClient();
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
+
+    // If siteId provided but no domain, look up domain from site
+    if (siteId && !domain) {
+      const { data: siteData } = await db
+        .from("sites")
+        .select("domain")
+        .eq("id", siteId)
+        .maybeSingle();
+      
+      if (siteData?.domain) {
+        domain = siteData.domain;
+      }
+    }
 
     if (!domain) {
       return NextResponse.json({ error: "Domain required" }, { status: 400 });
@@ -484,11 +502,6 @@ export async function POST(request: NextRequest) {
     // Clean domain
     let cleanDomain = domain.trim().toLowerCase();
     cleanDomain = cleanDomain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
-
-    const db = getDbClient();
-    if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
-    }
     
     // Get user's plan and site data for smart query generation
     let plan = "free";
