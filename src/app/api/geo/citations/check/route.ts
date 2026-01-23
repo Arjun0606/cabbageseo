@@ -499,7 +499,14 @@ export async function POST(request: NextRequest) {
     // Check if test session - use test data directly
     if (testSession) {
       plan = testSession.plan;
-      orgId = testSession.organizationId;
+      // Look up test organization from database
+      const testOrgSlug = `test-${testSession.email.split("@")[0]}`;
+      const { data: testOrgData } = await db
+        .from("organizations")
+        .select("id")
+        .eq("slug", testOrgSlug)
+        .maybeSingle();
+      orgId = testOrgData?.id || null;
     } else {
       // Fetch user's organization and plan from database
       const { data: userData } = await db

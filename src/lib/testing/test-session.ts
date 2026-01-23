@@ -11,6 +11,7 @@ export interface TestSession {
   email: string;
   plan: "free" | "starter" | "pro";
   name: string;
+  organizationId?: string; // Set after first site creation
 }
 
 /**
