@@ -558,13 +558,13 @@ export async function POST(request: NextRequest) {
       }
       
       // Check daily manual check limit for free users
-      if (plan === "free") {
+      if (plan === "free" && orgId) {
         // Get checks used today (count checks in current day)
         const today = new Date().toISOString().split('T')[0];
         const { data: todayUsage } = await db
           .from("usage")
           .select("checks_used")
-          .eq("organization_id", userData.organization_id)
+          .eq("organization_id", orgId)
           .eq("period", today)
           .maybeSingle();
         
