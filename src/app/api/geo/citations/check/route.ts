@@ -617,7 +617,7 @@ export async function POST(request: NextRequest) {
     const citedCount = results.filter(r => r.cited).length;
 
     // If tracking a site, save citations to database
-    if (siteId && userData?.organization_id) {
+    if (siteId && orgId) {
       const { data: siteData } = await db
         .from("sites")
         .select("id, organization_id, total_citations, citations_this_week")
@@ -631,7 +631,7 @@ export async function POST(request: NextRequest) {
         citations_this_week: number 
       } | null;
 
-      if (site && site.organization_id === userData.organization_id) {
+      if (site && site.organization_id === orgId) {
           let newCitationsCount = 0;
 
           // Save new citations (only from successful API calls)
@@ -680,7 +680,7 @@ export async function POST(request: NextRequest) {
           const { data: existingUsage } = await db
             .from("usage")
             .select("checks_used")
-            .eq("organization_id", userData.organization_id)
+            .eq("organization_id", orgId)
             .eq("period", period)
             .maybeSingle();
 
@@ -688,11 +688,11 @@ export async function POST(request: NextRequest) {
             await db
               .from("usage")
               .update({ checks_used: (existingUsage.checks_used || 0) + 1 })
-              .eq("organization_id", userData.organization_id)
+              .eq("organization_id", orgId)
               .eq("period", period);
           } else {
             await db.from("usage").insert({
-              organization_id: userData.organization_id,
+              organization_id: orgId,
               period,
               checks_used: 1,
             });
