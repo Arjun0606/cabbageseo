@@ -185,34 +185,40 @@ Create or remove references to `/settings/notifications`.
 | Teaser page | ✅ Passed | Real AI results from Perplexity |
 | Pricing page | ✅ Passed | All 3 tiers, features, FAQ |
 | Docs page | ✅ Passed | Full documentation |
-| Login page | ✅ Passed | Test account login works |
+| Login page | ✅ Passed | All 3 test account logins work |
 | Dashboard layout | ✅ Passed | Navigation, sidebar |
-| Settings page | ✅ Passed | Account info displayed |
+| Settings page | ✅ Passed | Account info displayed correctly |
 | Site limit | ✅ Passed | "Site limit reached (1)" shown |
-| Plan display | ✅ Passed | Shows "Free" correctly |
+| Plan display | ✅ Passed | Shows correct plan for each tier |
+| Free tier | ✅ Passed | Roadmap paywalled, limited features |
+| Starter tier | ✅ Passed | Roadmap unlocked, shows tasks |
+| Pro tier | ✅ Passed | Full access, "Pro" badge |
+| Trust Map | ✅ Passed | Shows sources (0 when no site) |
+| Roadmap | ✅ Passed | Shows 6 tasks, progress tracking |
+| Privacy/Terms | ✅ Passed | Full legal pages |
+| Feedback | ✅ Passed | Contact options displayed |
 
-### Pending Tests (After Fix Deployment)
-- [ ] Dashboard with site data
-- [ ] Run Check with results
-- [ ] Starter tier features
-- [ ] Pro tier features
-- [ ] Trust Map page
-- [ ] Roadmap page
-- [ ] Billing page
-- [ ] Payment flow
+### Test Accounts Verified
+| Account | Plan | Login | Settings | Features |
+|---------|------|-------|----------|----------|
+| `test-free@cabbageseo.test` | Free | ✅ | ✅ | Roadmap locked |
+| `test-starter@cabbageseo.test` | Starter | ✅ | ✅ | Roadmap unlocked |
+| `test-pro@cabbageseo.test` | Pro | ✅ | ✅ | Full access |
 
-### Test Accounts Used
-- `test-free@cabbageseo.test` / `TestFree123!`
-- `test-starter@cabbageseo.test` / `TestStarter123!` (not yet tested)
-- `test-pro@cabbageseo.test` / `TestPro123!` (not yet tested)
+### Still Pending (Deployment)
+- [ ] Sites showing in dashboard after creation
+- [ ] Notifications page (404 until deployed)
+- [ ] Billing usage API (401 until deployed)
 
 ---
 
 ## 🔄 Deployment Status
 
-**Commit:** a0c8951
-**Pushed:** ~5 minutes ago
-**Status:** Waiting for Vercel build
+**Commits Pushed:**
+- a0c8951: Fix sites API, billing API, add notifications page
+- 066fec8: Update testing docs
+
+**Status:** Some fixes pending Vercel deployment
 
 Once deployment completes, re-verify:
 1. `/settings/notifications` returns 200 (not 404)
