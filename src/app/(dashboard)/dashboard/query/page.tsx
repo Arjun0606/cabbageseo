@@ -71,7 +71,7 @@ function QueryPageContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           siteId: currentSite.id,
-          action: "gap_analysis",
+          action: "gap-analysis",
           query,
         }),
       });
