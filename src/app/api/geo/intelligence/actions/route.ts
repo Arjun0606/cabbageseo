@@ -39,50 +39,80 @@ interface RequestBody {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    if (!supabase) {
-      return NextResponse.json({ error: "Server error" }, { status: 500 });
-    }
-
-    // Get user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Get profile & org
-    const { data: profileData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const profile = profileData as { organization_id: string } | null;
-    if (!profile?.organization_id) {
-      return NextResponse.json({ error: "No organization" }, { status: 400 });
-    }
-
-    // Get org plan
+    // ⚠️ TEST SESSION CHECK FIRST
+    const { getTestSession } = await import("@/lib/testing/test-session");
+    const testSession = await getTestSession();
+    
+    let userId: string;
+    let userEmail: string | null = null;
+    let organizationId: string | null = null;
+    let plan: "free" | "starter" | "pro" = "free";
+    
+    // Create service client for DB operations
     const serviceClient = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
+    
+    if (testSession) {
+      userId = `test-${testSession.email}`;
+      userEmail = testSession.email;
+      plan = testSession.plan;
+      // Look up test organization from database
+      const testOrgSlug = `test-${testSession.email.split("@")[0]}`;
+      const { data: testOrgData } = await serviceClient
+        .from("organizations")
+        .select("id")
+        .eq("slug", testOrgSlug)
+        .maybeSingle();
+      organizationId = testOrgData?.id || null;
+    } else {
+      const supabase = await createClient();
+      if (!supabase) {
+        return NextResponse.json({ error: "Server error" }, { status: 500 });
+      }
 
-    const { data: org } = await serviceClient
-      .from("organizations")
-      .select("plan, created_at")
-      .eq("id", profile.organization_id)
-      .single();
+      // Get user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      userId = user.id;
+      userEmail = user.email || null;
 
-    // ⚠️ TEST ACCOUNT BYPASS - Use test account plan if applicable
-    let planId = org?.plan || "free";
-    const testPlan = getTestPlan(user.email);
-    if (testPlan) {
-      planId = testPlan;
-      console.log(`[Test Account] Using test plan: ${testPlan} for ${user.email}`);
+      // Get profile & org
+      const { data: profileData } = await supabase
+        .from("users")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
+
+      const profile = profileData as { organization_id: string } | null;
+      organizationId = profile?.organization_id || null;
     }
     
-    const plan = getCitationPlan(planId);
+    if (!organizationId) {
+      return NextResponse.json({ error: "No organization" }, { status: 400 });
+    }
+
+    // Get org plan for non-test users
+    let planId = plan;
+    if (!testSession) {
+      const { data: org } = await serviceClient
+        .from("organizations")
+        .select("plan, created_at")
+        .eq("id", organizationId)
+        .single();
+      planId = org?.plan || "free";
+      
+      // Legacy test account check (fallback)
+      const testPlan = getTestPlan(userEmail);
+      if (testPlan) {
+        planId = testPlan;
+      }
+    }
+    
+    const citationPlan = getCitationPlan(planId);
     const body: RequestBody = await request.json();
     const { action, siteId, query, competitorId } = body;
 
@@ -91,11 +121,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify site ownership
-    const { data: site } = await supabase
+    const { data: site } = await serviceClient
       .from("sites")
       .select("id, domain")
       .eq("id", siteId)
-      .eq("organization_id", profile.organization_id)
+      .eq("organization_id", organizationId)
       .single();
 
     if (!site) {
@@ -107,7 +137,7 @@ export async function POST(request: NextRequest) {
     const { data: usage } = await serviceClient
       .from("usage")
       .select("*")
-      .eq("organization_id", profile.organization_id)
+      .eq("organization_id", organizationId)
       .eq("period", currentMonth)
       .single();
 
@@ -121,7 +151,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "query is required for gap-analysis" }, { status: 400 });
         }
 
-        const canUse = canUseGapAnalysis(plan.id, gapAnalysesUsed);
+        const canUse = canUseGapAnalysis(citationPlan.id, gapAnalysesUsed);
         if (!canUse.allowed) {
           return NextResponse.json({
             error: canUse.reason,
@@ -130,10 +160,10 @@ export async function POST(request: NextRequest) {
           }, { status: 403 });
         }
 
-        const result = await analyzeCitationGap(siteId, query, profile.organization_id);
+        const result = await analyzeCitationGap(siteId, query, organizationId);
 
         // Track usage
-        await incrementUsage(serviceClient, profile.organization_id, currentMonth, "gap_analyses_used");
+        await incrementUsage(serviceClient, organizationId, currentMonth, "gap_analyses_used");
 
         return NextResponse.json({
           success: true,
@@ -143,7 +173,7 @@ export async function POST(request: NextRequest) {
       }
 
       case "content-recommendations": {
-        const canUse = canUseContentRecommendations(plan.id, contentIdeasUsed);
+        const canUse = canUseContentRecommendations(citationPlan.id, contentIdeasUsed);
         if (!canUse.allowed) {
           return NextResponse.json({
             error: canUse.reason,
@@ -152,10 +182,10 @@ export async function POST(request: NextRequest) {
           }, { status: 403 });
         }
 
-        const result = await generateContentRecommendations(siteId, profile.organization_id);
+        const result = await generateContentRecommendations(siteId, organizationId);
 
         // Track usage
-        await incrementUsage(serviceClient, profile.organization_id, currentMonth, "content_ideas_used");
+        await incrementUsage(serviceClient, organizationId, currentMonth, "content_ideas_used");
 
         return NextResponse.json({
           success: true,
@@ -165,7 +195,7 @@ export async function POST(request: NextRequest) {
       }
 
       case "action-plan": {
-        const canUse = canUseActionPlan(plan.id);
+        const canUse = canUseActionPlan(citationPlan.id);
         if (!canUse.allowed) {
           return NextResponse.json({
             error: canUse.reason,
@@ -174,7 +204,7 @@ export async function POST(request: NextRequest) {
           }, { status: 403 });
         }
 
-        const result = await generateWeeklyActionPlan(siteId, profile.organization_id);
+        const result = await generateWeeklyActionPlan(siteId, organizationId);
 
         return NextResponse.json({
           success: true,
@@ -187,7 +217,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "competitorId is required" }, { status: 400 });
         }
 
-        const canUse = canUseCompetitorDeepDive(plan.id);
+        const canUse = canUseCompetitorDeepDive(citationPlan.id);
         if (!canUse.allowed) {
           return NextResponse.json({
             error: canUse.reason,
@@ -196,7 +226,7 @@ export async function POST(request: NextRequest) {
           }, { status: 403 });
         }
 
-        const result = await analyzeCompetitorDeepDive(siteId, competitorId, profile.organization_id);
+        const result = await analyzeCompetitorDeepDive(siteId, competitorId, organizationId);
 
         return NextResponse.json({
           success: true,
@@ -258,46 +288,70 @@ async function incrementUsage(
 // GET - Get available intelligence features for current plan
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    if (!supabase) {
-      return NextResponse.json({ error: "Server error" }, { status: 500 });
-    }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: profileData2 } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    const profile = profileData2 as { organization_id: string } | null;
-    if (!profile?.organization_id) {
-      return NextResponse.json({ error: "No organization" }, { status: 400 });
-    }
-
+    // ⚠️ TEST SESSION CHECK FIRST
+    const { getTestSession } = await import("@/lib/testing/test-session");
+    const testSession = await getTestSession();
+    
+    let organizationId: string | null = null;
+    let planId: string = "free";
+    
     const serviceClient = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
+    
+    if (testSession) {
+      planId = testSession.plan;
+      // Look up test organization
+      const testOrgSlug = `test-${testSession.email.split("@")[0]}`;
+      const { data: testOrgData } = await serviceClient
+        .from("organizations")
+        .select("id")
+        .eq("slug", testOrgSlug)
+        .maybeSingle();
+      organizationId = testOrgData?.id || null;
+    } else {
+      const supabase = await createClient();
+      if (!supabase) {
+        return NextResponse.json({ error: "Server error" }, { status: 500 });
+      }
 
-    const { data: org } = await serviceClient
-      .from("organizations")
-      .select("plan")
-      .eq("id", profile.organization_id)
-      .single();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
 
-    const plan = getCitationPlan(org?.plan || "free");
+      const { data: profileData2 } = await supabase
+        .from("users")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
+
+      const profile = profileData2 as { organization_id: string } | null;
+      organizationId = profile?.organization_id || null;
+      
+      if (organizationId) {
+        const { data: org } = await serviceClient
+          .from("organizations")
+          .select("plan")
+          .eq("id", organizationId)
+          .single();
+        planId = org?.plan || "free";
+      }
+    }
+
+    if (!organizationId) {
+      return NextResponse.json({ error: "No organization" }, { status: 400 });
+    }
+
+    const citationPlan = getCitationPlan(planId);
 
     // Get current month usage
     const currentMonth = new Date().toISOString().slice(0, 7);
     const { data: usage } = await serviceClient
       .from("usage")
       .select("*")
-      .eq("organization_id", profile.organization_id)
+      .eq("organization_id", organizationId)
       .eq("period", currentMonth)
       .single();
 
@@ -305,31 +359,31 @@ export async function GET(request: NextRequest) {
     const contentIdeasUsed = (usage as Record<string, number> | null)?.content_ideas_used || 0;
 
     return NextResponse.json({
-      plan: plan.id,
+      plan: citationPlan.id,
       features: {
         gapAnalysis: {
-          available: plan.features.citationGapAnalysis,
-          fullVersion: plan.features.citationGapFull,
+          available: citationPlan.features.citationGapAnalysis,
+          fullVersion: citationPlan.features.citationGapFull,
           used: gapAnalysesUsed,
-          limit: plan.intelligenceLimits.gapAnalysesPerMonth,
-          remaining: plan.intelligenceLimits.gapAnalysesPerMonth === -1 
+          limit: citationPlan.intelligenceLimits.gapAnalysesPerMonth,
+          remaining: citationPlan.intelligenceLimits.gapAnalysesPerMonth === -1 
             ? "unlimited" 
-            : Math.max(0, plan.intelligenceLimits.gapAnalysesPerMonth - gapAnalysesUsed),
+            : Math.max(0, citationPlan.intelligenceLimits.gapAnalysesPerMonth - gapAnalysesUsed),
         },
         contentRecommendations: {
-          available: plan.features.contentRecommendations,
-          unlimited: plan.features.contentRecsUnlimited,
+          available: citationPlan.features.contentRecommendations,
+          unlimited: citationPlan.features.contentRecsUnlimited,
           used: contentIdeasUsed,
-          limit: plan.intelligenceLimits.contentIdeasPerMonth,
-          remaining: plan.intelligenceLimits.contentIdeasPerMonth === -1
+          limit: citationPlan.intelligenceLimits.contentIdeasPerMonth,
+          remaining: citationPlan.intelligenceLimits.contentIdeasPerMonth === -1
             ? "unlimited"
-            : Math.max(0, plan.intelligenceLimits.contentIdeasPerMonth - contentIdeasUsed),
+            : Math.max(0, citationPlan.intelligenceLimits.contentIdeasPerMonth - contentIdeasUsed),
         },
         actionPlan: {
-          available: plan.features.weeklyActionPlan,
+          available: citationPlan.features.weeklyActionPlan,
         },
         competitorDeepDive: {
-          available: plan.features.competitorDeepDive,
+          available: citationPlan.features.competitorDeepDive,
         },
       },
     });

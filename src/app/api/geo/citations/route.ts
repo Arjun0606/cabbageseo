@@ -21,14 +21,37 @@ function getDbClient(): SupabaseClient | null {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    if (!supabase) {
-      return NextResponse.json({ error: "Not configured" }, { status: 500 });
-    }
+    // ⚠️ TEST SESSION CHECK FIRST
+    const { getTestSession } = await import("@/lib/testing/test-session");
+    const testSession = await getTestSession();
+    
+    let userId: string;
+    let organizationId: string | null = null;
+    
+    if (testSession) {
+      userId = `test-${testSession.email}`;
+      // Look up test organization from database
+      const db = getDbClient();
+      if (db) {
+        const testOrgSlug = `test-${testSession.email.split("@")[0]}`;
+        const { data: testOrgData } = await db
+          .from("organizations")
+          .select("id")
+          .eq("slug", testOrgSlug)
+          .maybeSingle();
+        organizationId = testOrgData?.id || null;
+      }
+    } else {
+      const supabase = await createClient();
+      if (!supabase) {
+        return NextResponse.json({ error: "Not configured" }, { status: 500 });
+      }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      userId = user.id;
     }
 
     const { searchParams } = new URL(request.url);
@@ -39,16 +62,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "siteId required" }, { status: 400 });
     }
 
-    const db = getDbClient() || supabase;
+    const db = getDbClient();
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
 
-    // Verify site belongs to user
-    const { data: userData } = await db
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .maybeSingle();
+    // If not a test session, fetch organization from user
+    if (!testSession) {
+      const { data: userData } = await db
+        .from("users")
+        .select("organization_id")
+        .eq("id", userId)
+        .maybeSingle();
+      organizationId = userData?.organization_id || null;
+    }
 
-    if (!userData?.organization_id) {
+    if (!organizationId) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
@@ -58,7 +87,7 @@ export async function GET(request: NextRequest) {
       .eq("id", siteId)
       .maybeSingle();
 
-    if (!site || site.organization_id !== userData.organization_id) {
+    if (!site || site.organization_id !== organizationId) {
       return NextResponse.json({ error: "Site not found" }, { status: 404 });
     }
 
