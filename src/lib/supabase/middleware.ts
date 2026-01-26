@@ -10,8 +10,12 @@ import { getTestSession } from "@/lib/testing/test-session";
 // ============================================
 // 🔓 TESTING MODE - AUTH BYPASS
 // Set TESTING_MODE=true in .env for local testing
+// Set ENABLE_TEST_ACCOUNTS=true to allow test account sessions
 // ============================================
 const TESTING_MODE = process.env.TESTING_MODE === "true";
+const TEST_ACCOUNTS_ENABLED = 
+  process.env.NODE_ENV !== "production" || 
+  process.env.ENABLE_TEST_ACCOUNTS === "true";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -59,8 +63,8 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // ⚠️ CHECK TEST SESSION - Allow test accounts through
-  const testSession = await getTestSession();
+  // ⚠️ CHECK TEST SESSION - Only in development or when explicitly enabled
+  const testSession = TEST_ACCOUNTS_ENABLED ? await getTestSession() : null;
   const isAuthenticated = !!user || !!testSession;
 
   // Define public routes that don't require auth

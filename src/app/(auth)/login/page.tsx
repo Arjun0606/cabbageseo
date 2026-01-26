@@ -26,7 +26,10 @@ function LoginPageContent() {
     setError(null);
 
     // Check if this is a test account - use simple test login
-    if (isTestAccount(email)) {
+    // Only enabled in development or when NEXT_PUBLIC_ENABLE_TEST_ACCOUNTS=true
+    const testAccountsEnabled = process.env.NEXT_PUBLIC_ENABLE_TEST_ACCOUNTS === "true";
+    
+    if (testAccountsEnabled && isTestAccount(email)) {
       try {
         const response = await fetch("/api/test/login", {
           method: "POST",
@@ -53,7 +56,7 @@ function LoginPageContent() {
       }
     }
 
-    // Regular Supabase auth for non-test accounts
+    // Regular Supabase auth for all accounts
     const supabase = createClient();
     if (!supabase) {
       setError("Authentication is not configured");

@@ -5,13 +5,28 @@
  * 
  * Just checks credentials and sets a session cookie with the plan.
  * No email confirmation, no Supabase auth complexity.
+ * 
+ * DISABLED IN PRODUCTION unless ENABLE_TEST_ACCOUNTS=true
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { TEST_ACCOUNTS } from "@/lib/testing/test-accounts";
 import { cookies } from "next/headers";
 
+// Test accounts are DISABLED in production unless explicitly enabled
+const TEST_ACCOUNTS_ENABLED = 
+  process.env.NODE_ENV !== "production" || 
+  process.env.ENABLE_TEST_ACCOUNTS === "true";
+
 export async function POST(request: NextRequest) {
+  // Block test accounts in production
+  if (!TEST_ACCOUNTS_ENABLED) {
+    return NextResponse.json(
+      { error: "Test accounts are disabled" },
+      { status: 403 }
+    );
+  }
+
   try {
     const { email, password } = await request.json();
 
