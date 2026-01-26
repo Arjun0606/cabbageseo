@@ -13,8 +13,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { TEST_ACCOUNTS } from "@/lib/testing/test-accounts";
 import { cookies } from "next/headers";
 
-// TEMPORARILY ENABLED FOR PH SCREENSHOTS - TODO: REVERT
-const TEST_ACCOUNTS_ENABLED = true;
+// Test accounts are DISABLED in production unless explicitly enabled
+const TEST_ACCOUNTS_ENABLED = 
+  process.env.NODE_ENV !== "production" || 
+  process.env.ENABLE_TEST_ACCOUNTS === "true";
 
 export async function POST(request: NextRequest) {
   // Block test accounts in production

@@ -13,8 +13,9 @@ import { getTestSession } from "@/lib/testing/test-session";
 // Set ENABLE_TEST_ACCOUNTS=true to allow test account sessions
 // ============================================
 const TESTING_MODE = process.env.TESTING_MODE === "true";
-// TEMPORARILY ENABLED FOR PH SCREENSHOTS - TODO: REVERT
-const TEST_ACCOUNTS_ENABLED = true;
+const TEST_ACCOUNTS_ENABLED = 
+  process.env.NODE_ENV !== "production" || 
+  process.env.ENABLE_TEST_ACCOUNTS === "true";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
