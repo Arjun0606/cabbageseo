@@ -161,6 +161,116 @@ interface CheckResult {
   apiCalled: boolean;
 }
 
+interface TrustSourcePresence {
+  source: string;
+  domain: string;
+  isListed: boolean;
+  profileUrl?: string;
+  error?: string;
+}
+
+// ============================================
+// TRUST SOURCE VERIFICATION
+// Uses Perplexity to check if domain is listed on G2, Capterra, etc.
+// ============================================
+async function checkTrustSourcePresence(
+  domain: string,
+  sourcesToCheck: string[] = ["g2.com", "capterra.com", "producthunt.com"]
+): Promise<TrustSourcePresence[]> {
+  const apiKey = process.env.PERPLEXITY_API_KEY;
+  
+  if (!apiKey) {
+    return sourcesToCheck.map(source => ({
+      source,
+      domain: source,
+      isListed: false,
+      error: "API not configured",
+    }));
+  }
+
+  const results: TrustSourcePresence[] = [];
+
+  for (const source of sourcesToCheck) {
+    try {
+      const response = await fetch("https://api.perplexity.ai/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "sonar",
+          messages: [
+            { 
+              role: "system", 
+              content: "Answer with yes or no, then provide the URL if available. Be concise." 
+            },
+            { 
+              role: "user", 
+              content: `Is ${domain} listed on ${source}? If yes, what's the profile URL?` 
+            },
+          ],
+          return_citations: true,
+        }),
+      });
+
+      if (!response.ok) {
+        results.push({
+          source,
+          domain: source,
+          isListed: false,
+          error: `API error: ${response.status}`,
+        });
+        continue;
+      }
+
+      const data = await response.json();
+      const content = (data.choices?.[0]?.message?.content || "").toLowerCase();
+      const citations = data.citations || [];
+      
+      // Check if answer indicates listing
+      const isListed = content.includes("yes") && 
+                       !content.includes("no") && 
+                       !content.includes("not listed") &&
+                       !content.includes("not found");
+      
+      // Try to extract profile URL
+      let profileUrl: string | undefined;
+      const sourceBase = source.replace(".com", "").replace(".net", "");
+      
+      // Check citations for direct link
+      const directLink = citations.find((c: string) => 
+        c.toLowerCase().includes(sourceBase) && 
+        c.toLowerCase().includes(domain.toLowerCase().replace("www.", "").split(".")[0])
+      );
+      
+      if (directLink) {
+        profileUrl = directLink;
+      }
+      
+      results.push({
+        source,
+        domain: source,
+        isListed,
+        profileUrl,
+      });
+
+      // Rate limit
+      await new Promise(r => setTimeout(r, 200));
+      
+    } catch (error) {
+      results.push({
+        source,
+        domain: source,
+        isListed: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  return results;
+}
+
 // ============================================
 // PERPLEXITY - Real API with Citations
 // ============================================
@@ -617,10 +727,12 @@ export async function POST(request: NextRequest) {
     console.log(`[Citation Check] Plan: ${plan}, Category: ${category}, Queries: ${queries.length}`);
 
     // Run ALL checks in parallel - real API calls only
-    const [perplexityResult, googleResult, chatgptResult] = await Promise.all([
+    const [perplexityResult, googleResult, chatgptResult, trustSourceResults] = await Promise.all([
       checkPerplexity(cleanDomain, queries),
       checkGoogleAI(cleanDomain, queries),
       checkChatGPT(cleanDomain, queries),
+      // Also check if domain is listed on key trust sources
+      checkTrustSourcePresence(cleanDomain, ["g2.com", "capterra.com", "producthunt.com", "trustpilot.com"]),
     ]);
 
     const results = [perplexityResult, googleResult, chatgptResult];
@@ -628,6 +740,9 @@ export async function POST(request: NextRequest) {
     // Count how many APIs were actually called
     const apisCalled = results.filter(r => r.apiCalled).length;
     const citedCount = results.filter(r => r.cited).length;
+    
+    // Trust source presence
+    const trustSources = trustSourceResults.filter(t => !t.error);
 
     // If tracking a site, save citations to database
     if (siteId && orgId) {
@@ -660,6 +775,10 @@ export async function POST(request: NextRequest) {
                 .maybeSingle();
 
               if (!existing) {
+                // Extract which trust sources were mentioned in the AI response
+                const mentionedSources = result.snippet ? extractSources(result.snippet) : [];
+                const primarySource = mentionedSources.length > 0 ? mentionedSources[0] : null;
+                
                 await db.from("citations").insert({
                   site_id: siteId,
                   platform: result.platform,
@@ -667,6 +786,7 @@ export async function POST(request: NextRequest) {
                   snippet: result.snippet,
                   confidence: result.confidence >= 0.8 ? "high" : result.confidence >= 0.5 ? "medium" : "low",
                   cited_at: new Date().toISOString(),
+                  source_domain: primarySource, // Track which trust source was involved
                 });
                 newCitationsCount++;
               }
@@ -682,6 +802,43 @@ export async function POST(request: NextRequest) {
               citations_this_week: (site.citations_this_week || 0) + newCitationsCount,
             })
             .eq("id", siteId);
+          
+          // Save trust source presence (upsert to avoid duplicates)
+          for (const trustResult of trustSources) {
+            const sourceName = trustResult.source.replace(".com", "").replace(".net", "");
+            const capitalizedName = sourceName.charAt(0).toUpperCase() + sourceName.slice(1);
+            
+            // Check if listing already exists
+            const { data: existingListing } = await db
+              .from("source_listings")
+              .select("id")
+              .eq("site_id", siteId)
+              .eq("source_domain", trustResult.source)
+              .maybeSingle();
+            
+            if (existingListing) {
+              // Update existing listing
+              await db
+                .from("source_listings")
+                .update({
+                  status: trustResult.isListed ? "verified" : "unverified",
+                  profile_url: trustResult.profileUrl || null,
+                  verified_at: trustResult.isListed ? new Date().toISOString() : null,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", existingListing.id);
+            } else {
+              // Insert new listing
+              await db.from("source_listings").insert({
+                site_id: siteId,
+                source_domain: trustResult.source,
+                source_name: capitalizedName,
+                profile_url: trustResult.profileUrl || null,
+                status: trustResult.isListed ? "verified" : "unverified",
+                verified_at: trustResult.isListed ? new Date().toISOString() : null,
+              });
+            }
+          }
 
           // Update usage count (only for manual checks, not auto-checks)
           // Use daily period for free tier to track daily limits, monthly for paid
