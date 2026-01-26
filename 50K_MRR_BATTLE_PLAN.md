@@ -16,19 +16,24 @@
 | **Paying customers needed** | **~1,111** |
 | Free → Paid conversion | 5% (conservative) |
 | **Free signups needed** | **~22,000** |
-| Weekly signup target | **~1,000/week** |
+| Weeks available | 22 (Jan 27 - Jun 30) |
+| **Avg weekly signup target** | **~1,000/week** |
 
 ---
 
 ## Month-by-Month Targets
 
-| Month | MRR Target | Paying Customers | Weekly Signups |
-|-------|-----------|------------------|----------------|
-| **Feb** | $2,000 | 44 | 200 |
-| **Mar** | $8,000 | 178 | 500 |
-| **Apr** | $18,000 | 400 | 800 |
-| **May** | $32,000 | 711 | 1,000 |
-| **Jun** | $50,000 | 1,111 | 1,200 |
+*Ramped growth - starts slower, accelerates with momentum*
+
+| Month | MRR Target | Paying Customers | Weekly Signups | Monthly Total | Cumulative |
+|-------|-----------|------------------|----------------|---------------|------------|
+| **Feb** | $2,000 | 44 | 400 | 2,000 | 2,000 |
+| **Mar** | $8,000 | 178 | 800 | 3,200 | 5,200 |
+| **Apr** | $18,000 | 400 | 1,200 | 4,800 | 10,000 |
+| **May** | $32,000 | 711 | 1,400 | 5,600 | 15,600 |
+| **Jun** | $50,000 | 1,111 | 1,600 | 6,400 | **22,000** |
+
+> ✅ **Math check:** 2,000 + 3,200 + 4,800 + 5,600 + 6,400 = **22,000 signups** → 5% = 1,100 customers → $49,500 MRR
 
 ---
 
@@ -63,7 +68,7 @@
 
 ### PHASE 2: CONTENT ENGINE (Feb)
 
-**Goal:** 1,500 signups, $8,000 MRR
+**Goal:** 2,000 signups, $2,000 MRR
 
 #### Weekly Content Schedule
 | Day | Content Type | Platform |
@@ -90,7 +95,7 @@
 
 ### PHASE 3: VIRAL MECHANICS (Mar)
 
-**Goal:** 4,000 signups, $18,000 MRR
+**Goal:** 3,200 signups (5,200 cumulative), $8,000 MRR
 
 #### Built-in Virality
 - [ ] **Share Results Button** - "See my AI visibility score" → Twitter/LinkedIn
@@ -113,7 +118,7 @@
 
 ### PHASE 4: PAID GROWTH (Apr-May)
 
-**Goal:** 8,000 signups, $32,000 MRR
+**Goal:** 10,400 signups (15,600 cumulative), $32,000 MRR
 
 #### Paid Channels to Test
 | Channel | Budget/mo | Expected CAC | Notes |
