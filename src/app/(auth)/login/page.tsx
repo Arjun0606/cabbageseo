@@ -26,8 +26,8 @@ function LoginPageContent() {
     setError(null);
 
     // Check if this is a test account - use simple test login
-    // Only enabled in development or when NEXT_PUBLIC_ENABLE_TEST_ACCOUNTS=true
-    const testAccountsEnabled = process.env.NEXT_PUBLIC_ENABLE_TEST_ACCOUNTS === "true";
+    // TEMPORARILY ENABLED FOR PH SCREENSHOTS - TODO: REVERT
+    const testAccountsEnabled = true;
     
     if (testAccountsEnabled && isTestAccount(email)) {
       try {
