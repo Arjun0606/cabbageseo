@@ -573,6 +573,29 @@ export class CitationTracker {
       .eq("site_id", siteId)
       .gte("cited_at", prevStartDate.toISOString())
       .lt("cited_at", startDate.toISOString());
+    
+    // Get historical GEO score from geo_analyses for trend calculation
+    const { data: currentGeoAnalysis } = await (supabase as any)
+      .from("geo_analyses")
+      .select("score")
+      .eq("site_id", siteId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    const { data: prevGeoAnalysis } = await (supabase as any)
+      .from("geo_analyses")
+      .select("score")
+      .eq("site_id", siteId)
+      .lt("created_at", startDate.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    // Calculate GEO score change from historical data
+    const currentScore = (currentGeoAnalysis?.score as { overall?: number })?.overall || site.geo_score_avg || 0;
+    const prevScore = (prevGeoAnalysis?.score as { overall?: number })?.overall || currentScore;
+    const geoScoreChange = currentScore - prevScore;
 
     // Calculate metrics
     const platformBreakdown = {
@@ -615,7 +638,7 @@ export class CitationTracker {
       platformBreakdown,
       topCitedPages,
       topQueries,
-      geoScoreChange: 0, // TODO: Calculate from historical data
+      geoScoreChange,
     };
   }
 
@@ -652,10 +675,75 @@ export class CitationTracker {
     const ownerEmail = (members[0] as any).profiles?.email;
     if (!ownerEmail) return;
 
-    // TODO: Send email via email service
-    console.log(`[Citation Alert] ${site.domain} was cited on ${citation.platform}!`);
-    console.log(`Query: "${citation.query}"`);
-    console.log(`Email would be sent to: ${ownerEmail}`);
+    // Send email notification
+    await sendCitationAlertEmail({
+      to: ownerEmail,
+      domain: site.domain,
+      platform: citation.platform,
+      query: citation.query,
+      snippet: citation.snippet,
+    });
+  }
+}
+
+/**
+ * Email notification helper
+ * Uses Resend or falls back to console logging
+ */
+async function sendCitationAlertEmail(params: {
+  to: string;
+  domain: string;
+  platform: string;
+  query: string;
+  snippet?: string;
+}): Promise<void> {
+  const { to, domain, platform, query, snippet } = params;
+  
+  // Check if Resend is configured
+  const resendApiKey = process.env.RESEND_API_KEY;
+  
+  if (resendApiKey) {
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "CabbageSEO <noreply@cabbageseo.com>",
+          to: [to],
+          subject: `🎉 ${domain} was cited by ${platform}!`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #10b981;">Great news! AI is recommending you.</h2>
+              <p><strong>${domain}</strong> was just cited by <strong>${platform}</strong>!</p>
+              <div style="background: #f4f4f5; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                <p style="margin: 0 0 8px 0;"><strong>Query:</strong> "${query}"</p>
+                ${snippet ? `<p style="margin: 0; color: #71717a;"><strong>Snippet:</strong> ${snippet.slice(0, 200)}...</p>` : ""}
+              </div>
+              <a href="https://cabbageseo.com/dashboard" style="display: inline-block; background: #ef4444; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none;">
+                View your dashboard
+              </a>
+            </div>
+          `,
+        }),
+      });
+      
+      if (!response.ok) {
+        console.error("[Email] Failed to send:", await response.text());
+      } else {
+        console.log(`[Email] Citation alert sent to ${to}`);
+      }
+    } catch (error) {
+      console.error("[Email] Error sending citation alert:", error);
+    }
+  } else {
+    // Fallback: Log to console for development
+    console.log(`[Citation Alert Email] Would send to: ${to}`);
+    console.log(`  Subject: ${domain} was cited by ${platform}!`);
+    console.log(`  Query: "${query}"`);
+    console.log(`  Note: Set RESEND_API_KEY to enable email notifications`);
   }
 }
 

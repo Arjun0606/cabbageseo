@@ -23,8 +23,8 @@ export function DashboardHeader({
   description,
   action,
 }: DashboardHeaderProps) {
-  // const [searchOpen, setSearchOpen] = useState(false); // TODO: Implement command palette
-
+  // Command palette is a future enhancement - search button currently acts as visual placeholder
+  
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 bg-white/80 px-6 backdrop-blur-lg dark:border-slate-800 dark:bg-slate-950/80">
       <div>
@@ -37,11 +37,11 @@ export function DashboardHeader({
       </div>
 
       <div className="flex items-center space-x-4">
-        {/* Command Palette Trigger */}
+        {/* Command Palette Trigger - Future enhancement */}
         <Button
           variant="outline"
           className="hidden w-64 justify-start text-slate-400 sm:flex"
-          onClick={() => {/* TODO: Open command palette */}}
+          onClick={() => console.log("Command palette - coming soon")}
         >
           <Search className="mr-2 h-4 w-4" />
           <span>Search or type command...</span>

@@ -653,3 +653,5 @@ Run this in Supabase SQL Editor to set up a fresh database.
 
 
 
+
+

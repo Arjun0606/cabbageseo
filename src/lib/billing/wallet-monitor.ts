@@ -262,10 +262,64 @@ export async function sendWalletAlert(
     }
   }
   
-  // Email would go here (integrate with your email provider)
+  // Email notification
   if (config.sendEmail && config.email) {
-    // TODO: Integrate with email service (Resend, SendGrid, etc.)
-    console.log(`📧 Would send email alert to ${config.email}`);
+    await sendWalletAlertEmail(config.email, alertType, context);
+  }
+}
+
+/**
+ * Send wallet alert email
+ */
+async function sendWalletAlertEmail(
+  to: string,
+  alertType: "low_balance" | "empty" | "top_up_failed",
+  context: Record<string, unknown>
+): Promise<void> {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  
+  const subjects = {
+    low_balance: "⚠️ CabbageSEO Wallet Balance Low",
+    empty: "🚨 CabbageSEO Wallet Empty - Service May Be Interrupted",
+    top_up_failed: "❌ CabbageSEO Auto Top-Up Failed",
+  };
+  
+  if (resendApiKey) {
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "CabbageSEO Alerts <alerts@cabbageseo.com>",
+          to: [to],
+          subject: subjects[alertType],
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: ${alertType === "empty" ? "#ef4444" : "#f59e0b"};">
+                Wallet Alert: ${alertType.replace(/_/g, " ").toUpperCase()}
+              </h2>
+              <p>Your CabbageSEO API wallet needs attention.</p>
+              <pre style="background: #f4f4f5; padding: 16px; border-radius: 8px; overflow-x: auto;">
+${JSON.stringify(context, null, 2)}
+              </pre>
+              <p>Please add funds to continue uninterrupted service.</p>
+            </div>
+          `,
+        }),
+      });
+      
+      if (!response.ok) {
+        console.error("[Wallet Alert Email] Failed to send:", await response.text());
+      }
+    } catch (error) {
+      console.error("[Wallet Alert Email] Error:", error);
+    }
+  } else {
+    console.log(`📧 Would send ${alertType} email to ${to}`);
+    console.log(`   Context: ${JSON.stringify(context)}`);
   }
 }
 

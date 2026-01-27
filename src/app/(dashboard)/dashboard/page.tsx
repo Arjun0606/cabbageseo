@@ -71,6 +71,7 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState("");
+  const [previousLosses, setPreviousLosses] = useState(0);
 
   // Fetch citations when site changes
   useEffect(() => {
@@ -236,8 +237,27 @@ function DashboardContent() {
   const citationsLastWeek = currentSite?.citationsLastWeek || 0;
   const winsChange = citationsThisWeek - citationsLastWeek;
   
-  // Losses change (if we have recent check data, compare to previous)
-  const lossesChange = 0; // TODO: Track losses over time
+  // Calculate losses change from stored historical data
+  useEffect(() => {
+    if (currentSite?.id && effectiveLosses > 0) {
+      // Load previous losses count from localStorage
+      const storedPrevLosses = localStorage.getItem(`prev_losses_${currentSite.id}`);
+      if (storedPrevLosses) {
+        const prevCount = parseInt(storedPrevLosses) || 0;
+        if (prevCount !== previousLosses) {
+          setPreviousLosses(prevCount);
+        }
+      }
+      
+      // Store current losses for next comparison (only update on change)
+      const currentStored = localStorage.getItem(`prev_losses_${currentSite.id}`);
+      if (!currentStored || parseInt(currentStored) !== effectiveLosses) {
+        localStorage.setItem(`prev_losses_${currentSite.id}`, String(effectiveLosses));
+      }
+    }
+  }, [currentSite?.id, effectiveLosses, previousLosses]);
+  
+  const lossesChange = effectiveLosses - previousLosses;
 
   // Use real usage data from context
   const checksRemaining = Math.max(0, usage.checksLimit - usage.checksUsed);

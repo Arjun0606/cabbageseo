@@ -183,7 +183,8 @@ export async function POST(request: NextRequest) {
             } as never)
             .eq("id", organizationId);
 
-          // TODO: Send email notification about trial ending
+          // Send trial ending email notification
+          await sendTrialEndingEmail(supabase, organizationId, subscription.trial_end);
         }
         break;
       }
@@ -199,6 +200,81 @@ export async function POST(request: NextRequest) {
       { error: "Webhook processing failed" },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Send trial ending email notification
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function sendTrialEndingEmail(
+  supabase: any,
+  organizationId: string,
+  trialEndTimestamp?: number
+): Promise<void> {
+  try {
+    // Get organization owner's email
+    const { data: users } = await supabase
+      .from("users")
+      .select("email, name")
+      .eq("organization_id", organizationId)
+      .eq("role", "owner")
+      .limit(1);
+    
+    if (!users || users.length === 0) {
+      console.log("[Trial Email] No owner found for org:", organizationId);
+      return;
+    }
+    
+    const owner = users[0] as { email: string; name?: string };
+    const trialEndDate = trialEndTimestamp 
+      ? new Date(trialEndTimestamp * 1000).toLocaleDateString() 
+      : "soon";
+    
+    // Check if Resend is configured
+    const resendApiKey = process.env.RESEND_API_KEY;
+    
+    if (resendApiKey) {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "CabbageSEO <noreply@cabbageseo.com>",
+          to: [owner.email],
+          subject: "Your CabbageSEO trial is ending soon",
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2>Hi${owner.name ? ` ${owner.name}` : ""},</h2>
+              <p>Your CabbageSEO trial is ending on <strong>${trialEndDate}</strong>.</p>
+              <p>Upgrade now to keep tracking your AI visibility and stay ahead of competitors.</p>
+              <div style="margin: 24px 0;">
+                <a href="https://cabbageseo.com/settings/billing" 
+                   style="display: inline-block; background: #ef4444; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none;">
+                  Upgrade Now
+                </a>
+              </div>
+              <p style="color: #71717a;">Questions? Just reply to this email.</p>
+            </div>
+          `,
+        }),
+      });
+      
+      if (!response.ok) {
+        console.error("[Trial Email] Failed to send:", await response.text());
+      } else {
+        console.log(`[Trial Email] Sent to ${owner.email}`);
+      }
+    } else {
+      // Fallback: Log for development
+      console.log(`[Trial Email] Would send to: ${owner.email}`);
+      console.log(`  Subject: Your trial ends ${trialEndDate}`);
+      console.log(`  Note: Set RESEND_API_KEY to enable email notifications`);
+    }
+  } catch (error) {
+    console.error("[Trial Email] Error:", error);
   }
 }
 

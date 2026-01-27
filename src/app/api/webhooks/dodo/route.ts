@@ -107,13 +107,18 @@ export async function POST(request: NextRequest) {
     console.error("[Dodo Webhook] Signature comparison error:", e);
   }
 
-  // For now, log but don't block - to debug the issue
+  // Signature verification - reject invalid signatures in production
   if (!isValid) {
-    console.warn("[Dodo Webhook] Signature mismatch - processing anyway for debugging");
-    console.warn("[Dodo Webhook] Expected:", expectedSignature);
-    console.warn("[Dodo Webhook] Received:", signatureToCompare);
-    // TODO: Re-enable signature verification after debugging
-    // return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    console.error("[Dodo Webhook] Signature mismatch");
+    console.error("[Dodo Webhook] Expected:", expectedSignature);
+    console.error("[Dodo Webhook] Received:", signatureToCompare);
+    
+    // In production, reject invalid signatures
+    // In development, allow for easier testing (but still log the warning)
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+    console.warn("[Dodo Webhook] Bypassing signature check in non-production environment");
   }
 
   // Parse event

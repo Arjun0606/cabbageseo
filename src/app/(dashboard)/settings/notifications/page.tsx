@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Bell, Mail, AlertTriangle, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Bell, Mail, Check, Loader2 } from "lucide-react";
 
 export default function NotificationsPage() {
   const [settings, setSettings] = useState({
@@ -11,6 +11,33 @@ export default function NotificationsPage() {
     marketingEmails: false,
   });
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Load notification settings on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const response = await fetch("/api/notifications");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.settings) {
+            setSettings({
+              emailAlerts: data.settings.email_new_citation ?? true,
+              competitorAlerts: data.settings.email_competitor_cited ?? true,
+              weeklyReport: data.settings.email_weekly_digest ?? true,
+              marketingEmails: false, // Not stored in DB
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load notification settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadSettings();
+  }, []);
 
   const handleToggle = (key: keyof typeof settings) => {
     setSettings(prev => ({ ...prev, [key]: !prev[key] }));
@@ -18,10 +45,37 @@ export default function NotificationsPage() {
   };
 
   const handleSave = async () => {
-    // TODO: Save to database
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setSaving(true);
+    try {
+      const response = await fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email_new_citation: settings.emailAlerts,
+          email_lost_citation: settings.emailAlerts,
+          email_weekly_digest: settings.weeklyReport,
+          email_competitor_cited: settings.competitorAlerts,
+        }),
+      });
+      
+      if (response.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch (error) {
+      console.error("Failed to save notification settings:", error);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-red-400 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 p-6">
@@ -129,9 +183,15 @@ export default function NotificationsPage() {
           {/* Save Button */}
           <button
             onClick={handleSave}
-            className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+            disabled={saving}
+            className="w-full py-3 bg-red-500 hover:bg-red-600 disabled:bg-red-500/50 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
           >
-            {saved ? (
+            {saving ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Saving...
+              </>
+            ) : saved ? (
               <>
                 <Check className="w-5 h-5" />
                 Saved!

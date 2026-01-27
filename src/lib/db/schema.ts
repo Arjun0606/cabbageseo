@@ -303,6 +303,11 @@ export const usage = pgTable(
     sitesUsed: integer("sites_used").default(0),
     competitorsUsed: integer("competitors_used").default(0),
 
+    // Intelligence feature usage (Pro features)
+    gapAnalysesUsed: integer("gap_analyses_used").default(0),
+    contentIdeasUsed: integer("content_ideas_used").default(0),
+    actionPlansUsed: integer("action_plans_used").default(0),
+
     // Legacy usage counts (keeping for compatibility)
     articlesGenerated: integer("articles_generated").default(0),
     keywordsAnalyzed: integer("keywords_analyzed").default(0),
@@ -1014,6 +1019,66 @@ export const geoAnalyses = pgTable(
 );
 
 // ============================================
+// COMPETITORS (Competitor tracking per site)
+// ============================================
+
+export const competitors = pgTable(
+  "competitors",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+    
+    // Competitor info
+    domain: text("domain").notNull(),
+    name: text("name"),
+    
+    // Citation stats
+    totalCitations: integer("total_citations").default(0),
+    citationsThisWeek: integer("citations_this_week").default(0),
+    citationsChange: integer("citations_change").default(0),
+    
+    // Timestamps
+    lastCheckedAt: timestamp("last_checked_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("competitors_site_idx").on(table.siteId),
+    uniqueIndex("competitors_site_domain_unique").on(table.siteId, table.domain),
+  ]
+);
+
+// ============================================
+// NOTIFICATIONS (User notification preferences)
+// ============================================
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull()
+      .unique(),
+    
+    // Email notification preferences
+    emailNewCitation: boolean("email_new_citation").default(true),
+    emailLostCitation: boolean("email_lost_citation").default(true),
+    emailWeeklyDigest: boolean("email_weekly_digest").default(true),
+    emailCompetitorCited: boolean("email_competitor_cited").default(false),
+    
+    // Timestamps
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("notifications_user_unique").on(table.userId),
+  ]
+);
+
+// ============================================
 // SOURCE LISTINGS (Where user is listed - for AI Impact Tracking)
 // ============================================
 
@@ -1346,4 +1411,11 @@ export type Usage = typeof usage.$inferSelect;
 export type NewUsage = typeof usage.$inferInsert;
 export type ContentIdea = typeof contentIdeas.$inferSelect;
 export type NewContentIdea = typeof contentIdeas.$inferInsert;
-
+export type Competitor = typeof competitors.$inferSelect;
+export type NewCompetitor = typeof competitors.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;
+export type SourceListing = typeof sourceListings.$inferSelect;
+export type NewSourceListing = typeof sourceListings.$inferInsert;
+export type MarketShareSnapshot = typeof marketShareSnapshots.$inferSelect;
+export type NewMarketShareSnapshot = typeof marketShareSnapshots.$inferInsert;
