@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     let organizationId: string | null = null;
 
     if (testSession) {
-      organizationId = testSession.organizationId;
+      organizationId = testSession.organizationId ?? null;
     } else {
       const supabase = await createClient();
       if (!supabase) {
