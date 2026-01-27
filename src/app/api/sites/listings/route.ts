@@ -80,19 +80,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Get stored listings from source_listings table
-    const { data: storedListings } = await db
+    const { data: storedListingsRaw } = await db
       .from("source_listings")
       .select("source_domain, source_name, profile_url, status, verified_at")
       .eq("site_id", siteId);
 
-    // Create a map of stored listings
-    const listingsMap = new Map<string, {
+    // Type the listings properly
+    type ListingRecord = {
       source_domain: string;
       source_name: string;
       profile_url: string | null;
       status: string;
       verified_at: string | null;
-    }>();
+    };
+    
+    const storedListings = storedListingsRaw as ListingRecord[] | null;
+
+    // Create a map of stored listings
+    const listingsMap = new Map<string, ListingRecord>();
 
     if (storedListings) {
       for (const listing of storedListings) {
