@@ -85,8 +85,27 @@ function QueryPageContent() {
       }
 
       const data = await response.json();
-      if (data.analysis) {
-        setAnalysis(data.analysis);
+      // API returns data.data (from intelligence actions endpoint)
+      const analysisData = data.data || data.analysis;
+      if (analysisData) {
+        // Map API response to expected format
+        setAnalysis({
+          query: analysisData.query || query,
+          yourSite: analysisData.yourDomain || currentSite?.domain || "",
+          competitors: analysisData.citedDomains || [],
+          reasons: analysisData.whyNotYou || [],
+          trustedSources: (analysisData.contentGaps || []).map((gap: string) => ({
+            source: gap,
+            hasCompetitor: true,
+            hasYou: false,
+          })),
+          contentFix: {
+            title: analysisData.actionItems?.[0] || `Complete Guide to ${query}`,
+            headings: analysisData.missingElements || [],
+            entities: analysisData.authorityGaps || [],
+            faqs: analysisData.actionItems?.slice(1) || [],
+          },
+        });
       } else {
         throw new Error("No analysis data returned");
       }
