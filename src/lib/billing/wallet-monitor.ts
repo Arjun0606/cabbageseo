@@ -264,6 +264,16 @@ export async function sendWalletAlert(
   
   // Email notification
   if (config.sendEmail && config.email) {
+    // Derive alert type from status
+    const alertType: "low_balance" | "empty" | "top_up_failed" = 
+      status.alertLevel === "RED" ? "empty" : "low_balance";
+    
+    const context = {
+      balance: status.estimatedBalanceCents,
+      daysRemaining: status.daysUntilEmpty,
+      alertLevel: status.alertLevel,
+    };
+    
     await sendWalletAlertEmail(config.email, alertType, context);
   }
 }
