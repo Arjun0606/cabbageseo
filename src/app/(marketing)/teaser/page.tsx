@@ -63,14 +63,21 @@ function TeaserContent() {
           body: JSON.stringify({ domain }),
         });
 
+        const result = await response.json();
+        
         if (!response.ok) {
-          throw new Error("Failed to check visibility");
+          // Show specific error message from API (e.g., "Rate limit exceeded")
+          throw new Error(result.error || "Failed to check visibility");
         }
 
-        const result = await response.json();
+        if (result.error) {
+          throw new Error(result.error);
+        }
+        
         setData(result);
       } catch (err) {
-        setError("Failed to check visibility. Please try again.");
+        const message = err instanceof Error ? err.message : "Failed to check visibility";
+        setError(message);
       } finally {
         setLoading(false);
       }
