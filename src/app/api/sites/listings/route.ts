@@ -56,7 +56,8 @@ export async function GET(request: NextRequest) {
         .eq("id", user.id)
         .single();
 
-      organizationId = userData?.organization_id || null;
+      const userRecord = userData as { organization_id: string | null } | null;
+      organizationId = userRecord?.organization_id || null;
     }
 
     if (!organizationId) {
