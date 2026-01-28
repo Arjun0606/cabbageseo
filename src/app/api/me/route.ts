@@ -13,6 +13,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getTestPlan } from "@/lib/testing/test-accounts";
 import { getTestSession } from "@/lib/testing/test-session";
+import { cookies } from "next/headers";
 
 // Safe service client
 function getDbClient(): SupabaseClient | null {
@@ -23,9 +24,48 @@ function getDbClient(): SupabaseClient | null {
   }
 }
 
+// Check for test bypass session
+async function getBypassSession() {
+  try {
+    const cookieStore = await cookies();
+    const bypassCookie = cookieStore.get("test_bypass_session");
+    if (bypassCookie) {
+      const session = JSON.parse(bypassCookie.value);
+      if (session.bypassMode) {
+        return session;
+      }
+    }
+  } catch {
+    // Ignore cookie parse errors
+  }
+  return null;
+}
+
 export async function GET() {
   try {
-    // Check Supabase auth FIRST (real auth takes priority over test session cookie)
+    // Check for test bypass session FIRST (highest priority for testing)
+    const bypassSession = await getBypassSession();
+    if (bypassSession) {
+      return NextResponse.json({
+        authenticated: true,
+        user: {
+          id: `bypass-${bypassSession.plan}`,
+          email: bypassSession.email,
+          name: bypassSession.name,
+        },
+        organization: {
+          id: bypassSession.organizationId,
+          plan: bypassSession.plan,
+          status: "active",
+          createdAt: bypassSession.createdAt,
+        },
+        sites: [],
+        currentSite: null,
+        bypassMode: true,
+      });
+    }
+
+    // Check Supabase auth (real auth takes priority over test session cookie)
     const supabase = await createClient();
     if (!supabase) {
       return NextResponse.json({ 

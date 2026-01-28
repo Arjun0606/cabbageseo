@@ -7,6 +7,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getTestSession } from "@/lib/testing/test-session";
+import { cookies } from "next/headers";
 
 export interface UserInfo {
   id: string;
@@ -17,14 +18,46 @@ export interface UserInfo {
 }
 
 /**
+ * Check for test bypass session (for testing without auth)
+ */
+async function getBypassSession(): Promise<UserInfo | null> {
+  try {
+    const cookieStore = await cookies();
+    const bypassCookie = cookieStore.get("test_bypass_session");
+    if (bypassCookie) {
+      const session = JSON.parse(bypassCookie.value);
+      if (session.bypassMode) {
+        return {
+          id: `bypass-${session.plan}`,
+          email: session.email,
+          name: session.name,
+          plan: session.plan as "free" | "starter" | "pro",
+          isTestAccount: true,
+        };
+      }
+    }
+  } catch {
+    // Ignore cookie parse errors
+  }
+  return null;
+}
+
+/**
  * Get current user (test session or Supabase auth)
  * 
  * Priority order:
- * 1. Supabase auth (if user is logged in via real auth)
- * 2. Test session cookie (fallback for test login API)
+ * 1. Test bypass session (for automated testing)
+ * 2. Supabase auth (if user is logged in via real auth)
+ * 3. Test session cookie (fallback for test login API)
  */
 export async function getUser(): Promise<UserInfo | null> {
-  // Check Supabase auth FIRST (real auth takes priority)
+  // Check for test bypass FIRST (highest priority for testing)
+  const bypassSession = await getBypassSession();
+  if (bypassSession) {
+    return bypassSession;
+  }
+
+  // Check Supabase auth (real auth)
   const supabase = await createClient();
   if (supabase) {
     const { data: { user }, error } = await supabase.auth.getUser();

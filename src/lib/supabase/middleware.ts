@@ -27,6 +27,20 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
+  // Check for test bypass session cookie
+  const bypassCookie = request.cookies.get("test_bypass_session");
+  if (bypassCookie) {
+    try {
+      const session = JSON.parse(bypassCookie.value);
+      if (session.bypassMode) {
+        // Bypass mode is active - allow access to all routes
+        return supabaseResponse;
+      }
+    } catch {
+      // Ignore cookie parse errors
+    }
+  }
+
   // Skip auth if Supabase not configured
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return supabaseResponse;
