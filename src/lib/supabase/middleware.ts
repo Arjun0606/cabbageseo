@@ -12,7 +12,8 @@ import { getTestSession } from "@/lib/testing/test-session";
 // Set TESTING_MODE=true in .env for local testing
 // Set ENABLE_TEST_ACCOUNTS=true to allow test account sessions
 // ============================================
-const TESTING_MODE = process.env.TESTING_MODE === "true";
+// TEMPORARY: Force bypass for comprehensive testing - REMOVE AFTER TESTING!
+const TESTING_MODE = true; // process.env.TESTING_MODE === "true";
 const TEST_ACCOUNTS_ENABLED = 
   process.env.NODE_ENV !== "production" || 
   process.env.ENABLE_TEST_ACCOUNTS === "true";

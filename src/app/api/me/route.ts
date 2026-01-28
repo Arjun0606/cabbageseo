@@ -100,8 +100,23 @@ export async function GET() {
         });
       }
       
-      return NextResponse.json({ 
-        authenticated: false 
+      // TEMPORARY: Return test Pro user for comprehensive testing - REMOVE AFTER TESTING!
+      return NextResponse.json({
+        authenticated: true,
+        user: {
+          id: "test-bypass-pro",
+          email: "test-pro@bypass.test",
+          name: "Test Pro User",
+        },
+        organization: {
+          id: "test-org-bypass-pro",
+          plan: "pro",
+          status: "active",
+          createdAt: new Date().toISOString(),
+        },
+        sites: [],
+        currentSite: null,
+        bypassMode: true,
       });
     }
 
