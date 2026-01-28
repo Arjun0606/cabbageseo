@@ -7,6 +7,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCitationPlanLimits } from "@/lib/billing/citation-plans";
 import { getTestSession } from "@/lib/testing/test-session";
+import { getUser } from "@/lib/api/get-user";
 
 function getDbClient(): SupabaseClient | null {
   try {
@@ -23,7 +24,25 @@ export async function GET() {
       return NextResponse.json({ error: "Database not configured" }, { status: 500 });
     }
 
-    // ⚠️ TEST SESSION CHECK FIRST
+    // ⚠️ BYPASS CHECK FIRST (for testing)
+    const bypassUser = await getUser();
+    if (bypassUser?.isTestAccount) {
+      const limits = getCitationPlanLimits(bypassUser.plan);
+      return NextResponse.json({
+        data: {
+          usage: { checksUsed: 0, sitesUsed: 0, competitorsUsed: 0 },
+          limits: { 
+            checks: limits.manualChecksPerDay === -1 ? 999999 : limits.manualChecksPerDay, 
+            checksPerDay: limits.manualChecksPerDay,
+            sites: limits.sites, 
+            competitors: limits.competitors 
+          },
+        },
+        bypassMode: true,
+      });
+    }
+
+    // Test session check
     const testSession = await getTestSession();
     let orgId: string | null = null;
     let plan = "free";

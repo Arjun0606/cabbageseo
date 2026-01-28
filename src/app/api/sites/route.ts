@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
   try {
     // Check for bypass user first
     const bypassUser = await getUser();
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("test-bypass")) {
+    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
       // For bypass mode, return success without DB
       const body = await request.json();
       let domain = body.domain;
