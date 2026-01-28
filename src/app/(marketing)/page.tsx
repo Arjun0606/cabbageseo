@@ -48,7 +48,7 @@ export default function HomePage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-red-500/10 rounded-full blur-3xl" />
 
         <div className="relative max-w-4xl mx-auto px-6 text-center">
-          {/* Warning badge - More urgent */}
+          {/* Warning badge - Targeted to founders */}
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/40 rounded-full text-red-300 text-sm mb-8 animate-pulse">
             <AlertTriangle className="w-4 h-4" />
             <span className="font-medium">Right now, AI is recommending your competitors</span>
@@ -61,18 +61,18 @@ export default function HomePage() {
 
           {/* Subheadline - The reality */}
           <p className="text-xl text-zinc-300 mb-4 max-w-2xl mx-auto">
-            When someone asks ChatGPT <span className="text-white font-semibold">"what's the best [your category]?"</span>
+            When a buyer asks ChatGPT <span className="text-white font-semibold">"what's the best [your category]?"</span>
             <br />
-            AI names them — not you.
+            AI names your competitors — not you.
           </p>
           <p className="text-lg text-zinc-400 mb-12 max-w-2xl mx-auto">
             CabbageSEO shows you:
             <br />
-            <span className="text-white">• who AI recommends</span>
+            <span className="text-white">• who AI recommends (real responses)</span>
             <br />
-            <span className="text-white">• where it gets that information</span>
+            <span className="text-white">• where it learns about them (G2, Reddit, Product Hunt...)</span>
             <br />
-            <span className="text-white">• what to fix to get included</span>
+            <span className="text-white">• exactly what to fix (step-by-step)</span>
           </p>
 
           {/* Domain Input Form */}
@@ -83,7 +83,7 @@ export default function HomePage() {
                   type="text"
                   value={domain}
                   onChange={(e) => setDomain(e.target.value)}
-                  placeholder="yoursaas.com"
+                  placeholder="mysaas.io"
                   className="w-full px-6 py-4 bg-zinc-900 border-2 border-zinc-700 rounded-xl text-white text-lg placeholder:text-zinc-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
                   disabled={loading}
                 />
@@ -111,12 +111,12 @@ export default function HomePage() {
             )}
           </form>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
+          <div className="flex flex-col items-center justify-center gap-2 text-sm">
             <span className="text-zinc-500">
               Takes ~10 seconds • No signup required
             </span>
-            <p className="text-zinc-500 text-sm mt-2">
-              Works best for SaaS, micro-SaaS, and online tools
+            <p className="text-zinc-400 text-sm">
+              Built for indie hackers and solo founders doing $1k–$50k MRR
             </p>
           </div>
         </div>
@@ -251,7 +251,7 @@ export default function HomePage() {
                 type="text"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
-                placeholder="yoursaas.com"
+                placeholder="mysaas.io"
                 className="flex-1 px-6 py-4 bg-zinc-900 border-2 border-zinc-700 rounded-xl text-white text-lg placeholder:text-zinc-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
                 disabled={loading}
               />
@@ -267,7 +267,7 @@ export default function HomePage() {
           </form>
 
           <p className="text-zinc-500 text-sm">
-            No fake data. No estimates pretending to be revenue. Just what AI actually said.
+            Real AI responses. No fake data. No estimates pretending to be revenue.
           </p>
         </div>
       </section>
