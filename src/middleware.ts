@@ -22,6 +22,6 @@ export const config = {
      * - api/webhooks (Payment webhooks)
      * - api/test (Test endpoints - handle own auth)
      */
-    "/((?!_next/static|_next/image|favicon.ico|api/inngest|api/webhooks|api/test|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|site.webmanifest|api/inngest|api/webhooks|api/test|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|webmanifest)$).*)",
   ],
 };
