@@ -88,7 +88,7 @@ function TeaserContent() {
   const handleCopyResults = () => {
     if (!data) return;
     
-    const text = `I just checked if AI recommends my SaaS...
+    const text = `I just checked if AI recommends my product...
 
 Result: ${data.summary.isInvisible ? "I'm INVISIBLE 😬" : "AI knows about me ✓"}
 
@@ -106,7 +106,7 @@ Check yours (free): cabbageseo.com`;
     if (!data) return;
     
     const text = encodeURIComponent(
-      `I just checked if AI recommends my SaaS...
+      `I just checked if AI recommends my product...
 
 ${data.summary.isInvisible ? "Result: I'm INVISIBLE to ChatGPT & Perplexity 😬" : "Result: AI knows about me ✓"}
 
@@ -450,10 +450,10 @@ Check yours (free): cabbageseo.com`
           </div>
         </div>
 
-        {/* Social proof for solo founders */}
+        {/* Social proof */}
         <div className="mt-8 text-center">
           <p className="text-zinc-600 text-sm">
-            Built for indie hackers and solo founders who are tired of being invisible.
+            Built for founders and marketers who are tired of being invisible to AI.
           </p>
         </div>
       </div>

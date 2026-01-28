@@ -116,7 +116,7 @@ export default function HomePage() {
               Takes ~10 seconds • No signup required
             </span>
             <p className="text-zinc-400 text-sm">
-              Built for indie hackers and solo founders doing $1k–$50k MRR
+              For founders, marketers, and anyone building online
             </p>
           </div>
         </div>
