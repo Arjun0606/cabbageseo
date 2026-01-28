@@ -25,29 +25,7 @@ function getDbClient(): SupabaseClient | null {
 
 export async function GET() {
   try {
-    // ⚠️ TEST SESSION CHECK FIRST - Simple credential-based testing
-    const testSession = await getTestSession();
-    if (testSession) {
-      // Return test session data - no Supabase needed
-      return NextResponse.json({
-        authenticated: true,
-        user: {
-          id: `test-${testSession.email}`,
-          email: testSession.email,
-          name: testSession.name,
-        },
-        organization: {
-          id: `test-org-${testSession.email}`,
-          plan: testSession.plan,
-          status: "active",
-          createdAt: new Date().toISOString(),
-        },
-        sites: [],
-        currentSite: null,
-      });
-    }
-
-    // Regular Supabase auth for non-test accounts
+    // Check Supabase auth FIRST (real auth takes priority over test session cookie)
     const supabase = await createClient();
     if (!supabase) {
       return NextResponse.json({ 
@@ -56,9 +34,32 @@ export async function GET() {
       });
     }
 
-    // Get user
+    // Get user from Supabase auth
     const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    // If no Supabase user, fall back to test session cookie
     if (authError || !user) {
+      const testSession = await getTestSession();
+      if (testSession) {
+        // Return test session data - no Supabase needed
+        return NextResponse.json({
+          authenticated: true,
+          user: {
+            id: `test-${testSession.email}`,
+            email: testSession.email,
+            name: testSession.name,
+          },
+          organization: {
+            id: `test-org-${testSession.email}`,
+            plan: testSession.plan,
+            status: "active",
+            createdAt: new Date().toISOString(),
+          },
+          sites: [],
+          currentSite: null,
+        });
+      }
+      
       return NextResponse.json({ 
         authenticated: false 
       });

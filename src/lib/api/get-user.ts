@@ -18,9 +18,42 @@ export interface UserInfo {
 
 /**
  * Get current user (test session or Supabase auth)
+ * 
+ * Priority order:
+ * 1. Supabase auth (if user is logged in via real auth)
+ * 2. Test session cookie (fallback for test login API)
  */
 export async function getUser(): Promise<UserInfo | null> {
-  // Check test session first
+  // Check Supabase auth FIRST (real auth takes priority)
+  const supabase = await createClient();
+  if (supabase) {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (!error && user) {
+      // Real Supabase user - get plan from test account email pattern if applicable
+      const email = user.email || "";
+      let plan: "free" | "starter" | "pro" = "free";
+      
+      // Check if this is a test account email pattern
+      if (email === "test-pro@cabbageseo.test") {
+        plan = "pro";
+      } else if (email === "test-starter@cabbageseo.test") {
+        plan = "starter";
+      } else if (email === "test-free@cabbageseo.test") {
+        plan = "free";
+      }
+      // TODO: For real users, get plan from organization/subscription
+      
+      return {
+        id: user.id,
+        email: email,
+        name: user.user_metadata?.name || null,
+        plan: plan,
+        isTestAccount: email.endsWith("@cabbageseo.test"),
+      };
+    }
+  }
+
+  // Fall back to test session cookie (for test login API)
   const testSession = await getTestSession();
   if (testSession) {
     return {
@@ -32,25 +65,6 @@ export async function getUser(): Promise<UserInfo | null> {
     };
   }
 
-  // Fall back to Supabase auth
-  const supabase = await createClient();
-  if (!supabase) {
-    return null;
-  }
-
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) {
-    return null;
-  }
-
-  // Get plan from organization (or default to free)
-  // For now, return free - API routes will override with test plan if applicable
-  return {
-    id: user.id,
-    email: user.email || "",
-    name: user.user_metadata?.name || null,
-    plan: "free", // Will be overridden by API routes
-    isTestAccount: false,
-  };
+  return null;
 }
 
