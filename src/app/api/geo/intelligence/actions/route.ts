@@ -39,14 +39,18 @@ interface RequestBody {
 
 export async function POST(request: NextRequest) {
   try {
-    // ⚠️ TEST SESSION CHECK FIRST
+    // ⚠️ BYPASS USER CHECK FIRST
+    const { getUser } = await import("@/lib/api/get-user");
     const { getTestSession } = await import("@/lib/testing/test-session");
+    
+    const bypassUser = await getUser();
     const testSession = await getTestSession();
     
     let userId: string;
     let userEmail: string | null = null;
     let organizationId: string | null = null;
     let plan: "free" | "starter" | "pro" = "free";
+    let bypassMode = false;
     
     // Create service client for DB operations
     const serviceClient = createServiceClient(
@@ -54,7 +58,14 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
     
-    if (testSession) {
+    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("test-bypass")) {
+      // Bypass mode
+      userId = bypassUser.id;
+      userEmail = bypassUser.email;
+      plan = bypassUser.plan;
+      organizationId = "bypass-org";
+      bypassMode = true;
+    } else if (testSession) {
       userId = `test-${testSession.email}`;
       userEmail = testSession.email;
       plan = testSession.plan;
@@ -97,7 +108,7 @@ export async function POST(request: NextRequest) {
 
     // Get org plan for non-test users
     let planId = plan;
-    if (!testSession) {
+    if (!bypassMode && !testSession) {
       const { data: org } = await serviceClient
         .from("organizations")
         .select("plan, created_at")

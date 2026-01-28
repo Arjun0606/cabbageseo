@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getTestSession } from "@/lib/testing/test-session";
+import { getUser } from "@/lib/api/get-user";
 
 // Known trust sources that AI platforms use
 const TRUST_SOURCE_DOMAINS = [
@@ -31,11 +32,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "siteId required" }, { status: 400 });
     }
 
-    // Check for test session first
+    // Check for bypass user first
+    const bypassUser = await getUser();
     const testSession = await getTestSession();
     let organizationId: string | null = null;
 
-    if (testSession) {
+    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("test-bypass")) {
+      // Bypass mode - return empty listings
+      return NextResponse.json({
+        listings: TRUST_SOURCE_DOMAINS.map(source => ({
+          sourceDomain: source.domain,
+          sourceName: source.name,
+          isListed: false,
+          listingUrl: null,
+          lastChecked: new Date().toISOString(),
+        })),
+        bypassMode: true,
+      });
+    } else if (testSession) {
       organizationId = testSession.organizationId ?? null;
     } else {
       const supabase = await createClient();

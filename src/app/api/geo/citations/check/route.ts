@@ -557,14 +557,24 @@ async function checkChatGPT(domain: string, queries: string[]): Promise<CheckRes
 // ============================================
 export async function POST(request: NextRequest) {
   try {
-    // ⚠️ TEST SESSION CHECK FIRST
+    // ⚠️ BYPASS USER CHECK FIRST
+    const { getUser } = await import("@/lib/api/get-user");
     const { getTestSession } = await import("@/lib/testing/test-session");
+    
+    const bypassUser = await getUser();
     const testSession = await getTestSession();
     
     let userId: string;
     let userEmail: string | null = null;
+    let bypassMode = false;
     
-    if (testSession) {
+    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("test-bypass")) {
+      // Bypass mode - use bypass user data
+      userId = bypassUser.id;
+      userEmail = bypassUser.email;
+      bypassMode = true;
+      console.log(`[Bypass Mode] Citations check for ${bypassUser.email} (${bypassUser.plan})`);
+    } else if (testSession) {
       // Test account - use test session data
       userId = `test-${testSession.email}`;
       userEmail = testSession.email;
@@ -619,8 +629,11 @@ export async function POST(request: NextRequest) {
     let customQueries: string[] = [];
     let orgId: string | null = null;
     
-    // Check if test session - use test data directly
-    if (testSession) {
+    // Check if bypass mode or test session - use test data directly
+    if (bypassMode && bypassUser) {
+      plan = bypassUser.plan;
+      orgId = "bypass-org";
+    } else if (testSession) {
       plan = testSession.plan;
       // Look up test organization from database
       const testOrgSlug = `test-${testSession.email.split("@")[0]}`;
@@ -643,8 +656,8 @@ export async function POST(request: NextRequest) {
     let orgCreatedAt: string | undefined;
     
     if (orgId) {
-      // Only fetch from DB if not a test session (test session already set plan)
-      if (!testSession) {
+      // Only fetch from DB if not bypass/test session (already set plan)
+      if (!bypassMode && !testSession) {
         const { data: orgData } = await db
           .from("organizations")
           .select("plan, created_at")

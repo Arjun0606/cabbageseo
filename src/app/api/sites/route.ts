@@ -12,6 +12,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCitationPlanLimits, canAddSite, canAccessProduct } from "@/lib/billing/citation-plans";
 import { getTestPlan } from "@/lib/testing/test-accounts";
 import { getTestSession } from "@/lib/testing/test-session";
+import { getUser } from "@/lib/api/get-user";
 
 function getDbClient(): SupabaseClient | null {
   try {
@@ -27,6 +28,13 @@ export async function GET() {
     const db = getDbClient();
     if (!db) {
       return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
+
+    // Check for bypass/test user first
+    const bypassUser = await getUser();
+    if (bypassUser?.isTestAccount) {
+      // Return empty sites for bypass mode (no DB)
+      return NextResponse.json({ sites: [] });
     }
 
     // ⚠️ TEST SESSION CHECK FIRST
@@ -94,6 +102,31 @@ export async function GET() {
 // POST - Create site
 export async function POST(request: NextRequest) {
   try {
+    // Check for bypass user first
+    const bypassUser = await getUser();
+    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("test-bypass")) {
+      // For bypass mode, return success without DB
+      const body = await request.json();
+      let domain = body.domain;
+      domain = domain.trim().toLowerCase();
+      domain = domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
+      
+      return NextResponse.json({
+        site: {
+          id: `bypass-site-${Date.now()}`,
+          domain,
+          name: domain,
+          category: body.category || null,
+          totalCitations: 0,
+          citationsThisWeek: 0,
+          citationsLastWeek: 0,
+          lastCheckedAt: null,
+          geoScore: null,
+        },
+        bypassMode: true,
+      });
+    }
+
     // ⚠️ TEST SESSION CHECK FIRST
     const testSession = await getTestSession();
     let userId: string;
