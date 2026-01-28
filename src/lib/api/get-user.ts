@@ -98,13 +98,6 @@ export async function getUser(): Promise<UserInfo | null> {
     };
   }
 
-  // TEMPORARY: Return test Pro user for comprehensive testing - REMOVE AFTER TESTING!
-  return {
-    id: "test-bypass-pro",
-    email: "test-pro@bypass.test",
-    name: "Test Pro User",
-    plan: "pro" as const,
-    isTestAccount: true,
-  };
+  return null;
 }
 
