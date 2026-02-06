@@ -82,7 +82,7 @@ export async function checkOverage(
     return { allowed: false, reason: "Organization not found", action: "ok" };
   }
 
-  const plan = (org as { plan?: string }).plan || "starter";
+  const plan = (org as { plan?: string }).plan || "scout";
   const settings = ((org as { overage_settings?: OverageSettings }).overage_settings) || DEFAULT_OVERAGE_SETTINGS;
 
   // Get current usage for this billing period

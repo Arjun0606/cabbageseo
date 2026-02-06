@@ -118,7 +118,7 @@ export class UsageTracker {
    */
   async getPlan(): Promise<string> {
     const supabase = await createClient();
-    if (!supabase) return "starter";
+    if (!supabase) return "scout";
 
     const { data } = await supabase
       .from("organizations")
@@ -127,7 +127,7 @@ export class UsageTracker {
       .single();
 
     const org = data as { plan?: string } | null;
-    return org?.plan || "starter";
+    return org?.plan || "scout";
   }
 
   /**

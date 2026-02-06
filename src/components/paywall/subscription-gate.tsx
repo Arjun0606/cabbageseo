@@ -56,7 +56,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
         if (res.ok) {
           const data = await res.json();
           if (data.success) {
-            const plan = data.data?.plan?.id || data.data?.plan?.name || "starter";
+            const plan = data.data?.plan?.id || data.data?.plan?.name || "scout";
             const subscriptionStatus = data.data?.plan?.status || "active";
             
             // Check if they have an active paid subscription
@@ -76,7 +76,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
             if (meRes.ok) {
               const meData = await meRes.json();
               if (meData.authenticated && meData.organization) {
-                const plan = meData.organization.plan || "starter";
+                const plan = meData.organization.plan || "scout";
                 setStatus({
                   hasSubscription: plan !== "free",
                   plan: plan,
@@ -93,7 +93,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
           if (meRes.ok) {
             const meData = await meRes.json();
             if (meData.authenticated && meData.organization) {
-              const plan = meData.organization.plan || "starter";
+              const plan = meData.organization.plan || "scout";
               setStatus({
                 hasSubscription: plan !== "free",
                 plan: plan,

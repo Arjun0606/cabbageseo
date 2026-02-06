@@ -23,7 +23,7 @@
 // PLAN DEFINITIONS
 // ============================================
 
-export type PlanId = "starter" | "pro" | "pro_plus";
+export type PlanId = "scout" | "command" | "dominate";
 export type BillingInterval = "monthly" | "yearly";
 
 export interface PlanLimits {
@@ -69,32 +69,32 @@ export interface Plan {
 }
 
 export const PLANS: Record<PlanId, Plan> = {
-  starter: {
-    id: "starter",
-    name: "Starter",
-    description: "Perfect for solopreneurs and small sites",
-    monthlyPrice: 29,
-    yearlyPrice: 24,  // 17% off (~$60 savings/year)
+  scout: {
+    id: "scout",
+    name: "Scout",
+    description: "Know your blind spots",
+    monthlyPrice: 49,
+    yearlyPrice: 39,
     limits: {
-      sites: 3,                    // Up from 1
-      pagesPerSite: 200,           // Up from 100
-      articlesPerMonth: 50,        // Up from 10 (5x more!)
-      keywordsTracked: 500,        // Up from 100 (5x more!)
-      auditsPerMonth: 15,          // Up from 5 (3x more!)
-      aioAnalysesPerMonth: 100,    // Up from 20 (5x more!)
+      sites: 1,
+      pagesPerSite: 100,
+      articlesPerMonth: 10,
+      keywordsTracked: 100,
+      auditsPerMonth: 5,
+      aioAnalysesPerMonth: 50,
       teamMembers: 1,
-      aiCreditsPerMonth: 5000,     // Up from 1000
+      aiCreditsPerMonth: 2000,
     },
     features: {
-      internalLinking: true,       // Now included!
-      contentScoring: true,        // Now included!
-      autoSchema: true,            // Now included!
-      scheduledPublishing: true,   // All paid plans!
-      autopilotEligible: true,     // All paid plans!
-      gscIntegration: true,        // Now included!
+      internalLinking: true,
+      contentScoring: true,
+      autoSchema: true,
+      scheduledPublishing: true,
+      autopilotEligible: false,
+      gscIntegration: true,
       webflowIntegration: true,
       wordpressIntegration: true,
-      shopifyIntegration: true,    // Now included!
+      shopifyIntegration: true,
       apiAccess: false,
       priorityQueue: false,
       bulkOperations: false,
@@ -104,32 +104,32 @@ export const PLANS: Record<PlanId, Plan> = {
       sla: false,
     },
     featureList: [
-      "3 websites",
-      "50 AI articles/month + images",
-      "500 keywords tracked",
-      "15 SEO audits/month",
-      "100 GEO visibility checks",
-      "All CMS integrations",
-      "AI-generated featured images",
+      "1 website",
+      "3 competitor tracking",
+      "Daily AI monitoring",
+      "5 gap analyses/month",
+      "30-day AI sprint",
+      "Trust Map access",
+      "Email alerts",
       "Email support",
     ],
   },
-  pro: {
-    id: "pro",
-    name: "Pro",
-    description: "For growing businesses & agencies",
-    monthlyPrice: 79,
-    yearlyPrice: 66,  // 16% off (~$156 savings/year)
+  command: {
+    id: "command",
+    name: "Command",
+    description: "Win the AI conversation",
+    monthlyPrice: 149,
+    yearlyPrice: 119,
     popular: true,
     limits: {
-      sites: 10,                   // Up from 5
-      pagesPerSite: 1000,          // Up from 500
-      articlesPerMonth: 150,       // Up from 50 (3x more!)
-      keywordsTracked: 2000,       // Up from 500 (4x more!)
-      auditsPerMonth: 50,          // Up from 20 (2.5x more!)
-      aioAnalysesPerMonth: 300,    // Up from 100 (3x more!)
-      teamMembers: 5,
-      aiCreditsPerMonth: 15000,    // Up from 5000
+      sites: 5,
+      pagesPerSite: 500,
+      articlesPerMonth: 50,
+      keywordsTracked: 1000,
+      auditsPerMonth: 25,
+      aioAnalysesPerMonth: 200,
+      teamMembers: 3,
+      aiCreditsPerMonth: 10000,
     },
     features: {
       internalLinking: true,
@@ -141,40 +141,40 @@ export const PLANS: Record<PlanId, Plan> = {
       webflowIntegration: true,
       wordpressIntegration: true,
       shopifyIntegration: true,
-      apiAccess: true,
-      priorityQueue: true,         // Now included!
-      bulkOperations: true,        // Now included!
+      apiAccess: false,
+      priorityQueue: true,
+      bulkOperations: true,
       whiteLabel: false,
       premiumAI: false,
       customIntegrations: false,
       sla: false,
     },
     featureList: [
-      "10 websites",
-      "150 AI articles/month + images",
-      "2,000 keywords tracked",
-      "50 SEO audits/month",
-      "300 GEO visibility checks",
-      "Autopilot mode",
-      "Priority queue",
+      "5 websites",
+      "10 competitor tracking",
+      "Hourly AI monitoring",
+      "Unlimited intelligence",
+      "Weekly action playbooks",
+      "Competitor deep dives",
+      "Query discovery",
       "Priority support",
     ],
   },
-  pro_plus: {
-    id: "pro_plus",
-    name: "Pro+",
-    description: "Unlimited power for agencies & enterprises",
-    monthlyPrice: 199,
-    yearlyPrice: 166,  // 17% off (~$396 savings/year)
+  dominate: {
+    id: "dominate",
+    name: "Dominate",
+    description: "Own your category",
+    monthlyPrice: 349,
+    yearlyPrice: 279,
     limits: {
-      sites: 50,                   // Up from 20
-      pagesPerSite: 5000,          // Up from 2000
-      articlesPerMonth: 500,       // Up from 200 (2.5x more!)
-      keywordsTracked: 10000,      // Up from 2000 (5x more!)
-      auditsPerMonth: 200,         // Up from 100 (2x more!)
-      aioAnalysesPerMonth: 1000,   // Up from 500 (2x more!)
-      teamMembers: 20,
-      aiCreditsPerMonth: 50000,    // Up from 20000
+      sites: 25,
+      pagesPerSite: 2000,
+      articlesPerMonth: 200,
+      keywordsTracked: 5000,
+      auditsPerMonth: 100,
+      aioAnalysesPerMonth: 500,
+      teamMembers: 10,
+      aiCreditsPerMonth: 30000,
     },
     features: {
       internalLinking: true,
@@ -189,20 +189,20 @@ export const PLANS: Record<PlanId, Plan> = {
       apiAccess: true,
       priorityQueue: true,
       bulkOperations: true,
-      whiteLabel: true,            // Now included!
+      whiteLabel: true,
       premiumAI: true,
-      customIntegrations: true,    // Now included!
-      sla: true,                   // Now included!
+      customIntegrations: true,
+      sla: true,
     },
     featureList: [
-      "50 websites",
-      "500 AI articles/month + images",
-      "10,000 keywords tracked",
-      "200 SEO audits/month",
-      "1,000 GEO visibility checks",
+      "25 websites",
+      "25 competitor tracking",
+      "Real-time alerts",
       "White-label reports",
       "API access",
       "Dedicated support + SLA",
+      "Custom integrations",
+      "Everything in Command",
     ],
   },
 };
@@ -293,17 +293,17 @@ export const SPENDING_CAP_PRESETS = [
 // ============================================
 
 export const RATE_LIMITS = {
-  starter: {
+  scout: {
     requestsPerMinute: 10,
     tokensPerMinute: 50000,
     concurrentRequests: 2,
   },
-  pro: {
+  command: {
     requestsPerMinute: 30,
     tokensPerMinute: 200000,
     concurrentRequests: 5,
   },
-  pro_plus: {
+  dominate: {
     requestsPerMinute: 60,
     tokensPerMinute: 500000,
     concurrentRequests: 10,
@@ -315,17 +315,17 @@ export const RATE_LIMITS = {
 // ============================================
 
 export const DODO_PRODUCTS = {
-  starter: {
-    monthly: process.env.DODO_STARTER_MONTHLY_ID || "prod_starter_monthly",
-    yearly: process.env.DODO_STARTER_YEARLY_ID || "prod_starter_yearly",
+  scout: {
+    monthly: process.env.DODO_SCOUT_MONTHLY_ID || "prod_scout_monthly",
+    yearly: process.env.DODO_SCOUT_YEARLY_ID || "prod_scout_yearly",
   },
-  pro: {
-    monthly: process.env.DODO_PRO_MONTHLY_ID || "prod_pro_monthly",
-    yearly: process.env.DODO_PRO_YEARLY_ID || "prod_pro_yearly",
+  command: {
+    monthly: process.env.DODO_COMMAND_MONTHLY_ID || "prod_command_monthly",
+    yearly: process.env.DODO_COMMAND_YEARLY_ID || "prod_command_yearly",
   },
-  pro_plus: {
-    monthly: process.env.DODO_PRO_PLUS_MONTHLY_ID || "prod_pro_plus_monthly",
-    yearly: process.env.DODO_PRO_PLUS_YEARLY_ID || "prod_pro_plus_yearly",
+  dominate: {
+    monthly: process.env.DODO_DOMINATE_MONTHLY_ID || "prod_dominate_monthly",
+    yearly: process.env.DODO_DOMINATE_YEARLY_ID || "prod_dominate_yearly",
   },
 };
 
@@ -339,7 +339,14 @@ export const DODO_METERS = {
 // ============================================
 
 export function getPlan(planId: PlanId | string): Plan {
-  return PLANS[planId as PlanId] || PLANS.starter;
+  // Handle legacy plan names
+  const legacyMap: Record<string, PlanId> = {
+    starter: "scout",
+    pro: "command",
+    pro_plus: "dominate",
+  };
+  const resolvedId = legacyMap[planId] || planId;
+  return PLANS[resolvedId as PlanId] || PLANS.scout;
 }
 
 export function getPlans(): Plan[] {
@@ -355,7 +362,7 @@ export function getPlanFeatures(planId: PlanId | string): PlanFeatures {
 }
 
 export function getProductId(planId: PlanId, interval: BillingInterval): string {
-  return DODO_PRODUCTS[planId]?.[interval] || DODO_PRODUCTS.starter.monthly;
+  return DODO_PRODUCTS[planId]?.[interval] || DODO_PRODUCTS.scout.monthly;
 }
 
 export function getPlanFromProductId(productId: string): PlanId {
@@ -364,7 +371,7 @@ export function getPlanFromProductId(productId: string): PlanId {
       return planId as PlanId;
     }
   }
-  return "starter";
+  return "scout";
 }
 
 export function formatPrice(dollars: number): string {
@@ -511,18 +518,18 @@ export function checkUsage(
 // ============================================
 
 export function canUpgrade(currentPlan: PlanId, targetPlan: PlanId): boolean {
-  const order: PlanId[] = ["starter", "pro", "pro_plus"];
+  const order: PlanId[] = ["scout", "command", "dominate"];
   return order.indexOf(targetPlan) > order.indexOf(currentPlan);
 }
 
 export function canDowngrade(currentPlan: PlanId, targetPlan: PlanId): boolean {
-  const order: PlanId[] = ["starter", "pro", "pro_plus"];
+  const order: PlanId[] = ["scout", "command", "dominate"];
   return order.indexOf(targetPlan) < order.indexOf(currentPlan);
 }
 
 export function getPlanUpgrades(currentPlan: PlanId): Plan[] {
   const plans = getPlans();
-  const order: PlanId[] = ["starter", "pro", "pro_plus"];
+  const order: PlanId[] = ["scout", "command", "dominate"];
   const currentIndex = order.indexOf(currentPlan);
   return plans.filter((_, i) => i > currentIndex);
 }

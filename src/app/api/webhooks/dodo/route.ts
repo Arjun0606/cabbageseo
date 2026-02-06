@@ -467,15 +467,15 @@ async function handlePaymentFailed(
 
 function getPlanFromProductId(productId: string): string {
   const productToPlan: Record<string, string> = {
-    [process.env.DODO_STARTER_MONTHLY_ID || "prod_starter_monthly"]: "starter",
-    [process.env.DODO_STARTER_YEARLY_ID || "prod_starter_yearly"]: "starter",
-    [process.env.DODO_PRO_MONTHLY_ID || "prod_pro_monthly"]: "pro",
-    [process.env.DODO_PRO_YEARLY_ID || "prod_pro_yearly"]: "pro",
-    [process.env.DODO_PRO_PLUS_MONTHLY_ID || "prod_pro_plus_monthly"]: "pro_plus",
-    [process.env.DODO_PRO_PLUS_YEARLY_ID || "prod_pro_plus_yearly"]: "pro_plus",
+    [process.env.DODO_SCOUT_MONTHLY_ID || "prod_scout_monthly"]: "scout",
+    [process.env.DODO_SCOUT_YEARLY_ID || "prod_scout_yearly"]: "scout",
+    [process.env.DODO_COMMAND_MONTHLY_ID || "prod_command_monthly"]: "command",
+    [process.env.DODO_COMMAND_YEARLY_ID || "prod_command_yearly"]: "command",
+    [process.env.DODO_DOMINATE_MONTHLY_ID || "prod_dominate_monthly"]: "dominate",
+    [process.env.DODO_DOMINATE_YEARLY_ID || "prod_dominate_yearly"]: "dominate",
   };
 
-  return productToPlan[productId] || "starter";
+  return productToPlan[productId] || "scout";
 }
 
 async function createNotification(

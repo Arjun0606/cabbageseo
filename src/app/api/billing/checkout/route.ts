@@ -6,7 +6,7 @@
  * 
  * POST /api/billing/checkout
  * {
- *   "planId": "starter" | "pro" | "pro_plus",
+ *   "planId": "scout" | "command" | "dominate",
  *   "interval": "monthly" | "yearly"
  * }
  */
@@ -17,20 +17,18 @@ import { DodoPayments } from "dodopayments";
 import { PLANS, type PlanId } from "@/lib/billing/plans";
 
 // Dodo Product IDs (configured in Dodo Dashboard)
-// These are the product IDs you create in your Dodo Payments dashboard
-// All environment variables are optional - missing ones will show clear errors at runtime
 const PRODUCT_IDS: Record<string, Record<string, string | undefined>> = {
-  starter: {
-    monthly: process.env.DODO_STARTER_MONTHLY_ID,
-    yearly: process.env.DODO_STARTER_YEARLY_ID,
+  scout: {
+    monthly: process.env.DODO_SCOUT_MONTHLY_ID,
+    yearly: process.env.DODO_SCOUT_YEARLY_ID,
   },
-  pro: {
-    monthly: process.env.DODO_PRO_MONTHLY_ID,
-    yearly: process.env.DODO_PRO_YEARLY_ID,
+  command: {
+    monthly: process.env.DODO_COMMAND_MONTHLY_ID,
+    yearly: process.env.DODO_COMMAND_YEARLY_ID,
   },
-  pro_plus: {
-    monthly: process.env.DODO_PRO_PLUS_MONTHLY_ID,
-    yearly: process.env.DODO_PRO_PLUS_YEARLY_ID,
+  dominate: {
+    monthly: process.env.DODO_DOMINATE_MONTHLY_ID,
+    yearly: process.env.DODO_DOMINATE_YEARLY_ID,
   },
 };
 
@@ -93,7 +91,7 @@ export async function POST(request: NextRequest) {
     const { planId, interval = "monthly" } = body as { planId: string; interval?: string };
 
     // Validate plan
-    const validPlanIds: PlanId[] = ["starter", "pro", "pro_plus"];
+    const validPlanIds: PlanId[] = ["scout", "command", "dominate"];
     if (!validPlanIds.includes(planId as PlanId) || !PLANS[planId as PlanId]) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
@@ -117,7 +115,7 @@ export async function POST(request: NextRequest) {
     if (!profile || !organizationId) {
       console.log("[Checkout] Creating user and org for:", user.email);
       
-      // Create organization first (plan defaults to 'starter' in DB)
+      // Create organization first (plan defaults to 'free' in DB)
       const { data: newOrg, error: orgError } = await serviceClient
         .from("organizations")
         .insert({

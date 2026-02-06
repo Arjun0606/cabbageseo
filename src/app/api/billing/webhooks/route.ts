@@ -34,12 +34,12 @@ function buildProductMappings(): Record<string, string> {
   const mappings: Record<string, string> = {};
   
   const envMappings = [
-    { envVar: process.env.DODO_STARTER_MONTHLY_ID, plan: "starter" },
-    { envVar: process.env.DODO_STARTER_YEARLY_ID, plan: "starter" },
-    { envVar: process.env.DODO_PRO_MONTHLY_ID, plan: "pro" },
-    { envVar: process.env.DODO_PRO_YEARLY_ID, plan: "pro" },
-    { envVar: process.env.DODO_PRO_PLUS_MONTHLY_ID, plan: "pro_plus" },
-    { envVar: process.env.DODO_PRO_PLUS_YEARLY_ID, plan: "pro_plus" },
+    { envVar: process.env.DODO_SCOUT_MONTHLY_ID, plan: "scout" },
+    { envVar: process.env.DODO_SCOUT_YEARLY_ID, plan: "scout" },
+    { envVar: process.env.DODO_COMMAND_MONTHLY_ID, plan: "command" },
+    { envVar: process.env.DODO_COMMAND_YEARLY_ID, plan: "command" },
+    { envVar: process.env.DODO_DOMINATE_MONTHLY_ID, plan: "dominate" },
+    { envVar: process.env.DODO_DOMINATE_YEARLY_ID, plan: "dominate" },
   ];
   
   for (const { envVar, plan } of envMappings) {
@@ -54,16 +54,16 @@ function buildProductMappings(): Record<string, string> {
 // Get plan ID from product ID
 function getPlanFromProductId(productId: string | undefined): string {
   if (!productId) {
-    console.warn("[Webhook] No product ID provided, defaulting to 'starter'");
-    return "starter";
+    console.warn("[Webhook] No product ID provided, defaulting to 'scout'");
+    return "scout";
   }
   
   const productMappings = buildProductMappings();
   const plan = productMappings[productId];
   
   if (!plan) {
-    console.warn(`[Webhook] Unknown product ID: ${productId}, defaulting to 'starter'`);
-    return "starter";
+    console.warn(`[Webhook] Unknown product ID: ${productId}, defaulting to 'scout'`);
+    return "scout";
   }
   
   return plan;
@@ -74,9 +74,9 @@ function getIntervalFromProductId(productId: string | undefined): string {
   if (!productId) return "monthly";
   
   const yearlyProducts = [
-    process.env.DODO_STARTER_YEARLY_ID,
-    process.env.DODO_PRO_YEARLY_ID,
-    process.env.DODO_PRO_PLUS_YEARLY_ID,
+    process.env.DODO_SCOUT_YEARLY_ID,
+    process.env.DODO_COMMAND_YEARLY_ID,
+    process.env.DODO_DOMINATE_YEARLY_ID,
   ].filter(Boolean); // Remove undefined values
   
   return yearlyProducts.includes(productId) ? "yearly" : "monthly";

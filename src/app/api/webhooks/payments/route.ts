@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
             .from("organizations")
             .update({
               subscription_status: "canceled",
-              plan: "starter",
+              plan: "scout",
               updated_at: new Date().toISOString(),
             } as never)
             .eq("id", organizationId);

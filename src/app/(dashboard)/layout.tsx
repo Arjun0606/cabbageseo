@@ -30,11 +30,11 @@ import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
-// Navigation items - Revenue-focused terminology
+// Navigation items - Simplified, sprint-focused
 const navItems = [
-  { href: "/dashboard", label: "War Room", icon: LayoutDashboard },
-  { href: "/dashboard/sources", label: "AI Trust Map", icon: Search },
-  { href: "/dashboard/roadmap", label: "Visibility Roadmap", icon: TrendingUp },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/sources", label: "Trust Map", icon: Search },
+  { href: "/dashboard/intelligence", label: "Intelligence", icon: TrendingUp },
 ];
 
 // Sidebar component
@@ -157,8 +157,9 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
         <div className="flex items-center justify-between">
           <span className="text-xs text-zinc-500">Plan</span>
           <Badge className={`text-xs ${
-            plan === "pro" ? "bg-violet-500" :
-            plan === "starter" ? "bg-emerald-500" :
+            plan === "dominate" ? "bg-amber-500" :
+            plan === "command" ? "bg-violet-500" :
+            plan === "scout" ? "bg-emerald-500" :
             "bg-zinc-600"
           }`}>
             {plan.charAt(0).toUpperCase() + plan.slice(1)}

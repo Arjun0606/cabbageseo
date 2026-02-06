@@ -1,21 +1,48 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+/**
+ * ONBOARDING — Domain + Category + Competitor
+ *
+ * Steps:
+ * 1. Domain input (or pre-filled from URL)
+ * 2. SaaS category selection + optional competitor
+ * 3. Scanning animation
+ * 4. Redirect to dashboard
+ */
+
+import { useEffect, useState, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Check, Loader2, AlertTriangle, ArrowRight } from "lucide-react";
+import { Check, Loader2, AlertTriangle, ArrowRight, ChevronRight } from "lucide-react";
+
+const SAAS_CATEGORIES = [
+  "CRM",
+  "Project Management",
+  "Analytics",
+  "Marketing",
+  "Dev Tools",
+  "Finance",
+  "Communication",
+  "Design",
+  "HR & Recruiting",
+  "Security",
+  "Education",
+  "E-commerce",
+  "Other",
+] as const;
 
 function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const domainFromUrl = searchParams.get("domain");
 
-  const [step, setStep] = useState<"input" | "scanning" | "complete">(
-    domainFromUrl ? "scanning" : "input"
+  const [step, setStep] = useState<"domain" | "details" | "scanning" | "complete">(
+    domainFromUrl ? "details" : "domain"
   );
   const [domain, setDomain] = useState(domainFromUrl || "");
+  const [category, setCategory] = useState("");
+  const [competitor, setCompetitor] = useState("");
   const [scanStep, setScanStep] = useState(0);
   const [error, setError] = useState("");
-  const [siteId, setSiteId] = useState<string | null>(null);
 
   const scanSteps = [
     "Creating your workspace...",
@@ -25,31 +52,42 @@ function OnboardingContent() {
     "Extracting competitors...",
     "Finding trusted sources...",
     "Calculating AI mention share...",
-    "Generating your report...",
+    "Generating your sprint plan...",
   ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleDomainSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!domain.trim()) return;
 
-    // Clean domain
     let cleanDomain = domain.trim().toLowerCase();
     cleanDomain = cleanDomain.replace(/^https?:\/\//, "");
     cleanDomain = cleanDomain.replace(/^www\./, "");
     cleanDomain = cleanDomain.split("/")[0];
 
     setDomain(cleanDomain);
-    setStep("scanning");
-    startScan(cleanDomain);
+    setStep("details");
   };
 
-  const startScan = async (domainToScan: string) => {
+  const handleDetailsSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setStep("scanning");
+  };
+
+  const handleSkipDetails = () => {
+    setStep("scanning");
+  };
+
+  const startScan = useCallback(async () => {
     try {
-      // Create site FIRST (so we have siteId for check)
+      // Create site with category and competitor data
       const siteResponse = await fetch("/api/sites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ domain: domainToScan }),
+        body: JSON.stringify({
+          domain,
+          category: category || undefined,
+          competitor: competitor || undefined,
+        }),
       });
 
       if (!siteResponse.ok) {
@@ -58,59 +96,59 @@ function OnboardingContent() {
       }
 
       const site = await siteResponse.json();
-      setSiteId(site.id);
 
       // Progressive animation WHILE check runs
-      // Show steps 1-3 quickly (site creation)
       for (let i = 0; i < 3; i++) {
         setScanStep(i);
-        await new Promise(resolve => setTimeout(resolve, 400));
+        await new Promise((resolve) => setTimeout(resolve, 400));
       }
 
-      // Start the actual check (this takes time)
+      // Start the actual check
       const checkPromise = fetch("/api/geo/citations/check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteId: site.id, domain: domainToScan }),
+        body: JSON.stringify({ siteId: site.id, domain }),
       });
 
       // Continue animation while check runs
       for (let i = 3; i < scanSteps.length - 1; i++) {
         setScanStep(i);
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise((resolve) => setTimeout(resolve, 800));
       }
 
       // Wait for check to complete
       const checkResponse = await checkPromise;
-      
+
       if (!checkResponse.ok) {
-        // Still redirect even if check fails - they can run it again
-        console.error("Check failed but continuing:", await checkResponse.text());
+        console.error(
+          "Check failed but continuing:",
+          await checkResponse.text()
+        );
       }
 
       // Final step
       setScanStep(scanSteps.length - 1);
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       setStep("complete");
-
-      // Redirect IMMEDIATELY to dashboard with results
-      router.push(`/dashboard?welcome=true&siteId=${site.id}&justScanned=true`);
+      router.push(
+        `/dashboard?welcome=true&siteId=${site.id}&justScanned=true`
+      );
     } catch (err) {
       console.error("Onboarding error:", err);
       setError(err instanceof Error ? err.message : "Something went wrong");
-      setStep("input");
+      setStep("domain");
     }
-  };
+  }, [domain, category, competitor, router, scanSteps.length]);
 
   useEffect(() => {
-    if (domainFromUrl && step === "scanning") {
-      startScan(domainFromUrl);
+    if (step === "scanning") {
+      startScan();
     }
-  }, []);
+  }, [step, startScan]);
 
-  // Input step
-  if (step === "input") {
+  // ========== STEP 1: DOMAIN INPUT ==========
+  if (step === "domain") {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="max-w-md w-full mx-auto px-6">
@@ -124,21 +162,21 @@ function OnboardingContent() {
               Welcome to CabbageSEO
             </h1>
             <p className="text-zinc-400">
-              Let's see if AI is recommending your product.
+              Let&rsquo;s see if AI is recommending your product.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleDomainSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-2">
-                What's your website?
+                What&rsquo;s your website?
               </label>
               <input
                 type="text"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
-                placeholder="yourdomain.com"
-                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+                placeholder="yoursaas.com"
+                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                 autoFocus
               />
             </div>
@@ -153,40 +191,119 @@ function OnboardingContent() {
             <button
               type="submit"
               disabled={!domain.trim()}
-              className="w-full py-3 bg-red-500 hover:bg-red-600 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
             >
-              Start AI visibility scan
+              Continue
               <ArrowRight className="w-5 h-5" />
             </button>
           </form>
 
           <p className="mt-6 text-center text-zinc-500 text-sm">
-            We'll check ChatGPT, Perplexity, and Google AI to see
-            if they recommend your product.
+            We&rsquo;ll check ChatGPT, Perplexity, and Google AI to see if they
+            recommend your product.
           </p>
         </div>
       </div>
     );
   }
 
-  // Scanning step
+  // ========== STEP 2: CATEGORY + COMPETITOR ==========
+  if (step === "details") {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="max-w-md w-full mx-auto px-6">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-full text-zinc-400 text-sm mb-4">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              {domain}
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2">
+              Tell us about your SaaS
+            </h1>
+            <p className="text-zinc-400 text-sm">
+              This helps us find the right AI queries and competitors for your
+              market.
+            </p>
+          </div>
+
+          <form onSubmit={handleDetailsSubmit} className="space-y-5">
+            {/* Category Selection */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">
+                What category is your SaaS?
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {SAAS_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategory(cat)}
+                    className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${
+                      category === cat
+                        ? "bg-emerald-500/15 border border-emerald-500/40 text-emerald-400"
+                        : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Competitor */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">
+                Who&rsquo;s your biggest competitor?{" "}
+                <span className="text-zinc-500">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={competitor}
+                onChange={(e) => setCompetitor(e.target.value)}
+                placeholder="competitor.com"
+                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+              />
+              <p className="text-xs text-zinc-500 mt-1.5">
+                We&rsquo;ll check if AI recommends them over you.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+            >
+              Start AI visibility scan
+              <ArrowRight className="w-5 h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSkipDetails}
+              className="w-full py-2 text-zinc-500 hover:text-zinc-300 text-sm transition-colors flex items-center justify-center gap-1"
+            >
+              Skip for now
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // ========== STEP 3: SCANNING ==========
   if (step === "scanning") {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="max-w-lg w-full mx-auto px-6">
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
             <div className="text-center mb-8">
-              <div className="relative inline-block">
-                <Loader2 className="w-16 h-16 text-red-400 animate-spin" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-2xl">🔍</span>
-                </div>
-              </div>
+              <Loader2 className="w-16 h-16 text-emerald-400 animate-spin mx-auto" />
               <h2 className="text-2xl font-bold text-white mt-4 mb-2">
                 Scanning AI platforms...
               </h2>
               <p className="text-zinc-400">
-                Checking if AI recommends <span className="text-white font-medium">{domain}</span>
+                Checking if AI recommends{" "}
+                <span className="text-white font-medium">{domain}</span>
               </p>
             </div>
 
@@ -199,8 +316,8 @@ function OnboardingContent() {
                     i < scanStep
                       ? "text-emerald-400"
                       : i === scanStep
-                      ? "text-white"
-                      : "text-zinc-600"
+                        ? "text-white"
+                        : "text-zinc-600"
                   }`}
                 >
                   {i < scanStep ? (
@@ -216,7 +333,7 @@ function OnboardingContent() {
             </div>
 
             <p className="mt-6 text-center text-zinc-500 text-sm">
-              This uses real AI APIs — no estimates or guesses.
+              This uses real AI APIs &mdash; no estimates or guesses.
             </p>
           </div>
         </div>
@@ -224,7 +341,7 @@ function OnboardingContent() {
     );
   }
 
-  // Complete step
+  // ========== STEP 4: COMPLETE ==========
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
       <div className="max-w-md w-full mx-auto px-6 text-center">
@@ -247,11 +364,13 @@ function OnboardingContent() {
 
 export default function OnboardingPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-zinc-400 animate-spin" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-zinc-400 animate-spin" />
+        </div>
+      }
+    >
       <OnboardingContent />
     </Suspense>
   );

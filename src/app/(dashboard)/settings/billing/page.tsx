@@ -204,12 +204,14 @@ function BillingContent() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
-                currentPlan === "pro" ? "bg-violet-500/10" :
-                currentPlan === "starter" ? "bg-blue-500/10" :
+                currentPlan === "dominate" ? "bg-amber-500/10" :
+                currentPlan === "command" ? "bg-violet-500/10" :
+                currentPlan === "scout" ? "bg-emerald-500/10" :
                 "bg-zinc-800"
               }`}>
-                {currentPlan === "pro" ? <Building2 className="w-7 h-7 text-violet-400" /> :
-                 currentPlan === "starter" ? <Crown className="w-7 h-7 text-blue-400" /> :
+                {currentPlan === "dominate" ? <Building2 className="w-7 h-7 text-amber-400" /> :
+                 currentPlan === "command" ? <Zap className="w-7 h-7 text-violet-400" /> :
+                 currentPlan === "scout" ? <Crown className="w-7 h-7 text-emerald-400" /> :
                  <CreditCard className="w-7 h-7 text-zinc-500" />}
               </div>
               <div>
@@ -271,7 +273,7 @@ function BillingContent() {
       </Card>
 
       {/* Upgrade Options */}
-      {currentPlan !== "pro" && (
+      {currentPlan !== "dominate" && (
         <Card className="bg-zinc-900/50 border-zinc-800">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -300,34 +302,34 @@ function BillingContent() {
                   }`}
                 >
                   Yearly
-                  <span className="ml-1 text-xs opacity-75">(-17%)</span>
+                  <span className="ml-1 text-xs opacity-75">(-20%)</span>
                 </button>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {(["starter", "pro"] as const)
+            <div className="grid sm:grid-cols-3 gap-4">
+              {(["scout", "command", "dominate"] as const)
                 .filter(p => {
-                  const planOrder = ["free", "starter", "pro"];
+                  const planOrder = ["free", "scout", "command", "dominate"];
                   return planOrder.indexOf(p) > planOrder.indexOf(currentPlan);
                 })
                 .map((planId) => {
                   const planData = CITATION_PLANS[planId];
                   const price = billingInterval === "yearly" ? planData.yearlyPrice : planData.monthlyPrice;
-                  
+
                   return (
                     <div
                       key={planId}
                       className={`p-4 rounded-xl border ${
-                        planId === "pro" 
-                          ? "bg-emerald-500/5 border-emerald-500/30" 
+                        planId === "command"
+                          ? "bg-emerald-500/5 border-emerald-500/30"
                           : "bg-zinc-800/50 border-zinc-700"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="font-semibold text-white">{planData.name}</h4>
-                        {planId === "pro" && (
+                        {planId === "command" && (
                           <Badge className="bg-emerald-500 text-white text-xs">Popular</Badge>
                         )}
                       </div>
@@ -341,11 +343,7 @@ function BillingContent() {
                       <ul className="space-y-2 text-sm text-zinc-400 mb-4">
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400" />
-                          {planData.limits.sites} sites
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-emerald-400" />
-                          {planData.limits.manualChecksPerDay === -1 ? "Unlimited" : planData.limits.manualChecksPerDay + "/day"} manual checks
+                          {planData.limits.sites} site{planData.limits.sites > 1 ? "s" : ""}
                         </li>
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400" />
@@ -353,28 +351,32 @@ function BillingContent() {
                         </li>
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400" />
-                          {planData.features.dailyAutoCheck && planData.features.hourlyAutoCheck 
+                          {planData.features.hourlyAutoCheck
                             ? "Hourly auto-checks"
-                            : planData.features.dailyAutoCheck 
+                            : planData.features.dailyAutoCheck
                             ? "Daily auto-checks"
                             : "Manual checks only"}
                         </li>
+                        {planData.features.sprintFramework && (
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-emerald-400" />
+                            30-day sprint program
+                          </li>
+                        )}
                       </ul>
                       <Button
                         onClick={() => handleUpgrade(planId)}
                         disabled={upgrading === planId}
                         className={`w-full font-medium ${
-                          planId === "pro" 
-                            ? "bg-emerald-600 hover:bg-emerald-500" 
+                          planId === "command"
+                            ? "bg-emerald-600 hover:bg-emerald-500"
                             : "bg-zinc-700 hover:bg-zinc-600"
                         }`}
                       >
                         {upgrading === planId ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : planId === "pro" ? (
-                          "Stop Losing AI Recommendations"
                         ) : (
-                          "Start Winning AI Recommendations"
+                          `Get ${planData.name}`
                         )}
                       </Button>
                     </div>

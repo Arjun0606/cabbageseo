@@ -17,7 +17,7 @@ import { relations } from "drizzle-orm";
 // ENUMS
 // ============================================
 
-export const planEnum = pgEnum("plan", ["starter", "pro", "pro_plus"]);
+export const planEnum = pgEnum("plan", ["free", "scout", "command", "dominate"]);
 export const billingIntervalEnum = pgEnum("billing_interval", ["monthly", "yearly"]);
 export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "active",
@@ -109,7 +109,7 @@ export const organizations = pgTable(
     dodoCustomerId: text("dodo_customer_id"),
     dodoSubscriptionId: text("dodo_subscription_id"),
     dodoProductId: text("dodo_product_id"),
-    plan: planEnum("plan").notNull().default("starter"),
+    plan: planEnum("plan").notNull().default("free"),
     billingInterval: billingIntervalEnum("billing_interval").default("monthly"),
     subscriptionStatus: subscriptionStatusEnum("subscription_status").default("trialing"),
     trialEndsAt: timestamp("trial_ends_at"),
@@ -467,6 +467,14 @@ export const sites = pgTable(
     // Public profile (privacy-first: off by default)
     publicProfileEnabled: boolean("public_profile_enabled").default(false),
     publicProfileBio: text("public_profile_bio"), // Optional tagline for public profile
+
+    // 30-Day Sprint
+    sprintStartedAt: timestamp("sprint_started_at"),
+    sprintCompletedAt: timestamp("sprint_completed_at"),
+
+    // Momentum tracking
+    momentumScore: integer("momentum_score").default(0),
+    momentumChange: integer("momentum_change").default(0), // week-over-week delta
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -1199,6 +1207,91 @@ export const aioAnalyses = pgTable(
 );
 
 // ============================================
+// SPRINT ACTIONS (30-day sprint progress)
+// ============================================
+
+export const sprintActionStatusEnum = pgEnum("sprint_action_status", [
+  "pending",
+  "in_progress",
+  "completed",
+  "skipped",
+]);
+
+export const sprintActions = pgTable(
+  "sprint_actions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Action details
+    actionType: text("action_type").notNull(), // get_listed_g2, get_listed_capterra, publish_comparison, etc.
+    actionTitle: text("action_title").notNull(),
+    actionDescription: text("action_description"),
+    actionUrl: text("action_url"), // Direct link to take action
+
+    // Priority & effort
+    priority: integer("priority").default(5), // 1-10, lower = higher priority
+    estimatedMinutes: integer("estimated_minutes").default(60),
+    week: integer("week").default(1), // Which sprint week (1-4)
+
+    // Status
+    status: sprintActionStatusEnum("status").default("pending"),
+
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("sprint_actions_site_idx").on(table.siteId),
+    index("sprint_actions_status_idx").on(table.status),
+  ]
+);
+
+// ============================================
+// MONTHLY CHECKPOINTS (churn prevention)
+// ============================================
+
+export const monthlyCheckpoints = pgTable(
+  "monthly_checkpoints",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+    organizationId: uuid("organization_id")
+      .references(() => organizations.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Period
+    period: text("period").notNull(), // YYYY-MM
+
+    // Momentum
+    momentumScore: integer("momentum_score").default(0),
+    momentumChange: integer("momentum_change").default(0),
+
+    // Changes
+    newQueries: jsonb("new_queries").default([]),
+    lostQueries: jsonb("lost_queries").default([]),
+    competitorChanges: jsonb("competitor_changes").default([]),
+
+    // Action
+    topAction: text("top_action"),
+    reportData: jsonb("report_data").default({}),
+
+    // Email sent
+    emailSentAt: timestamp("email_sent_at"),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("monthly_checkpoints_site_idx").on(table.siteId),
+    index("monthly_checkpoints_period_idx").on(table.period),
+    uniqueIndex("monthly_checkpoints_unique").on(table.siteId, table.period),
+  ]
+);
+
+// ============================================
 // RELATIONS
 // ============================================
 
@@ -1419,3 +1512,7 @@ export type SourceListing = typeof sourceListings.$inferSelect;
 export type NewSourceListing = typeof sourceListings.$inferInsert;
 export type MarketShareSnapshot = typeof marketShareSnapshots.$inferSelect;
 export type NewMarketShareSnapshot = typeof marketShareSnapshots.$inferInsert;
+export type SprintAction = typeof sprintActions.$inferSelect;
+export type NewSprintAction = typeof sprintActions.$inferInsert;
+export type MonthlyCheckpoint = typeof monthlyCheckpoints.$inferSelect;
+export type NewMonthlyCheckpoint = typeof monthlyCheckpoints.$inferInsert;

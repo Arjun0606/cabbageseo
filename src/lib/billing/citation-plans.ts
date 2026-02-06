@@ -1,71 +1,84 @@
 /**
  * AI Visibility Intelligence Pricing Plans
- * 
- * HONEST PRICING - Sensible limits
- * 
- * AUTO-CHECKS: Run automatically via Inngest - DON'T count against limits
- * MANUAL CHECKS: On-demand checks users trigger - these have limits on Free
- * 
- * Free: 10-day trial, limited manual checks
- * Starter: $29/mo - Unlimited manual + daily auto
- * Pro: $79/mo - Unlimited manual + hourly auto
+ *
+ * NEW PRICING (Jan 2026) — Optimized for $100k MRR
+ *
+ * Free: 7-day trial, limited manual checks
+ * Scout ($49/mo): Monitor + know your status
+ * Command ($149/mo): Full intelligence + action plans
+ * Dominate ($349/mo): Scale across brands, white-label
+ *
+ * Path to $100k MRR:
+ * 50% Scout ($49) + 35% Command ($149) + 15% Dominate ($349)
+ * = blended ARPU ~$127 → ~785 customers
  */
 
-export const TRIAL_DAYS = 7; // Updated to match pricing page
+export const TRIAL_DAYS = 7;
 
-export type CitationPlanId = "free" | "starter" | "pro";
+export type CitationPlanId = "free" | "scout" | "command" | "dominate";
 
 export interface CitationPlanLimits {
   sites: number;
-  manualChecksPerDay: number;  // On-demand checks user triggers
+  manualChecksPerDay: number;
   competitors: number;
   historyDays: number;
   teamMembers: number;
-  queriesPerCheck: number;     // Auto-generated queries per check
-  customQueriesPerSite: number; // User-defined queries (-1 = unlimited)
+  queriesPerCheck: number;
+  customQueriesPerSite: number; // -1 = unlimited
 }
 
 export interface CitationPlanFeatures {
   // Monitoring
   manualChecks: boolean;
-  dailyAutoCheck: boolean;      // Inngest cron - daily
-  hourlyAutoCheck: boolean;     // Inngest cron - hourly (Pro only)
+  dailyAutoCheck: boolean;
+  hourlyAutoCheck: boolean;
+  realtimeAlerts: boolean; // Dominate only
   emailAlerts: boolean;
   weeklyReport: boolean;
   csvExport: boolean;
   competitorTracking: boolean;
   geoScore: boolean;
   geoTips: boolean;
-  
-  // Intelligence (the $100k features)
-  citationGapAnalysis: boolean;       // "Why competitor, not me?"
-  citationGapFull: boolean;           // Full per-query analysis (Pro only)
-  contentRecommendations: boolean;    // "What to publish next"
-  contentRecsUnlimited: boolean;      // Unlimited vs 3/month
-  weeklyActionPlan: boolean;          // Weekly Action Playbook (Pro only)
-  competitorDeepDive: boolean;        // Full competitor comparison (Pro only)
-  customQueries: boolean;             // User-defined queries (Starter+)
-  queryDiscovery: boolean;            // AI-suggested queries (Pro only)
+
+  // Intelligence
+  citationGapAnalysis: boolean;
+  citationGapFull: boolean;
+  contentRecommendations: boolean;
+  contentRecsUnlimited: boolean;
+  weeklyActionPlan: boolean;
+  competitorDeepDive: boolean;
+  customQueries: boolean;
+  queryDiscovery: boolean;
+
+  // Sprint
+  sprintFramework: boolean;
+  monthlyCheckpoints: boolean;
+
+  // Scale (Dominate)
+  whiteLabel: boolean;
+  apiAccess: boolean;
+  prioritySupport: boolean;
 }
 
-// Intelligence limits
 export interface CitationIntelligenceLimits {
-  gapAnalysesPerMonth: number;        // -1 = unlimited
-  contentIdeasPerMonth: number;       // -1 = unlimited
-  actionPlansPerMonth: number;        // 0 = not available
+  gapAnalysesPerMonth: number;  // -1 = unlimited
+  contentIdeasPerMonth: number; // -1 = unlimited
+  actionPlansPerMonth: number;  // 0 = not available
 }
 
 export interface CitationPlan {
   id: CitationPlanId;
   name: string;
   description: string;
-  tagline?: string;  // Value prop for marketing
+  tagline?: string;
+  whoIsThisFor?: string;
   monthlyPrice: number;
   yearlyPrice: number;
   limits: CitationPlanLimits;
   intelligenceLimits: CitationIntelligenceLimits;
   features: CitationPlanFeatures;
   isTrial?: boolean;
+  popular?: boolean;
 }
 
 export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
@@ -73,35 +86,35 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     id: "free",
     name: "Free Trial",
     description: `${TRIAL_DAYS}-day trial to explore`,
-    tagline: "See who AI cites",
+    tagline: "The wake-up call",
     monthlyPrice: 0,
     yearlyPrice: 0,
     isTrial: true,
     limits: {
       sites: 1,
-      manualChecksPerDay: 3,     // 3 on-demand checks per day
+      manualChecksPerDay: 3,
       competitors: 0,
       historyDays: 7,
       teamMembers: 1,
-      queriesPerCheck: 3,        // 3 basic queries
-      customQueriesPerSite: 0,   // No custom queries
+      queriesPerCheck: 3,
+      customQueriesPerSite: 0,
     },
     intelligenceLimits: {
-      gapAnalysesPerMonth: 0,    // No intelligence on free
+      gapAnalysesPerMonth: 0,
       contentIdeasPerMonth: 0,
       actionPlansPerMonth: 0,
     },
     features: {
       manualChecks: true,
-      dailyAutoCheck: false,     // No automation on free
+      dailyAutoCheck: false,
       hourlyAutoCheck: false,
+      realtimeAlerts: false,
       emailAlerts: false,
       weeklyReport: false,
       csvExport: false,
       competitorTracking: false,
       geoScore: true,
       geoTips: false,
-      // Intelligence features
       citationGapAnalysis: false,
       citationGapFull: false,
       contentRecommendations: false,
@@ -110,90 +123,156 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       competitorDeepDive: false,
       customQueries: false,
       queryDiscovery: false,
+      sprintFramework: false,
+      monthlyCheckpoints: false,
+      whiteLabel: false,
+      apiAccess: false,
+      prioritySupport: false,
     },
   },
-  starter: {
-    id: "starter",
-    name: "Starter",
-    description: "For individuals & small brands",
-    tagline: "Know why competitors win",
-    monthlyPrice: 29,
-    yearlyPrice: 24,
+  scout: {
+    id: "scout",
+    name: "Scout",
+    description: "Know your blind spots",
+    tagline: "See exactly where AI ignores you",
+    whoIsThisFor: "Solo founder with one product. You want to know where you stand.",
+    monthlyPrice: 49,
+    yearlyPrice: 39,
     limits: {
-      sites: 3,
-      manualChecksPerDay: -1,    // Unlimited manual checks
-      competitors: 2,
+      sites: 1,
+      manualChecksPerDay: -1,
+      competitors: 3,
       historyDays: 30,
       teamMembers: 1,
-      queriesPerCheck: 10,       // 10 queries per check
-      customQueriesPerSite: 5,   // 5 custom queries per site
+      queriesPerCheck: 10,
+      customQueriesPerSite: 5,
     },
     intelligenceLimits: {
-      gapAnalysesPerMonth: 5,    // 5 "why not me?" analyses
-      contentIdeasPerMonth: 3,   // 3 content ideas
-      actionPlansPerMonth: 0,    // No action plans (Pro only)
-    },
-    features: {
-      manualChecks: true,
-      dailyAutoCheck: true,      // Daily automation included
-      hourlyAutoCheck: false,
-      emailAlerts: true,
-      weeklyReport: true,
-      csvExport: true,
-      competitorTracking: true,
-      geoScore: true,
-      geoTips: true,
-      // Intelligence features
-      citationGapAnalysis: true,    // Basic "why not me?" summary
-      citationGapFull: false,       // Full per-query analysis is Pro
-      contentRecommendations: true, // Limited content ideas
-      contentRecsUnlimited: false,  // 3/month limit
-      weeklyActionPlan: false,      // Pro only
-      competitorDeepDive: false,    // Pro only
-      customQueries: true,          // 5 custom queries per site
-      queryDiscovery: false,        // Pro only
-    },
-  },
-  pro: {
-    id: "pro",
-    name: "Pro",
-    description: "For brands & growing companies",
-    tagline: "Win every AI conversation",
-    monthlyPrice: 79,
-    yearlyPrice: 66,
-    limits: {
-      sites: 10,
-      manualChecksPerDay: -1,    // Unlimited manual checks
-      competitors: 10,
-      historyDays: 365,
-      teamMembers: 1,
-      queriesPerCheck: 20,       // 20 queries per check
-      customQueriesPerSite: -1,  // Unlimited custom queries
-    },
-    intelligenceLimits: {
-      gapAnalysesPerMonth: -1,   // Unlimited
-      contentIdeasPerMonth: -1,  // Unlimited
-      actionPlansPerMonth: 4,    // Weekly action plans
+      gapAnalysesPerMonth: 5,
+      contentIdeasPerMonth: 5,
+      actionPlansPerMonth: 0,
     },
     features: {
       manualChecks: true,
       dailyAutoCheck: true,
-      hourlyAutoCheck: true,     // Hourly automation for Pro
+      hourlyAutoCheck: false,
+      realtimeAlerts: false,
       emailAlerts: true,
       weeklyReport: true,
       csvExport: true,
       competitorTracking: true,
       geoScore: true,
       geoTips: true,
-      // Intelligence features - ALL UNLOCKED
-      citationGapAnalysis: true,    // Full gap analysis
-      citationGapFull: true,        // Per-query deep dive
-      contentRecommendations: true, // Unlimited content ideas
-      contentRecsUnlimited: true,   // No limits
-      weeklyActionPlan: true,       // Weekly Action Playbook
-      competitorDeepDive: true,     // Full competitor breakdown
-      customQueries: true,          // Unlimited custom queries
-      queryDiscovery: true,         // AI-suggested queries
+      citationGapAnalysis: true,
+      citationGapFull: false,
+      contentRecommendations: true,
+      contentRecsUnlimited: false,
+      weeklyActionPlan: false,
+      competitorDeepDive: false,
+      customQueries: true,
+      queryDiscovery: false,
+      sprintFramework: true,
+      monthlyCheckpoints: true,
+      whiteLabel: false,
+      apiAccess: false,
+      prioritySupport: false,
+    },
+  },
+  command: {
+    id: "command",
+    name: "Command",
+    description: "Win the AI conversation",
+    tagline: "Get the playbook to become AI's #1 recommendation",
+    whoIsThisFor: "Growing SaaS doing $5k-$50k MRR. Ready to actively compete for AI recommendations.",
+    monthlyPrice: 149,
+    yearlyPrice: 119,
+    popular: true,
+    limits: {
+      sites: 5,
+      manualChecksPerDay: -1,
+      competitors: 10,
+      historyDays: 365,
+      teamMembers: 3,
+      queriesPerCheck: 20,
+      customQueriesPerSite: -1,
+    },
+    intelligenceLimits: {
+      gapAnalysesPerMonth: -1,
+      contentIdeasPerMonth: -1,
+      actionPlansPerMonth: 4, // Weekly
+    },
+    features: {
+      manualChecks: true,
+      dailyAutoCheck: true,
+      hourlyAutoCheck: true,
+      realtimeAlerts: false,
+      emailAlerts: true,
+      weeklyReport: true,
+      csvExport: true,
+      competitorTracking: true,
+      geoScore: true,
+      geoTips: true,
+      citationGapAnalysis: true,
+      citationGapFull: true,
+      contentRecommendations: true,
+      contentRecsUnlimited: true,
+      weeklyActionPlan: true,
+      competitorDeepDive: true,
+      customQueries: true,
+      queryDiscovery: true,
+      sprintFramework: true,
+      monthlyCheckpoints: true,
+      whiteLabel: false,
+      apiAccess: false,
+      prioritySupport: true,
+    },
+  },
+  dominate: {
+    id: "dominate",
+    name: "Dominate",
+    description: "Own your category",
+    tagline: "Track and win across every query in your space",
+    whoIsThisFor: "Agency or multi-product company. Track and win across multiple brands.",
+    monthlyPrice: 349,
+    yearlyPrice: 279,
+    limits: {
+      sites: 25,
+      manualChecksPerDay: -1,
+      competitors: 25,
+      historyDays: 365,
+      teamMembers: 10,
+      queriesPerCheck: 30,
+      customQueriesPerSite: -1,
+    },
+    intelligenceLimits: {
+      gapAnalysesPerMonth: -1,
+      contentIdeasPerMonth: -1,
+      actionPlansPerMonth: -1, // Unlimited
+    },
+    features: {
+      manualChecks: true,
+      dailyAutoCheck: true,
+      hourlyAutoCheck: true,
+      realtimeAlerts: true,
+      emailAlerts: true,
+      weeklyReport: true,
+      csvExport: true,
+      competitorTracking: true,
+      geoScore: true,
+      geoTips: true,
+      citationGapAnalysis: true,
+      citationGapFull: true,
+      contentRecommendations: true,
+      contentRecsUnlimited: true,
+      weeklyActionPlan: true,
+      competitorDeepDive: true,
+      customQueries: true,
+      queryDiscovery: true,
+      sprintFramework: true,
+      monthlyCheckpoints: true,
+      whiteLabel: true,
+      apiAccess: true,
+      prioritySupport: true,
     },
   },
 };
@@ -212,7 +291,7 @@ export function checkTrialStatus(createdAt: string | Date): {
   const diffMs = now.getTime() - created.getTime();
   const daysUsed = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   const daysRemaining = Math.max(0, TRIAL_DAYS - daysUsed);
-  
+
   return {
     expired: daysUsed >= TRIAL_DAYS,
     daysRemaining,
@@ -225,21 +304,19 @@ export function canAccessProduct(
   createdAt: string | Date,
   userEmail?: string | null
 ): { allowed: boolean; reason?: string; upgradeRequired?: boolean } {
-  // ⚠️ TEST ACCOUNT BYPASS - Remove before production
   if (userEmail) {
-    // Dynamic import to avoid circular dependency issues
     const { shouldBypassPaywall } = require("@/lib/testing/test-accounts");
     if (shouldBypassPaywall(userEmail)) {
       return { allowed: true };
     }
   }
-  
+
   if (planId !== "free") {
     return { allowed: true };
   }
-  
+
   const trial = checkTrialStatus(createdAt);
-  
+
   if (trial.expired) {
     return {
       allowed: false,
@@ -247,7 +324,7 @@ export function canAccessProduct(
       upgradeRequired: true,
     };
   }
-  
+
   return { allowed: true };
 }
 
@@ -256,7 +333,14 @@ export function canAccessProduct(
 // ============================================
 
 export function getCitationPlan(planId: CitationPlanId | string): CitationPlan {
-  return CITATION_PLANS[planId as CitationPlanId] || CITATION_PLANS.free;
+  // Handle legacy plan names
+  const legacyMap: Record<string, CitationPlanId> = {
+    starter: "scout",
+    pro: "command",
+    pro_plus: "dominate",
+  };
+  const resolvedId = legacyMap[planId] || planId;
+  return CITATION_PLANS[resolvedId as CitationPlanId] || CITATION_PLANS.free;
 }
 
 export function getCitationPlanLimits(planId: CitationPlanId | string): CitationPlanLimits {
@@ -267,33 +351,35 @@ export function getCitationPlanFeatures(planId: CitationPlanId | string): Citati
   return getCitationPlan(planId).features;
 }
 
+export function isPaidPlan(planId: string): boolean {
+  return planId !== "free";
+}
+
 export function canRunManualCheck(
   planId: CitationPlanId | string,
   checksToday: number,
   createdAt?: string | Date
 ): { allowed: boolean; reason?: string } {
-  // Check trial expiration for free users
   if (planId === "free" && createdAt) {
     const access = canAccessProduct(planId, createdAt);
     if (!access.allowed) {
       return { allowed: false, reason: access.reason };
     }
   }
-  
+
   const plan = getCitationPlan(planId);
-  
-  // Unlimited for paid plans
+
   if (plan.limits.manualChecksPerDay === -1) {
     return { allowed: true };
   }
-  
+
   if (checksToday >= plan.limits.manualChecksPerDay) {
     return {
       allowed: false,
       reason: `Daily limit reached (${plan.limits.manualChecksPerDay}/day). Upgrade for unlimited.`,
     };
   }
-  
+
   return { allowed: true };
 }
 
@@ -302,16 +388,16 @@ export function canAddCompetitor(
   currentCompetitors: number
 ): { allowed: boolean; reason?: string } {
   const plan = getCitationPlan(planId);
-  
+
   if (currentCompetitors >= plan.limits.competitors) {
     return {
       allowed: false,
-      reason: planId === "free" 
-        ? "Competitor tracking requires Starter plan." 
+      reason: planId === "free"
+        ? "Competitor tracking requires Scout plan."
         : `Limit reached (${plan.limits.competitors}). Upgrade for more.`,
     };
   }
-  
+
   return { allowed: true };
 }
 
@@ -320,14 +406,14 @@ export function canAddSite(
   currentSites: number
 ): { allowed: boolean; reason?: string } {
   const plan = getCitationPlan(planId);
-  
+
   if (currentSites >= plan.limits.sites) {
     return {
       allowed: false,
       reason: `Site limit reached (${plan.limits.sites}). Upgrade for more.`,
     };
   }
-  
+
   return { allowed: true };
 }
 
@@ -344,29 +430,28 @@ export function canUseGapAnalysis(
   usedThisMonth: number
 ): { allowed: boolean; reason?: string; remaining?: number } {
   const plan = getCitationPlan(planId);
-  
+
   if (!plan.features.citationGapAnalysis) {
     return {
       allowed: false,
-      reason: "Citation Gap Analysis requires Starter plan or higher.",
+      reason: "Citation Gap Analysis requires Scout plan or higher.",
     };
   }
-  
+
   const limit = plan.intelligenceLimits.gapAnalysesPerMonth;
-  
-  // Unlimited
+
   if (limit === -1) {
     return { allowed: true, remaining: -1 };
   }
-  
+
   if (usedThisMonth >= limit) {
     return {
       allowed: false,
-      reason: `Monthly limit reached (${limit}). Upgrade to Pro for unlimited.`,
+      reason: `Monthly limit reached (${limit}). Upgrade to Command for unlimited.`,
       remaining: 0,
     };
   }
-  
+
   return { allowed: true, remaining: limit - usedThisMonth };
 }
 
@@ -375,29 +460,28 @@ export function canUseContentRecommendations(
   usedThisMonth: number
 ): { allowed: boolean; reason?: string; remaining?: number } {
   const plan = getCitationPlan(planId);
-  
+
   if (!plan.features.contentRecommendations) {
     return {
       allowed: false,
-      reason: "Content Recommendations require Starter plan or higher.",
+      reason: "Content Recommendations require Scout plan or higher.",
     };
   }
-  
+
   const limit = plan.intelligenceLimits.contentIdeasPerMonth;
-  
-  // Unlimited
+
   if (limit === -1) {
     return { allowed: true, remaining: -1 };
   }
-  
+
   if (usedThisMonth >= limit) {
     return {
       allowed: false,
-      reason: `Monthly limit reached (${limit} ideas). Upgrade to Pro for unlimited.`,
+      reason: `Monthly limit reached (${limit} ideas). Upgrade to Command for unlimited.`,
       remaining: 0,
     };
   }
-  
+
   return { allowed: true, remaining: limit - usedThisMonth };
 }
 
@@ -405,14 +489,14 @@ export function canUseActionPlan(
   planId: CitationPlanId | string
 ): { allowed: boolean; reason?: string } {
   const plan = getCitationPlan(planId);
-  
+
   if (!plan.features.weeklyActionPlan) {
     return {
       allowed: false,
-      reason: "Weekly Action Plans are a Pro feature. Upgrade to unlock.",
+      reason: "Weekly Action Plans are a Command feature. Upgrade to unlock.",
     };
   }
-  
+
   return { allowed: true };
 }
 
@@ -420,18 +504,17 @@ export function canUseCompetitorDeepDive(
   planId: CitationPlanId | string
 ): { allowed: boolean; reason?: string } {
   const plan = getCitationPlan(planId);
-  
+
   if (!plan.features.competitorDeepDive) {
     return {
       allowed: false,
-      reason: "Competitor Deep Dive is a Pro feature. Upgrade to unlock.",
+      reason: "Competitor Deep Dive is a Command feature. Upgrade to unlock.",
     };
   }
-  
+
   return { allowed: true };
 }
 
-// Get intelligence feature summary for UI
 export function getIntelligenceFeatureSummary(planId: CitationPlanId | string): {
   gapAnalysis: string;
   contentIdeas: string;
@@ -440,23 +523,23 @@ export function getIntelligenceFeatureSummary(planId: CitationPlanId | string): 
 } {
   const plan = getCitationPlan(planId);
   const limits = plan.intelligenceLimits;
-  
+
   return {
-    gapAnalysis: !plan.features.citationGapAnalysis 
+    gapAnalysis: !plan.features.citationGapAnalysis
       ? "Not available"
-      : limits.gapAnalysesPerMonth === -1 
+      : limits.gapAnalysesPerMonth === -1
         ? "Unlimited per-query analysis"
         : `${limits.gapAnalysesPerMonth} analyses/month`,
     contentIdeas: !plan.features.contentRecommendations
-      ? "Not available"  
+      ? "Not available"
       : limits.contentIdeasPerMonth === -1
         ? "Unlimited ideas"
         : `${limits.contentIdeasPerMonth} ideas/month`,
     actionPlan: plan.features.weeklyActionPlan
       ? "Weekly Action Playbook"
-      : "Pro only",
+      : "Command only",
     competitorDeepDive: plan.features.competitorDeepDive
       ? "Full competitor breakdown"
-      : "Pro only",
+      : "Command only",
   };
 }

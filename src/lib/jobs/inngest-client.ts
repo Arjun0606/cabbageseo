@@ -125,8 +125,20 @@ export interface GEOSiteAddedEvent {
   };
 }
 
+export interface CompetitorChangeDetectedEvent {
+  name: "competitor/change.detected";
+  data: {
+    siteId: string;
+    domain: string;
+    organizationId: string;
+    competitorDomain: string;
+    newCitations: number;
+    change: number;
+  };
+}
+
 // Union type for all events
-export type CabbageSEOEvents = 
+export type CabbageSEOEvents =
   | CrawlSiteEvent
   | AuditSiteEvent
   | GenerateContentEvent
@@ -134,5 +146,6 @@ export type CabbageSEOEvents =
   | AnalyticsSyncEvent
   | AutopilotRunEvent
   | ScheduledJobEvent
-  | GEOSiteAddedEvent;
+  | GEOSiteAddedEvent
+  | CompetitorChangeDetectedEvent;
 

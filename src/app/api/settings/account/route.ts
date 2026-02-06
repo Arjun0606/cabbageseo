@@ -78,7 +78,7 @@ export async function GET() {
           .insert({
             name: `${user.email?.split("@")[0] || "My"}'s Organization`,
             slug: `org-${user.id.slice(0, 8)}-${Date.now()}`,
-            plan: "starter",
+            plan: "scout",
             subscription_status: "active",
           } as never)
           .select("id")
@@ -140,7 +140,7 @@ export async function GET() {
           id: org.id,
           name: org.name,
           slug: org.slug,
-          plan: org.plan || "starter",
+          plan: org.plan || "scout",
           website: orgSettings.website || "",
           timezone: orgSettings.timezone || "UTC",
         } : null,

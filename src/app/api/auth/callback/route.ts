@@ -42,7 +42,7 @@ export async function GET(request: Request) {
             .insert({
               name: user.user_metadata?.name || user.email?.split("@")[0] || "My Organization",
               slug: orgSlug,
-              plan: "starter" as const,
+              plan: "scout" as const,
             } as never)
             .select()
             .single();

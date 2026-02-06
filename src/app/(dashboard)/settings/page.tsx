@@ -151,8 +151,8 @@ export default function SettingsPage() {
             <Label className="text-zinc-400">Plan</Label>
             <div className="flex items-center gap-2 mt-1">
               <Badge className={
-                organization?.plan === "pro" ? "bg-emerald-500/10 text-emerald-400 border-0" :
-                organization?.plan === "starter" ? "bg-blue-500/10 text-blue-400 border-0" :
+                organization?.plan === "command" || organization?.plan === "dominate" ? "bg-emerald-500/10 text-emerald-400 border-0" :
+                organization?.plan === "scout" ? "bg-blue-500/10 text-blue-400 border-0" :
                 "bg-zinc-800 text-zinc-400 border-0"
               }>
                 {organization?.plan || "free"} {organization?.plan === "free" ? "trial" : "plan"}

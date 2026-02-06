@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getCitationPlanLimits, getCitationPlanFeatures } from "@/lib/billing/citation-plans";
+import { getUser } from "@/lib/api/get-user";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 function getDbClient(): SupabaseClient | null {
@@ -21,6 +22,16 @@ function getDbClient(): SupabaseClient | null {
 // GET - Get custom queries for a site
 export async function GET(request: NextRequest) {
   try {
+    // Check for bypass user first
+    const bypassUser = await getUser();
+    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
+      return NextResponse.json({
+        customQueries: [],
+        category: null,
+        bypassMode: true,
+      });
+    }
+
     const supabase = await createClient();
     if (!supabase) {
       return NextResponse.json({ error: "Not configured" }, { status: 500 });
@@ -75,6 +86,19 @@ export async function GET(request: NextRequest) {
 // POST - Update custom queries
 export async function POST(request: NextRequest) {
   try {
+    // Check for bypass user first
+    const bypassUser = await getUser();
+    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
+      const body = await request.json();
+      const { customQueries } = body;
+      return NextResponse.json({
+        success: true,
+        customQueries: customQueries || [],
+        limit: 10,
+        bypassMode: true,
+      });
+    }
+
     const supabase = await createClient();
     if (!supabase) {
       return NextResponse.json({ error: "Not configured" }, { status: 500 });

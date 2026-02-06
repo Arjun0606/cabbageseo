@@ -14,21 +14,21 @@
 
 // Plan limits
 export const PLAN_LIMITS = {
-  starter: {
+  scout: {
     articlesPerMonth: 10,
     keywordsPerMonth: 100,
     pagesPerCrawl: 100,
     serpCallsPerMonth: 500,
     optimizationsPerMonth: 20,
   },
-  pro: {
+  command: {
     articlesPerMonth: 50,
     keywordsPerMonth: 500,
     pagesPerCrawl: 500,
     serpCallsPerMonth: 2500,
     optimizationsPerMonth: 100,
   },
-  pro_plus: {
+  dominate: {
     articlesPerMonth: 200,
     keywordsPerMonth: 2000,
     pagesPerCrawl: 2000,

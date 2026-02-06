@@ -125,8 +125,8 @@ export default function SourcesPage() {
   const [sources, setSources] = useState<TrustSource[]>([]);
   const [expandedSource, setExpandedSource] = useState<string | null>(null);
 
-  const isPaidPlan = organization?.plan === "starter" || organization?.plan === "pro";
-  const isProPlan = organization?.plan === "pro";
+  const isPaidPlan = organization?.plan === "scout" || organization?.plan === "command" || organization?.plan === "dominate";
+  const isProPlan = organization?.plan === "command" || organization?.plan === "dominate";
 
   useEffect(() => {
     const fetchSources = async () => {

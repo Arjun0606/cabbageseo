@@ -137,12 +137,12 @@ function generateQueries(
   
   // Determine query count by plan
   let maxQueries = 3; // Free
-  if (plan === "starter") maxQueries = 10;
-  if (plan === "pro") maxQueries = 20;
-  
+  if (plan === "scout") maxQueries = 10;
+  if (plan === "command" || plan === "dominate") maxQueries = 20;
+
   // Combine: custom queries first, then base, then category
   const allQueries = [
-    ...customQueries.slice(0, plan === "pro" ? 100 : 5), // Custom queries (limited for starter)
+    ...customQueries.slice(0, (plan === "command" || plan === "dominate") ? 100 : 5), // Custom queries (limited for scout)
     ...baseQueries,
     ...categoryQueries,
   ];

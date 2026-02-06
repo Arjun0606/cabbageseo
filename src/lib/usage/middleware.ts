@@ -20,22 +20,22 @@ const RATE_LIMIT_CONFIG = {
     requests_per_day: 500,
   },
   
-  // Authenticated - Starter plan
-  starter: {
+  // Authenticated - Scout plan
+  scout: {
     requests_per_minute: 60,
     requests_per_hour: 500,
     requests_per_day: 5000,
   },
-  
-  // Authenticated - Pro plan
-  pro: {
+
+  // Authenticated - Command plan
+  command: {
     requests_per_minute: 120,
     requests_per_hour: 2000,
     requests_per_day: 20000,
   },
-  
-  // Authenticated - Pro+ plan
-  pro_plus: {
+
+  // Authenticated - Dominate plan
+  dominate: {
     requests_per_minute: 300,
     requests_per_hour: 5000,
     requests_per_day: 50000,
@@ -85,7 +85,7 @@ function getClientIdentifier(request: NextRequest): {
   
   if (orgId) {
     // In production, validate this against the session
-    const plan = request.headers.get("x-plan") || "starter";
+    const plan = request.headers.get("x-plan") || "scout";
     return {
       identifier: `org:${orgId}`,
       isAuthenticated: true,
@@ -111,7 +111,7 @@ function getClientIdentifier(request: NextRequest): {
 function isRateLimited(
   identifier: string,
   isAuthenticated: boolean,
-  plan: string = "starter",
+  plan: string = "scout",
   endpoint: string
 ): { limited: boolean; retryAfter?: number; reason?: string } {
   const now = Date.now();
@@ -129,7 +129,7 @@ function isRateLimited(
   
   // Get appropriate limits
   const tierLimits = isAuthenticated 
-    ? RATE_LIMIT_CONFIG[plan as keyof typeof RATE_LIMIT_CONFIG] || RATE_LIMIT_CONFIG.starter
+    ? RATE_LIMIT_CONFIG[plan as keyof typeof RATE_LIMIT_CONFIG] || RATE_LIMIT_CONFIG.scout
     : RATE_LIMIT_CONFIG.unauthenticated;
   
   // Check endpoint-specific limit
@@ -276,10 +276,10 @@ export function withRateLimit<T>(
  */
 export function getRateLimitHeaders(
   identifier: string,
-  plan: string = "starter"
+  plan: string = "scout"
 ): Record<string, string> {
-  const tierLimits = RATE_LIMIT_CONFIG[plan as keyof typeof RATE_LIMIT_CONFIG] || 
-                     RATE_LIMIT_CONFIG.starter;
+  const tierLimits = RATE_LIMIT_CONFIG[plan as keyof typeof RATE_LIMIT_CONFIG] ||
+                     RATE_LIMIT_CONFIG.scout;
   
   const minuteKey = `${identifier}:minute`;
   const entry = rateLimitStore.get(minuteKey);

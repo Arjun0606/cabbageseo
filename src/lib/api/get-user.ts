@@ -13,7 +13,7 @@ export interface UserInfo {
   id: string;
   email: string;
   name: string | null;
-  plan: "free" | "starter" | "pro";
+  plan: "free" | "scout" | "command" | "dominate";
   isTestAccount: boolean;
 }
 
@@ -31,7 +31,7 @@ async function getBypassSession(): Promise<UserInfo | null> {
           id: `bypass-${session.plan}`,
           email: session.email,
           name: session.name,
-          plan: session.plan as "free" | "starter" | "pro",
+          plan: session.plan as "free" | "scout" | "command" | "dominate",
           isTestAccount: true,
         };
       }
@@ -64,13 +64,13 @@ export async function getUser(): Promise<UserInfo | null> {
     if (!error && user) {
       // Real Supabase user - get plan from test account email pattern if applicable
       const email = user.email || "";
-      let plan: "free" | "starter" | "pro" = "free";
-      
+      let plan: "free" | "scout" | "command" | "dominate" = "free";
+
       // Check if this is a test account email pattern
       if (email === "test-pro@cabbageseo.test") {
-        plan = "pro";
+        plan = "command";
       } else if (email === "test-starter@cabbageseo.test") {
-        plan = "starter";
+        plan = "scout";
       } else if (email === "test-free@cabbageseo.test") {
         plan = "free";
       }

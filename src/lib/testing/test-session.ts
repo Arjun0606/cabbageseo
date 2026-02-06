@@ -9,7 +9,7 @@ import { cookies } from "next/headers";
 
 export interface TestSession {
   email: string;
-  plan: "free" | "starter" | "pro";
+  plan: "free" | "scout" | "command" | "dominate";
   name: string;
   organizationId?: string; // Set after first site creation
 }

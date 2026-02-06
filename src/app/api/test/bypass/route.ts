@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate plan
-    const validPlans = ["free", "starter", "pro"];
+    const validPlans = ["free", "scout", "command", "dominate"];
     const selectedPlan = validPlans.includes(plan) ? plan : "pro";
 
     // Create test session data

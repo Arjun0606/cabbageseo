@@ -100,7 +100,7 @@ export async function recordUsageAndBill(
       dodo_subscription_id: string | null;
     };
 
-    const plan = orgData.plan || "starter";
+    const plan = orgData.plan || "scout";
     const overageSettings = orgData.overage_settings || getDefaultOverageSettings();
     const subscriptionId = orgData.dodo_subscription_id;
 
@@ -266,7 +266,7 @@ export async function checkUsageAllowed(
   }
 
   const orgData = org as { plan: string; overage_settings: OverageSettings | null };
-  const plan = orgData.plan || "starter";
+  const plan = orgData.plan || "scout";
   const overageSettings = orgData.overage_settings || getDefaultOverageSettings();
 
   const period = getCurrentPeriod();
@@ -602,7 +602,7 @@ export async function getUsageSummary(organizationId: string): Promise<UsageSumm
   if (!org) return null;
 
   const orgData = org as { plan: string; overage_settings: OverageSettings | null };
-  const plan = orgData.plan || "starter";
+  const plan = orgData.plan || "scout";
   const overageSettings = orgData.overage_settings || getDefaultOverageSettings();
 
   const period = getCurrentPeriod();

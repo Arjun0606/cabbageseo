@@ -12,19 +12,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard,
-  FileText,
   Settings,
   ChevronLeft,
   ChevronRight,
   Crown,
-  Sparkles,
-  Target,
   Search,
-  Shield,
+  TrendingUp,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -36,39 +32,26 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Content", href: "/content", icon: FileText },
-  { title: "Keywords", href: "/keywords", icon: Search },
-  { title: "GEO", href: "/geo", icon: Target },
-  { title: "SEO Audit", href: "/audit", icon: Shield },
+  { title: "Trust Map", href: "/dashboard/sources", icon: Search },
+  { title: "Intelligence", href: "/dashboard/intelligence", icon: TrendingUp },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const [plan, setPlan] = useState("starter");
-  const [usage, setUsage] = useState({ articles: 0, limit: 50 });
+  const [plan, setPlan] = useState("free");
 
-  // Fetch plan and usage
+  // Fetch plan
   useEffect(() => {
     fetch("/api/me", { credentials: "include" })
       .then(res => res.json())
       .then(data => {
-        setPlan(data.organization?.plan || "starter");
-      })
-      .catch(() => {});
-      
-    fetch("/api/billing/usage", { credentials: "include" })
-      .then(res => res.json())
-      .then(data => {
-        setUsage({
-          articles: data.data?.usage?.articlesUsed || 0,
-          limit: data.data?.limits?.articles || 50,
-        });
+        setPlan(data.organization?.plan || "free");
       })
       .catch(() => {});
   }, []);
 
-  const isPro = plan === "pro" || plan === "pro-plus";
+  const isPaid = plan === "scout" || plan === "command" || plan === "dominate";
 
   return (
     <aside
@@ -87,18 +70,6 @@ export function Sidebar() {
           <span className="font-bold text-white text-lg tracking-tight">CabbageSEO</span>
         )}
       </div>
-
-      {/* Quick Action */}
-      {!collapsed && (
-        <div className="px-3 py-3">
-          <Link href="/content/new">
-            <Button className="w-full bg-emerald-600 hover:bg-emerald-500 text-white gap-2">
-              <Sparkles className="w-4 h-4" />
-              Generate Article
-            </Button>
-          </Link>
-        </div>
-      )}
 
       {/* Main Nav */}
       <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
@@ -150,33 +121,17 @@ export function Sidebar() {
         </div>
       </nav>
 
-      {/* Usage Meter */}
-      {!collapsed && (
-        <div className="px-3 py-3 border-t border-zinc-800">
-          <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-zinc-400">Articles</span>
-            <span className="text-zinc-500">{usage.articles}/{usage.limit}</span>
-          </div>
-          <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-emerald-500 transition-all"
-              style={{ width: `${Math.min((usage.articles / usage.limit) * 100, 100)}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Upgrade CTA (only for non-Pro) */}
-      {!collapsed && !isPro && (
+      {/* Upgrade CTA (only for free users) */}
+      {!collapsed && !isPaid && (
         <div className="px-3 py-3 border-t border-zinc-800">
           <Link href="/pricing">
             <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border border-emerald-500/20 cursor-pointer hover:border-emerald-500/40 transition-colors">
               <div className="flex items-center gap-2 mb-2">
                 <Crown className="h-4 w-4 text-emerald-400" />
-                <span className="text-sm font-medium text-white">Upgrade to Pro</span>
+                <span className="text-sm font-medium text-white">Upgrade to Scout</span>
               </div>
               <p className="text-xs text-zinc-400">
-                Unlimited articles & more sites
+                Daily monitoring & 30-day sprint
               </p>
             </div>
           </Link>

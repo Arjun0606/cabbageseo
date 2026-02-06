@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     const testSession = await getTestSession();
     let organizationId: string | null = null;
 
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("test-bypass")) {
+    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
       // Bypass mode - return empty listings
       return NextResponse.json({
         listings: TRUST_SOURCE_DOMAINS.map(source => ({

@@ -1,19 +1,29 @@
 /**
  * Inngest API Route
- * 
+ *
  * Serves the Inngest functions for background job processing.
  * AI Visibility Intelligence jobs run automatically:
  * - Daily checks at 10 AM UTC
  * - Hourly checks for Pro users
  * - Weekly reports on Mondays
+ * - Monthly checkpoint reports on the 1st
+ * - Competitor change alerts (event-driven)
  */
 
 import { serve } from "inngest/next";
 import { inngest } from "@/lib/jobs/inngest-client";
 import { citationFunctions } from "@/lib/jobs/citation-jobs";
+import { monthlyCheckpointFunctions } from "@/lib/jobs/monthly-checkpoint";
+import { competitorAlertFunctions } from "@/lib/jobs/competitor-alert";
+import { trialDripFunctions } from "@/lib/jobs/trial-drip";
 
 // Export handlers for Inngest
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: citationFunctions,
+  functions: [
+    ...citationFunctions,
+    ...monthlyCheckpointFunctions,
+    ...competitorAlertFunctions,
+    ...trialDripFunctions,
+  ],
 });

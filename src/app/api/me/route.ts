@@ -134,7 +134,7 @@ export async function GET() {
         .insert({
           name: user.user_metadata?.name || user.email?.split("@")[0] || "My Organization",
           slug,
-          plan: "free", // Start with free trial
+          plan: "free",
           subscription_status: "active",
         })
         .select("id, created_at")

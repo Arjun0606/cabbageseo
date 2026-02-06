@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     let userId: string;
     let userEmail: string | null = null;
     let organizationId: string | null = null;
-    let plan: "free" | "starter" | "pro" = "free";
+    let plan: "free" | "scout" | "command" | "dominate" = "free";
     let bypassMode = false;
     
     // Create service client for DB operations
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
     
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("test-bypass")) {
+    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
       // Bypass mode
       userId = bypassUser.id;
       userEmail = bypassUser.email;
@@ -299,8 +299,11 @@ async function incrementUsage(
 // GET - Get available intelligence features for current plan
 export async function GET(request: NextRequest) {
   try {
-    // ⚠️ TEST SESSION CHECK FIRST
+    // ⚠️ BYPASS USER CHECK FIRST
+    const { getUser } = await import("@/lib/api/get-user");
     const { getTestSession } = await import("@/lib/testing/test-session");
+    
+    const bypassUser = await getUser();
     const testSession = await getTestSession();
     
     let organizationId: string | null = null;
@@ -310,6 +313,42 @@ export async function GET(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
+    
+    // Check for bypass user first
+    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
+      // Return mock features in bypass mode
+      const citationPlan = getCitationPlan(bypassUser.plan);
+      return NextResponse.json({
+        plan: bypassUser.plan,
+        features: {
+          gapAnalysis: {
+            available: citationPlan.features.citationGapAnalysis,
+            fullVersion: citationPlan.features.citationGapFull,
+            used: 0,
+            limit: citationPlan.intelligenceLimits.gapAnalysesPerMonth,
+            remaining: citationPlan.intelligenceLimits.gapAnalysesPerMonth === -1 
+              ? "unlimited" 
+              : citationPlan.intelligenceLimits.gapAnalysesPerMonth,
+          },
+          contentRecommendations: {
+            available: citationPlan.features.contentRecommendations,
+            unlimited: citationPlan.features.contentRecsUnlimited,
+            used: 0,
+            limit: citationPlan.intelligenceLimits.contentIdeasPerMonth,
+            remaining: citationPlan.intelligenceLimits.contentIdeasPerMonth === -1
+              ? "unlimited"
+              : citationPlan.intelligenceLimits.contentIdeasPerMonth,
+          },
+          actionPlan: {
+            available: citationPlan.features.weeklyActionPlan,
+          },
+          competitorDeepDive: {
+            available: citationPlan.features.competitorDeepDive,
+          },
+        },
+        bypassMode: true,
+      });
+    }
     
     if (testSession) {
       planId = testSession.plan;

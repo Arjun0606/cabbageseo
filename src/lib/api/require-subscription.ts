@@ -31,10 +31,10 @@ export async function requireSubscription(
   supabase: SupabaseClient,
   options?: {
     allowTrial?: boolean;  // Allow trialing users (default: true)
-    minPlan?: PlanId;      // Minimum plan required (default: "starter")
+    minPlan?: PlanId;      // Minimum plan required (default: "scout")
   }
 ): Promise<SubscriptionCheckResult> {
-  const { allowTrial = true, minPlan = "starter" } = options || {};
+  const { allowTrial = true, minPlan = "scout" } = options || {};
 
   // In testing mode, bypass auth entirely and use first organization
   if (TESTING_MODE) {
@@ -68,7 +68,7 @@ export async function requireSubscription(
       authorized: true,
       organizationId,
       userId: userId || "test-user",
-      plan: "pro", // Pretend they're on pro in testing
+      plan: "command", // Pretend they're on command in testing
     };
   }
 
@@ -107,7 +107,7 @@ export async function requireSubscription(
       .insert({
         name: user.user_metadata?.name || user.email?.split("@")[0] || "My Organization",
         slug,
-        plan: "starter",
+        plan: "free",
         subscription_status: "active",
       })
       .select("id")
@@ -191,7 +191,7 @@ export async function requireSubscription(
   }
 
   // Check minimum plan requirement
-  const planOrder: PlanId[] = ["starter", "pro", "pro_plus"];
+  const planOrder: PlanId[] = ["scout", "command", "dominate"];
   const currentPlanIndex = planOrder.indexOf(subscriptionInfo.plan);
   const minPlanIndex = planOrder.indexOf(minPlan);
 
@@ -248,14 +248,14 @@ export async function requireAuth(
   const organizationId = (userData as { organization_id?: string } | null)?.organization_id;
 
   // Get plan info if org exists
-  let plan: PlanId = "starter";
+  let plan: PlanId = "scout";
   if (organizationId) {
     const { data: org } = await supabase
       .from("organizations")
       .select("plan")
       .eq("id", organizationId)
       .single();
-    plan = ((org as { plan?: string } | null)?.plan as PlanId) || "starter";
+    plan = ((org as { plan?: string } | null)?.plan as PlanId) || "scout";
   }
 
   return {

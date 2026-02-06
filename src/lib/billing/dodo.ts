@@ -56,12 +56,12 @@ export function getProductIdForPlan(
   interval: "monthly" | "yearly"
 ): string {
   const productIds: Record<string, string> = {
-    starter_monthly: process.env.DODO_STARTER_MONTHLY_ID || "",
-    starter_yearly: process.env.DODO_STARTER_YEARLY_ID || "",
-    pro_monthly: process.env.DODO_PRO_MONTHLY_ID || "",
-    pro_yearly: process.env.DODO_PRO_YEARLY_ID || "",
-    pro_plus_monthly: process.env.DODO_PRO_PLUS_MONTHLY_ID || "",
-    pro_plus_yearly: process.env.DODO_PRO_PLUS_YEARLY_ID || "",
+    scout_monthly: process.env.DODO_SCOUT_MONTHLY_ID || "",
+    scout_yearly: process.env.DODO_SCOUT_YEARLY_ID || "",
+    command_monthly: process.env.DODO_COMMAND_MONTHLY_ID || "",
+    command_yearly: process.env.DODO_COMMAND_YEARLY_ID || "",
+    dominate_monthly: process.env.DODO_DOMINATE_MONTHLY_ID || "",
+    dominate_yearly: process.env.DODO_DOMINATE_YEARLY_ID || "",
   };
 
   const key = `${planId}_${interval}`;

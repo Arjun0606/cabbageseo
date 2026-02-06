@@ -130,10 +130,70 @@ export const dailyCitationCheck = inngest.createFunction(
       await step.sleep("rate-limit-delay", "2s");
     }
 
+    // ============================================
+    // COMPETITOR CHANGE DETECTION
+    // After checking all sites, look for competitor changes
+    // and emit events for sites whose competitors gained citations
+    // ============================================
+    const competitorAlerts = await step.run("detect-competitor-changes", async () => {
+      const alerts: Array<{ siteId: string; domain: string; orgId: string; competitorDomain: string; newCitations: number; change: number }> = [];
+
+      for (const site of sites) {
+        // Get competitors for this site
+        const { data: competitors } = await supabase
+          .from("competitors")
+          .select("id, domain, total_citations, citations_change")
+          .eq("site_id", site.id);
+
+        const competitorList = (competitors || []) as Array<{
+          id: string;
+          domain: string;
+          total_citations: number | null;
+          citations_change: number | null;
+        }>;
+
+        for (const comp of competitorList) {
+          const change = comp.citations_change || 0;
+          if (change > 0) {
+            alerts.push({
+              siteId: site.id,
+              domain: site.domain,
+              orgId: site.organization_id,
+              competitorDomain: comp.domain,
+              newCitations: comp.total_citations || 0,
+              change,
+            });
+          }
+        }
+      }
+
+      return alerts;
+    });
+
+    // Send competitor change events
+    for (const alert of competitorAlerts) {
+      await step.run(`competitor-alert-${alert.siteId}-${alert.competitorDomain}`, async () => {
+        await inngest.send({
+          name: "competitor/change.detected",
+          data: {
+            siteId: alert.siteId,
+            domain: alert.domain,
+            organizationId: alert.orgId,
+            competitorDomain: alert.competitorDomain,
+            newCitations: alert.newCitations,
+            change: alert.change,
+          },
+        });
+      });
+
+      await step.sleep(`competitor-alert-delay-${alert.competitorDomain}`, "500ms");
+    }
+
     return {
       checked: sites.length,
       successful: results.filter(r => r.success).length,
       totalNewCitations,
+      competitorAlertsSent: competitorAlerts.length,
       results,
     };
   }
@@ -164,7 +224,7 @@ export const hourlyCitationCheck = inngest.createFunction(
           organizations!inner(plan)
         `)
         .eq("status", "active")
-        .in("organizations.plan", ["pro", "pro_plus", "agency"]);
+        .in("organizations.plan", ["command", "dominate"]);
       
       if (error) {
         console.error("Failed to fetch pro sites:", error);
@@ -400,7 +460,7 @@ export const weeklyReport = inngest.createFunction(
           html: `
             <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #09090b; color: #fff;">
               <div style="text-align: center; margin-bottom: 24px;">
-                <h1 style="font-size: 24px; margin: 0; color: #fff;">⚔️ Weekly Battle Report</h1>
+                <h1 style="font-size: 24px; margin: 0; color: #fff;">📊 Weekly Momentum Report</h1>
                 <p style="color: #71717a; margin-top: 8px;">${primarySite.domain}</p>
               </div>
               
@@ -438,7 +498,7 @@ export const weeklyReport = inngest.createFunction(
               <div style="text-align: center; margin: 30px 0;">
                 <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" 
                    style="display: inline-block; background: #10b981; color: #000; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                  Enter War Room →
+                  Open Dashboard →
                 </a>
               </div>
               

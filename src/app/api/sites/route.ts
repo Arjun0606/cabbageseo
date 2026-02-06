@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     const testSession = await getTestSession();
     let userId: string;
     let userEmail: string;
-    let testPlan: "free" | "starter" | "pro" | null = null;
+    let testPlan: "free" | "scout" | "command" | "dominate" | null = null;
 
     if (testSession) {
       userId = `test-${testSession.email}`;

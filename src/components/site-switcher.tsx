@@ -71,8 +71,8 @@ export function SiteSwitcher() {
     }
   }, [selectedSite]);
 
-  const canAddMore = plan === "pro" || plan === "pro_plus" || plan === "agency";
-  const siteLimit = plan === "agency" ? 50 : plan === "pro" || plan === "pro_plus" ? 10 : plan === "starter" ? 3 : 1;
+  const canAddMore = plan === "command" || plan === "dominate";
+  const siteLimit = plan === "dominate" ? 50 : plan === "command" ? 10 : plan === "scout" ? 3 : 1;
 
   if (loading) {
     return (

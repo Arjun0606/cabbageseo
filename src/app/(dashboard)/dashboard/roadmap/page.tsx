@@ -34,8 +34,8 @@ export default function RoadmapPage() {
   const { organization } = useSite();
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
 
-  const isPaidPlan = organization?.plan === "starter" || organization?.plan === "pro";
-  const isProPlan = organization?.plan === "pro";
+  const isPaidPlan = organization?.plan === "scout" || organization?.plan === "command" || organization?.plan === "dominate";
+  const isProPlan = organization?.plan === "command" || organization?.plan === "dominate";
 
   const toggleStep = (id: string) => {
     const newSet = new Set(completedSteps);

@@ -17,7 +17,7 @@
 export interface TestAccount {
   email: string;
   password: string;
-  plan: "free" | "starter" | "pro";
+  plan: "free" | "scout" | "command" | "dominate";
   description: string;
 }
 
@@ -31,14 +31,14 @@ export const TEST_ACCOUNTS: TestAccount[] = [
   {
     email: "test-starter@cabbageseo.test",
     password: "TestStarter123!",
-    plan: "starter",
-    description: "Starter tier test account - Unlimited checks, 3 sites, 2 competitors",
+    plan: "scout",
+    description: "Scout tier test account - Unlimited checks, 3 sites, 2 competitors",
   },
   {
     email: "test-pro@cabbageseo.test",
     password: "TestPro123!",
-    plan: "pro",
-    description: "Pro tier test account - Unlimited checks, 10 sites, 10 competitors",
+    plan: "command",
+    description: "Command tier test account - Unlimited checks, 10 sites, 10 competitors",
   },
 ];
 
@@ -58,7 +58,7 @@ export function isTestAccount(email: string | null | undefined): boolean {
  * Get the test plan for a test account email
  * Returns null if not a test account
  */
-export function getTestPlan(email: string | null | undefined): "free" | "starter" | "pro" | null {
+export function getTestPlan(email: string | null | undefined): "free" | "scout" | "command" | "dominate" | null {
   if (!email) return null;
   const account = TEST_ACCOUNTS.find(acc => acc.email === email.toLowerCase());
   return account?.plan || null;

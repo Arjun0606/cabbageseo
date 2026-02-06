@@ -232,6 +232,9 @@ export async function POST(request: NextRequest) {
       snippet: string;
     }> = [];
 
+    // Track which platforms succeeded
+    const platformErrors: string[] = [];
+
     // Query Perplexity (one query)
     try {
       const perplexityResult = await queryPerplexity(queries[0]);
@@ -245,6 +248,7 @@ export async function POST(request: NextRequest) {
       });
     } catch (error) {
       console.error("[Teaser] Perplexity error:", error);
+      platformErrors.push("perplexity");
     }
 
     // Query Gemini (one query)
@@ -260,6 +264,7 @@ export async function POST(request: NextRequest) {
       });
     } catch (error) {
       console.error("[Teaser] Gemini error:", error);
+      platformErrors.push("gemini");
     }
 
     // Calculate summary
@@ -284,6 +289,11 @@ export async function POST(request: NextRequest) {
           : mentionedCount < totalQueries
             ? "AI sometimes recommends you, but competitors get more visibility."
             : "AI is recommending you!",
+        // Include info about any platform failures
+        ...(platformErrors.length > 0 && {
+          platformsChecked: results.length,
+          platformErrors,
+        }),
       },
     });
   } catch (error) {

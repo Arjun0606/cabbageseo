@@ -21,12 +21,37 @@ function getDbClient(): SupabaseClient | null {
 
 export async function GET(request: NextRequest) {
   try {
-    // ⚠️ TEST SESSION CHECK FIRST
+    // ⚠️ BYPASS USER CHECK FIRST
+    const { getUser } = await import("@/lib/api/get-user");
     const { getTestSession } = await import("@/lib/testing/test-session");
+    
+    const bypassUser = await getUser();
     const testSession = await getTestSession();
     
     let userId: string;
     let organizationId: string | null = null;
+    
+    // Check for bypass user first
+    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
+      // Return mock citations in bypass mode
+      return NextResponse.json({
+        success: true,
+        data: {
+          total: 0,
+          thisWeek: 0,
+          lastWeek: 0,
+          byPlatform: {
+            perplexity: 0,
+            google_aio: 0,
+            chatgpt: 0,
+          },
+          citations: [],
+          recent: [],
+        },
+        citations: [],
+        bypassMode: true,
+      });
+    }
     
     if (testSession) {
       userId = `test-${testSession.email}`;
