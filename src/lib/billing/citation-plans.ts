@@ -50,6 +50,9 @@ export interface CitationPlanFeatures {
   customQueries: boolean;
   queryDiscovery: boolean;
 
+  // Content Generation
+  pageGeneration: boolean;
+
   // Sprint
   sprintFramework: boolean;
   monthlyCheckpoints: boolean;
@@ -64,6 +67,7 @@ export interface CitationIntelligenceLimits {
   gapAnalysesPerMonth: number;  // -1 = unlimited
   contentIdeasPerMonth: number; // -1 = unlimited
   actionPlansPerMonth: number;  // 0 = not available
+  pagesPerMonth: number;        // -1 = unlimited, 0 = not available
 }
 
 export interface CitationPlan {
@@ -103,6 +107,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       gapAnalysesPerMonth: 0,
       contentIdeasPerMonth: 0,
       actionPlansPerMonth: 0,
+      pagesPerMonth: 0,
     },
     features: {
       manualChecks: true,
@@ -123,6 +128,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       competitorDeepDive: false,
       customQueries: false,
       queryDiscovery: false,
+      pageGeneration: false,
       sprintFramework: false,
       monthlyCheckpoints: false,
       whiteLabel: false,
@@ -151,6 +157,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       gapAnalysesPerMonth: 5,
       contentIdeasPerMonth: 5,
       actionPlansPerMonth: 0,
+      pagesPerMonth: 3,
     },
     features: {
       manualChecks: true,
@@ -171,6 +178,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       competitorDeepDive: false,
       customQueries: true,
       queryDiscovery: false,
+      pageGeneration: true,
       sprintFramework: true,
       monthlyCheckpoints: true,
       whiteLabel: false,
@@ -200,6 +208,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       gapAnalysesPerMonth: -1,
       contentIdeasPerMonth: -1,
       actionPlansPerMonth: 4, // Weekly
+      pagesPerMonth: 15,
     },
     features: {
       manualChecks: true,
@@ -220,6 +229,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       competitorDeepDive: true,
       customQueries: true,
       queryDiscovery: true,
+      pageGeneration: true,
       sprintFramework: true,
       monthlyCheckpoints: true,
       whiteLabel: false,
@@ -248,6 +258,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       gapAnalysesPerMonth: -1,
       contentIdeasPerMonth: -1,
       actionPlansPerMonth: -1, // Unlimited
+      pagesPerMonth: -1, // Unlimited
     },
     features: {
       manualChecks: true,
@@ -268,6 +279,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       competitorDeepDive: true,
       customQueries: true,
       queryDiscovery: true,
+      pageGeneration: true,
       sprintFramework: true,
       monthlyCheckpoints: true,
       whiteLabel: true,
@@ -513,6 +525,36 @@ export function canUseCompetitorDeepDive(
   }
 
   return { allowed: true };
+}
+
+export function canGeneratePage(
+  planId: CitationPlanId | string,
+  usedThisMonth: number
+): { allowed: boolean; reason?: string; remaining?: number } {
+  const plan = getCitationPlan(planId);
+
+  if (!plan.features.pageGeneration) {
+    return {
+      allowed: false,
+      reason: "AI Page Generation requires Scout plan or higher.",
+    };
+  }
+
+  const limit = plan.intelligenceLimits.pagesPerMonth;
+
+  if (limit === -1) {
+    return { allowed: true, remaining: -1 };
+  }
+
+  if (usedThisMonth >= limit) {
+    return {
+      allowed: false,
+      reason: `Monthly limit reached (${limit} pages). Upgrade for more.`,
+      remaining: 0,
+    };
+  }
+
+  return { allowed: true, remaining: limit - usedThisMonth };
 }
 
 export function getIntelligenceFeatureSummary(planId: CitationPlanId | string): {

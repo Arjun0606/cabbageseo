@@ -11,7 +11,6 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getTestPlan } from "@/lib/testing/test-accounts";
 import { getTestSession } from "@/lib/testing/test-session";
 import { cookies } from "next/headers";
 
@@ -24,8 +23,12 @@ function getDbClient(): SupabaseClient | null {
   }
 }
 
-// Check for test bypass session
+const TESTING_MODE = process.env.TESTING_MODE === "true";
+
+// Check for test bypass session (only active in TESTING_MODE)
 async function getBypassSession() {
+  if (!TESTING_MODE) return null;
+
   try {
     const cookieStore = await cookies();
     const bypassCookie = cookieStore.get("test_bypass_session");
@@ -77,9 +80,9 @@ export async function GET() {
     // Get user from Supabase auth
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
-    // If no Supabase user, fall back to test session cookie
+    // If no Supabase user, fall back to test session cookie (only in TESTING_MODE)
     if (authError || !user) {
-      const testSession = await getTestSession();
+      const testSession = TESTING_MODE ? await getTestSession() : null;
       if (testSession) {
         // Return test session data - no Supabase needed
         return NextResponse.json({
@@ -165,13 +168,7 @@ export async function GET() {
       orgData = org as { plan: string; subscription_status: string; created_at: string } | null;
     }
     
-    // ⚠️ TEST ACCOUNT BYPASS - Override plan with test account plan if applicable
-    let finalPlan = orgData?.plan || "free";
-    const testPlan = getTestPlan(user.email);
-    if (testPlan) {
-      finalPlan = testPlan;
-      console.log(`[Test Account] Overriding plan to ${testPlan} for ${user.email}`);
-    }
+    const finalPlan = orgData?.plan || "free";
 
     // Get sites with citation data
     interface SiteRecord {

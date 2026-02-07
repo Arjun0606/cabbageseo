@@ -10,7 +10,7 @@
  * 
  * Pricing Model:
  * - FREE: URL analyzer (SEO + AIO scores)
- * - PAID: Subscriptions at $29/$79/$199 with pay-as-you-go overages
+ * - PAID: Subscriptions at $49/$149/$349 with pay-as-you-go overages
  * 
  * Note: Prepaid credits are NOT part of this model
  */

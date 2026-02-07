@@ -68,17 +68,27 @@ export async function POST(request: NextRequest) {
         // Don't fail the signup, profile can be created later
       }
 
-      // Create a default organization for the user
+      // Create a default organization for the user and link it
       const orgSlug = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "-");
-      const { error: orgError } = await (supabase as any)
+      const { data: newOrg, error: orgError } = await (supabase as any)
         .from("organizations")
         .insert({
           name: `${fullName || email.split("@")[0]}'s Organization`,
           slug: `${orgSlug}-${Date.now()}`,
-        });
+          plan: "free",
+          subscription_status: "active",
+        })
+        .select("id")
+        .single();
 
       if (orgError) {
         console.error("Error creating organization:", orgError);
+      } else if (newOrg?.id) {
+        // Link the user to their organization
+        await (supabase as any)
+          .from("users")
+          .update({ organization_id: newOrg.id })
+          .eq("id", authData.user.id);
       }
     } catch (dbError) {
       console.error("Database not yet set up:", dbError);

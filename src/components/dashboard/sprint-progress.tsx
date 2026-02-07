@@ -14,6 +14,8 @@ interface SprintAction {
   week: number;
   status: string;
   completedAt: string | null;
+  proofUrl?: string | null;
+  notes?: string | null;
 }
 
 interface SprintProgressProps {
@@ -27,7 +29,7 @@ interface SprintProgressProps {
     isComplete: boolean;
   };
   actions: SprintAction[];
-  onComplete: (actionId: string) => void;
+  onComplete: (actionId: string, proofUrl?: string, notes?: string) => void;
   onSkip: (actionId: string) => void;
   loading?: boolean;
 }
@@ -163,11 +165,21 @@ function SprintActionCard({
   onSkip,
 }: {
   action: SprintAction;
-  onComplete: (id: string) => void;
+  onComplete: (id: string, proofUrl?: string, notes?: string) => void;
   onSkip: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [proofUrl, setProofUrl] = useState("");
+  const [notes, setNotes] = useState("");
   const isDone = action.status === "completed" || action.status === "skipped";
+
+  const handleConfirm = () => {
+    onComplete(action.id, proofUrl || undefined, notes || undefined);
+    setConfirming(false);
+    setProofUrl("");
+    setNotes("");
+  };
 
   return (
     <div
@@ -193,7 +205,20 @@ function SprintActionCard({
             <span className="text-xs text-zinc-600">~{action.estimatedMinutes}min</span>
           </div>
 
-          {expanded && (
+          {/* Completed state: show proof link if provided */}
+          {isDone && action.proofUrl && (
+            <a
+              href={action.proofUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 mt-1"
+            >
+              View proof
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          )}
+
+          {expanded && !confirming && (
             <div className="mt-2">
               <p className="text-sm text-zinc-400 mb-3">{action.description}</p>
               {!isDone && (
@@ -210,23 +235,57 @@ function SprintActionCard({
                     </a>
                   )}
                   <button
-                    onClick={() => onComplete(action.id)}
+                    onClick={() => setConfirming(true)}
                     className="px-3 py-1.5 bg-emerald-500 text-white text-xs font-medium rounded-lg hover:bg-emerald-600 transition-colors"
                   >
-                    Mark complete
+                    I did this
                   </button>
                   <button
                     onClick={() => onSkip(action.id)}
                     className="px-3 py-1.5 text-zinc-500 text-xs hover:text-zinc-300 transition-colors"
                   >
-                    Skip
+                    Not relevant
                   </button>
                 </div>
               )}
             </div>
           )}
 
-          {!isDone && (
+          {/* Proof confirmation step */}
+          {confirming && (
+            <div className="mt-3 space-y-3">
+              <input
+                type="url"
+                value={proofUrl}
+                onChange={(e) => setProofUrl(e.target.value)}
+                placeholder="Paste link to prove it (optional)"
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+              />
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Any notes? (optional)"
+                rows={2}
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none"
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleConfirm}
+                  className="px-4 py-1.5 bg-emerald-500 text-white text-xs font-medium rounded-lg hover:bg-emerald-600 transition-colors"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => { setConfirming(false); setProofUrl(""); setNotes(""); }}
+                  className="px-3 py-1.5 text-zinc-500 text-xs hover:text-zinc-300 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!isDone && !confirming && (
             <button
               onClick={() => setExpanded(!expanded)}
               className="text-xs text-zinc-500 hover:text-zinc-300 mt-1"

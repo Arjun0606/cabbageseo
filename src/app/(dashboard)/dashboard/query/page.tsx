@@ -16,6 +16,8 @@ import {
   Lightbulb,
   Target,
   FileText,
+  RefreshCw,
+  Sparkles,
 } from "lucide-react";
 
 interface WhyNotMeAnalysis {
@@ -39,11 +41,13 @@ interface WhyNotMeAnalysis {
 function QueryPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { currentSite, organization } = useSite();
-  
+  const { currentSite, organization, runCheck } = useSite();
+
   const query = searchParams.get("q") || "";
-  
+
   const [loading, setLoading] = useState(true);
+  const [rechecking, setRechecking] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [analysis, setAnalysis] = useState<WhyNotMeAnalysis | null>(null);
   const [error, setError] = useState("");
 
@@ -118,6 +122,39 @@ function QueryPageContent() {
     }
   };
 
+  const handleRecheck = async () => {
+    if (!currentSite?.id || !query || rechecking) return;
+    setRechecking(true);
+    try {
+      await runCheck(currentSite.id, query);
+      await analyzeQuery();
+    } finally {
+      setRechecking(false);
+    }
+  };
+
+  const handleGeneratePage = async () => {
+    if (!currentSite?.id || !query || generating) return;
+    setGenerating(true);
+    try {
+      const response = await fetch("/api/geo/pages/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ siteId: currentSite.id, query }),
+      });
+      const data = await response.json();
+      if (response.ok && data.data?.page?.id) {
+        router.push(`/dashboard/pages/${data.data.page.id}`);
+      } else {
+        alert(data.error || "Failed to generate page. Please try again.");
+      }
+    } catch {
+      alert("Failed to generate page. Please try again.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
@@ -170,15 +207,29 @@ function QueryPageContent() {
 
         {/* Header */}
         <div className="mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full text-red-400 text-sm mb-4">
-            <X className="w-4 h-4" />
-            You were not mentioned
+          <div className="flex items-center gap-3 mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full text-red-400 text-sm">
+              <X className="w-4 h-4" />
+              You were not mentioned
+            </div>
+            <button
+              onClick={handleRecheck}
+              disabled={rechecking}
+              className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm rounded-full hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+            >
+              {rechecking ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3.5 h-3.5" />
+              )}
+              {rechecking ? "Re-checking..." : "Re-check now"}
+            </button>
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">
             Why AI didn't recommend you
           </h1>
           <p className="text-xl text-zinc-400">
-            Query: "{analysis.query}"
+            Query: &ldquo;{analysis.query}&rdquo;
           </p>
         </div>
 
@@ -322,6 +373,30 @@ function QueryPageContent() {
                   ))}
                 </ul>
               </div>
+
+              {/* Generate AI-Ready Page CTA */}
+              <div className="mt-8 pt-6 border-t border-zinc-800">
+                <button
+                  onClick={handleGeneratePage}
+                  disabled={generating}
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-black font-bold rounded-xl transition-all disabled:opacity-50"
+                >
+                  {generating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Generating page... (30-60 seconds)
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5" />
+                      Generate AI-Ready Page
+                    </>
+                  )}
+                </button>
+                <p className="text-center text-xs text-zinc-500 mt-2">
+                  Creates a full, publish-ready page optimized for AI citation
+                </p>
+              </div>
             </>
           ) : (
             <>
@@ -347,17 +422,17 @@ function QueryPageContent() {
                     <Lock className="w-5 h-5 text-zinc-400 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-white font-medium mb-1">
-                        Unlock full content strategy
+                        Unlock full content strategy + AI page generation
                       </p>
                       <p className="text-zinc-400 text-sm mb-3">
-                        Starter plan includes: Exact page structure, section headings, key entities to mention, 
-                        FAQs to answer, and competitor analysis showing what they did that you didn't.
+                        Scout plan includes: Exact page structure, section headings, key entities to mention,
+                        FAQs to answer, and <strong className="text-emerald-400">AI-generated publish-ready pages</strong> optimized for citation.
                       </p>
                       <Link
                         href="/settings/billing"
                         className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors"
                       >
-                        Upgrade to Starter ($29/mo)
+                        Upgrade to Scout ($49/mo)
                         <ArrowRight className="w-5 h-5" />
                       </Link>
                     </div>

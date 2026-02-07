@@ -10,8 +10,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCitationPlanLimits, canAddSite, canAccessProduct } from "@/lib/billing/citation-plans";
-import { getTestPlan } from "@/lib/testing/test-accounts";
-import { getTestSession } from "@/lib/testing/test-session";
 import { getUser } from "@/lib/api/get-user";
 
 function getDbClient(): SupabaseClient | null {
@@ -30,53 +28,15 @@ export async function GET() {
       return NextResponse.json({ error: "Database not configured" }, { status: 500 });
     }
 
-    // Check for bypass/test user first
-    const bypassUser = await getUser();
-    if (bypassUser?.isTestAccount) {
-      // Return empty sites for bypass mode (no DB)
-      return NextResponse.json({ sites: [] });
+    // Auth check
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // ⚠️ TEST SESSION CHECK FIRST
-    const testSession = await getTestSession();
-    let orgId: string | null = null;
-
-    if (testSession) {
-      // For test accounts, find the test organization
-      const testOrgSlug = `test-${testSession.email.split("@")[0]}`;
-      const { data: testOrg } = await db
-        .from("organizations")
-        .select("id")
-        .eq("slug", testOrgSlug)
-        .maybeSingle();
-      
-      if (!testOrg) {
-        // No org created yet - return empty
-        return NextResponse.json({ sites: [] });
-      }
-      orgId = testOrg.id;
-    } else {
-      const supabase = await createClient();
-      if (!supabase) {
-        return NextResponse.json({ error: "Not configured" }, { status: 500 });
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-
-      // Get user's organization
-      const { data: userData } = await db
-        .from("users")
-        .select("organization_id")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (!userData?.organization_id) {
-        return NextResponse.json({ sites: [] });
-      }
-      orgId = userData.organization_id;
+    const orgId = currentUser.organizationId;
+    if (!orgId) {
+      return NextResponse.json({ sites: [] });
     }
 
     // Get sites with geo_score_avg, category, and custom_queries
@@ -102,53 +62,10 @@ export async function GET() {
 // POST - Create site
 export async function POST(request: NextRequest) {
   try {
-    // Check for bypass user first
-    const bypassUser = await getUser();
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
-      // For bypass mode, return success without DB
-      const body = await request.json();
-      let domain = body.domain;
-      domain = domain.trim().toLowerCase();
-      domain = domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
-      
-      return NextResponse.json({
-        site: {
-          id: `bypass-site-${Date.now()}`,
-          domain,
-          name: domain,
-          category: body.category || null,
-          totalCitations: 0,
-          citationsThisWeek: 0,
-          citationsLastWeek: 0,
-          lastCheckedAt: null,
-          geoScore: null,
-        },
-        bypassMode: true,
-      });
-    }
-
-    // ⚠️ TEST SESSION CHECK FIRST
-    const testSession = await getTestSession();
-    let userId: string;
-    let userEmail: string;
-    let testPlan: "free" | "scout" | "command" | "dominate" | null = null;
-
-    if (testSession) {
-      userId = `test-${testSession.email}`;
-      userEmail = testSession.email;
-      testPlan = testSession.plan;
-    } else {
-      const supabase = await createClient();
-      if (!supabase) {
-        return NextResponse.json({ error: "Not configured" }, { status: 500 });
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-      userId = user.id;
-      userEmail = user.email || "";
+    // Auth check
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
@@ -167,88 +84,35 @@ export async function POST(request: NextRequest) {
     if (!db) {
       return NextResponse.json({ error: "Database not configured" }, { status: 500 });
     }
-    
-    // For test accounts, create/use test organization in database
-    let orgId: string | null = null;
-    let plan = testPlan || "free";
-    
-    if (testSession) {
-      // Find or create test organization
-      const testOrgSlug = `test-${testSession.email.split("@")[0]}`;
-      const { data: existingOrg } = await db
+
+    // Get or create organization for user
+    let orgId = currentUser.organizationId;
+
+    if (!orgId) {
+      // Create org if user doesn't have one yet
+      const userEmail = currentUser.email || "";
+      const slug = (userEmail.split("@")[0]?.replace(/[^a-z0-9]/gi, "") || "user") + "-" + Date.now();
+
+      const { data: newOrg } = await db
         .from("organizations")
-        .select("id, plan, created_at")
-        .eq("slug", testOrgSlug)
-        .maybeSingle();
-      
-      if (existingOrg) {
-        orgId = existingOrg.id;
-        // Override plan with test plan
-        plan = testPlan || existingOrg.plan || "free";
-      } else {
-        // Create test organization
-        const planName = testPlan || "free";
-        const planDisplayName = planName.charAt(0).toUpperCase() + planName.slice(1);
-        const { data: newOrg } = await db
-          .from("organizations")
-          .insert({
-            name: `Test ${planDisplayName} Organization`,
-            slug: testOrgSlug,
-            plan: planName,
-            subscription_status: "active",
-          })
-          .select("id, created_at")
-          .single();
-        
-        if (newOrg) {
-          orgId = newOrg.id;
-          
-          // Create test user record
-          await db.from("users").upsert({
-            id: userId,
-            organization_id: orgId,
-            email: userEmail,
-            name: testSession.name,
-            role: "owner",
-          });
-        }
-      }
-    }
+        .insert({
+          name: userEmail.split("@")[0] || "My Organization",
+          slug,
+          plan: "free",
+          subscription_status: "active",
+        })
+        .select("id, created_at")
+        .single();
 
-    // For regular (non-test) accounts, get organization
-    if (!testSession) {
-      const { data: userData } = await db
-        .from("users")
-        .select("organization_id")
-        .eq("id", userId)
-        .maybeSingle();
-
-      orgId = userData?.organization_id;
-
-      // Create org if doesn't exist
-      if (!orgId) {
-        const slug = (userEmail.split("@")[0]?.replace(/[^a-z0-9]/gi, "") || "user") + "-" + Date.now();
-        
-        const { data: newOrg } = await db
-          .from("organizations")
-          .insert({
-            name: userEmail.split("@")[0] || "My Organization",
-            slug,
-            plan: "free",
-            subscription_status: "active",
-          })
-          .select("id, created_at")
-          .single();
-
-        if (newOrg) {
-          orgId = newOrg.id;
-          await db.from("users").upsert({
-            id: userId,
-            organization_id: orgId,
-            email: userEmail,
-            role: "owner",
-          });
-        }
+      if (newOrg) {
+        orgId = newOrg.id;
+        await db.from("users").upsert({
+          id: currentUser.id,
+          organization_id: orgId,
+          email: userEmail,
+          name: currentUser.name,
+          role: "owner",
+        });
       }
     }
 
@@ -256,26 +120,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to create organization" }, { status: 500 });
     }
 
-    // Get plan limits (for test accounts, we already have plan from session)
+    // Get plan from DB
     const { data: org } = await db
       .from("organizations")
       .select("plan, created_at")
       .eq("id", orgId)
       .single();
 
-    if (!testSession) {
-      plan = org?.plan || "free";
-      const dbTestPlan = getTestPlan(userEmail);
-      if (dbTestPlan) {
-        plan = dbTestPlan;
-      }
-    }
-    
+    const plan = org?.plan || "free";
     const orgCreatedAt = org?.created_at;
-    
-    // Check if free user's trial has expired (bypass for test accounts)
-    if (plan === "free" && orgCreatedAt && !testSession) {
-      const access = canAccessProduct(plan, orgCreatedAt, userEmail || null);
+
+    // Check if free user's trial has expired
+    if (plan === "free" && orgCreatedAt) {
+      const access = canAccessProduct(plan, orgCreatedAt, currentUser.email || null);
       if (!access.allowed) {
         return NextResponse.json({
           error: access.reason || "Trial expired. Upgrade to continue.",

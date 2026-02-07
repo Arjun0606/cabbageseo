@@ -1,26 +1,42 @@
 /**
  * GET USER - Unified user retrieval
- * 
- * Checks test session first, then Supabase auth
- * Returns user info in a consistent format
+ *
+ * Checks test session first (if TESTING_MODE), then Supabase auth.
+ * Returns user info in a consistent format.
+ * Queries the DB for real user plan (not hardcoded).
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getTestSession } from "@/lib/testing/test-session";
 import { cookies } from "next/headers";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export interface UserInfo {
   id: string;
   email: string;
   name: string | null;
   plan: "free" | "scout" | "command" | "dominate";
+  organizationId: string | null;
   isTestAccount: boolean;
+}
+
+const TESTING_MODE = process.env.TESTING_MODE === "true";
+
+function getDbClient(): SupabaseClient | null {
+  try {
+    return createServiceClient();
+  } catch {
+    return null;
+  }
 }
 
 /**
  * Check for test bypass session (for testing without auth)
+ * Only active when TESTING_MODE=true
  */
 async function getBypassSession(): Promise<UserInfo | null> {
+  if (!TESTING_MODE) return null;
+
   try {
     const cookieStore = await cookies();
     const bypassCookie = cookieStore.get("test_bypass_session");
@@ -32,6 +48,7 @@ async function getBypassSession(): Promise<UserInfo | null> {
           email: session.email,
           name: session.name,
           plan: session.plan as "free" | "scout" | "command" | "dominate",
+          organizationId: session.organizationId || null,
           isTestAccount: true,
         };
       }
@@ -44,14 +61,14 @@ async function getBypassSession(): Promise<UserInfo | null> {
 
 /**
  * Get current user (test session or Supabase auth)
- * 
+ *
  * Priority order:
- * 1. Test bypass session (for automated testing)
- * 2. Supabase auth (if user is logged in via real auth)
- * 3. Test session cookie (fallback for test login API)
+ * 1. Test bypass session (only if TESTING_MODE=true)
+ * 2. Supabase auth (real users - plan queried from DB)
+ * 3. Test session cookie (only if TESTING_MODE=true)
  */
 export async function getUser(): Promise<UserInfo | null> {
-  // Check for test bypass FIRST (highest priority for testing)
+  // Check for test bypass FIRST (only in testing mode)
   const bypassSession = await getBypassSession();
   if (bypassSession) {
     return bypassSession;
@@ -62,42 +79,59 @@ export async function getUser(): Promise<UserInfo | null> {
   if (supabase) {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (!error && user) {
-      // Real Supabase user - get plan from test account email pattern if applicable
       const email = user.email || "";
       let plan: "free" | "scout" | "command" | "dominate" = "free";
+      let organizationId: string | null = null;
 
-      // Check if this is a test account email pattern
-      if (email === "test-pro@cabbageseo.test") {
-        plan = "command";
-      } else if (email === "test-starter@cabbageseo.test") {
-        plan = "scout";
-      } else if (email === "test-free@cabbageseo.test") {
-        plan = "free";
+      // Query the DB for the user's actual plan
+      const db = getDbClient();
+      if (db) {
+        const { data: existingUser } = await db
+          .from("users")
+          .select("organization_id")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (existingUser?.organization_id) {
+          organizationId = existingUser.organization_id;
+
+          const { data: org } = await db
+            .from("organizations")
+            .select("plan")
+            .eq("id", existingUser.organization_id)
+            .maybeSingle();
+
+          if (org?.plan) {
+            plan = org.plan as "free" | "scout" | "command" | "dominate";
+          }
+        }
       }
-      // TODO: For real users, get plan from organization/subscription
-      
+
       return {
         id: user.id,
         email: email,
         name: user.user_metadata?.name || null,
         plan: plan,
-        isTestAccount: email.endsWith("@cabbageseo.test"),
+        organizationId: organizationId,
+        isTestAccount: false,
       };
     }
   }
 
-  // Fall back to test session cookie (for test login API)
-  const testSession = await getTestSession();
-  if (testSession) {
-    return {
-      id: `test-${testSession.email}`,
-      email: testSession.email,
-      name: testSession.name,
-      plan: testSession.plan,
-      isTestAccount: true,
-    };
+  // Fall back to test session cookie (only in testing mode)
+  if (TESTING_MODE) {
+    const testSession = await getTestSession();
+    if (testSession) {
+      return {
+        id: `test-${testSession.email}`,
+        email: testSession.email,
+        name: testSession.name,
+        plan: testSession.plan,
+        organizationId: null,
+        isTestAccount: true,
+      };
+    }
   }
 
   return null;
 }
-

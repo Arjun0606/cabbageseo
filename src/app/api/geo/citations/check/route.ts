@@ -11,7 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   calculateBuyerIntent,
@@ -29,7 +29,7 @@ import {
   canRunManualCheck,
   canAccessProduct,
 } from "@/lib/billing/citation-plans";
-import { getTestPlan } from "@/lib/testing/test-accounts";
+import { getUser } from "@/lib/api/get-user";
 
 function getDbClient(): SupabaseClient | null {
   try {
@@ -557,45 +557,17 @@ async function checkChatGPT(domain: string, queries: string[]): Promise<CheckRes
 // ============================================
 export async function POST(request: NextRequest) {
   try {
-    // ⚠️ BYPASS USER CHECK FIRST
-    const { getUser } = await import("@/lib/api/get-user");
-    const { getTestSession } = await import("@/lib/testing/test-session");
-    
-    const bypassUser = await getUser();
-    const testSession = await getTestSession();
-    
-    let userId: string;
-    let userEmail: string | null = null;
-    let bypassMode = false;
-    
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("test-bypass")) {
-      // Bypass mode - use bypass user data
-      userId = bypassUser.id;
-      userEmail = bypassUser.email;
-      bypassMode = true;
-      console.log(`[Bypass Mode] Citations check for ${bypassUser.email} (${bypassUser.plan})`);
-    } else if (testSession) {
-      // Test account - use test session data
-      userId = `test-${testSession.email}`;
-      userEmail = testSession.email;
-      console.log(`[Test Session] Citations check for ${testSession.email} (${testSession.plan})`);
-    } else {
-      // Regular auth
-      const supabase = await createClient();
-      if (!supabase) {
-        return NextResponse.json({ error: "Not configured" }, { status: 500 });
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-      userId = user.id;
-      userEmail = user.email || null;
+    // Auth check
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const userEmail = currentUser.email || null;
 
     const body = await request.json();
     let { siteId, domain } = body;
+    const singleQuery: string | undefined = body.query;
 
     const db = getDbClient();
     if (!db) {
@@ -627,54 +599,21 @@ export async function POST(request: NextRequest) {
     let plan = "free";
     let category: string | null = null;
     let customQueries: string[] = [];
-    let orgId: string | null = null;
-    
-    // Check if bypass mode or test session - use test data directly
-    if (bypassMode && bypassUser) {
-      plan = bypassUser.plan;
-      orgId = "bypass-org";
-    } else if (testSession) {
-      plan = testSession.plan;
-      // Look up test organization from database
-      const testOrgSlug = `test-${testSession.email.split("@")[0]}`;
-      const { data: testOrgData } = await db
-        .from("organizations")
-        .select("id")
-        .eq("slug", testOrgSlug)
-        .maybeSingle();
-      orgId = testOrgData?.id || null;
-    } else {
-      // Fetch user's organization and plan from database
-      const { data: userData } = await db
-        .from("users")
-        .select("organization_id")
-        .eq("id", userId)
-        .maybeSingle();
-      orgId = userData?.organization_id || null;
-    }
-    
+    const orgId = currentUser.organizationId;
+
     let orgCreatedAt: string | undefined;
-    
+
     if (orgId) {
-      // Only fetch from DB if not bypass/test session (already set plan)
-      if (!bypassMode && !testSession) {
-        const { data: orgData } = await db
-          .from("organizations")
-          .select("plan, created_at")
-          .eq("id", orgId)
-          .maybeSingle();
-        
-        if (orgData) {
-          plan = orgData.plan || "free";
-          orgCreatedAt = orgData.created_at;
-        }
-        
-        // ⚠️ TEST ACCOUNT BYPASS - Use test account plan if applicable
-        const testPlan = getTestPlan(userEmail);
-        if (testPlan) {
-          plan = testPlan;
-          console.log(`[Test Account] Using test plan: ${testPlan} for ${userEmail}`);
-        }
+      // Fetch org plan from database
+      const { data: orgData } = await db
+        .from("organizations")
+        .select("plan, created_at")
+        .eq("id", orgId)
+        .maybeSingle();
+
+      if (orgData) {
+        plan = orgData.plan || "free";
+        orgCreatedAt = orgData.created_at;
       }
       
       // ============================================
@@ -735,9 +674,14 @@ export async function POST(request: NextRequest) {
     }
     
     // Generate queries based on plan, category, and custom queries
-    const queries = generateQueries(cleanDomain, category, customQueries, plan);
-    
-    console.log(`[Citation Check] Plan: ${plan}, Category: ${category}, Queries: ${queries.length}`);
+    const generatedQueries = generateQueries(cleanDomain, category, customQueries, plan);
+
+    // If single query re-check, use that query for all platforms
+    const queries = singleQuery
+      ? [singleQuery, singleQuery, singleQuery]
+      : generatedQueries;
+
+    console.log(`[Citation Check] Plan: ${plan}, Category: ${category}, Queries: ${queries.length}${singleQuery ? ' (single re-check)' : ''}`);
 
     // Run ALL checks in parallel - real API calls only
     const [perplexityResult, googleResult, chatgptResult, trustSourceResults] = await Promise.all([

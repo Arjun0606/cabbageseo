@@ -59,6 +59,8 @@ interface SprintData {
     week: number;
     status: string;
     completedAt: string | null;
+    proofUrl?: string | null;
+    notes?: string | null;
   }>;
 }
 
@@ -214,12 +216,12 @@ function DashboardContent() {
   };
 
   // Handle sprint action complete/skip
-  const handleSprintAction = async (actionId: string, status: "completed" | "skipped") => {
+  const handleSprintAction = async (actionId: string, status: "completed" | "skipped", proofUrl?: string, notes?: string) => {
     try {
       await fetch("/api/geo/sprint", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ actionId, status }),
+        body: JSON.stringify({ actionId, status, proofUrl, notes }),
       });
       // Re-fetch sprint data
       const res = await fetch(`/api/geo/sprint?siteId=${currentSite?.id}`);
@@ -309,7 +311,7 @@ function DashboardContent() {
             }
           }
           actions={sprint?.actions || []}
-          onComplete={(id) => handleSprintAction(id, "completed")}
+          onComplete={(id, proofUrl, notes) => handleSprintAction(id, "completed", proofUrl, notes)}
           onSkip={(id) => handleSprintAction(id, "skipped")}
           loading={loading}
         />

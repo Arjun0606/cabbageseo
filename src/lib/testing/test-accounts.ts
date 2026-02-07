@@ -50,15 +50,17 @@ export const TEST_ACCOUNTS: TestAccount[] = [
  * Check if an email is a test account
  */
 export function isTestAccount(email: string | null | undefined): boolean {
+  if (!isTestingModeEnabled()) return false;
   if (!email) return false;
   return TEST_ACCOUNTS.some(account => account.email === email.toLowerCase());
 }
 
 /**
  * Get the test plan for a test account email
- * Returns null if not a test account
+ * Returns null if not a test account or if TESTING_MODE is disabled
  */
 export function getTestPlan(email: string | null | undefined): "free" | "scout" | "command" | "dominate" | null {
+  if (!isTestingModeEnabled()) return null;
   if (!email) return null;
   const account = TEST_ACCOUNTS.find(acc => acc.email === email.toLowerCase());
   return account?.plan || null;
@@ -68,6 +70,7 @@ export function getTestPlan(email: string | null | undefined): "free" | "scout" 
  * Get test account info by email
  */
 export function getTestAccount(email: string | null | undefined): TestAccount | null {
+  if (!isTestingModeEnabled()) return null;
   if (!email) return null;
   return TEST_ACCOUNTS.find(acc => acc.email === email.toLowerCase()) || null;
 }

@@ -6,9 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/api/get-user";
-import { getTestSession } from "@/lib/testing/test-session";
 import {
   generateSprintActions,
   calculateSprintProgress,
@@ -41,27 +40,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Auth check (bypass → test session → supabase)
-    const bypassUser = await getUser();
-    if (bypassUser?.isTestAccount) {
-      return NextResponse.json({
-        data: getMockSprintData(),
-        bypassMode: true,
-      });
-    }
-
-    const testSession = await getTestSession();
-    if (!testSession) {
-      const supabase = await createClient();
-      if (!supabase) {
-        return NextResponse.json({ error: "Not configured" }, { status: 500 });
-      }
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+    // Auth check
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get site data
@@ -192,33 +174,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Auth check
-    const bypassUser = await getUser();
-    if (!bypassUser?.isTestAccount) {
-      const testSession = await getTestSession();
-      if (!testSession) {
-        const supabase = await createClient();
-        if (!supabase) {
-          return NextResponse.json(
-            { error: "Not configured" },
-            { status: 500 }
-          );
-        }
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) {
-          return NextResponse.json(
-            { error: "Unauthorized" },
-            { status: 401 }
-          );
-        }
-      }
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const body = await request.json();
-    const { actionId, status } = body as {
+    const { actionId, status, proofUrl, notes } = body as {
       actionId: string;
       status: "completed" | "skipped";
+      proofUrl?: string;
+      notes?: string;
     };
 
     if (!actionId || !["completed", "skipped"].includes(status)) {
@@ -231,12 +200,16 @@ export async function POST(request: NextRequest) {
     const updateData: Record<string, unknown> = { status };
     if (status === "completed") {
       updateData.completed_at = new Date().toISOString();
+      if (proofUrl) updateData.proof_url = proofUrl;
+      if (notes) updateData.notes = notes;
     }
 
-    const { error } = await db
+    const { data: updatedAction, error } = await db
       .from("sprint_actions")
       .update(updateData)
-      .eq("id", actionId);
+      .eq("id", actionId)
+      .select("*")
+      .single();
 
     if (error) {
       return NextResponse.json(
@@ -245,7 +218,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, action: updatedAction ? formatActions([updatedAction])[0] : null });
   } catch (error) {
     console.error("[/api/geo/sprint POST] Error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
@@ -264,6 +237,8 @@ function formatActions(
     week: number;
     status: string;
     completed_at: string | null;
+    proof_url: string | null;
+    notes: string | null;
   }>
 ) {
   return actions.map((a) => ({
@@ -277,56 +252,8 @@ function formatActions(
     week: a.week,
     status: a.status,
     completedAt: a.completed_at,
+    proofUrl: a.proof_url,
+    notes: a.notes,
   }));
 }
 
-function getMockSprintData() {
-  return {
-    progress: {
-      totalActions: 9,
-      completedActions: 3,
-      percentComplete: 33,
-      currentDay: 12,
-      currentWeek: 2,
-      daysRemaining: 19,
-      isComplete: false,
-    },
-    actions: [
-      {
-        id: "mock-1",
-        actionType: "get_listed_g2",
-        title: "Get listed on G2",
-        description: "G2 is the #1 source AI uses for software recommendations.",
-        actionUrl: "https://www.g2.com/products/new",
-        priority: 1,
-        estimatedMinutes: 120,
-        week: 1,
-        status: "completed",
-        completedAt: new Date().toISOString(),
-      },
-      {
-        id: "mock-2",
-        actionType: "get_listed_capterra",
-        title: "Get listed on Capterra",
-        description: "Capterra is the second most-cited source by AI platforms.",
-        actionUrl: "https://www.capterra.com/vendors/sign-up",
-        priority: 2,
-        estimatedMinutes: 90,
-        week: 1,
-        status: "completed",
-        completedAt: new Date().toISOString(),
-      },
-      {
-        id: "mock-3",
-        actionType: "publish_comparison",
-        title: "Publish a comparison page",
-        description: "Create a detailed comparison page on your site.",
-        priority: 3,
-        estimatedMinutes: 60,
-        week: 2,
-        status: "in_progress",
-        completedAt: null,
-      },
-    ],
-  };
-}

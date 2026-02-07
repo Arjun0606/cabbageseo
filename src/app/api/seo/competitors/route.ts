@@ -10,8 +10,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCitationPlanLimits, canAddCompetitor, canAccessProduct } from "@/lib/billing/citation-plans";
-import { getTestPlan } from "@/lib/testing/test-accounts";
-import { getUser } from "@/lib/api/get-user";
 
 function getDbClient(): SupabaseClient | null {
   try {
@@ -24,13 +22,6 @@ function getDbClient(): SupabaseClient | null {
 // GET - List competitors
 export async function GET(request: NextRequest) {
   try {
-    // Check for bypass user first
-    const bypassUser = await getUser();
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
-      // Return empty competitors list in bypass mode
-      return NextResponse.json({ competitors: [], bypassMode: true });
-    }
-
     const supabase = await createClient();
     if (!supabase) {
       return NextResponse.json({ error: "Not configured" }, { status: 500 });
@@ -94,25 +85,6 @@ export async function GET(request: NextRequest) {
 // POST - Add competitor
 export async function POST(request: NextRequest) {
   try {
-    // Check for bypass user first
-    const bypassUser = await getUser();
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
-      const body = await request.json();
-      const { domain } = body;
-      // Return mock competitor in bypass mode
-      return NextResponse.json({
-        competitor: {
-          id: `bypass-competitor-${Date.now()}`,
-          domain: domain?.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "") || "example.com",
-          total_citations: 0,
-          citations_change: 0,
-          last_checked_at: null,
-          created_at: new Date().toISOString(),
-        },
-        bypassMode: true,
-      });
-    }
-
     const supabase = await createClient();
     if (!supabase) {
       return NextResponse.json({ error: "Not configured" }, { status: 500 });
@@ -169,15 +141,8 @@ export async function POST(request: NextRequest) {
       .eq("id", userData.organization_id)
       .single();
 
-    let plan = org?.plan || "free";
+    const plan = org?.plan || "free";
     const orgCreatedAt = org?.created_at;
-    
-    // ⚠️ TEST ACCOUNT BYPASS - Use test account plan if applicable
-    const testPlan = getTestPlan(user.email);
-    if (testPlan) {
-      plan = testPlan;
-      console.log(`[Test Account] Using test plan: ${testPlan} for ${user.email}`);
-    }
     
     // Check if free user's trial has expired (bypass for test accounts)
     if (plan === "free" && orgCreatedAt) {
@@ -248,12 +213,6 @@ export async function POST(request: NextRequest) {
 // DELETE - Remove competitor
 export async function DELETE(request: NextRequest) {
   try {
-    // Check for bypass user first
-    const bypassUser = await getUser();
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
-      return NextResponse.json({ success: true, bypassMode: true });
-    }
-
     const supabase = await createClient();
     if (!supabase) {
       return NextResponse.json({ error: "Not configured" }, { status: 500 });

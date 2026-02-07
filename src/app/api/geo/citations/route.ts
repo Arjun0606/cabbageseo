@@ -1,6 +1,6 @@
 /**
  * /api/geo/citations - Get Citations
- * 
+ *
  * GET: Fetch citations for a site
  * Query params:
  *   - siteId: Required site ID
@@ -8,7 +8,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/api/get-user";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 function getDbClient(): SupabaseClient | null {
@@ -21,63 +22,13 @@ function getDbClient(): SupabaseClient | null {
 
 export async function GET(request: NextRequest) {
   try {
-    // ⚠️ BYPASS USER CHECK FIRST
-    const { getUser } = await import("@/lib/api/get-user");
-    const { getTestSession } = await import("@/lib/testing/test-session");
-    
-    const bypassUser = await getUser();
-    const testSession = await getTestSession();
-    
-    let userId: string;
-    let organizationId: string | null = null;
-    
-    // Check for bypass user first
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
-      // Return mock citations in bypass mode
-      return NextResponse.json({
-        success: true,
-        data: {
-          total: 0,
-          thisWeek: 0,
-          lastWeek: 0,
-          byPlatform: {
-            perplexity: 0,
-            google_aio: 0,
-            chatgpt: 0,
-          },
-          citations: [],
-          recent: [],
-        },
-        citations: [],
-        bypassMode: true,
-      });
+    // Auth check
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
-    if (testSession) {
-      userId = `test-${testSession.email}`;
-      // Look up test organization from database
-      const db = getDbClient();
-      if (db) {
-        const testOrgSlug = `test-${testSession.email.split("@")[0]}`;
-        const { data: testOrgData } = await db
-          .from("organizations")
-          .select("id")
-          .eq("slug", testOrgSlug)
-          .maybeSingle();
-        organizationId = testOrgData?.id || null;
-      }
-    } else {
-      const supabase = await createClient();
-      if (!supabase) {
-        return NextResponse.json({ error: "Not configured" }, { status: 500 });
-      }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-      userId = user.id;
-    }
+    const organizationId = currentUser.organizationId;
 
     const { searchParams } = new URL(request.url);
     const siteId = searchParams.get("siteId");
@@ -92,17 +43,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Database not configured" }, { status: 500 });
     }
 
-    // If not a test session, fetch organization from user
-    if (!testSession) {
+    // If no org from getUser, try to fetch from DB
+    let orgId = organizationId;
+    if (!orgId) {
       const { data: userData } = await db
         .from("users")
         .select("organization_id")
-        .eq("id", userId)
+        .eq("id", currentUser.id)
         .maybeSingle();
-      organizationId = userData?.organization_id || null;
+      orgId = userData?.organization_id || null;
     }
 
-    if (!organizationId) {
+    if (!orgId) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
@@ -112,7 +64,7 @@ export async function GET(request: NextRequest) {
       .eq("id", siteId)
       .maybeSingle();
 
-    if (!site || site.organization_id !== organizationId) {
+    if (!site || site.organization_id !== orgId) {
       return NextResponse.json({ error: "Site not found" }, { status: 404 });
     }
 
@@ -137,25 +89,25 @@ export async function GET(request: NextRequest) {
     // Helper to convert confidence (string or number) to normalized number
     const confidenceToNumber = (conf: string | number | null | undefined): number => {
       if (conf === null || conf === undefined) return 0.7;
-      
+
       // Handle numeric values
       if (typeof conf === "number") {
         if (conf > 1) return conf / 100; // Convert 0-100 range to 0-1
         return conf;
       }
-      
+
       // Handle string values
       const confStr = String(conf).toLowerCase();
       if (confStr === "high") return 0.9;
       if (confStr === "medium") return 0.7;
       if (confStr === "low") return 0.5;
-      
+
       // Try parsing as number
       const parsed = parseFloat(confStr);
       if (!isNaN(parsed)) {
         return parsed > 1 ? parsed / 100 : parsed;
       }
-      
+
       return 0.7;
     };
 
@@ -200,10 +152,9 @@ export async function GET(request: NextRequest) {
         thisWeek: site.citations_this_week || 0,
         lastWeek: site.citations_last_week || 0,
         byPlatform,
-        citations: formattedCitations, // Always return citations array
+        citations: formattedCitations,
         recent: formattedCitations.slice(0, 10),
       },
-      // Also return flat citations for backward compatibility
       citations: formattedCitations,
     });
 

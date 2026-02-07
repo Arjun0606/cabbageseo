@@ -3,10 +3,9 @@
  */
 
 import { NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCitationPlanLimits } from "@/lib/billing/citation-plans";
-import { getTestSession } from "@/lib/testing/test-session";
 import { getUser } from "@/lib/api/get-user";
 
 function getDbClient(): SupabaseClient | null {
@@ -24,83 +23,31 @@ export async function GET() {
       return NextResponse.json({ error: "Database not configured" }, { status: 500 });
     }
 
-    // ⚠️ BYPASS CHECK FIRST (for testing)
-    const bypassUser = await getUser();
-    if (bypassUser?.isTestAccount) {
-      const limits = getCitationPlanLimits(bypassUser.plan);
+    // Auth check
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const orgId = currentUser.organizationId;
+    if (!orgId) {
+      const limits = getCitationPlanLimits("free");
       return NextResponse.json({
         data: {
           usage: { checksUsed: 0, sitesUsed: 0, competitorsUsed: 0 },
-          limits: { 
-            checks: limits.manualChecksPerDay === -1 ? 999999 : limits.manualChecksPerDay, 
-            checksPerDay: limits.manualChecksPerDay,
-            sites: limits.sites, 
-            competitors: limits.competitors 
-          },
-        },
-        bypassMode: true,
-      });
-    }
-
-    // Test session check
-    const testSession = await getTestSession();
-    let orgId: string | null = null;
-    let plan = "free";
-
-    if (testSession) {
-      // For test accounts, find the test organization and return usage based on test plan
-      const testOrgSlug = `test-${testSession.email.split("@")[0]}`;
-      const { data: testOrg } = await db
-        .from("organizations")
-        .select("id")
-        .eq("slug", testOrgSlug)
-        .maybeSingle();
-      
-      if (testOrg) {
-        orgId = testOrg.id;
-      }
-      plan = testSession.plan;
-    } else {
-      const supabase = await createClient();
-      if (!supabase) {
-        return NextResponse.json({ error: "Not configured" }, { status: 500 });
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-
-      // Get user's organization
-      const { data: userData } = await db
-        .from("users")
-        .select("organization_id")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      orgId = userData?.organization_id || null;
-    }
-
-    if (!orgId) {
-      const limits = getCitationPlanLimits(plan);
-      return NextResponse.json({
-        data: {
-          usage: { checksUsed: 0, competitorsUsed: 0 },
-          limits: { checks: limits.manualChecksPerDay === -1 ? 999999 : limits.manualChecksPerDay, sites: limits.sites, competitors: limits.competitors },
+          limits: { checks: limits.manualChecksPerDay === -1 ? 999999 : limits.manualChecksPerDay, checksPerDay: limits.manualChecksPerDay, sites: limits.sites, competitors: limits.competitors },
         },
       });
     }
 
-    // Get organization plan (if not already set from test session)
-    if (!testSession) {
-      const { data: org } = await db
-        .from("organizations")
-        .select("plan")
-        .eq("id", orgId)
-        .single();
+    // Get organization plan from DB
+    const { data: org } = await db
+      .from("organizations")
+      .select("plan")
+      .eq("id", orgId)
+      .single();
 
-      plan = org?.plan || "free";
-    }
+    const plan = org?.plan || "free";
     const limits = getCitationPlanLimits(plan);
 
     // Get current period usage

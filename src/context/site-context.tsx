@@ -78,7 +78,7 @@ interface SiteContextType {
   refreshData: () => Promise<void>;
   addSite: (domain: string, category?: string) => Promise<Site | null>;
   deleteSite: (siteId: string) => Promise<boolean>;
-  runCheck: (siteId?: string) => Promise<boolean>;
+  runCheck: (siteId?: string, query?: string) => Promise<boolean>;
 }
 
 const defaultUsage: Usage = {
@@ -265,17 +265,20 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     }
   }, [currentSite, sites]);
 
-  const runCheck = useCallback(async (siteId?: string): Promise<boolean> => {
+  const runCheck = useCallback(async (siteId?: string, query?: string): Promise<boolean> => {
     const id = siteId || currentSite?.id;
     const domain = siteId ? sites.find(s => s.id === siteId)?.domain : currentSite?.domain;
-    
+
     if (!id || !domain) return false;
-    
+
     try {
+      const body: Record<string, string> = { siteId: id, domain };
+      if (query) body.query = query;
+
       const res = await fetch("/api/geo/citations/check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteId: id, domain }),
+        body: JSON.stringify(body),
       });
       
       if (res.ok) {

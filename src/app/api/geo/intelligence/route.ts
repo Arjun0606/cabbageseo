@@ -15,7 +15,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { analyzeSite } from "@/lib/geo/site-analyzer";
 import { getUser } from "@/lib/api/get-user";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -31,36 +31,9 @@ function getDbClient(): SupabaseClient | null {
 // GET - Get existing analysis
 export async function GET(request: NextRequest) {
   try {
-    // Check for bypass user first
-    const bypassUser = await getUser();
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
-      // Return mock intelligence data in bypass mode
-      return NextResponse.json({
-        success: true,
-        data: {
-          score: { overall: 72, grade: "B", breakdown: { authority: 65, relevance: 78, freshness: 73 } },
-          tips: [
-            { title: "Add structured data", description: "Add JSON-LD schema to improve AI understanding", priority: "high" },
-            { title: "Improve documentation", description: "Create more detailed product documentation", priority: "medium" },
-          ],
-          queries: [],
-          opportunities: [
-            { platform: "G2", action: "Claim your profile", impact: "high" },
-            { platform: "Product Hunt", action: "Launch your product", impact: "medium" },
-          ],
-          needsAnalysis: false,
-        },
-        bypassMode: true,
-      });
-    }
-
-    const supabase = await createClient();
-    if (!supabase) {
-      return NextResponse.json({ error: "Not configured" }, { status: 500 });
-    }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    // Auth check
+    const currentUser = await getUser();
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -71,16 +44,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "siteId required" }, { status: 400 });
     }
 
-    const db = getDbClient() || supabase;
+    const db = getDbClient();
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
 
-    // Verify site belongs to user
-    const { data: userData } = await db
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .maybeSingle();
+    // Get organization ID from currentUser or DB
+    let orgId = currentUser.organizationId;
+    if (!orgId) {
+      const { data: userData } = await db
+        .from("users")
+        .select("organization_id")
+        .eq("id", currentUser.id)
+        .maybeSingle();
+      orgId = userData?.organization_id || null;
+    }
 
-    if (!userData?.organization_id) {
+    if (!orgId) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
@@ -90,7 +70,7 @@ export async function GET(request: NextRequest) {
       .eq("id", siteId)
       .maybeSingle();
 
-    if (!site || site.organization_id !== userData.organization_id) {
+    if (!site || site.organization_id !== orgId) {
       return NextResponse.json({ error: "Site not found" }, { status: 404 });
     }
 
@@ -143,37 +123,9 @@ export async function GET(request: NextRequest) {
 // POST - Run NEW real analysis
 export async function POST(request: NextRequest) {
   try {
-    // Check for bypass user first
-    const bypassUser = await getUser();
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
-      // Return mock analysis in bypass mode
-      return NextResponse.json({
-        success: true,
-        data: {
-          score: { overall: 72, grade: "B", breakdown: { authority: 65, relevance: 78, freshness: 73 } },
-          tips: [
-            { title: "Add structured data", description: "Add JSON-LD schema to improve AI understanding", priority: "high" },
-            { title: "Improve documentation", description: "Create more detailed product documentation", priority: "medium" },
-          ],
-          queries: [],
-          opportunities: [
-            { platform: "G2", action: "Claim your profile", impact: "high" },
-            { platform: "Product Hunt", action: "Launch your product", impact: "medium" },
-          ],
-          analyzedAt: new Date().toISOString(),
-          needsAnalysis: false,
-        },
-        bypassMode: true,
-      });
-    }
-
-    const supabase = await createClient();
-    if (!supabase) {
-      return NextResponse.json({ error: "Not configured" }, { status: 500 });
-    }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    // Auth check
+    const currentUser = await getUser();
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -184,16 +136,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "siteId required" }, { status: 400 });
     }
 
-    const db = getDbClient() || supabase;
+    const db = getDbClient();
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
 
-    // Verify site belongs to user
-    const { data: userData } = await db
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .maybeSingle();
+    // Get organization ID
+    let orgId = currentUser.organizationId;
+    if (!orgId) {
+      const { data: userData } = await db
+        .from("users")
+        .select("organization_id")
+        .eq("id", currentUser.id)
+        .maybeSingle();
+      orgId = userData?.organization_id || null;
+    }
 
-    if (!userData?.organization_id) {
+    if (!orgId) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
@@ -203,7 +162,7 @@ export async function POST(request: NextRequest) {
       .eq("id", siteId)
       .maybeSingle();
 
-    if (!site || site.organization_id !== userData.organization_id) {
+    if (!site || site.organization_id !== orgId) {
       return NextResponse.json({ error: "Site not found" }, { status: 404 });
     }
 
@@ -219,7 +178,7 @@ export async function POST(request: NextRequest) {
     // Save analysis to database
     const { error: insertError } = await db.from("geo_analyses").insert({
       site_id: siteId,
-      organization_id: userData.organization_id,
+      organization_id: orgId,
       score: analysis.score,
       tips: analysis.tips,
       queries: analysis.queries,

@@ -7,9 +7,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/api/get-user";
-import { getTestSession } from "@/lib/testing/test-session";
 import { calculateMomentum } from "@/lib/geo/momentum";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -23,65 +22,13 @@ function getDbClient(): SupabaseClient | null {
 
 export async function GET(request: NextRequest) {
   try {
-    // Check for bypass user first
-    const bypassUser = await getUser();
-    const testSession = await getTestSession();
-
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
-      // Return mock momentum data in bypass mode
-      return NextResponse.json({
-        success: true,
-        data: {
-          score: 42,
-          change: 0,
-          trend: "stable",
-          citationsWon: 0,
-          citationsLost: 0,
-          queriesWon: 0,
-          queriesTotal: 0,
-          sourceCoverage: 0,
-          topCompetitor: null,
-        },
-        bypassMode: true,
-      });
+    // Auth check
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    let organizationId: string | null = null;
-
-    if (testSession) {
-      // Test session - look up organization from database
-      const db = getDbClient();
-      if (db) {
-        const testOrgSlug = `test-${testSession.email.split("@")[0]}`;
-        const { data: testOrgData } = await db
-          .from("organizations")
-          .select("id")
-          .eq("slug", testOrgSlug)
-          .maybeSingle();
-        organizationId = testOrgData?.id || null;
-      }
-    } else {
-      const supabase = await createClient();
-      if (!supabase) {
-        return NextResponse.json({ error: "Not configured" }, { status: 500 });
-      }
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-
-      // Get organization from user
-      const db = getDbClient() || supabase;
-      const { data: userData } = await db
-        .from("users")
-        .select("organization_id")
-        .eq("id", user.id)
-        .maybeSingle();
-      organizationId = userData?.organization_id || null;
-    }
+    const organizationId = currentUser.organizationId;
 
     if (!organizationId) {
       return NextResponse.json(

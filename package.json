@@ -14,7 +14,9 @@
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -58,7 +60,9 @@
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "react-hook-form": "^7.68.0",
+    "react-markdown": "^10.1.0",
     "recharts": "^3.5.1",
+    "remark-gfm": "^4.0.1",
     "resend": "^6.6.0",
     "stripe": "^20.0.0",
     "tailwind-merge": "^3.4.0",
@@ -77,7 +81,7 @@
     "eslint-config-next": "16.0.8",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.18"
   }
 }
-

@@ -13,32 +13,16 @@ import { getTestSession } from "@/lib/testing/test-session";
 // Set ENABLE_TEST_ACCOUNTS=true to allow test account sessions
 // ============================================
 const TESTING_MODE = process.env.TESTING_MODE === "true";
-const TEST_ACCOUNTS_ENABLED = 
-  process.env.NODE_ENV !== "production" || 
-  process.env.ENABLE_TEST_ACCOUNTS === "true";
+const TEST_ACCOUNTS_ENABLED = TESTING_MODE;
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
 
-  // TESTING: Skip all auth checks for dashboard testing
+  // TESTING: Skip all auth checks for dashboard testing (only when TESTING_MODE=true)
   if (TESTING_MODE) {
     return supabaseResponse;
-  }
-
-  // Check for test bypass session cookie
-  const bypassCookie = request.cookies.get("test_bypass_session");
-  if (bypassCookie) {
-    try {
-      const session = JSON.parse(bypassCookie.value);
-      if (session.bypassMode) {
-        // Bypass mode is active - allow access to all routes
-        return supabaseResponse;
-      }
-    } catch {
-      // Ignore cookie parse errors
-    }
   }
 
   // Skip auth if Supabase not configured

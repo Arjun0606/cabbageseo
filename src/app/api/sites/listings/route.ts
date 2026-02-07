@@ -6,8 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { getTestSession } from "@/lib/testing/test-session";
+import { createServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/api/get-user";
 
 // Known trust sources that AI platforms use
@@ -32,47 +31,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "siteId required" }, { status: 400 });
     }
 
-    // Check for bypass user first
-    const bypassUser = await getUser();
-    const testSession = await getTestSession();
-    let organizationId: string | null = null;
-
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
-      // Bypass mode - return empty listings
-      return NextResponse.json({
-        listings: TRUST_SOURCE_DOMAINS.map(source => ({
-          sourceDomain: source.domain,
-          sourceName: source.name,
-          isListed: false,
-          listingUrl: null,
-          lastChecked: new Date().toISOString(),
-        })),
-        bypassMode: true,
-      });
-    } else if (testSession) {
-      organizationId = testSession.organizationId ?? null;
-    } else {
-      const supabase = await createClient();
-      if (!supabase) {
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-
-      // Get user's org
-      const db = createServiceClient();
-      const { data: userData } = await db
-        .from("users")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
-
-      const userRecord = userData as { organization_id: string | null } | null;
-      organizationId = userRecord?.organization_id || null;
+    // Auth check
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const organizationId = currentUser.organizationId;
 
     if (!organizationId) {
       return NextResponse.json({ error: "No organization" }, { status: 400 });

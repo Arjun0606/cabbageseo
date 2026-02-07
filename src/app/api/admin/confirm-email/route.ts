@@ -13,7 +13,13 @@ export async function POST(request: NextRequest) {
     const { email, adminSecret } = await request.json();
 
     // Check admin secret
-    const expectedSecret = process.env.ADMIN_SECRET || "cabbage-admin-2026";
+    const expectedSecret = process.env.ADMIN_SECRET;
+    if (!expectedSecret) {
+      return NextResponse.json(
+        { error: "Admin secret not configured" },
+        { status: 500 }
+      );
+    }
     if (adminSecret !== expectedSecret) {
       return NextResponse.json(
         { error: "Unauthorized" },

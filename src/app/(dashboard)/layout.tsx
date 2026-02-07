@@ -13,10 +13,11 @@
 import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
+import {
   LayoutDashboard,
   Search,
   TrendingUp,
+  FileText,
   Settings,
   Menu,
   X,
@@ -35,6 +36,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/sources", label: "Trust Map", icon: Search },
   { href: "/dashboard/intelligence", label: "Intelligence", icon: TrendingUp },
+  { href: "/dashboard/pages", label: "Pages", icon: FileText },
 ];
 
 // Sidebar component

@@ -93,6 +93,7 @@ export const issueTypeEnum = pgEnum("issue_type", [
 export const issueSeverityEnum = pgEnum("issue_severity", ["critical", "warning", "info"]);
 export const cmsTypeEnum = pgEnum("cms_type", ["wordpress", "webflow", "shopify", "ghost", "custom"]);
 export const integrationStatusEnum = pgEnum("integration_status", ["active", "error", "disconnected"]);
+export const generatedPageStatusEnum = pgEnum("generated_page_status", ["draft", "published", "archived"]);
 
 // ============================================
 // ORGANIZATIONS & USERS
@@ -311,6 +312,7 @@ export const usage = pgTable(
     gapAnalysesUsed: integer("gap_analyses_used").default(0),
     contentIdeasUsed: integer("content_ideas_used").default(0),
     actionPlansUsed: integer("action_plans_used").default(0),
+    pagesGenerated: integer("pages_generated").default(0),
 
     // Legacy usage counts (keeping for compatibility)
     articlesGenerated: integer("articles_generated").default(0),
@@ -366,6 +368,47 @@ export const contentIdeas = pgTable(
   (table) => [
     index("content_ideas_site_idx").on(table.siteId),
     index("content_ideas_status_idx").on(table.status),
+  ]
+);
+
+// ============================================
+// GENERATED PAGES (AI Page Generator)
+// ============================================
+
+export const generatedPages = pgTable(
+  "generated_pages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .references(() => sites.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Query context
+    query: text("query").notNull(),
+
+    // Generated content
+    title: text("title").notNull(),
+    metaDescription: text("meta_description"),
+    body: text("body").notNull(), // Full markdown
+    schemaMarkup: jsonb("schema_markup"), // Ready-to-paste JSON-LD
+    targetEntities: jsonb("target_entities").$type<string[]>().default([]),
+    competitorsAnalyzed: jsonb("competitors_analyzed").$type<string[]>().default([]),
+
+    // Metrics
+    wordCount: integer("word_count"),
+
+    // Generation metadata
+    aiModel: text("ai_model").default("gpt-5-mini"),
+
+    // Status
+    status: generatedPageStatusEnum("status").default("draft"),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("generated_pages_site_idx").on(table.siteId),
+    index("generated_pages_query_idx").on(table.query),
   ]
 );
 
@@ -1244,6 +1287,8 @@ export const sprintActions = pgTable(
     status: sprintActionStatusEnum("status").default("pending"),
 
     completedAt: timestamp("completed_at"),
+    proofUrl: text("proof_url"),
+    notes: text("notes"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [

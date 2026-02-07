@@ -1,8 +1,8 @@
 /**
  * AI Visibility Intelligence API
- * 
+ *
  * POST /api/geo/intelligence/actions
- * 
+ *
  * The $100k features:
  * - gap-analysis: "Why did AI cite competitor, not me?"
  * - content-recommendations: "What to publish next"
@@ -11,14 +11,15 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/api/get-user";
 import {
   getCitationPlan,
   canUseGapAnalysis,
   canUseContentRecommendations,
   canUseActionPlan,
   canUseCompetitorDeepDive,
+  canGeneratePage,
 } from "@/lib/billing/citation-plans";
 import {
   analyzeCitationGap,
@@ -26,7 +27,7 @@ import {
   generateWeeklyActionPlan,
   analyzeCompetitorDeepDive,
 } from "@/lib/geo/citation-intelligence";
-import { getTestPlan } from "@/lib/testing/test-accounts";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 type ActionType = "gap-analysis" | "content-recommendations" | "action-plan" | "competitor-deep-dive";
 
@@ -37,92 +38,40 @@ interface RequestBody {
   competitorId?: string;   // Required for competitor-deep-dive
 }
 
+function getDbClient(): SupabaseClient | null {
+  try {
+    return createServiceClient();
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // ⚠️ BYPASS USER CHECK FIRST
-    const { getUser } = await import("@/lib/api/get-user");
-    const { getTestSession } = await import("@/lib/testing/test-session");
-    
-    const bypassUser = await getUser();
-    const testSession = await getTestSession();
-    
-    let userId: string;
-    let userEmail: string | null = null;
-    let organizationId: string | null = null;
-    let plan: "free" | "scout" | "command" | "dominate" = "free";
-    let bypassMode = false;
-    
-    // Create service client for DB operations
-    const serviceClient = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-    
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
-      // Bypass mode
-      userId = bypassUser.id;
-      userEmail = bypassUser.email;
-      plan = bypassUser.plan;
-      organizationId = "bypass-org";
-      bypassMode = true;
-    } else if (testSession) {
-      userId = `test-${testSession.email}`;
-      userEmail = testSession.email;
-      plan = testSession.plan;
-      // Look up test organization from database
-      const testOrgSlug = `test-${testSession.email.split("@")[0]}`;
-      const { data: testOrgData } = await serviceClient
-        .from("organizations")
-        .select("id")
-        .eq("slug", testOrgSlug)
-        .maybeSingle();
-      organizationId = testOrgData?.id || null;
-    } else {
-      const supabase = await createClient();
-      if (!supabase) {
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
-      }
-
-      // Get user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-      userId = user.id;
-      userEmail = user.email || null;
-
-      // Get profile & org
-      const { data: profileData } = await supabase
-        .from("users")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
-
-      const profile = profileData as { organization_id: string } | null;
-      organizationId = profile?.organization_id || null;
+    // Auth check
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
+    const organizationId = currentUser.organizationId;
     if (!organizationId) {
       return NextResponse.json({ error: "No organization" }, { status: 400 });
     }
 
-    // Get org plan for non-test users
-    let planId = plan;
-    if (!bypassMode && !testSession) {
-      const { data: org } = await serviceClient
-        .from("organizations")
-        .select("plan, created_at")
-        .eq("id", organizationId)
-        .single();
-      planId = org?.plan || "free";
-      
-      // Legacy test account check (fallback)
-      const testPlan = getTestPlan(userEmail);
-      if (testPlan) {
-        planId = testPlan;
-      }
+    const db = getDbClient();
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
     }
-    
+
+    // Get org plan from DB
+    const { data: org } = await db
+      .from("organizations")
+      .select("plan, created_at")
+      .eq("id", organizationId)
+      .single();
+    const planId = org?.plan || "free";
+
     const citationPlan = getCitationPlan(planId);
     const body: RequestBody = await request.json();
     const { action, siteId, query, competitorId } = body;
@@ -132,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify site ownership
-    const { data: site } = await serviceClient
+    const { data: site } = await db
       .from("sites")
       .select("id, domain")
       .eq("id", siteId)
@@ -145,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     // Get current month usage (for rate limiting)
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-    const { data: usage } = await serviceClient
+    const { data: usage } = await db
       .from("usage")
       .select("*")
       .eq("organization_id", organizationId)
@@ -174,7 +123,7 @@ export async function POST(request: NextRequest) {
         const result = await analyzeCitationGap(siteId, query, organizationId);
 
         // Track usage
-        await incrementUsage(serviceClient, organizationId, currentMonth, "gap_analyses_used");
+        await incrementUsage(db, organizationId, currentMonth, "gap_analyses_used");
 
         return NextResponse.json({
           success: true,
@@ -196,7 +145,7 @@ export async function POST(request: NextRequest) {
         const result = await generateContentRecommendations(siteId, organizationId);
 
         // Track usage
-        await incrementUsage(serviceClient, organizationId, currentMonth, "content_ideas_used");
+        await incrementUsage(db, organizationId, currentMonth, "content_ideas_used");
 
         return NextResponse.json({
           success: true,
@@ -297,108 +246,37 @@ async function incrementUsage(
 }
 
 // GET - Get available intelligence features for current plan
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // ⚠️ BYPASS USER CHECK FIRST
-    const { getUser } = await import("@/lib/api/get-user");
-    const { getTestSession } = await import("@/lib/testing/test-session");
-    
-    const bypassUser = await getUser();
-    const testSession = await getTestSession();
-    
-    let organizationId: string | null = null;
-    let planId: string = "free";
-    
-    const serviceClient = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-    
-    // Check for bypass user first
-    if (bypassUser?.isTestAccount && bypassUser.id.startsWith("bypass-")) {
-      // Return mock features in bypass mode
-      const citationPlan = getCitationPlan(bypassUser.plan);
-      return NextResponse.json({
-        plan: bypassUser.plan,
-        features: {
-          gapAnalysis: {
-            available: citationPlan.features.citationGapAnalysis,
-            fullVersion: citationPlan.features.citationGapFull,
-            used: 0,
-            limit: citationPlan.intelligenceLimits.gapAnalysesPerMonth,
-            remaining: citationPlan.intelligenceLimits.gapAnalysesPerMonth === -1 
-              ? "unlimited" 
-              : citationPlan.intelligenceLimits.gapAnalysesPerMonth,
-          },
-          contentRecommendations: {
-            available: citationPlan.features.contentRecommendations,
-            unlimited: citationPlan.features.contentRecsUnlimited,
-            used: 0,
-            limit: citationPlan.intelligenceLimits.contentIdeasPerMonth,
-            remaining: citationPlan.intelligenceLimits.contentIdeasPerMonth === -1
-              ? "unlimited"
-              : citationPlan.intelligenceLimits.contentIdeasPerMonth,
-          },
-          actionPlan: {
-            available: citationPlan.features.weeklyActionPlan,
-          },
-          competitorDeepDive: {
-            available: citationPlan.features.competitorDeepDive,
-          },
-        },
-        bypassMode: true,
-      });
-    }
-    
-    if (testSession) {
-      planId = testSession.plan;
-      // Look up test organization
-      const testOrgSlug = `test-${testSession.email.split("@")[0]}`;
-      const { data: testOrgData } = await serviceClient
-        .from("organizations")
-        .select("id")
-        .eq("slug", testOrgSlug)
-        .maybeSingle();
-      organizationId = testOrgData?.id || null;
-    } else {
-      const supabase = await createClient();
-      if (!supabase) {
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-
-      const { data: profileData2 } = await supabase
-        .from("users")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
-
-      const profile = profileData2 as { organization_id: string } | null;
-      organizationId = profile?.organization_id || null;
-      
-      if (organizationId) {
-        const { data: org } = await serviceClient
-          .from("organizations")
-          .select("plan")
-          .eq("id", organizationId)
-          .single();
-        planId = org?.plan || "free";
-      }
+    // Auth check
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const organizationId = currentUser.organizationId;
     if (!organizationId) {
       return NextResponse.json({ error: "No organization" }, { status: 400 });
     }
+
+    const db = getDbClient();
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
+
+    // Get org plan from DB
+    const { data: org } = await db
+      .from("organizations")
+      .select("plan")
+      .eq("id", organizationId)
+      .single();
+    const planId = org?.plan || "free";
 
     const citationPlan = getCitationPlan(planId);
 
     // Get current month usage
     const currentMonth = new Date().toISOString().slice(0, 7);
-    const { data: usage } = await serviceClient
+    const { data: usage } = await db
       .from("usage")
       .select("*")
       .eq("organization_id", organizationId)
@@ -407,6 +285,9 @@ export async function GET(request: NextRequest) {
 
     const gapAnalysesUsed = (usage as Record<string, number> | null)?.gap_analyses_used || 0;
     const contentIdeasUsed = (usage as Record<string, number> | null)?.content_ideas_used || 0;
+    const pagesGenerated = (usage as Record<string, number> | null)?.pages_generated || 0;
+
+    const pageCheck = canGeneratePage(citationPlan.id, pagesGenerated);
 
     return NextResponse.json({
       plan: citationPlan.id,
@@ -416,8 +297,8 @@ export async function GET(request: NextRequest) {
           fullVersion: citationPlan.features.citationGapFull,
           used: gapAnalysesUsed,
           limit: citationPlan.intelligenceLimits.gapAnalysesPerMonth,
-          remaining: citationPlan.intelligenceLimits.gapAnalysesPerMonth === -1 
-            ? "unlimited" 
+          remaining: citationPlan.intelligenceLimits.gapAnalysesPerMonth === -1
+            ? "unlimited"
             : Math.max(0, citationPlan.intelligenceLimits.gapAnalysesPerMonth - gapAnalysesUsed),
         },
         contentRecommendations: {
@@ -435,6 +316,12 @@ export async function GET(request: NextRequest) {
         competitorDeepDive: {
           available: citationPlan.features.competitorDeepDive,
         },
+        pageGeneration: {
+          available: citationPlan.features.pageGeneration,
+          used: pagesGenerated,
+          limit: citationPlan.intelligenceLimits.pagesPerMonth,
+          remaining: pageCheck.remaining === -1 ? "unlimited" : pageCheck.remaining ?? 0,
+        },
       },
     });
   } catch (error) {
@@ -442,4 +329,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed to get features" }, { status: 500 });
   }
 }
-
