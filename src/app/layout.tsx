@@ -10,6 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://cabbageseo.com"),
   title: {
     default: "CabbageSEO – AI Visibility Intelligence",
     template: "%s | CabbageSEO",
