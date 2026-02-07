@@ -5,19 +5,20 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowRight,
-  Search,
-  TrendingDown,
-  EyeOff,
-  Target,
+  Rocket,
+  Swords,
   TrendingUp,
+  Search,
+  Target,
   Zap,
-  Eye,
-  Map,
+  BarChart3,
   FileText,
+  Shield,
+  Eye,
   Timer,
 } from "lucide-react";
 
-export default function HomePage() {
+export default function ForSaaSPage() {
   const router = useRouter();
   const [domain, setDomain] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,15 +42,22 @@ export default function HomePage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl" />
 
         <div className="relative max-w-4xl mx-auto px-6 text-center">
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            See who AI recommends
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/15 border border-emerald-500/30 rounded-full text-emerald-300 text-sm mb-8">
+            <Rocket className="w-4 h-4" />
+            <span className="font-medium">Built for B2B SaaS founders</span>
+          </div>
+
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            When buyers ask AI for the
             <br />
-            <span className="text-emerald-400">instead of you</span>
+            <span className="text-emerald-400">best tool in your category</span>
+            <br />
+            — are you the answer?
           </h1>
+
           <p className="text-xl text-zinc-300 mb-12 max-w-2xl mx-auto">
-            Buyers ask ChatGPT, Perplexity, and Google AI for product
-            recommendations. CabbageSEO shows you who they pick — and helps you
-            become their answer.
+            CabbageSEO helps SaaS founders track, analyze, and win AI
+            recommendations across ChatGPT, Perplexity, and Google AI.
           </p>
 
           <form onSubmit={handleSubmit} className="max-w-xl mx-auto mb-4">
@@ -58,7 +66,7 @@ export default function HomePage() {
                 type="text"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
-                placeholder="yourdomain.com"
+                placeholder="yoursaas.com"
                 className="flex-1 px-6 py-4 bg-zinc-900 border-2 border-zinc-700 rounded-xl text-white text-lg placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 disabled={loading}
               />
@@ -71,7 +79,7 @@ export default function HomePage() {
                   <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                 ) : (
                   <>
-                    Check now
+                    Check your SaaS
                     <ArrowRight className="w-5 h-5" />
                   </>
                 )}
@@ -79,21 +87,21 @@ export default function HomePage() {
             </div>
           </form>
           <p className="text-sm text-zinc-500">
-            Takes 10 seconds &bull; No signup required &bull; Real AI responses
+            Takes 10 seconds &bull; No signup required
           </p>
         </div>
       </section>
 
-      {/* Problem */}
+      {/* The SaaS Problem */}
       <section className="py-24 bg-gradient-to-b from-red-950/15 to-zinc-950 border-t border-red-900/20">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-white text-center mb-4">
-            AI is replacing Google for buying decisions
+            AI decides who wins your category
           </h2>
           <p className="text-zinc-400 text-center max-w-2xl mx-auto mb-12">
-            When someone asks &quot;best CRM for startups&quot; or &quot;top
-            analytics tools&quot;, AI gives one answer. If it&apos;s not you,
-            your competitor just got a free customer.
+            When a buyer asks &quot;best CRM for startups&quot; or &quot;top
+            project management tool&quot;, AI picks one winner. The rest don&apos;t
+            exist.
           </p>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -102,148 +110,155 @@ export default function HomePage() {
                 <Search className="w-6 h-6 text-red-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">
-                AI answers buying questions
+                Buyers ask AI first
               </h3>
               <p className="text-zinc-400">
-                ChatGPT, Perplexity, and Google AI directly recommend products.
-                They decide who gets mentioned — and who gets ignored.
+                &quot;What&apos;s the best alternative to Salesforce?&quot;
+                &quot;Which analytics tool should I use?&quot; AI gives one answer.
+                If it&apos;s not you — that&apos;s a lost customer.
               </p>
             </div>
 
             <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-8">
               <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-6">
-                <TrendingDown className="w-6 h-6 text-red-400" />
+                <Shield className="w-6 h-6 text-red-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">
-                Competitors already optimize
+                Incumbents have the advantage
               </h3>
               <p className="text-zinc-400">
-                Smart founders are already working on AI visibility. The longer
-                you wait, the harder it gets to catch up.
+                Established players already have the trust signals AI looks for:
+                G2 reviews, Capterra listings, authority content. You need to
+                close that gap fast.
               </p>
             </div>
 
             <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-8">
               <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-6">
-                <EyeOff className="w-6 h-6 text-red-400" />
+                <BarChart3 className="w-6 h-6 text-red-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">
-                You have zero visibility
+                No tool tracks this
               </h3>
               <p className="text-zinc-400">
-                Ahrefs, SEMrush, Google Analytics — none of them track AI
-                recommendations. You&apos;re flying blind.
+                Ahrefs tracks Google. SEMrush tracks Google. Nothing tracks
+                ChatGPT recommendations. You have zero data on the fastest
+                growing channel.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* Three Use Cases */}
       <section className="py-24 border-t border-zinc-800">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-white text-center mb-4">
-            From invisible to recommended in 30 days
+            Whether you&apos;re launching, competing, or scaling
           </h2>
-          <p className="text-zinc-400 text-center max-w-2xl mx-auto mb-16">
-            A structured sprint — not an endless dashboard.
+          <p className="text-zinc-400 text-center max-w-2xl mx-auto mb-12">
+            CabbageSEO fits every stage of your SaaS journey.
           </p>
 
-          <div className="grid md:grid-cols-4 gap-6">
-            {[
-              {
-                step: "1",
-                icon: <Search className="w-6 h-6 text-emerald-400" />,
-                title: "Scan",
-                description:
-                  "See who AI recommends for your queries across 3 platforms.",
-              },
-              {
-                step: "2",
-                icon: <Target className="w-6 h-6 text-emerald-400" />,
-                title: "Focus",
-                description:
-                  "Get one clear, high-impact action. Do it, move on.",
-              },
-              {
-                step: "3",
-                icon: <TrendingUp className="w-6 h-6 text-emerald-400" />,
-                title: "Track",
-                description:
-                  "Watch your momentum score grow week over week.",
-              },
-              {
-                step: "4",
-                icon: <Zap className="w-6 h-6 text-emerald-400" />,
-                title: "Win",
-                description:
-                  "Become AI's recommended choice in your category.",
-              },
-            ].map((item) => (
-              <div key={item.step} className="text-center">
-                <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  {item.icon}
-                </div>
-                <div className="text-xs font-bold text-emerald-400 mb-2">
-                  STEP {item.step}
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-zinc-400">{item.description}</p>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+              <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-6">
+                <Rocket className="w-7 h-7 text-emerald-400" />
               </div>
-            ))}
+              <h3 className="text-xl font-semibold text-white mb-3">
+                Launch
+              </h3>
+              <p className="text-emerald-400 text-sm font-medium mb-3">
+                &quot;Does AI even know I exist?&quot;
+              </p>
+              <p className="text-zinc-400">
+                Get your first AI citations. See which trust sources you need.
+                Build visibility from zero with the 30-day sprint.
+              </p>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+              <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-6">
+                <Swords className="w-7 h-7 text-emerald-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">
+                Compete
+              </h3>
+              <p className="text-emerald-400 text-sm font-medium mb-3">
+                &quot;How do I beat the incumbent?&quot;
+              </p>
+              <p className="text-zinc-400">
+                Analyze exactly why AI recommends your competitor. Get a gap
+                analysis and targeted content strategy to overtake them.
+              </p>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+              <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-6">
+                <TrendingUp className="w-7 h-7 text-emerald-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">
+                Scale
+              </h3>
+              <p className="text-emerald-400 text-sm font-medium mb-3">
+                &quot;How do I defend my position?&quot;
+              </p>
+              <p className="text-zinc-400">
+                Monitor competitors in real-time. Get alerts when challengers
+                gain ground. Protect your AI recommendation status.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Key Features */}
+      {/* Key Features for SaaS */}
       <section className="py-24 bg-zinc-900/30 border-t border-zinc-800">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-white text-center mb-4">
-            Built for founders who want results
+            Features built for SaaS
           </h2>
           <p className="text-zinc-400 text-center max-w-2xl mx-auto mb-12">
-            Not another dashboard. A system that tells you exactly what to do.
+            Everything you need to win AI recommendations in your category.
           </p>
 
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
                 icon: <Eye className="w-6 h-6 text-emerald-400" />,
-                title: "AI Citation Tracking",
+                title: "Citation Tracking",
                 description:
-                  "Track mentions across ChatGPT, Perplexity, and Google AI. Daily or hourly.",
+                  "See exactly which queries mention your SaaS across ChatGPT, Perplexity, and Google AI.",
               },
               {
-                icon: <Map className="w-6 h-6 text-emerald-400" />,
-                title: "Trust Map",
+                icon: <Target className="w-6 h-6 text-emerald-400" />,
+                title: "Competitor Intelligence",
                 description:
-                  "See which sources AI trusts. Find where competitors are listed and you're not.",
+                  "Track up to 25 competitors. See their trust sources, content strategy, and authority signals.",
               },
               {
                 icon: <Search className="w-6 h-6 text-emerald-400" />,
                 title: "Gap Analysis",
                 description:
-                  "Per-query breakdown of why AI picks your competitor. See exactly what you're missing.",
+                  "Per-query breakdown of why AI recommends your competitor instead of you. Fix the gaps.",
               },
               {
                 icon: <FileText className="w-6 h-6 text-emerald-400" />,
                 title: "AI Page Generator",
                 description:
-                  "Generate publish-ready pages optimized for AI citation. Paste and publish.",
+                  "Generate comparison pages, feature pages, and use case content optimized for AI citation.",
               },
               {
                 icon: <Timer className="w-6 h-6 text-emerald-400" />,
                 title: "30-Day Sprint",
                 description:
-                  "Structured 4-week program. Clear actions, estimated time, and priority each week.",
+                  "Structured program for SaaS founders. Week-by-week actions to build AI visibility fast.",
               },
               {
-                icon: <TrendingUp className="w-6 h-6 text-emerald-400" />,
-                title: "Momentum Score",
+                icon: <Zap className="w-6 h-6 text-emerald-400" />,
+                title: "Momentum Scoring",
                 description:
-                  "One number showing your progress. Week-over-week trends you can feel.",
+                  "Track your progress with a single number. See week-over-week improvements.",
               },
             ].map((item) => (
               <div
@@ -272,28 +287,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Social Proof */}
-      <section className="py-16 border-t border-zinc-800">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <p className="text-lg text-zinc-300 mb-2">
-            Most founders improve their AI visibility in{" "}
-            <span className="text-white font-bold">30 days</span>.
-          </p>
-          <p className="text-zinc-500">
-            Real AI responses from ChatGPT, Perplexity, and Google AI. No fake
-            data.
-          </p>
-        </div>
-      </section>
-
-      {/* Final CTA */}
+      {/* CTA */}
       <section className="py-16 bg-emerald-950/30 border-t border-emerald-900/30">
         <div className="max-w-xl mx-auto px-6 text-center">
           <h2 className="text-2xl font-bold text-white mb-3">
-            Check your AI visibility now
+            Check if AI recommends your SaaS
           </h2>
           <p className="text-zinc-400 mb-8">
-            See what AI says about you in 10 seconds. No signup required.
+            See what ChatGPT, Perplexity, and Google AI say about you in 10
+            seconds.
           </p>
           <form onSubmit={handleSubmit} className="mb-4">
             <div className="flex flex-col sm:flex-row gap-3">
@@ -301,7 +303,7 @@ export default function HomePage() {
                 type="text"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
-                placeholder="yourdomain.com"
+                placeholder="yoursaas.com"
                 className="flex-1 px-6 py-4 bg-zinc-900 border-2 border-zinc-700 rounded-xl text-white text-lg placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 disabled={loading}
               />

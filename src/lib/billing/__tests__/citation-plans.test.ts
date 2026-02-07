@@ -85,6 +85,7 @@ describe("Limit escalation (higher tier >= lower tier)", () => {
     "gapAnalysesPerMonth",
     "contentIdeasPerMonth",
     "actionPlansPerMonth",
+    "pagesPerMonth",
   ];
 
   for (const key of intelligenceKeys) {
@@ -131,7 +132,7 @@ describe("Specific limit values per tier", () => {
     expect(limits.competitors).toBe(0);
   });
 
-  it("Scout: 1 site, unlimited checks, 3 competitors, 5 gap analyses", () => {
+  it("Scout: 1 site, unlimited checks, 3 competitors, 5 gap analyses, 3 pages", () => {
     const limits = CITATION_PLANS.scout.limits;
     const intel = CITATION_PLANS.scout.intelligenceLimits;
     expect(limits.sites).toBe(1);
@@ -140,9 +141,10 @@ describe("Specific limit values per tier", () => {
     expect(intel.gapAnalysesPerMonth).toBe(5);
     expect(intel.contentIdeasPerMonth).toBe(5);
     expect(intel.actionPlansPerMonth).toBe(0);
+    expect(intel.pagesPerMonth).toBe(3);
   });
 
-  it("Command: 5 sites, unlimited checks, 10 competitors, unlimited intelligence", () => {
+  it("Command: 5 sites, unlimited checks, 10 competitors, unlimited intelligence, 15 pages", () => {
     const limits = CITATION_PLANS.command.limits;
     const intel = CITATION_PLANS.command.intelligenceLimits;
     expect(limits.sites).toBe(5);
@@ -151,6 +153,7 @@ describe("Specific limit values per tier", () => {
     expect(intel.gapAnalysesPerMonth).toBe(-1);
     expect(intel.contentIdeasPerMonth).toBe(-1);
     expect(intel.actionPlansPerMonth).toBe(4);
+    expect(intel.pagesPerMonth).toBe(15);
   });
 
   it("Dominate: 25 sites, unlimited checks, 25 competitors, unlimited everything", () => {
@@ -162,6 +165,7 @@ describe("Specific limit values per tier", () => {
     expect(intel.gapAnalysesPerMonth).toBe(-1);
     expect(intel.contentIdeasPerMonth).toBe(-1);
     expect(intel.actionPlansPerMonth).toBe(-1);
+    expect(intel.pagesPerMonth).toBe(-1);
   });
 });
 
@@ -170,7 +174,7 @@ describe("Specific limit values per tier", () => {
 // ============================================
 
 describe("Feature availability per tier", () => {
-  it("Free: manual checks + geoScore only", () => {
+  it("Free: manual checks + geoScore only, no page generation", () => {
     const f = CITATION_PLANS.free.features;
     expect(f.manualChecks).toBe(true);
     expect(f.geoScore).toBe(true);
@@ -180,11 +184,16 @@ describe("Feature availability per tier", () => {
     expect(f.contentRecommendations).toBe(false);
     expect(f.weeklyActionPlan).toBe(false);
     expect(f.sprintFramework).toBe(false);
+    expect(f.pageGeneration).toBe(false);
     expect(f.whiteLabel).toBe(false);
     expect(f.apiAccess).toBe(false);
   });
 
-  it("Scout: monitoring + basic intelligence, no action plans", () => {
+  it("Free: pagesPerMonth is 0", () => {
+    expect(CITATION_PLANS.free.intelligenceLimits.pagesPerMonth).toBe(0);
+  });
+
+  it("Scout: monitoring + basic intelligence + page generation, no action plans", () => {
     const f = CITATION_PLANS.scout.features;
     expect(f.dailyAutoCheck).toBe(true);
     expect(f.emailAlerts).toBe(true);
@@ -193,6 +202,7 @@ describe("Feature availability per tier", () => {
     expect(f.citationGapAnalysis).toBe(true);
     expect(f.citationGapFull).toBe(false);
     expect(f.contentRecommendations).toBe(true);
+    expect(f.pageGeneration).toBe(true);
     expect(f.weeklyActionPlan).toBe(false);
     expect(f.competitorDeepDive).toBe(false);
     expect(f.sprintFramework).toBe(true);
@@ -200,13 +210,14 @@ describe("Feature availability per tier", () => {
     expect(f.apiAccess).toBe(false);
   });
 
-  it("Command: full intelligence + action plans, no white-label", () => {
+  it("Command: full intelligence + action plans + page generation, no white-label", () => {
     const f = CITATION_PLANS.command.features;
     expect(f.hourlyAutoCheck).toBe(true);
     expect(f.citationGapFull).toBe(true);
     expect(f.contentRecsUnlimited).toBe(true);
     expect(f.weeklyActionPlan).toBe(true);
     expect(f.competitorDeepDive).toBe(true);
+    expect(f.pageGeneration).toBe(true);
     expect(f.queryDiscovery).toBe(true);
     expect(f.prioritySupport).toBe(true);
     expect(f.whiteLabel).toBe(false);

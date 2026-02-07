@@ -69,7 +69,7 @@ const tiers: PricingTier[] = [
     features: [
       "1 site monitored",
       "3 manual checks per day",
-      "See your basic GEO visibility score",
+      "See your GEO visibility score",
       "Find out who AI recommends instead of you",
       "7-day access to explore the platform",
     ],
@@ -91,9 +91,11 @@ const tiers: PricingTier[] = [
       "1 site monitored",
       "Track 3 competitors side by side",
       "Daily automated monitoring",
-      "5 gap analyses per month — see exactly why competitors rank above you",
+      "5 gap analyses per month",
+      "3 AI-generated pages per month",
       "Trust Map: visualize who AI trusts in your space",
-      "30-day sprint: structured program to improve your visibility",
+      "30-day sprint to improve your visibility",
+      "Momentum scoring with weekly trends",
       "Email alerts when your visibility changes",
     ],
   },
@@ -116,10 +118,11 @@ const tiers: PricingTier[] = [
       "Track 10 competitors per site",
       "Hourly automated monitoring",
       "Unlimited intelligence reports",
-      "Weekly action plans — get told exactly what to do next",
-      "Competitor deep dives: reverse-engineer why they win",
-      "Query discovery: find high-intent questions you should own",
-      "Watch your momentum grow week over week",
+      "15 AI-generated pages per month",
+      "Weekly action plans — told exactly what to do",
+      "Competitor deep dives",
+      "Query discovery",
+      "5 team members",
       "Everything in Scout",
     ],
     highlight: "MOST POPULAR",
@@ -140,11 +143,12 @@ const tiers: PricingTier[] = [
     features: [
       "25 sites monitored",
       "Track 25 competitors per site",
-      "Real-time alerts: know the instant anything shifts",
+      "Real-time alerts",
+      "Unlimited AI-generated pages",
       "White-label reports for clients",
       "API access for custom integrations",
-      "Dedicated support with priority response",
-      "Custom onboarding and strategy session",
+      "Unlimited team members",
+      "Priority support",
       "Everything in Command",
     ],
   },
@@ -175,6 +179,21 @@ const faqs: FAQItem[] = [
     question: "Do you support all AI platforms?",
     answer:
       "We monitor the three platforms that matter most for buying decisions: ChatGPT, Perplexity, and Google AI Overviews. These are where your potential customers are increasingly going when they search for solutions like yours. We\u2019re continuously evaluating additional platforms and will add them as they become significant sources of product recommendations.",
+  },
+  {
+    question: "Can I change plans?",
+    answer:
+      "Yes. You can upgrade or downgrade at any time from your billing settings. When you upgrade, you get immediate access to the new tier\u2019s features. When you downgrade, your current tier remains active until the end of your billing period. No penalties, no hoops.",
+  },
+  {
+    question: "Do you offer refunds?",
+    answer:
+      "We offer a 7-day free trial on all paid plans so you can evaluate the platform before committing. If you\u2019re unhappy after subscribing, contact us within 14 days of your first payment and we\u2019ll issue a full refund. After 14 days, you can cancel anytime and your access continues until the end of your billing period.",
+  },
+  {
+    question: "What is AI Page Generation?",
+    answer:
+      "AI Page Generation creates full, publish-ready pages optimized for AI citation. Unlike generic AI writing tools, CabbageSEO uses your citation data, competitor intelligence, and gap analysis to create deeply contextual content. Scout gets 3 pages/month, Command gets 15, and Dominate gets unlimited.",
   },
 ];
 
@@ -404,6 +423,78 @@ export default function PricingPage() {
             All plans include SSL encryption, SOC 2 compliant infrastructure,
             and data stored in US-based servers.
           </p>
+        </div>
+      </section>
+
+      {/* Which plan is right for you? */}
+      <section className="py-20 sm:py-24 px-6 border-t border-zinc-800/60">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center text-white mb-4">
+            Which plan is right for you?
+          </h2>
+          <p className="text-center text-zinc-500 mb-14 max-w-2xl mx-auto">
+            Find the tier that matches where you are right now.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+              <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-6">
+                <Target className="w-6 h-6 text-emerald-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Solo founder, one product
+              </h3>
+              <p className="text-sm text-zinc-400 mb-6">
+                You have one SaaS product and want to know if AI recommends you.
+                You need daily monitoring and a structured plan to improve.
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400 font-semibold text-sm">
+                  Scout ($49/mo)
+                </span>
+                <ArrowRight className="w-4 h-4 text-emerald-400" />
+              </div>
+            </div>
+
+            <div className="bg-zinc-900 border-2 border-emerald-500/30 rounded-2xl p-8">
+              <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-6">
+                <Zap className="w-6 h-6 text-emerald-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Growing SaaS, ready to compete
+              </h3>
+              <p className="text-sm text-zinc-400 mb-6">
+                You&apos;re doing $5k-$50k MRR and want to actively win AI
+                recommendations. You need intelligence, action plans, and
+                content generation.
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400 font-semibold text-sm">
+                  Command ($149/mo)
+                </span>
+                <ArrowRight className="w-4 h-4 text-emerald-400" />
+              </div>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+              <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center mb-6">
+                <Crown className="w-6 h-6 text-amber-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Agency or multi-brand company
+              </h3>
+              <p className="text-sm text-zinc-400 mb-6">
+                You manage multiple sites or client brands. You need white-label
+                reports, API access, and scale.
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-amber-400 font-semibold text-sm">
+                  Dominate ($349/mo)
+                </span>
+                <ArrowRight className="w-4 h-4 text-amber-400" />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -7,6 +7,7 @@ import {
   canUseContentRecommendations,
   canUseActionPlan,
   canUseCompetitorDeepDive,
+  canGeneratePage,
 } from "../citation-plans";
 
 // ============================================
@@ -341,16 +342,104 @@ describe("canUseCompetitorDeepDive", () => {
 });
 
 // ============================================
+// canGeneratePage
+// ============================================
+
+describe("canGeneratePage", () => {
+  describe("Free (not available, 0 pages)", () => {
+    it("denies even at 0 usage", () => {
+      const result = canGeneratePage("free", 0);
+      expect(result.allowed).toBe(false);
+      expect(result.reason).toContain("Scout");
+    });
+    it("denies at 5 usage", () => {
+      expect(canGeneratePage("free", 5).allowed).toBe(false);
+    });
+  });
+
+  describe("Scout (limit: 3/month)", () => {
+    it("allows at 0 usage", () => {
+      const result = canGeneratePage("scout", 0);
+      expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(3);
+    });
+    it("allows at 1 usage", () => {
+      const result = canGeneratePage("scout", 1);
+      expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(2);
+    });
+    it("allows at 2 usage", () => {
+      const result = canGeneratePage("scout", 2);
+      expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(1);
+    });
+    it("denies at 3 usage (limit reached)", () => {
+      const result = canGeneratePage("scout", 3);
+      expect(result.allowed).toBe(false);
+      expect(result.remaining).toBe(0);
+      expect(result.reason).toContain("Monthly limit");
+    });
+    it("denies at 10 usage", () => {
+      expect(canGeneratePage("scout", 10).allowed).toBe(false);
+    });
+  });
+
+  describe("Command (limit: 15/month)", () => {
+    it("allows at 0 usage", () => {
+      const result = canGeneratePage("command", 0);
+      expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(15);
+    });
+    it("allows at 7 usage", () => {
+      const result = canGeneratePage("command", 7);
+      expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(8);
+    });
+    it("allows at 14 usage", () => {
+      const result = canGeneratePage("command", 14);
+      expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(1);
+    });
+    it("denies at 15 usage (limit reached)", () => {
+      const result = canGeneratePage("command", 15);
+      expect(result.allowed).toBe(false);
+      expect(result.remaining).toBe(0);
+      expect(result.reason).toContain("Monthly limit");
+    });
+    it("denies at 100 usage", () => {
+      expect(canGeneratePage("command", 100).allowed).toBe(false);
+    });
+  });
+
+  describe("Dominate (unlimited)", () => {
+    it("allows at 0 usage", () => {
+      const result = canGeneratePage("dominate", 0);
+      expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(-1);
+    });
+    it("allows at 100 usage", () => {
+      const result = canGeneratePage("dominate", 100);
+      expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(-1);
+    });
+    it("allows at 999999 usage", () => {
+      expect(canGeneratePage("dominate", 999999).allowed).toBe(true);
+    });
+  });
+});
+
+// ============================================
 // CROSS-TIER COMPARISON: what each tier gets vs doesn't get
 // ============================================
 
 describe("Cross-tier: paying customers get what they pay for", () => {
-  it("Scout customers CAN: add sites, add competitors, run unlimited checks, use gap analysis, use content recs", () => {
+  it("Scout customers CAN: add sites, add competitors, run unlimited checks, use gap analysis, use content recs, generate pages", () => {
     expect(canAddSite("scout", 0).allowed).toBe(true);
     expect(canAddCompetitor("scout", 0).allowed).toBe(true);
     expect(canRunManualCheck("scout", 100).allowed).toBe(true);
     expect(canUseGapAnalysis("scout", 0).allowed).toBe(true);
     expect(canUseContentRecommendations("scout", 0).allowed).toBe(true);
+    expect(canGeneratePage("scout", 0).allowed).toBe(true);
   });
 
   it("Scout customers CANNOT: use action plans, use competitor deep dive", () => {
@@ -358,7 +447,7 @@ describe("Cross-tier: paying customers get what they pay for", () => {
     expect(canUseCompetitorDeepDive("scout").allowed).toBe(false);
   });
 
-  it("Command customers CAN: everything Scout can + action plans + deep dive + more sites/competitors", () => {
+  it("Command customers CAN: everything Scout can + action plans + deep dive + more sites/competitors + more pages", () => {
     expect(canAddSite("command", 0).allowed).toBe(true);
     expect(canAddSite("command", 4).allowed).toBe(true);
     expect(canAddCompetitor("command", 0).allowed).toBe(true);
@@ -368,9 +457,11 @@ describe("Cross-tier: paying customers get what they pay for", () => {
     expect(canUseContentRecommendations("command", 100).allowed).toBe(true);
     expect(canUseActionPlan("command").allowed).toBe(true);
     expect(canUseCompetitorDeepDive("command").allowed).toBe(true);
+    expect(canGeneratePage("command", 0).allowed).toBe(true);
+    expect(canGeneratePage("command", 14).allowed).toBe(true);
   });
 
-  it("Dominate customers CAN: everything + even more sites/competitors", () => {
+  it("Dominate customers CAN: everything + even more sites/competitors + unlimited pages", () => {
     expect(canAddSite("dominate", 24).allowed).toBe(true);
     expect(canAddCompetitor("dominate", 24).allowed).toBe(true);
     expect(canRunManualCheck("dominate", 100).allowed).toBe(true);
@@ -378,6 +469,7 @@ describe("Cross-tier: paying customers get what they pay for", () => {
     expect(canUseContentRecommendations("dominate", 100).allowed).toBe(true);
     expect(canUseActionPlan("dominate").allowed).toBe(true);
     expect(canUseCompetitorDeepDive("dominate").allowed).toBe(true);
+    expect(canGeneratePage("dominate", 100).allowed).toBe(true);
   });
 
   it("Free users are properly limited", () => {
@@ -388,5 +480,6 @@ describe("Cross-tier: paying customers get what they pay for", () => {
     expect(canUseContentRecommendations("free", 0).allowed).toBe(false);
     expect(canUseActionPlan("free").allowed).toBe(false);
     expect(canUseCompetitorDeepDive("free").allowed).toBe(false);
+    expect(canGeneratePage("free", 0).allowed).toBe(false);
   });
 });

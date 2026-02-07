@@ -7,6 +7,7 @@ import {
   canUseContentRecommendations,
   canUseActionPlan,
   canUseCompetitorDeepDive,
+  canGeneratePage,
   getCitationPlan,
   getCitationPlanLimits,
   getCitationPlanFeatures,
@@ -123,6 +124,21 @@ describe("Legacy plan names in gating functions", () => {
   it("canUseActionPlan('starter') uses scout (denied)", () => {
     expect(canUseActionPlan("starter").allowed).toBe(false);
   });
+
+  it("canGeneratePage('starter', 2) uses scout limits (3)", () => {
+    expect(canGeneratePage("starter", 2).allowed).toBe(true);
+    expect(canGeneratePage("starter", 3).allowed).toBe(false);
+  });
+
+  it("canGeneratePage('pro', 14) uses command limits (15)", () => {
+    expect(canGeneratePage("pro", 14).allowed).toBe(true);
+    expect(canGeneratePage("pro", 15).allowed).toBe(false);
+  });
+
+  it("canGeneratePage('pro_plus', 999) uses dominate (unlimited)", () => {
+    expect(canGeneratePage("pro_plus", 999).allowed).toBe(true);
+    expect(canGeneratePage("pro_plus", 999).remaining).toBe(-1);
+  });
 });
 
 // ============================================
@@ -158,6 +174,10 @@ describe("Unknown plan names fall back to free", () => {
 
   it("canUseCompetitorDeepDive with unknown plan: denied", () => {
     expect(canUseCompetitorDeepDive("nonexistent").allowed).toBe(false);
+  });
+
+  it("canGeneratePage with unknown plan: denied (free limits)", () => {
+    expect(canGeneratePage("nonexistent", 0).allowed).toBe(false);
   });
 });
 
@@ -211,6 +231,35 @@ describe("Boundary values", () => {
     const result = canUseContentRecommendations("scout", 5);
     expect(result.allowed).toBe(false);
     expect(result.remaining).toBe(0);
+  });
+
+  it("canGeneratePage at exactly scout limit - 1: allowed", () => {
+    const result = canGeneratePage("scout", 2);
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(1);
+  });
+
+  it("canGeneratePage at exactly scout limit: denied", () => {
+    const result = canGeneratePage("scout", 3);
+    expect(result.allowed).toBe(false);
+    expect(result.remaining).toBe(0);
+  });
+
+  it("canGeneratePage at exactly command limit - 1: allowed", () => {
+    const result = canGeneratePage("command", 14);
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(1);
+  });
+
+  it("canGeneratePage at exactly command limit: denied", () => {
+    const result = canGeneratePage("command", 15);
+    expect(result.allowed).toBe(false);
+    expect(result.remaining).toBe(0);
+  });
+
+  it("canGeneratePage way over limit: still denied", () => {
+    expect(canGeneratePage("scout", 100).allowed).toBe(false);
+    expect(canGeneratePage("command", 1000).allowed).toBe(false);
   });
 });
 
@@ -369,12 +418,53 @@ describe("Denial messages are user-friendly", () => {
     expect(result.reason).toContain("Command");
   });
 
+  it("canGeneratePage denial for free mentions Scout", () => {
+    const result = canGeneratePage("free", 0);
+    expect(result.reason).toContain("Scout");
+  });
+
+  it("canGeneratePage denial at limit mentions monthly limit", () => {
+    const result = canGeneratePage("scout", 3);
+    expect(result.reason).toContain("Monthly limit");
+  });
+
+  it("canGeneratePage denial at limit mentions page count", () => {
+    const result = canGeneratePage("command", 15);
+    expect(result.reason).toContain("15");
+  });
+
   it("trial expired message mentions trial days", () => {
     const expiredDate = new Date();
     expiredDate.setDate(expiredDate.getDate() - 10);
     const result = canAccessProduct("free", expiredDate);
     expect(result.reason).toContain("7-day");
     expect(result.reason).toContain("trial");
+  });
+});
+
+// ============================================
+// PAGE GENERATION FEATURES PER TIER
+// ============================================
+
+describe("Page generation features per tier", () => {
+  it("Free: no page generation", () => {
+    expect(CITATION_PLANS.free.features.pageGeneration).toBe(false);
+    expect(CITATION_PLANS.free.intelligenceLimits.pagesPerMonth).toBe(0);
+  });
+
+  it("Scout: page generation with 3/month limit", () => {
+    expect(CITATION_PLANS.scout.features.pageGeneration).toBe(true);
+    expect(CITATION_PLANS.scout.intelligenceLimits.pagesPerMonth).toBe(3);
+  });
+
+  it("Command: page generation with 15/month limit", () => {
+    expect(CITATION_PLANS.command.features.pageGeneration).toBe(true);
+    expect(CITATION_PLANS.command.intelligenceLimits.pagesPerMonth).toBe(15);
+  });
+
+  it("Dominate: unlimited page generation", () => {
+    expect(CITATION_PLANS.dominate.features.pageGeneration).toBe(true);
+    expect(CITATION_PLANS.dominate.intelligenceLimits.pagesPerMonth).toBe(-1);
   });
 });
 
