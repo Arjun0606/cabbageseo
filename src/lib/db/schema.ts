@@ -120,6 +120,10 @@ export const organizations = pgTable(
     // Add-ons
     autopilotEnabled: boolean("autopilot_enabled").default(false),
 
+    // Referral
+    referralCode: text("referral_code"),
+    referredBy: text("referred_by"),
+
     // Settings
     settings: jsonb("settings").default({}),
     brandVoice: text("brand_voice"),
@@ -1292,6 +1296,40 @@ export const monthlyCheckpoints = pgTable(
 );
 
 // ============================================
+// REFERRALS
+// ============================================
+
+export const referralStatusEnum = pgEnum("referral_status", [
+  "pending",
+  "signed_up",
+  "converted",
+  "expired",
+]);
+
+export const referrals = pgTable(
+  "referrals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    referrerOrganizationId: uuid("referrer_organization_id")
+      .references(() => organizations.id, { onDelete: "cascade" })
+      .notNull(),
+    referralCode: text("referral_code").notNull(),
+    referredEmail: text("referred_email"),
+    referredOrganizationId: uuid("referred_organization_id")
+      .references(() => organizations.id, { onDelete: "set null" }),
+    status: referralStatusEnum("status").default("pending"),
+    rewardApplied: boolean("reward_applied").default(false),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    convertedAt: timestamp("converted_at"),
+  },
+  (table) => [
+    uniqueIndex("referrals_code_idx").on(table.referralCode),
+    index("referrals_referrer_idx").on(table.referrerOrganizationId),
+    index("referrals_referred_org_idx").on(table.referredOrganizationId),
+  ]
+);
+
+// ============================================
 // RELATIONS
 // ============================================
 
@@ -1516,3 +1554,5 @@ export type SprintAction = typeof sprintActions.$inferSelect;
 export type NewSprintAction = typeof sprintActions.$inferInsert;
 export type MonthlyCheckpoint = typeof monthlyCheckpoints.$inferSelect;
 export type NewMonthlyCheckpoint = typeof monthlyCheckpoints.$inferInsert;
+export type Referral = typeof referrals.$inferSelect;
+export type NewReferral = typeof referrals.$inferInsert;

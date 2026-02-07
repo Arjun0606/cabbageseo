@@ -4,10 +4,10 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { emailService } from "@/lib/email";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
@@ -49,25 +49,46 @@ export async function GET(request: Request) {
 
           const orgData = org as { id: string } | null;
           if (!orgError && orgData) {
+            const newOrgId = orgData.id;
+
             // Create user profile
             await supabase
               .from("users")
               .insert({
                 id: user.id,
-                organization_id: orgData.id,
+                organization_id: newOrgId,
                 email: user.email!,
                 name: user.user_metadata?.name || null,
                 avatar_url: user.user_metadata?.avatar_url || null,
                 role: "owner",
                 email_verified: true,
               } as never);
-            
+
+            // Track referral if ref_code cookie exists
+            const refCode = request.cookies.get("ref_code")?.value;
+            if (refCode && newOrgId) {
+              try {
+                const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+                await fetch(`${baseUrl}/api/referrals/track`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    referralCode: refCode,
+                    email: user.email,
+                    organizationId: newOrgId,
+                  }),
+                });
+              } catch (e) {
+                console.error("[Auth Callback] Referral tracking failed:", e);
+              }
+            }
+
             // Send welcome email (async, don't block)
             emailService.sendWelcome(
-              user.email!, 
+              user.email!,
               user.user_metadata?.name || undefined
             ).catch(err => console.error("Welcome email error:", err));
-            
+
             // Redirect to onboarding for new users
             return NextResponse.redirect(`${origin}/onboarding`);
           }

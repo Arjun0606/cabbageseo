@@ -18,6 +18,7 @@ import {
   LogOut,
   Globe,
   Mail,
+  Gift,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -28,6 +29,7 @@ import { useSite } from "@/context/site-context";
 
 const settingsNav = [
   { href: "/settings/billing", label: "Billing", icon: CreditCard, description: "Subscription & invoices" },
+  { href: "/settings/referrals", label: "Referrals", icon: Gift, description: "Earn free months" },
 ];
 
 export default function SettingsPage() {
