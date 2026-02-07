@@ -372,7 +372,7 @@ function RoadmapStepCard({ step, onToggle }: { step: RoadmapStep; onToggle: () =
 
       {expanded && (
         <div className="border-t border-zinc-800 p-6 bg-zinc-950/50">
-          {/* Expected Outcome for Starter+ */}
+          {/* Expected Outcome for Scout+ */}
           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 mb-4">
             <p className="text-emerald-300 text-sm font-medium mb-1">Why this matters:</p>
             <p className="text-zinc-300 text-sm">

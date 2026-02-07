@@ -71,9 +71,13 @@ describe("plans.ts limit escalation", () => {
     "aiCreditsPerMonth",
   ];
 
+  function effectiveLimit(val: number): number {
+    return val === -1 ? Infinity : val;
+  }
+
   for (const key of limitKeys) {
     it(`${key}: scout <= command <= dominate`, () => {
-      const values = TIERS.map((t) => PLANS[t].limits[key]);
+      const values = TIERS.map((t) => effectiveLimit(PLANS[t].limits[key]));
       for (let i = 1; i < values.length; i++) {
         expect(values[i]).toBeGreaterThanOrEqual(values[i - 1]);
       }
@@ -111,14 +115,14 @@ describe("plans.ts specific limits", () => {
     expect(PLANS.scout.limits.teamMembers).toBe(1);
   });
 
-  it("Command: 5 sites, 3 team members", () => {
+  it("Command: 5 sites, 5 team members", () => {
     expect(PLANS.command.limits.sites).toBe(5);
-    expect(PLANS.command.limits.teamMembers).toBe(3);
+    expect(PLANS.command.limits.teamMembers).toBe(5);
   });
 
-  it("Dominate: 25 sites, 10 team members", () => {
+  it("Dominate: 25 sites, unlimited team members", () => {
     expect(PLANS.dominate.limits.sites).toBe(25);
-    expect(PLANS.dominate.limits.teamMembers).toBe(10);
+    expect(PLANS.dominate.limits.teamMembers).toBe(-1);
   });
 });
 

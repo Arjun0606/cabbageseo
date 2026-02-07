@@ -392,7 +392,7 @@ export default function SourcesPage() {
                               ⚠️ See all {source.howToGetListed.length} steps
                             </p>
                             <p className="text-zinc-400 text-sm">
-                              Upgrade to Starter to get the complete step-by-step guide for {source.name}.
+                              Upgrade to Scout to get the complete step-by-step guide for {source.name}.
                             </p>
                           </div>
 
@@ -400,7 +400,7 @@ export default function SourcesPage() {
                             href="/settings/billing"
                             className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors w-full justify-center"
                           >
-                            Upgrade to Starter ($29/mo) for full roadmap
+                            Upgrade to Scout ($49/mo) for full roadmap
                             <ArrowRight className="w-5 h-5" />
                           </Link>
                         </>

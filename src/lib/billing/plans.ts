@@ -128,7 +128,7 @@ export const PLANS: Record<PlanId, Plan> = {
       keywordsTracked: 1000,
       auditsPerMonth: 25,
       aioAnalysesPerMonth: 200,
-      teamMembers: 3,
+      teamMembers: 5,
       aiCreditsPerMonth: 10000,
     },
     features: {
@@ -173,7 +173,7 @@ export const PLANS: Record<PlanId, Plan> = {
       keywordsTracked: 5000,
       auditsPerMonth: 100,
       aioAnalysesPerMonth: 500,
-      teamMembers: 10,
+      teamMembers: -1,
       aiCreditsPerMonth: 30000,
     },
     features: {

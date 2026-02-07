@@ -2,7 +2,7 @@
  * /api/sites/queries - Manage Custom Queries
  * 
  * GET: Get custom queries for a site
- * POST: Add/update custom queries (Starter+)
+ * POST: Add/update custom queries (Scout+)
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     // Check if custom queries are allowed
     if (!features.customQueries && customQueries?.length > 0) {
       return NextResponse.json({ 
-        error: "Custom queries require Starter plan or higher",
+        error: "Custom queries require Scout plan or higher",
         upgrade: true 
       }, { status: 403 });
     }
