@@ -78,6 +78,11 @@ export async function updateSession(request: NextRequest) {
     "/analyze",
     "/docs",
     "/feedback",
+    "/features",
+    "/changelog",
+    "/for/saas",
+    "/for/agencies",
+    "/vs/manual-tracking",
     "/teaser",         // Teaser results page (no signup required)
     "/auth/callback",  // OAuth callback must be public
   ];
