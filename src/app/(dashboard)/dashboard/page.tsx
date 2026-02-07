@@ -137,7 +137,7 @@ function DashboardContent() {
           citationsWon: won,
           citationsLost: Math.max(0, last - won),
           queriesWon: total,
-          queriesTotal: total + 5,
+          queriesTotal: total,
           sourceCoverage: 0,
           topCompetitor: null,
         });

@@ -378,7 +378,7 @@ async function checkGoogleAI(domain: string, queries: string[]): Promise<CheckRe
   try {
     // Use Gemini with Google Search grounding
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: {
@@ -392,12 +392,7 @@ async function checkGoogleAI(domain: string, queries: string[]): Promise<CheckRe
           ],
           tools: [
             {
-              google_search_retrieval: {
-                dynamic_retrieval_config: {
-                  mode: "MODE_DYNAMIC",
-                  dynamic_threshold: 0.3
-                }
-              }
+              google_search: {}
             }
           ],
           generationConfig: {
@@ -483,7 +478,7 @@ async function checkChatGPT(domain: string, queries: string[]): Promise<CheckRes
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [
           {
             role: "system",
@@ -491,8 +486,7 @@ async function checkChatGPT(domain: string, queries: string[]): Promise<CheckRes
           },
           { role: "user", content: query }
         ],
-        temperature: 0.3,
-        max_tokens: 500,
+        max_completion_tokens: 4000,
       }),
     });
 

@@ -475,7 +475,7 @@ function getPlanFromProductId(productId: string): string {
     [process.env.DODO_DOMINATE_YEARLY_ID || "prod_dominate_yearly"]: "dominate",
   };
 
-  return productToPlan[productId] || "scout";
+  return productToPlan[productId] || "free";
 }
 
 async function createNotification(

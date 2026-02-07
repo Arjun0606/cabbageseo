@@ -111,7 +111,7 @@ function BillingContent() {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
-          <Loader2 className="w-8 h-8 text-red-400 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
           <p className="text-zinc-400">Loading billing information...</p>
         </div>
       </div>
@@ -398,7 +398,7 @@ export default function BillingPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
-          <Loader2 className="w-8 h-8 text-red-400 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
           <p className="text-zinc-400">Loading billing information...</p>
         </div>
       </div>

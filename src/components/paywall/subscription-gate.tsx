@@ -15,12 +15,12 @@ interface SubscriptionStatus {
 
 // Features to show on the paywall
 const FEATURES = [
-  "AI-powered content generation",
-  "Keyword research & tracking",
-  "Technical SEO audits",
-  "AI visibility optimization",
-  "WordPress/Webflow publishing",
-  "Priority support",
+  "AI citation monitoring across ChatGPT, Perplexity, Gemini",
+  "Citation gap analysis — why AI picks competitors over you",
+  "AI-optimized page generation",
+  "30-day visibility sprint with action plans",
+  "Competitor tracking and alerts",
+  "Trust source mapping and recommendations",
 ];
 
 export function SubscriptionGate({ children }: { children: React.ReactNode }) {
@@ -56,7 +56,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
         if (res.ok) {
           const data = await res.json();
           if (data.success) {
-            const plan = data.data?.plan?.id || data.data?.plan?.name || "scout";
+            const plan = data.data?.plan?.id || data.data?.plan?.name || "free";
             const subscriptionStatus = data.data?.plan?.status || "active";
             
             // Check if they have an active paid subscription
@@ -76,7 +76,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
             if (meRes.ok) {
               const meData = await meRes.json();
               if (meData.authenticated && meData.organization) {
-                const plan = meData.organization.plan || "scout";
+                const plan = meData.organization.plan || "free";
                 setStatus({
                   hasSubscription: plan !== "free",
                   plan: plan,
@@ -93,7 +93,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
           if (meRes.ok) {
             const meData = await meRes.json();
             if (meData.authenticated && meData.organization) {
-              const plan = meData.organization.plan || "scout";
+              const plan = meData.organization.plan || "free";
               setStatus({
                 hasSubscription: plan !== "free",
                 plan: plan,

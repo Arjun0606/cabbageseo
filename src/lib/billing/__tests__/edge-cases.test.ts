@@ -114,7 +114,7 @@ describe("Legacy plan names in gating functions", () => {
   });
 
   it("canUseActionPlan('pro') uses command (allowed)", () => {
-    expect(canUseActionPlan("pro").allowed).toBe(true);
+    expect(canUseActionPlan("pro", 0).allowed).toBe(true);
   });
 
   it("canUseCompetitorDeepDive('pro') uses command (allowed)", () => {
@@ -122,7 +122,7 @@ describe("Legacy plan names in gating functions", () => {
   });
 
   it("canUseActionPlan('starter') uses scout (denied)", () => {
-    expect(canUseActionPlan("starter").allowed).toBe(false);
+    expect(canUseActionPlan("starter", 0).allowed).toBe(false);
   });
 
   it("canGeneratePage('starter', 2) uses scout limits (3)", () => {
@@ -169,7 +169,7 @@ describe("Unknown plan names fall back to free", () => {
   });
 
   it("canUseActionPlan with unknown plan: denied", () => {
-    expect(canUseActionPlan("nonexistent").allowed).toBe(false);
+    expect(canUseActionPlan("nonexistent", 0).allowed).toBe(false);
   });
 
   it("canUseCompetitorDeepDive with unknown plan: denied", () => {
@@ -409,7 +409,7 @@ describe("Denial messages are user-friendly", () => {
   });
 
   it("canUseActionPlan denial mentions Command", () => {
-    const result = canUseActionPlan("free");
+    const result = canUseActionPlan("free", 0);
     expect(result.reason).toContain("Command");
   });
 

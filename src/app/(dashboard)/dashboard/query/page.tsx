@@ -159,7 +159,7 @@ function QueryPageContent() {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
-          <Loader2 className="w-8 h-8 text-red-400 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
           <p className="text-zinc-400">Analyzing why AI prefers competitors...</p>
         </div>
       </div>
@@ -303,7 +303,7 @@ function QueryPageContent() {
 
           <Link
             href="/dashboard/sources"
-            className="inline-flex items-center gap-2 mt-4 text-red-400 hover:text-red-300 text-sm font-medium"
+            className="inline-flex items-center gap-2 mt-4 text-emerald-400 hover:text-emerald-300 text-sm font-medium"
           >
             View full Trust Map
             <ArrowRight className="w-4 h-4" />
@@ -311,7 +311,7 @@ function QueryPageContent() {
         </div>
 
         {/* Content fix (paywalled) */}
-        <div className="bg-gradient-to-r from-red-950/50 to-zinc-900 border border-red-500/20 rounded-xl p-6 mb-6 relative overflow-hidden">
+        <div className="bg-gradient-to-r from-emerald-950/50 to-zinc-900 border border-emerald-500/20 rounded-xl p-6 mb-6 relative overflow-hidden">
           <div className="flex items-center gap-2 mb-4">
             <Lightbulb className="w-5 h-5 text-yellow-400" />
             <h2 className="text-lg font-semibold text-white">
@@ -430,7 +430,7 @@ function QueryPageContent() {
                       </p>
                       <Link
                         href="/settings/billing"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors"
                       >
                         Upgrade to Scout ($49/mo)
                         <ArrowRight className="w-5 h-5" />

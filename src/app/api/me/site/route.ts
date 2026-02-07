@@ -74,8 +74,8 @@ export async function POST(request: NextRequest) {
         .insert({
           name: user.user_metadata?.name || user.email?.split("@")[0] || "My Organization",
           slug,
-          plan: "scout",
-          subscription_status: "active",
+          plan: "free",
+          subscription_status: "trialing",
         })
         .select("id")
         .single();

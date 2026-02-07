@@ -519,8 +519,8 @@ async function discoverQueries(domain: string): Promise<SiteAnalysis["queries"]>
     }));
   }
 
-  // Check each query (limit to 3 to save API calls)
-  for (const query of testQueries.slice(0, 3)) {
+  // Check each query against Perplexity
+  for (const query of testQueries) {
     try {
       const response = await fetch("https://api.perplexity.ai/chat/completions", {
         method: "POST",
@@ -573,16 +573,6 @@ async function discoverQueries(domain: string): Promise<SiteAnalysis["queries"]>
         opportunity: true,
       });
     }
-  }
-
-  // Add remaining queries without checking
-  for (const query of testQueries.slice(3)) {
-    queries.push({
-      query,
-      searchVolume: "medium",
-      yourPosition: "not checked",
-      opportunity: true,
-    });
   }
 
   return queries;

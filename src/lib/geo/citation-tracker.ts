@@ -99,7 +99,7 @@ export class ChatGPTCitationChecker {
                 content: `${query} Please mention any specific websites or sources you'd recommend.`,
               },
             ],
-            max_tokens: 500,
+            max_completion_tokens: 4000,
           }),
         });
 
@@ -166,7 +166,7 @@ export class GoogleAICitationChecker {
       try {
         // Use Gemini API with search grounding
         const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`,
           {
             method: "POST",
             headers: {
@@ -180,12 +180,7 @@ export class GoogleAICitationChecker {
               ],
               tools: [
                 {
-                  google_search_retrieval: {
-                    dynamic_retrieval_config: {
-                      mode: "MODE_DYNAMIC",
-                      dynamic_threshold: 0.3,
-                    },
-                  },
+                  google_search: {},
                 },
               ],
             }),
@@ -366,13 +361,13 @@ export class CitationTracker {
     // Get all active sites
     const { data: sites } = await supabase
       .from("sites")
-      .select("id, domain, topics")
+      .select("id, domain, main_topics")
       .eq("status", "active");
 
     if (!sites) return;
 
-    for (const site of (sites as Array<{ id: string; domain: string; topics: string[] }>)) {
-      await this.checkSiteCitations(site.id, site.domain, site.topics || []);
+    for (const site of (sites as Array<{ id: string; domain: string; main_topics: string[] }>)) {
+      await this.checkSiteCitations(site.id, site.domain, site.main_topics || []);
     }
   }
 

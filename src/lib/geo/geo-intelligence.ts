@@ -92,7 +92,7 @@ export class GEOScoreCalculator {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
+          model: "gpt-5-mini",
           messages: [
             {
               role: "system",
@@ -124,7 +124,6 @@ Respond in JSON only:
               content: `Analyze this content for GEO/AI citation potential:\n\n${textToAnalyze.slice(0, 8000)}`
             }
           ],
-          temperature: 0.3,
           response_format: { type: "json_object" },
         }),
       });
@@ -367,7 +366,7 @@ export class QueryIntelligenceEngine {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
+          model: "gpt-5-mini",
           messages: [
             {
               role: "system",
@@ -385,7 +384,6 @@ Return JSON array of strings only: ["question 1", "question 2", ...]`
               content: `Generate questions for the ${niche} niche that people commonly ask ChatGPT, Perplexity, or Google AI.`
             }
           ],
-          temperature: 0.7,
           response_format: { type: "json_object" },
         }),
       });

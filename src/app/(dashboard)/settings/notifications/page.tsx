@@ -72,7 +72,7 @@ export default function NotificationsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-red-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
       </div>
     );
   }
@@ -89,7 +89,7 @@ export default function NotificationsPage() {
           {/* Email Notifications */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
             <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <Mail className="w-5 h-5 text-red-400" />
+              <Mail className="w-5 h-5 text-emerald-400" />
               Email Notifications
             </h2>
             
@@ -102,7 +102,7 @@ export default function NotificationsPage() {
                 <button
                   onClick={() => handleToggle("emailAlerts")}
                   className={`w-12 h-6 rounded-full transition-colors ${
-                    settings.emailAlerts ? "bg-red-500" : "bg-zinc-700"
+                    settings.emailAlerts ? "bg-emerald-500" : "bg-zinc-700"
                   }`}
                 >
                   <div
@@ -121,7 +121,7 @@ export default function NotificationsPage() {
                 <button
                   onClick={() => handleToggle("competitorAlerts")}
                   className={`w-12 h-6 rounded-full transition-colors ${
-                    settings.competitorAlerts ? "bg-red-500" : "bg-zinc-700"
+                    settings.competitorAlerts ? "bg-emerald-500" : "bg-zinc-700"
                   }`}
                 >
                   <div
@@ -140,7 +140,7 @@ export default function NotificationsPage() {
                 <button
                   onClick={() => handleToggle("weeklyReport")}
                   className={`w-12 h-6 rounded-full transition-colors ${
-                    settings.weeklyReport ? "bg-red-500" : "bg-zinc-700"
+                    settings.weeklyReport ? "bg-emerald-500" : "bg-zinc-700"
                   }`}
                 >
                   <div
@@ -168,7 +168,7 @@ export default function NotificationsPage() {
               <button
                 onClick={() => handleToggle("marketingEmails")}
                 className={`w-12 h-6 rounded-full transition-colors ${
-                  settings.marketingEmails ? "bg-red-500" : "bg-zinc-700"
+                  settings.marketingEmails ? "bg-emerald-500" : "bg-zinc-700"
                 }`}
               >
                 <div
@@ -184,7 +184,7 @@ export default function NotificationsPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-3 bg-red-500 hover:bg-red-600 disabled:bg-red-500/50 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-500/50 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
           >
             {saving ? (
               <>

@@ -72,7 +72,7 @@ export function SiteSwitcher() {
   }, [selectedSite]);
 
   const canAddMore = plan === "command" || plan === "dominate";
-  const siteLimit = plan === "dominate" ? 50 : plan === "command" ? 10 : plan === "scout" ? 3 : 1;
+  const siteLimit = plan === "dominate" ? 25 : plan === "command" ? 5 : 1;
 
   if (loading) {
     return (
@@ -131,7 +131,7 @@ export function SiteSwitcher() {
       
       <DropdownMenuContent align="start" className="w-[260px] bg-zinc-900 border-zinc-700">
         <DropdownMenuLabel className="text-xs text-zinc-400 font-normal">
-          Your Sites ({sites.length}/{siteLimit === 50 ? "∞" : siteLimit})
+          Your Sites ({sites.length}/{siteLimit})
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-zinc-800" />
         

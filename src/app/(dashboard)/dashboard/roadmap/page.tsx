@@ -178,7 +178,7 @@ export default function RoadmapPage() {
             </p>
             <Link
               href="/settings/billing"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors"
             >
               Upgrade to unlock
               <ArrowRight className="w-5 h-5" />

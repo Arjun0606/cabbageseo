@@ -90,6 +90,13 @@ interface CompetitorDeepDive {
 // LLM HELPER
 // ============================================
 
+function extractJSON(text: string): string {
+  // Strip markdown code fences if present
+  const fenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+  if (fenceMatch) return fenceMatch[1].trim();
+  return text.trim();
+}
+
 async function askLLM(prompt: string): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -103,7 +110,7 @@ async function askLLM(prompt: string): Promise<string> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [
         {
           role: "system",
@@ -111,8 +118,7 @@ async function askLLM(prompt: string): Promise<string> {
         },
         { role: "user", content: prompt },
       ],
-      temperature: 0.7,
-      max_tokens: 2000,
+      max_completion_tokens: 16000,
     }),
   });
 
@@ -121,7 +127,8 @@ async function askLLM(prompt: string): Promise<string> {
   }
 
   const data = await response.json();
-  return data.choices[0]?.message?.content || "";
+  const rawContent = data.choices[0]?.message?.content || "";
+  return extractJSON(rawContent);
 }
 
 // ============================================
@@ -138,7 +145,7 @@ export async function analyzeCitationGap(
   // Get the site info
   const { data: site } = await supabase
     .from("sites")
-    .select("domain, topics")
+    .select("domain, main_topics")
     .eq("id", siteId)
     .single();
 
@@ -168,7 +175,7 @@ QUERY: "${query}"
 SITES THAT WERE CITED: ${citedDomains.length > 0 ? citedDomains.join(", ") : "Unknown (need to check)"}
 
 USER'S SITE: ${site.domain}
-USER'S TOPICS: ${(site.topics || []).join(", ") || "Not specified"}
+USER'S TOPICS: ${(site.main_topics || []).join(", ") || "Not specified"}
 
 WAS USER CITED: ${wasYouCited ? "Yes" : "No"}
 
@@ -235,7 +242,7 @@ export async function generateContentRecommendations(
   // Get site info
   const { data: site } = await supabase
     .from("sites")
-    .select("domain, topics")
+    .select("domain, main_topics")
     .eq("id", siteId)
     .single();
 
@@ -258,7 +265,7 @@ export async function generateContentRecommendations(
   const prompt = `Based on AI citation data, recommend content this site should create to get more AI citations.
 
 SITE: ${site.domain}
-TOPICS: ${(site.topics || []).join(", ") || "General"}
+TOPICS: ${(site.main_topics || []).join(", ") || "General"}
 
 RECENT QUERIES WHERE THIS SITE WAS MENTIONED:
 ${citations?.slice(0, 20).map(c => `- "${c.query}" (${c.platform}, ${c.confidence} confidence)`).join("\n") || "No citations yet"}
@@ -285,7 +292,7 @@ Respond in this exact JSON format:
 }`;
 
   const response = await askLLM(prompt);
-  
+
   try {
     const parsed = JSON.parse(response);
     return parsed.recommendations || [];

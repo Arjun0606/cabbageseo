@@ -295,23 +295,33 @@ describe("canUseContentRecommendations", () => {
 
 describe("canUseActionPlan", () => {
   it("Free: denied", () => {
-    const result = canUseActionPlan("free");
+    const result = canUseActionPlan("free", 0);
     expect(result.allowed).toBe(false);
     expect(result.reason).toContain("Command");
   });
 
   it("Scout: denied", () => {
-    const result = canUseActionPlan("scout");
+    const result = canUseActionPlan("scout", 0);
     expect(result.allowed).toBe(false);
     expect(result.reason).toContain("Command");
   });
 
-  it("Command: allowed", () => {
-    expect(canUseActionPlan("command").allowed).toBe(true);
+  it("Command: allowed (under limit)", () => {
+    expect(canUseActionPlan("command", 0).allowed).toBe(true);
+    expect(canUseActionPlan("command", 3).allowed).toBe(true);
+    expect(canUseActionPlan("command", 3).remaining).toBe(1);
   });
 
-  it("Dominate: allowed", () => {
-    expect(canUseActionPlan("dominate").allowed).toBe(true);
+  it("Command: denied (at limit)", () => {
+    expect(canUseActionPlan("command", 4).allowed).toBe(false);
+    expect(canUseActionPlan("command", 4).remaining).toBe(0);
+    expect(canUseActionPlan("command", 4).reason).toContain("Monthly limit");
+  });
+
+  it("Dominate: allowed (unlimited)", () => {
+    expect(canUseActionPlan("dominate", 0).allowed).toBe(true);
+    expect(canUseActionPlan("dominate", 999).allowed).toBe(true);
+    expect(canUseActionPlan("dominate", 999).remaining).toBe(-1);
   });
 });
 
@@ -443,7 +453,7 @@ describe("Cross-tier: paying customers get what they pay for", () => {
   });
 
   it("Scout customers CANNOT: use action plans, use competitor deep dive", () => {
-    expect(canUseActionPlan("scout").allowed).toBe(false);
+    expect(canUseActionPlan("scout", 0).allowed).toBe(false);
     expect(canUseCompetitorDeepDive("scout").allowed).toBe(false);
   });
 
@@ -455,7 +465,7 @@ describe("Cross-tier: paying customers get what they pay for", () => {
     expect(canRunManualCheck("command", 100).allowed).toBe(true);
     expect(canUseGapAnalysis("command", 100).allowed).toBe(true);
     expect(canUseContentRecommendations("command", 100).allowed).toBe(true);
-    expect(canUseActionPlan("command").allowed).toBe(true);
+    expect(canUseActionPlan("command", 0).allowed).toBe(true);
     expect(canUseCompetitorDeepDive("command").allowed).toBe(true);
     expect(canGeneratePage("command", 0).allowed).toBe(true);
     expect(canGeneratePage("command", 14).allowed).toBe(true);
@@ -467,7 +477,7 @@ describe("Cross-tier: paying customers get what they pay for", () => {
     expect(canRunManualCheck("dominate", 100).allowed).toBe(true);
     expect(canUseGapAnalysis("dominate", 100).allowed).toBe(true);
     expect(canUseContentRecommendations("dominate", 100).allowed).toBe(true);
-    expect(canUseActionPlan("dominate").allowed).toBe(true);
+    expect(canUseActionPlan("dominate", 0).allowed).toBe(true);
     expect(canUseCompetitorDeepDive("dominate").allowed).toBe(true);
     expect(canGeneratePage("dominate", 100).allowed).toBe(true);
   });
@@ -478,7 +488,7 @@ describe("Cross-tier: paying customers get what they pay for", () => {
     expect(canRunManualCheck("free", 3).allowed).toBe(false);
     expect(canUseGapAnalysis("free", 0).allowed).toBe(false);
     expect(canUseContentRecommendations("free", 0).allowed).toBe(false);
-    expect(canUseActionPlan("free").allowed).toBe(false);
+    expect(canUseActionPlan("free", 0).allowed).toBe(false);
     expect(canUseCompetitorDeepDive("free").allowed).toBe(false);
     expect(canGeneratePage("free", 0).allowed).toBe(false);
   });

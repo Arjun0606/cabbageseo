@@ -208,7 +208,7 @@ export default function SourcesPage() {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
-          <Loader2 className="w-8 h-8 text-red-400 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
           <p className="text-zinc-400">Mapping trusted sources...</p>
         </div>
       </div>
@@ -398,7 +398,7 @@ export default function SourcesPage() {
 
                           <Link
                             href="/settings/billing"
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors w-full justify-center"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors w-full justify-center"
                           >
                             Upgrade to Scout ($49/mo) for full roadmap
                             <ArrowRight className="w-5 h-5" />

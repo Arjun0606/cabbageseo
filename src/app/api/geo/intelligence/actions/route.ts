@@ -103,6 +103,7 @@ export async function POST(request: NextRequest) {
 
     const gapAnalysesUsed = (usage as Record<string, number> | null)?.gap_analyses_used || 0;
     const contentIdeasUsed = (usage as Record<string, number> | null)?.content_ideas_used || 0;
+    const actionPlansUsed = (usage as Record<string, number> | null)?.action_plans_used || 0;
 
     // Handle each action type
     switch (action) {
@@ -155,7 +156,7 @@ export async function POST(request: NextRequest) {
       }
 
       case "action-plan": {
-        const canUse = canUseActionPlan(citationPlan.id);
+        const canUse = canUseActionPlan(citationPlan.id, actionPlansUsed);
         if (!canUse.allowed) {
           return NextResponse.json({
             error: canUse.reason,
@@ -166,9 +167,13 @@ export async function POST(request: NextRequest) {
 
         const result = await generateWeeklyActionPlan(siteId, organizationId);
 
+        // Track usage
+        await incrementUsage(db, organizationId, currentMonth, "action_plans_used");
+
         return NextResponse.json({
           success: true,
           data: result,
+          remaining: canUse.remaining === -1 ? "unlimited" : (canUse.remaining || 0) - 1,
         });
       }
 
@@ -285,6 +290,7 @@ export async function GET() {
 
     const gapAnalysesUsed = (usage as Record<string, number> | null)?.gap_analyses_used || 0;
     const contentIdeasUsed = (usage as Record<string, number> | null)?.content_ideas_used || 0;
+    const actionPlansUsedCount = (usage as Record<string, number> | null)?.action_plans_used || 0;
     const pagesGenerated = (usage as Record<string, number> | null)?.pages_generated || 0;
 
     const pageCheck = canGeneratePage(citationPlan.id, pagesGenerated);
@@ -312,6 +318,11 @@ export async function GET() {
         },
         actionPlan: {
           available: citationPlan.features.weeklyActionPlan,
+          used: actionPlansUsedCount,
+          limit: citationPlan.intelligenceLimits.actionPlansPerMonth,
+          remaining: citationPlan.intelligenceLimits.actionPlansPerMonth === -1
+            ? "unlimited"
+            : Math.max(0, citationPlan.intelligenceLimits.actionPlansPerMonth - actionPlansUsedCount),
         },
         competitorDeepDive: {
           available: citationPlan.features.competitorDeepDive,

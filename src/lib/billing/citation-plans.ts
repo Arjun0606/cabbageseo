@@ -498,8 +498,9 @@ export function canUseContentRecommendations(
 }
 
 export function canUseActionPlan(
-  planId: CitationPlanId | string
-): { allowed: boolean; reason?: string } {
+  planId: CitationPlanId | string,
+  usedThisMonth: number
+): { allowed: boolean; reason?: string; remaining?: number } {
   const plan = getCitationPlan(planId);
 
   if (!plan.features.weeklyActionPlan) {
@@ -509,7 +510,21 @@ export function canUseActionPlan(
     };
   }
 
-  return { allowed: true };
+  const limit = plan.intelligenceLimits.actionPlansPerMonth;
+
+  if (limit === -1) {
+    return { allowed: true, remaining: -1 };
+  }
+
+  if (usedThisMonth >= limit) {
+    return {
+      allowed: false,
+      reason: `Monthly limit reached (${limit} plans). Upgrade to Dominate for unlimited.`,
+      remaining: 0,
+    };
+  }
+
+  return { allowed: true, remaining: limit - usedThisMonth };
 }
 
 export function canUseCompetitorDeepDive(

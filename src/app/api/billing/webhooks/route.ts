@@ -54,18 +54,18 @@ function buildProductMappings(): Record<string, string> {
 // Get plan ID from product ID
 function getPlanFromProductId(productId: string | undefined): string {
   if (!productId) {
-    console.warn("[Webhook] No product ID provided, defaulting to 'scout'");
-    return "scout";
+    console.warn("[Webhook] No product ID provided, defaulting to 'free'");
+    return "free";
   }
-  
+
   const productMappings = buildProductMappings();
   const plan = productMappings[productId];
-  
+
   if (!plan) {
-    console.warn(`[Webhook] Unknown product ID: ${productId}, defaulting to 'scout'`);
-    return "scout";
+    console.warn(`[Webhook] Unknown product ID: ${productId}, defaulting to 'free'`);
+    return "free";
   }
-  
+
   return plan;
 }
 

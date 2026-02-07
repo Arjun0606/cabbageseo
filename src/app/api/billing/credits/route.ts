@@ -5,7 +5,7 @@
  * 
  * Pricing model:
  * - FREE: URL analyzer (SEO + AIO scores)
- * - PAID: Subscriptions at $29/$79/$199 with pay-as-you-go overages
+ * - PAID: Subscriptions at $49/$149/$349 (Scout/Command/Dominate)
  */
 
 import { NextResponse } from "next/server";

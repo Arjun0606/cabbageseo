@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/api/get-user";
+import { getCitationPlanFeatures } from "@/lib/billing/citation-plans";
 import {
   generateSprintActions,
   calculateSprintProgress,
@@ -44,6 +45,21 @@ export async function GET(request: NextRequest) {
     const currentUser = await getUser();
     if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Plan check — Sprint is Scout+ only
+    const { data: org } = await db
+      .from("organizations")
+      .select("plan")
+      .eq("id", currentUser.organizationId)
+      .single();
+
+    const planFeatures = getCitationPlanFeatures(org?.plan || "free");
+    if (!planFeatures.sprintFramework) {
+      return NextResponse.json(
+        { error: "Sprint framework requires Scout plan or higher", upgradeRequired: true },
+        { status: 403 }
+      );
     }
 
     // Get site data
@@ -179,6 +195,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
+      );
+    }
+
+    // Plan check — Sprint is Scout+ only
+    const { data: org } = await db
+      .from("organizations")
+      .select("plan")
+      .eq("id", currentUser.organizationId)
+      .single();
+
+    const planFeatures = getCitationPlanFeatures(org?.plan || "free");
+    if (!planFeatures.sprintFramework) {
+      return NextResponse.json(
+        { error: "Sprint framework requires Scout plan or higher", upgradeRequired: true },
+        { status: 403 }
       );
     }
 

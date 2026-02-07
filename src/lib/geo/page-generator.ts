@@ -45,8 +45,7 @@ async function askLLMForPage(systemPrompt: string, userPrompt: string): Promise<
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      temperature: 0.7,
-      max_tokens: 4096,
+      max_completion_tokens: 16000,
     }),
   });
 

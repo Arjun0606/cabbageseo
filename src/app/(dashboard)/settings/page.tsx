@@ -49,7 +49,7 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       await fetch("/api/settings/account", {
-        method: "PATCH",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       });
@@ -72,7 +72,7 @@ export default function SettingsPage() {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
-          <Loader2 className="w-8 h-8 text-red-400 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
           <p className="text-zinc-400">Loading settings...</p>
         </div>
       </div>
@@ -153,14 +153,14 @@ export default function SettingsPage() {
             <Label className="text-zinc-400">Plan</Label>
             <div className="flex items-center gap-2 mt-1">
               <Badge className={
-                organization?.plan === "command" || organization?.plan === "dominate" ? "bg-emerald-500/10 text-emerald-400 border-0" :
-                organization?.plan === "scout" ? "bg-blue-500/10 text-blue-400 border-0" :
-                "bg-zinc-800 text-zinc-400 border-0"
+                organization?.plan && organization.plan !== "free"
+                  ? "bg-emerald-500/10 text-emerald-400 border-0"
+                  : "bg-zinc-800 text-zinc-400 border-0"
               }>
                 {organization?.plan || "free"} {organization?.plan === "free" ? "trial" : "plan"}
               </Badge>
-              {organization?.plan !== "pro" && (
-                <Link href="/pricing" className="text-sm text-emerald-400 hover:underline">
+              {organization?.plan !== "dominate" && (
+                <Link href="/settings/billing" className="text-sm text-emerald-400 hover:underline">
                   Upgrade
                 </Link>
               )}
