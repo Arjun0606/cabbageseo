@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
+
 // ============================================
 // HEADER
 // ============================================
@@ -28,12 +29,14 @@ const navLinks = [
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
   { href: "/docs", label: "Docs" },
+  { href: "/blog", label: "Blog" },
   { href: "/changelog", label: "Changelog" },
 ];
 
 const solutionLinks = [
   { href: "/for/saas", label: "For SaaS Founders", desc: "Track and win AI recommendations for your product" },
   { href: "/for/agencies", label: "For Agencies", desc: "Multi-client AI visibility intelligence at scale" },
+  { href: "/leaderboard", label: "Leaderboard", desc: "Top 30 most visible brands in AI search" },
 ];
 
 function Header() {
@@ -230,17 +233,19 @@ function Footer() {
       { href: "/features", label: "Features" },
       { href: "/pricing", label: "Pricing" },
       { href: "/changelog", label: "Changelog" },
+      { href: "/teaser", label: "Free AI Scan" },
     ],
     solutions: [
       { href: "/for/saas", label: "For SaaS" },
       { href: "/for/agencies", label: "For Agencies" },
+      { href: "/leaderboard", label: "Leaderboard" },
       { href: "/vs/manual-tracking", label: "Why CabbageSEO?" },
     ],
     resources: [
       { href: "/docs", label: "Documentation" },
+      { href: "/blog", label: "Blog" },
       { href: "/feedback", label: "Feedback" },
       { href: "/login", label: "Log In" },
-      { href: "/signup", label: "Sign Up" },
     ],
     company: [
       { href: "/privacy", label: "Privacy Policy" },

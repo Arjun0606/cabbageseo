@@ -244,21 +244,21 @@ export default function ForSaaSPage() {
               },
               {
                 icon: <FileText className="w-6 h-6 text-emerald-400" />,
-                title: "AI Page Generator",
+                title: "Authority Pages",
                 description:
-                  "Generate comparison pages, feature pages, and use case content optimized for AI citation.",
+                  "Generate comparison pages, category explainers, and FAQs that reinforce your credibility with AI systems.",
               },
               {
                 icon: <Timer className="w-6 h-6 text-emerald-400" />,
-                title: "30-Day Sprint",
+                title: "Automated Daily Checks",
                 description:
-                  "Structured program for SaaS founders. Week-by-week actions to build AI visibility fast.",
+                  "Plan-tiered auto-checks run while you sleep. Score drop alerts hit your inbox + Slack when you lose ground.",
               },
               {
                 icon: <Zap className="w-6 h-6 text-emerald-400" />,
-                title: "Momentum Scoring",
+                title: "AI Content Generation",
                 description:
-                  "Track your progress with a single number. See week-over-week improvements.",
+                  "We generate comparison pages and authority content for you. Get a preview during your free scan — full pages on paid plans.",
               },
             ].map((item) => (
               <div
@@ -281,7 +281,7 @@ export default function ForSaaSPage() {
               href="/features"
               className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
             >
-              See all 16 features →
+              See all features →
             </Link>
           </div>
         </div>

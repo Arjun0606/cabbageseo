@@ -15,14 +15,17 @@ import {
   Lightbulb,
   ClipboardList,
   Microscope,
-  Compass,
   Zap,
   FileText,
   Timer,
   TrendingUp,
-  Calendar,
-  Palette,
-  Code,
+  MessageSquare,
+  LineChart,
+  AlertTriangle,
+  PenTool,
+  Trophy,
+  Database,
+  Mail,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -65,8 +68,29 @@ const monitorFeatures: Feature[] = [
   {
     name: "Alerts & Notifications",
     description:
-      "Email alerts on Scout, real-time notifications on Dominate. Never miss a competitor move.",
+      "Email alerts when your visibility changes. Never miss a competitor move.",
     icon: <Bell className="w-5 h-5" />,
+    plan: "scout",
+  },
+  {
+    name: "Score Drop Alerts",
+    description:
+      "Instant email + Slack notification when your visibility drops 5+ points. Includes the queries you're now losing.",
+    icon: <AlertTriangle className="w-5 h-5" />,
+    plan: "scout",
+  },
+  {
+    name: "Historical Trend Chart",
+    description:
+      "Line chart of your AI visibility over time. Track score, queries won, and queries lost across weeks and months.",
+    icon: <LineChart className="w-5 h-5" />,
+    plan: "scout",
+  },
+  {
+    name: "Slack Integration",
+    description:
+      "Get check results, score drops, and weekly summaries delivered directly to your Slack channel.",
+    icon: <MessageSquare className="w-5 h-5" />,
     plan: "scout",
   },
 ];
@@ -100,22 +124,22 @@ const analyzeFeatures: Feature[] = [
     icon: <Microscope className="w-5 h-5" />,
     plan: "command",
   },
-  {
-    name: "Query Discovery",
-    description:
-      "Find new queries where buyers are asking about your category. Stop guessing which queries matter.",
-    icon: <Compass className="w-5 h-5" />,
-    plan: "command",
-  },
 ];
 
 const actFeatures: Feature[] = [
   {
-    name: "AI Page Generation",
+    name: "Authority Pages",
     description:
-      "Generate publish-ready pages optimized for AI citation. Not bullet points — actual content.",
+      "Generate comparison pages, category explainers, and FAQs that reinforce your credibility with AI systems. They support third-party trust signals so AI can confidently cite you — they don't cause recommendations on their own.",
     icon: <FileText className="w-5 h-5" />,
     plan: "scout",
+  },
+  {
+    name: "AI Content Preview",
+    description:
+      "Get a real \"Brand vs Competitor\" page generated during your free scan. First paragraph visible immediately — full page unlocked on signup.",
+    icon: <PenTool className="w-5 h-5" />,
+    plan: "all",
   },
   {
     name: "30-Day Sprint",
@@ -132,25 +156,32 @@ const actFeatures: Feature[] = [
     plan: "scout",
   },
   {
-    name: "Monthly Checkpoints",
+    name: "Get Listed Playbook",
     description:
-      "Automated monthly reports with citation trends, competitor movements, and next steps.",
-    icon: <Calendar className="w-5 h-5" />,
+      "Step-by-step instructions to get listed on every source AI trusts. G2, Capterra, Product Hunt, and more.",
+    icon: <Map className="w-5 h-5" />,
     plan: "scout",
   },
   {
-    name: "White-Label Reports",
+    name: "Weekly Email Digest",
     description:
-      "Branded reports for your clients. Perfect for agencies managing multiple brands.",
-    icon: <Palette className="w-5 h-5" />,
-    plan: "dominate",
+      "Weekly momentum report with citation changes, competitor moves, and your top action. Delivered every Monday.",
+    icon: <Bell className="w-5 h-5" />,
+    plan: "scout",
   },
   {
-    name: "API Access",
+    name: "Teaser Drip Emails",
     description:
-      "Full API access for custom integrations and automated workflows.",
-    icon: <Code className="w-5 h-5" />,
-    plan: "dominate",
+      "Automated 3-email nurture sequence after free scans. Score recap, competitor insights, and action preview delivered over 5 days.",
+    icon: <Mail className="w-5 h-5" />,
+    plan: "all",
+  },
+  {
+    name: "Custom Query Tracking",
+    description:
+      "Monitor your exact buying queries. Add the queries your customers actually ask and track visibility for each one.",
+    icon: <Target className="w-5 h-5" />,
+    plan: "scout",
   },
 ];
 
@@ -198,25 +229,28 @@ const comparisonFeatures = [
   { name: "AI Citation Tracking", free: true, scout: true, command: true, dominate: true },
   { name: "GEO Score", free: true, scout: true, command: true, dominate: true },
   { name: "Manual Checks", free: "3/day", scout: "Unlimited", command: "Unlimited", dominate: "Unlimited" },
-  { name: "Daily Auto-Check", free: false, scout: true, command: true, dominate: true },
-  { name: "Hourly Auto-Check", free: false, scout: false, command: true, dominate: true },
+  { name: "Auto-Check Frequency", free: false, scout: "Weekly", command: "Every 3 days", dominate: "Daily + Hourly" },
+  { name: "Score Drop Alerts", free: false, scout: true, command: true, dominate: true },
+  { name: "Historical Trend Chart", free: "7 days", scout: "30 days", command: "365 days", dominate: "365 days" },
   { name: "Competitor Tracking", free: false, scout: "3", command: "10", dominate: "25" },
+  { name: "Custom Query Tracking", free: false, scout: "5 queries", command: "Unlimited", dominate: "Unlimited" },
   { name: "Trust Map", free: false, scout: true, command: true, dominate: true },
+  { name: "Get Listed Playbook", free: false, scout: true, command: true, dominate: true },
   { name: "Email Alerts", free: false, scout: true, command: true, dominate: true },
-  { name: "Real-Time Alerts", free: false, scout: false, command: false, dominate: true },
+  { name: "Slack Integration", free: false, scout: true, command: true, dominate: true },
+  { name: "Weekly Email Digest", free: false, scout: true, command: true, dominate: true },
   { name: "Gap Analysis", free: false, scout: "5/mo", command: "Unlimited", dominate: "Unlimited" },
   { name: "Content Recommendations", free: false, scout: "5/mo", command: "Unlimited", dominate: "Unlimited" },
-  { name: "AI Page Generation", free: false, scout: "3/mo", command: "15/mo", dominate: "Unlimited" },
+  { name: "Authority Pages", free: false, scout: "3/mo", command: "15/mo", dominate: "Unlimited" },
   { name: "Weekly Action Plans", free: false, scout: false, command: true, dominate: true },
   { name: "Competitor Deep Dive", free: false, scout: false, command: true, dominate: true },
-  { name: "Query Discovery", free: false, scout: false, command: true, dominate: true },
   { name: "30-Day Sprint", free: false, scout: true, command: true, dominate: true },
   { name: "Momentum Scoring", free: false, scout: true, command: true, dominate: true },
-  { name: "Monthly Checkpoints", free: false, scout: true, command: true, dominate: true },
   { name: "Sites", free: "1", scout: "1", command: "5", dominate: "25" },
+  { name: "AI Content Preview", free: true, scout: true, command: true, dominate: true },
+  { name: "Competitor Quick-Scan", free: true, scout: true, command: true, dominate: true },
+  { name: "Bulk Scanning API", free: false, scout: false, command: "50/req", dominate: "50/req" },
   { name: "Team Members", free: "1", scout: "1", command: "5", dominate: "Unlimited" },
-  { name: "White-Label Reports", free: false, scout: false, command: false, dominate: true },
-  { name: "API Access", free: false, scout: false, command: false, dominate: true },
   { name: "Priority Support", free: false, scout: false, command: true, dominate: true },
 ];
 
@@ -238,7 +272,7 @@ export default function FeaturesPage() {
             variant="outline"
             className="mb-6 text-emerald-400 border-emerald-500/30"
           >
-            16 features across 4 plans
+            25+ features across 4 plans
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Everything you need to win in AI search
@@ -271,7 +305,7 @@ export default function FeaturesPage() {
               Know exactly where you stand
             </h2>
             <p className="text-zinc-400 max-w-2xl">
-              Real-time tracking across ChatGPT, Perplexity, and Google AI.
+              Daily tracking across ChatGPT, Perplexity, and Google AI.
               See who gets recommended — and who doesn&apos;t.
             </p>
           </div>

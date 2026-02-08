@@ -84,17 +84,28 @@ export async function updateSession(request: NextRequest) {
     "/for/agencies",
     "/vs/manual-tracking",
     "/teaser",         // Teaser results page (no signup required)
+    "/blog",           // Blog index
+    "/leaderboard",    // Public leaderboard
     "/auth/callback",  // OAuth callback must be public
   ];
-  
+
   // Define public API route prefixes (these handle their own auth)
   // ALL /api routes should handle their own auth and return JSON responses
   const publicApiPrefixes = [
     "/api/",  // All API routes handle their own auth - return JSON, not redirects
   ];
-  
+
+  // Public route prefixes (e.g. /teaser/abc, /report/abc)
+  const publicRoutePrefixes = [
+    "/teaser/",
+    "/report/",
+    "/ai-visibility/",  // Programmatic SEO pages
+  ];
+
   const isPublicRoute = publicRoutes.some(
     (route) => request.nextUrl.pathname === route
+  ) || publicRoutePrefixes.some(
+    (prefix) => request.nextUrl.pathname.startsWith(prefix)
   );
   
   const isPublicApi = publicApiPrefixes.some(

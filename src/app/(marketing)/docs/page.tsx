@@ -18,7 +18,8 @@ import {
   FileText,
   TrendingUp,
   Timer,
-  Compass,
+  PenTool,
+  Database,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -77,11 +78,11 @@ All numbers come from real AI responses. Citations in your dashboard represent a
       {
         title: "Check Limits by Plan",
         content: `• **Free**: 3 manual checks per day for 7 days (then access expires)
-• **Scout ($49/mo)**: Unlimited manual checks + daily automated checks
-• **Command ($149/mo)**: Unlimited manual checks + hourly automated checks
-• **Dominate ($349/mo)**: Unlimited manual checks + real-time monitoring
+• **Scout ($49/mo)**: Unlimited manual checks + weekly automated checks (Mondays)
+• **Command ($149/mo)**: Unlimited manual checks + auto-checks every 3 days
+• **Dominate ($349/mo)**: Unlimited manual checks + daily auto-checks + hourly monitoring
 
-**Note**: Automated checks run in the background and don't count against manual check limits. There are no monthly limits on manual checks for paid plans.`,
+**Note**: Automated checks run in the background and don't count against manual check limits. If your visibility score drops 5+ points, you'll get an instant alert via email and Slack (if configured).`,
       },
     ],
   },
@@ -140,27 +141,29 @@ This is your blueprint to win specific queries.`,
     ],
   },
   {
-    id: "page-generation",
-    title: "AI Page Generation",
+    id: "authority-pages",
+    title: "Authority Pages",
     icon: FileText,
     items: [
       {
-        title: "What is AI Page Generation?",
-        content: `CabbageSEO can generate full, publish-ready pages optimized for AI citation. Not bullet points — actual content you can paste into your CMS and publish same day.
+        title: "What are Authority Pages?",
+        content: `Authority Pages are comparison pages, category explainers, and FAQs designed to reinforce your credibility with AI systems. They work alongside your trust signals — G2 listings, Capterra reviews, Reddit mentions — by giving AI additional context to validate its recommendations.
 
-Pages are generated using your citation data, competitor intelligence, and gap analysis to create deeply contextual content that generic AI tools can't match.`,
+Pages are generated using your citation data, competitor intelligence, and gap analysis to create deeply relevant content that generic AI tools can't match.
+
+Authority Pages reinforce third-party trust signals (reviews, listings, mentions) so AI platforms can confidently cite you — they don't cause recommendations on their own.`,
       },
       {
         title: "How it works",
         content: `1. Choose a query where you want better AI visibility
-2. Select the page type (comparison page, feature page, use case, etc.)
+2. Select the page type (comparison page, category explainer, FAQ, etc.)
 3. CabbageSEO generates a full page with headings, content, FAQs, and structured data
 4. Review, edit if needed, and publish to your site
 
-Each page is tailored to your specific gaps and designed to address the exact reasons AI currently recommends your competitors.`,
+Each page is tailored to your specific gaps and designed to reinforce the trust signals AI already looks for when recommending products.`,
       },
       {
-        title: "Page generation limits",
+        title: "Authority page limits",
         content: `• **Free**: Not available
 • **Scout**: 3 pages per month
 • **Command**: 15 pages per month
@@ -223,28 +226,6 @@ The momentum score is available on Scout, Command, and Dominate plans.`,
     ],
   },
   {
-    id: "query-discovery",
-    title: "Query Discovery",
-    icon: Compass,
-    items: [
-      {
-        title: "Finding new queries",
-        content: `Query Discovery helps you find new questions where buyers are asking about your category. AI-suggested queries based on your industry, competitors, and existing citation data.
-
-Instead of guessing which queries matter, CabbageSEO identifies high-intent buyer queries you should be tracking and optimizing for.`,
-      },
-      {
-        title: "How to use it",
-        content: `Navigate to Query Discovery from your dashboard. You'll see:
-• Suggested queries based on your industry
-• Queries where competitors are cited but you're not
-• High-intent buyer questions in your category
-
-Query Discovery is available on Command and Dominate plans.`,
-      },
-    ],
-  },
-  {
     id: "competitors",
     title: "Competitor Tracking",
     icon: Target,
@@ -272,9 +253,87 @@ Use this intelligence to build a targeted strategy for overtaking specific compe
         content: `Get notified when competitors gain or lose AI citations:
 • **Scout**: Weekly email summary
 • **Command**: Email alerts within 24 hours
-• **Dominate**: Real-time notifications
+• **Dominate**: Priority email alerts
 
 Never be surprised by a competitor's move.`,
+      },
+    ],
+  },
+  {
+    id: "notifications",
+    title: "Notifications & Slack",
+    icon: Globe,
+    items: [
+      {
+        title: "Slack Integration",
+        content: `Connect Slack to get AI visibility alerts directly in your channel. Available on all paid plans.
+
+**Setup:**
+1. Go to Settings > Notifications
+2. Create a Slack incoming webhook (link provided in settings)
+3. Paste the webhook URL and click "Test Connection"
+4. Save — you'll now receive automated alerts
+
+**What you'll get in Slack:**
+• Check results (score and queries won/lost)
+• Score drop alerts (when visibility falls 5+ points)
+• Weekly summary reports (every Monday)`,
+      },
+      {
+        title: "Score Drop Alerts",
+        content: `When your AI visibility score drops by 5 or more points, you'll get an instant alert via:
+• **Email** — includes the score change and queries you're now losing
+• **Slack** — if configured, sent to your channel automatically
+
+Score drops are detected during automated checks. The alert includes specific queries you were winning but are now losing, so you can take targeted action.`,
+      },
+      {
+        title: "Email Notifications",
+        content: `Manage your email preferences in Settings > Notifications:
+• **Citation Alerts** — when new AI citations are found
+• **Competitor Alerts** — when competitors gain citations
+• **Weekly Report** — Monday morning digest with score, wins, competitor moves, and top action
+
+All email notifications can be toggled on/off individually.`,
+      },
+    ],
+  },
+  {
+    id: "trend-chart",
+    title: "Trend Chart & History",
+    icon: TrendingUp,
+    items: [
+      {
+        title: "Historical Trend Chart",
+        content: `The trend chart on your dashboard shows your AI visibility score over time. Each data point represents a check (manual or automated).
+
+**What's tracked:**
+• Overall visibility score (0-100)
+• Queries won (AI recommends you)
+• Queries lost (AI recommends competitors)
+
+**History limits by plan:**
+• Free: 7 days
+• Scout: 30 days
+• Command: 365 days
+• Dominate: 365 days
+
+Hover over any data point to see the full breakdown for that check.`,
+      },
+      {
+        title: "Custom Query Tracking",
+        content: `Monitor your exact buying queries. Instead of relying only on auto-generated queries, add the specific questions your customers ask.
+
+**How to use:**
+1. On the dashboard, find the "Custom Queries" section below "Queries You're Losing"
+2. Type a query and press Enter or click Add
+3. Your custom queries will be included in future checks
+
+**Limits by plan:**
+• Free: Not available
+• Scout: 5 custom queries
+• Command: Unlimited
+• Dominate: Unlimited`,
       },
     ],
   },
@@ -322,6 +381,85 @@ This is calculated only for queries you've tracked. It's labeled "AI mention sha
     ],
   },
   {
+    id: "content-preview",
+    title: "AI Content Preview",
+    icon: PenTool,
+    items: [
+      {
+        title: "What is the AI Content Preview?",
+        content: `When you scan a domain with the free teaser tool, CabbageSEO generates a real "Brand vs Competitor" comparison page preview using your scan data. The first paragraph and one FAQ are fully visible; the rest is blurred behind a signup gate.
+
+This shows you the kind of content CabbageSEO creates — before you even sign up.`,
+      },
+      {
+        title: "How is it generated?",
+        content: `The preview is generated in parallel with your scan results using AI. It uses:
+• Your domain and brand name
+• The top competitor found during the scan
+• Real competitive data from the scan
+
+The preview runs non-blocking — if generation fails, your scan results still work normally.`,
+      },
+      {
+        title: "Full content on paid plans",
+        content: `On Scout, Command, and Dominate plans, you get full Authority Pages:
+• **Scout**: 3 pages per month
+• **Command**: 15 pages per month
+• **Dominate**: Unlimited pages
+
+Each page includes headings, body content, FAQ schema, and structured data — ready to publish.`,
+      },
+    ],
+  },
+  {
+    id: "bulk-api",
+    title: "Bulk Scanning API",
+    icon: Database,
+    items: [
+      {
+        title: "API Overview",
+        content: `The Bulk Scanning API lets you scan up to 50 domains in a single request. Available on Command and Dominate plans.
+
+**Endpoint:** POST /api/v1/scan/bulk
+**Auth:** x-api-key header
+**Rate Limit:** 200 scans per hour per API key`,
+      },
+      {
+        title: "Request format",
+        content: `Send a POST request with JSON body:
+
+{
+  "domains": ["example.com", "competitor.com"]
+}
+
+**Limits:**
+• Max 50 domains per request
+• 200 scans per hour per API key
+• Domains are processed in parallel batches of 3`,
+      },
+      {
+        title: "Response format",
+        content: `The API returns results for each domain:
+
+{
+  "results": [
+    {
+      "domain": "example.com",
+      "status": "success",
+      "reportId": "abc123",
+      "reportUrl": "https://cabbageseo.com/teaser/abc123",
+      "score": 45,
+      "verdict": "Invisible"
+    }
+  ],
+  "summary": { "total": 2, "succeeded": 2, "failed": 0 }
+}
+
+Each result includes a shareable report URL and the overall visibility score.`,
+      },
+    ],
+  },
+  {
     id: "faq",
     title: "FAQ",
     icon: HelpCircle,
@@ -329,11 +467,11 @@ This is calculated only for queries you've tracked. It's labeled "AI mention sha
       {
         title: "How often are checks run?",
         content: `• **Free**: 3 manual checks per day for 7 days
-• **Scout**: Daily automated checks + unlimited manual checks
-• **Command**: Hourly automated checks + unlimited manual checks
-• **Dominate**: Real-time monitoring + unlimited manual checks
+• **Scout**: Unlimited manual checks + weekly automated checks (Mondays)
+• **Command**: Unlimited manual checks + auto-checks every 3 days
+• **Dominate**: Unlimited manual checks + daily auto-checks + hourly monitoring
 
-Automated checks happen in the background. You'll receive email alerts when new citations are found.`,
+Automated checks happen in the background. You'll receive email + Slack alerts when new citations are found or when your score drops.`,
       },
       {
         title: "Can I check any website?",

@@ -14,6 +14,17 @@ import {
   DollarSign,
   FileText,
   Eye,
+  MessageSquare,
+  LineChart,
+  AlertTriangle,
+  Zap,
+  Target,
+  Share2,
+  PenTool,
+  Database,
+  Trophy,
+  Mail,
+  Users,
 } from "lucide-react";
 
 interface ChangelogEntry {
@@ -26,11 +37,115 @@ interface ChangelogEntry {
 
 const entries: ChangelogEntry[] = [
   {
+    date: "February 9, 2026",
+    category: "new",
+    title: "AI Content Preview in Teaser",
+    description:
+      "Free scans now generate a real \"Brand vs Competitor\" comparison page preview. First paragraph and one FAQ visible immediately — rest blurred behind signup. Shows the value of our content generation before you sign up.",
+    icon: <PenTool className="w-5 h-5" />,
+  },
+  {
+    date: "February 9, 2026",
+    category: "new",
+    title: "Competitor Quick-Scan",
+    description:
+      "After viewing a teaser report, scan any competitor with one click. Quick-scan buttons for the top 4 competitors found in your report, plus a custom domain input. Creates a viral loop — scan your brand, then scan competitors.",
+    icon: <Users className="w-5 h-5" />,
+  },
+  {
+    date: "February 9, 2026",
+    category: "new",
+    title: "Bulk Scanning API",
+    description:
+      "Programmatic access to scan up to 50 domains per request. POST to /api/v1/scan/bulk with an API key. Rate-limited to 200 scans/hour. Perfect for agencies onboarding new clients or building integrations.",
+    icon: <Database className="w-5 h-5" />,
+  },
+  {
+    date: "February 9, 2026",
+    category: "new",
+    title: "Teaser Drip Email Sequence",
+    description:
+      "Automated 3-email nurture after free scans. Day 0: score recap. Day 2: competitor fear. Day 5: action preview with content preview teaser. Runs daily at 9 AM UTC via Inngest cron.",
+    icon: <Mail className="w-5 h-5" />,
+  },
+  {
+    date: "February 9, 2026",
+    category: "new",
+    title: "AI Visibility Leaderboard",
+    description:
+      "Public leaderboard of the top 30 most visible SaaS brands in AI search. Filterable by category. Check where your brand ranks — or scan to find out. Available at /leaderboard.",
+    icon: <Trophy className="w-5 h-5" />,
+  },
+  {
+    date: "February 9, 2026",
+    category: "new",
+    title: "Blog & Content Hub",
+    description:
+      "New blog at /blog with guides on AI SEO, generative engine optimization, and AI visibility strategy. Targeting high-intent keywords like \"how to get recommended by ChatGPT\" and \"GEO guide 2026\".",
+    icon: <FileText className="w-5 h-5" />,
+  },
+  {
+    date: "February 9, 2026",
+    category: "improved",
+    title: "Upgraded OG Score Cards",
+    description:
+      "Shared teaser reports now show competitor names, verdict pills, and a split layout in social previews. Richer sharing experience on Twitter, LinkedIn, and Slack.",
+    icon: <Share2 className="w-5 h-5" />,
+  },
+  {
+    date: "February 8, 2026",
+    category: "new",
+    title: "Slack Integration",
+    description:
+      "Get AI visibility alerts directly in Slack. Check results, score drop notifications, and weekly summaries delivered to your channel. Configure in Settings > Notifications with a single webhook URL.",
+    icon: <MessageSquare className="w-5 h-5" />,
+  },
+  {
+    date: "February 8, 2026",
+    category: "new",
+    title: "Score Drop Alerts",
+    description:
+      "Instant email + Slack notification when your AI visibility drops 5 or more points. Includes the specific queries you're now losing so you can take action immediately.",
+    icon: <AlertTriangle className="w-5 h-5" />,
+  },
+  {
+    date: "February 8, 2026",
+    category: "new",
+    title: "Plan-Tiered Auto-Checks",
+    description:
+      "Automated checks now run on a schedule based on your plan: weekly for Scout, every 3 days for Command, daily + hourly for Dominate. Free users are excluded from automated runs. No manual action needed.",
+    icon: <Zap className="w-5 h-5" />,
+  },
+  {
+    date: "February 8, 2026",
+    category: "new",
+    title: "Historical Trend Chart",
+    description:
+      "Line chart of your AI visibility score over time, right on the dashboard. Track queries won, queries lost, and overall score across weeks and months. Like Ahrefs rank tracker, but for AI citations.",
+    icon: <LineChart className="w-5 h-5" />,
+  },
+  {
+    date: "February 8, 2026",
+    category: "new",
+    title: "Custom Query Tracking",
+    description:
+      "Monitor your exact buying queries. Add the queries your customers actually ask and track visibility for each one. Scout gets 5 slots, Command and Dominate get unlimited.",
+    icon: <Target className="w-5 h-5" />,
+  },
+  {
+    date: "February 8, 2026",
+    category: "new",
+    title: "Dynamic OG Score Cards",
+    description:
+      "Shared teaser reports now generate dynamic social preview images. When you share a report link on Twitter, LinkedIn, or Slack, it shows a rich 1200x630 card with the domain, score, and verdict.",
+    icon: <Share2 className="w-5 h-5" />,
+  },
+  {
     date: "February 6, 2026",
     category: "new",
-    title: "AI Page Generation",
+    title: "Authority Pages (formerly Support Pages)",
     description:
-      "Generate full, publish-ready pages optimized for AI citation. Not bullet points — actual content you can paste into your CMS and publish same day. Uses your citation data, competitor intelligence, and gap analysis to create deeply contextual content that ChatGPT alone can't match.",
+      "Generate comparison pages, category explainers, and FAQs that reinforce your credibility with AI systems. Uses your citation data, competitor intelligence, and gap analysis to create pages that reinforce the trust signals AI already looks for — not generic SEO content.",
     icon: <FileText className="w-5 h-5" />,
   },
   {

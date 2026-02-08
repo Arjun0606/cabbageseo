@@ -8,8 +8,6 @@ import {
   Target,
   TrendingUp,
   Globe,
-  Palette,
-  Code,
   Users,
   Check,
   MessageSquare,
@@ -36,8 +34,8 @@ export default function ForAgenciesPage() {
           </h1>
 
           <p className="text-xl text-zinc-300 mb-12 max-w-2xl mx-auto">
-            Manage AI citation tracking across all your client brands. White-label
-            reports, multi-site management, and competitive intelligence at scale.
+            Manage AI citation tracking across all your client brands. Multi-site
+            management, weekly digests, and competitive intelligence at scale.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -139,7 +137,7 @@ export default function ForAgenciesPage() {
                 icon: <FileText className="w-6 h-6 text-blue-400" />,
                 title: "Report",
                 description:
-                  "Generate white-label reports showing gaps, competitors, and opportunities.",
+                  "Share weekly digest reports showing gaps, competitors, and opportunities.",
               },
               {
                 step: "3",
@@ -183,7 +181,7 @@ export default function ForAgenciesPage() {
             Features designed for teams managing multiple client brands.
           </p>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
               <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6">
                 <Globe className="w-6 h-6 text-blue-400" />
@@ -200,28 +198,55 @@ export default function ForAgenciesPage() {
 
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
               <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6">
-                <Palette className="w-6 h-6 text-blue-400" />
+                <MessageSquare className="w-6 h-6 text-blue-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">
-                White-Label Reports
+                Slack Integration
               </h3>
               <p className="text-zinc-400">
-                Generate branded reports for your clients. Show AI citation data,
-                competitor analysis, and progress tracking with your agency&apos;s
-                branding.
+                Get check results, score drop alerts, and weekly summaries
+                delivered to your team&apos;s Slack channel. No dashboard logins
+                needed.
               </p>
             </div>
 
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
               <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6">
-                <Code className="w-6 h-6 text-blue-400" />
+                <TrendingUp className="w-6 h-6 text-blue-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">
-                API Access
+                Trend Charts &amp; Proof
               </h3>
               <p className="text-zinc-400">
-                Integrate AI visibility data into your existing tools and
-                workflows. Build custom dashboards and automated reporting.
+                Historical visibility charts per client. Show ROI with
+                before/after data. Score drop alerts when clients need attention.
+              </p>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+              <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6">
+                <Target className="w-6 h-6 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">
+                Get Listed Playbook
+              </h3>
+              <p className="text-zinc-400">
+                Step-by-step instructions to get each client listed on every source
+                AI trusts. G2, Capterra, Product Hunt, Reddit, and more.
+              </p>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+              <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6">
+                <FileText className="w-6 h-6 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">
+                Automated Reports
+              </h3>
+              <p className="text-zinc-400">
+                Weekly email + Slack reports per client with momentum scores,
+                competitor moves, and top actions. Share progress without
+                building custom reports.
               </p>
             </div>
 
@@ -236,6 +261,33 @@ export default function ForAgenciesPage() {
                 Track up to 25 competitors per client. See cross-client
                 competitive trends and identify opportunities across your
                 portfolio.
+              </p>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+              <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6">
+                <Search className="w-6 h-6 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">
+                Bulk Scanning API
+              </h3>
+              <p className="text-zinc-400">
+                Scan up to 50 domains per API call. Onboard new clients in
+                seconds with programmatic access. Rate-limited to 200
+                scans/hour.
+              </p>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+              <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6">
+                <FileText className="w-6 h-6 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">
+                AI Content Generation
+              </h3>
+              <p className="text-zinc-400">
+                Generate comparison pages and authority content for each client.
+                AI-written, data-driven content ready to publish.
               </p>
             </div>
           </div>
@@ -267,10 +319,12 @@ export default function ForAgenciesPage() {
                 {[
                   "5 sites (1 per client)",
                   "10 competitors per site",
-                  "Hourly auto-checks",
-                  "Full gap analysis",
-                  "Weekly action plans",
-                  "AI page generation (15/mo)",
+                  "Auto-checks every 3 days",
+                  "Score drop alerts (email + Slack)",
+                  "Full gap analysis + trend charts",
+                  "Authority pages (15/mo)",
+                  "Bulk scanning API",
+                  "Slack integration",
                   "5 team members",
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3 text-sm text-zinc-300">
@@ -304,11 +358,12 @@ export default function ForAgenciesPage() {
                 {[
                   "25 sites",
                   "25 competitors per site",
-                  "Real-time alerts",
-                  "Unlimited intelligence",
-                  "Unlimited page generation",
-                  "White-label reports",
-                  "API access",
+                  "Daily + hourly auto-checks",
+                  "Score drop alerts (email + Slack)",
+                  "Unlimited intelligence + authority pages",
+                  "Bulk scanning API",
+                  "365-day trend chart history",
+                  "Slack integration",
                   "Unlimited team members",
                   "Priority support",
                 ].map((item) => (
