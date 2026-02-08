@@ -22,10 +22,16 @@ export const metadata: Metadata = {
     "AI visibility",
     "AI citations",
     "ChatGPT SEO",
-    "Perplexity tracking",
+    "Perplexity SEO",
     "AI search optimization",
     "competitor intelligence",
     "GEO optimization",
+    "AI recommendation tracking",
+    "ChatGPT visibility",
+    "AI search ranking",
+    "is my brand on ChatGPT",
+    "AI citation monitoring",
+    "generative engine optimization",
   ],
   authors: [{ name: "CabbageSEO" }],
   creator: "CabbageSEO",
@@ -76,22 +82,80 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
 };
 
-// JSON-LD Schema for SEO
-const jsonLd = {
+// JSON-LD Schemas for SEO — multiple types for maximum coverage
+const jsonLdOrg = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "CabbageSEO",
   url: "https://cabbageseo.com",
   logo: "https://cabbageseo.com/apple-touch-icon.png",
-  description: "AI Visibility Intelligence - See who AI recommends in your market",
-  sameAs: [
-    "https://x.com/Arjun06061",
-  ],
+  description: "AI Visibility Intelligence — Track who AI recommends in your market",
+  sameAs: ["https://x.com/Arjun06061"],
   contactPoint: {
     "@type": "ContactPoint",
     email: "arjun@cabbageseo.com",
     contactType: "customer support",
   },
+};
+
+const jsonLdWebSite = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "CabbageSEO",
+  url: "https://cabbageseo.com",
+  description: "AI Visibility Intelligence — See who AI recommends in your market",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: "https://cabbageseo.com/teaser?domain={search_term_string}",
+    },
+    "query-input": "required name=search_term_string",
+  },
+};
+
+const jsonLdApp = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "CabbageSEO",
+  url: "https://cabbageseo.com",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  description:
+    "Track whether ChatGPT, Perplexity & Google AI recommend your brand or your competitors. Daily monitoring, competitor alerts, and AI-generated comparison pages.",
+  offers: [
+    {
+      "@type": "Offer",
+      name: "Free Trial",
+      price: "0",
+      priceCurrency: "USD",
+      description: "7-day free trial with full access",
+    },
+    {
+      "@type": "Offer",
+      name: "Scout",
+      price: "49",
+      priceCurrency: "USD",
+      billingIncrement: "P1M",
+      description: "1 site, 3 competitors, daily AI monitoring",
+    },
+    {
+      "@type": "Offer",
+      name: "Command",
+      price: "149",
+      priceCurrency: "USD",
+      billingIncrement: "P1M",
+      description: "5 sites, 10 competitors, hourly AI monitoring",
+    },
+    {
+      "@type": "Offer",
+      name: "Dominate",
+      price: "349",
+      priceCurrency: "USD",
+      billingIncrement: "P1M",
+      description: "25 sites, 25 competitors, real-time AI monitoring",
+    },
+  ],
 };
 
 export default function RootLayout({
@@ -104,7 +168,15 @@ export default function RootLayout({
       <head>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrg) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebSite) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdApp) }}
         />
       </head>
       <body className="min-h-screen bg-white font-sans antialiased dark:bg-slate-950">

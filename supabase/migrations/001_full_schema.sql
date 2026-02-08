@@ -16,6 +16,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- DROP EXISTING TABLES (reverse dependency order)
 -- ============================================
 
+DROP TABLE IF EXISTS teaser_subscribers CASCADE;
+DROP TABLE IF EXISTS teaser_reports CASCADE;
+DROP TABLE IF EXISTS generated_pages CASCADE;
 DROP TABLE IF EXISTS referrals CASCADE;
 DROP TABLE IF EXISTS monthly_checkpoints CASCADE;
 DROP TABLE IF EXISTS sprint_actions CASCADE;
@@ -50,6 +53,7 @@ DROP TABLE IF EXISTS organizations CASCADE;
 -- DROP EXISTING ENUMS
 -- ============================================
 
+DROP TYPE IF EXISTS generated_page_status CASCADE;
 DROP TYPE IF EXISTS referral_status CASCADE;
 DROP TYPE IF EXISTS sprint_action_status CASCADE;
 DROP TYPE IF EXISTS integration_status CASCADE;
@@ -90,6 +94,7 @@ CREATE TYPE cms_type AS ENUM ('wordpress', 'webflow', 'shopify', 'ghost', 'custo
 CREATE TYPE integration_status AS ENUM ('active', 'error', 'disconnected');
 CREATE TYPE sprint_action_status AS ENUM ('pending', 'in_progress', 'completed', 'skipped');
 CREATE TYPE referral_status AS ENUM ('pending', 'signed_up', 'converted', 'expired');
+CREATE TYPE generated_page_status AS ENUM ('draft', 'published', 'archived');
 
 -- ============================================
 -- ORGANIZATIONS
@@ -1050,6 +1055,69 @@ CREATE INDEX referrals_referrer_idx ON referrals(referrer_organization_id);
 CREATE INDEX referrals_referred_org_idx ON referrals(referred_organization_id);
 
 -- ============================================
+-- GENERATED PAGES (AI Page Generator)
+-- ============================================
+
+CREATE TABLE generated_pages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  site_id UUID NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+
+  query TEXT NOT NULL,
+  title TEXT NOT NULL,
+  meta_description TEXT,
+  body TEXT NOT NULL,
+  schema_markup JSONB DEFAULT '{}',
+  target_entities JSONB DEFAULT '[]',
+  competitors_analyzed JSONB DEFAULT '[]',
+  word_count INTEGER,
+
+  status generated_page_status DEFAULT 'draft',
+  published_url TEXT,
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX generated_pages_site_idx ON generated_pages(site_id);
+CREATE INDEX generated_pages_query_idx ON generated_pages(query);
+
+-- ============================================
+-- TEASER REPORTS (Shareable free scan results)
+-- ============================================
+
+CREATE TABLE teaser_reports (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  domain TEXT NOT NULL,
+  visibility_score INTEGER NOT NULL,
+  is_invisible BOOLEAN NOT NULL,
+  competitors_mentioned JSONB DEFAULT '[]',
+  results JSONB NOT NULL,
+  summary JSONB NOT NULL,
+  content_preview JSONB DEFAULT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX teaser_reports_domain_idx ON teaser_reports(domain);
+CREATE INDEX teaser_reports_created_idx ON teaser_reports(created_at);
+
+-- ============================================
+-- TEASER SUBSCRIBERS (Score change notifications)
+-- ============================================
+
+CREATE TABLE teaser_subscribers (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT NOT NULL,
+  domain TEXT NOT NULL,
+  report_id UUID,
+  unsubscribed BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX teaser_subscribers_domain_idx ON teaser_subscribers(domain);
+CREATE INDEX teaser_subscribers_email_idx ON teaser_subscribers(email);
+
+-- ============================================
 -- KEYWORDS → CONTENT FK (added after both tables exist)
 -- ============================================
 
@@ -1091,6 +1159,8 @@ ALTER TABLE aio_analyses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sprint_actions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE monthly_checkpoints ENABLE ROW LEVEL SECURITY;
 ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE generated_pages ENABLE ROW LEVEL SECURITY;
+-- teaser_reports and teaser_subscribers are public (no auth), accessed via service client only
 
 -- ============================================
 -- RLS POLICIES - Organization-scoped access
@@ -1298,6 +1368,12 @@ CREATE POLICY "Users can manage org entities"
 DROP POLICY IF EXISTS "Users can manage org aio analyses" ON aio_analyses;
 CREATE POLICY "Users can manage org aio analyses"
   ON aio_analyses FOR ALL
+  USING (site_id IN (SELECT id FROM sites WHERE organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())));
+
+-- Generated Pages: site-scoped
+DROP POLICY IF EXISTS "Users can manage org generated pages" ON generated_pages;
+CREATE POLICY "Users can manage org generated pages"
+  ON generated_pages FOR ALL
   USING (site_id IN (SELECT id FROM sites WHERE organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())));
 
 -- ============================================

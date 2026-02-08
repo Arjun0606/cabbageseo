@@ -372,7 +372,7 @@ export const contentIdeas = pgTable(
 );
 
 // ============================================
-// GENERATED PAGES (AI Page Generator)
+// GENERATED PAGES (Support Pages)
 // ============================================
 
 export const generatedPages = pgTable(
@@ -1341,6 +1341,60 @@ export const monthlyCheckpoints = pgTable(
 );
 
 // ============================================
+// TEASER REPORTS (Shareable free scan results)
+// ============================================
+
+export const teaserReports = pgTable(
+  "teaser_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    domain: text("domain").notNull(),
+    visibilityScore: integer("visibility_score").notNull(),
+    isInvisible: boolean("is_invisible").notNull(),
+    competitorsMentioned: jsonb("competitors_mentioned").$type<string[]>().default([]),
+    results: jsonb("results").notNull(),
+    summary: jsonb("summary").notNull(),
+    contentPreview: jsonb("content_preview").$type<ContentPreviewData | null>().default(null),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("teaser_reports_domain_idx").on(table.domain),
+    index("teaser_reports_created_idx").on(table.createdAt),
+  ]
+);
+
+export type ContentPreviewData = {
+  title: string;
+  metaDescription: string;
+  firstParagraph: string;
+  blurredBody: string;
+  faqItems: Array<{ question: string; answer: string }>;
+  wordCount: number;
+  competitorUsed: string;
+  generatedAt: string;
+};
+
+// ============================================
+// TEASER SUBSCRIBERS (Score change notifications)
+// ============================================
+
+export const teaserSubscribers = pgTable(
+  "teaser_subscribers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull(),
+    domain: text("domain").notNull(),
+    reportId: uuid("report_id"),
+    unsubscribed: boolean("unsubscribed").default(false).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("teaser_subscribers_domain_idx").on(table.domain),
+    index("teaser_subscribers_email_idx").on(table.email),
+  ]
+);
+
+// ============================================
 // REFERRALS
 // ============================================
 
@@ -1601,3 +1655,7 @@ export type MonthlyCheckpoint = typeof monthlyCheckpoints.$inferSelect;
 export type NewMonthlyCheckpoint = typeof monthlyCheckpoints.$inferInsert;
 export type Referral = typeof referrals.$inferSelect;
 export type NewReferral = typeof referrals.$inferInsert;
+export type TeaserReport = typeof teaserReports.$inferSelect;
+export type NewTeaserReport = typeof teaserReports.$inferInsert;
+export type TeaserSubscriber = typeof teaserSubscribers.$inferSelect;
+export type NewTeaserSubscriber = typeof teaserSubscribers.$inferInsert;

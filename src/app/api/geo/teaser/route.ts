@@ -8,6 +8,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { db, teaserReports } from "@/lib/db";
+import { generateTeaserPreview, type ContentPreviewData } from "@/lib/geo/teaser-preview-generator";
 
 // Rate limiting: simple in-memory store (in production, use Redis)
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
@@ -235,7 +237,7 @@ export async function POST(request: NextRequest) {
     // Track which platforms succeeded
     const platformErrors: string[] = [];
 
-    // Query Perplexity (one query)
+    // Query Perplexity first (we need competitor data for content preview)
     try {
       const perplexityResult = await queryPerplexity(queries[0]);
       const mentioned = extractMentionedDomains(perplexityResult.response, perplexityResult.citations);
@@ -251,20 +253,42 @@ export async function POST(request: NextRequest) {
       platformErrors.push("perplexity");
     }
 
-    // Query Gemini (one query)
-    try {
-      const geminiResult = await queryGemini(queries[1]);
-      const mentioned = extractMentionedDomains(geminiResult.response, geminiResult.mentions);
-      results.push({
-        query: queries[1],
-        platform: "gemini",
-        aiRecommends: mentioned.filter(d => d !== cleanDomain).slice(0, 5),
-        mentionedYou: mentioned.includes(cleanDomain) || geminiResult.response.toLowerCase().includes(cleanDomain.split(".")[0]),
-        snippet: geminiResult.response.slice(0, 300),
-      });
-    } catch (error) {
-      console.error("[Teaser] Gemini error:", error);
+    // Extract brand name and early competitors for content preview
+    const brandName = cleanDomain.replace(/\.(com|io|co|ai|app|dev|org|net)$/, "");
+    const earlyCompetitors = results.flatMap(r => r.aiRecommends);
+
+    // Run Gemini + Content Preview in parallel
+    const [geminiSettled, previewSettled] = await Promise.allSettled([
+      // Gemini query
+      (async () => {
+        const geminiResult = await queryGemini(queries[1]);
+        const mentioned = extractMentionedDomains(geminiResult.response, geminiResult.mentions);
+        return {
+          query: queries[1],
+          platform: "gemini" as const,
+          aiRecommends: mentioned.filter(d => d !== cleanDomain).slice(0, 5),
+          mentionedYou: mentioned.includes(cleanDomain) || geminiResult.response.toLowerCase().includes(cleanDomain.split(".")[0]),
+          snippet: geminiResult.response.slice(0, 300),
+        };
+      })(),
+      // Content preview generation (uses Perplexity competitors)
+      earlyCompetitors.length > 0
+        ? generateTeaserPreview(cleanDomain, earlyCompetitors, brandName)
+        : Promise.resolve(null),
+    ]);
+
+    // Process Gemini result
+    if (geminiSettled.status === "fulfilled") {
+      results.push(geminiSettled.value);
+    } else {
+      console.error("[Teaser] Gemini error:", geminiSettled.reason);
       platformErrors.push("gemini");
+    }
+
+    // Process preview result
+    let contentPreview: ContentPreviewData | null = null;
+    if (previewSettled.status === "fulfilled") {
+      contentPreview = previewSettled.value;
     }
 
     // Calculate summary
@@ -276,25 +300,48 @@ export async function POST(request: NextRequest) {
     const allCompetitors = new Set<string>();
     results.forEach(r => r.aiRecommends.forEach(c => allCompetitors.add(c)));
 
+    const competitorsMentioned = Array.from(allCompetitors).slice(0, 10);
+    const visibilityScore = isInvisible ? 0 : Math.min(100, mentionedCount * 25);
+    const summary = {
+      totalQueries,
+      mentionedCount,
+      isInvisible,
+      competitorsMentioned,
+      message: isInvisible
+        ? "You are invisible to AI search."
+        : mentionedCount < totalQueries
+          ? "AI sometimes recommends you, but competitors get more visibility."
+          : "AI is recommending you!",
+      // Include info about any platform failures
+      ...(platformErrors.length > 0 && {
+        platformsChecked: results.length,
+        platformErrors,
+      }),
+    };
+
+    // Save to DB for shareable URL (non-fatal)
+    let reportId: string | null = null;
+    try {
+      const [inserted] = await db.insert(teaserReports).values({
+        domain: cleanDomain,
+        visibilityScore,
+        isInvisible,
+        competitorsMentioned,
+        results: results as any,
+        summary: summary as any,
+        contentPreview: contentPreview as any,
+      }).returning({ id: teaserReports.id });
+      reportId = inserted.id;
+    } catch (err) {
+      console.error("[Teaser] Failed to save report:", err);
+    }
+
     return NextResponse.json({
       domain: cleanDomain,
       results,
-      summary: {
-        totalQueries,
-        mentionedCount,
-        isInvisible,
-        competitorsMentioned: Array.from(allCompetitors).slice(0, 10),
-        message: isInvisible 
-          ? "You are invisible to AI search."
-          : mentionedCount < totalQueries
-            ? "AI sometimes recommends you, but competitors get more visibility."
-            : "AI is recommending you!",
-        // Include info about any platform failures
-        ...(platformErrors.length > 0 && {
-          platformsChecked: results.length,
-          platformErrors,
-        }),
-      },
+      summary,
+      reportId,
+      contentPreview,
     });
   } catch (error) {
     console.error("[Teaser] Error:", error);

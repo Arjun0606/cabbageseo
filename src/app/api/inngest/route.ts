@@ -16,6 +16,7 @@ import { citationFunctions } from "@/lib/jobs/citation-jobs";
 import { monthlyCheckpointFunctions } from "@/lib/jobs/monthly-checkpoint";
 import { competitorAlertFunctions } from "@/lib/jobs/competitor-alert";
 import { trialDripFunctions } from "@/lib/jobs/trial-drip";
+import { teaserDripFunctions } from "@/lib/jobs/teaser-drip";
 
 // Export handlers for Inngest
 export const { GET, POST, PUT } = serve({
@@ -25,5 +26,6 @@ export const { GET, POST, PUT } = serve({
     ...monthlyCheckpointFunctions,
     ...competitorAlertFunctions,
     ...trialDripFunctions,
+    ...teaserDripFunctions,
   ],
 });

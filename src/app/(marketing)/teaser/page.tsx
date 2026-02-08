@@ -28,6 +28,9 @@ import {
   Share2,
   Linkedin,
 } from "lucide-react";
+import ContentPreview from "./[id]/content-preview";
+import CompetitorScan from "./[id]/competitor-scan";
+import type { ContentPreviewData } from "@/lib/db/schema";
 
 interface TeaserResult {
   query: string;
@@ -47,6 +50,8 @@ interface TeaserData {
     competitorsMentioned: string[];
     message: string;
   };
+  reportId?: string;
+  contentPreview?: ContentPreviewData;
 }
 
 /** Generate 3 personalized fix bullets based on scan data */
@@ -105,6 +110,7 @@ function TeaserContent() {
         "Asking ChatGPT about your market...",
         "Asking Perplexity who they recommend...",
         "Extracting competitor mentions...",
+        "Generating your custom content preview...",
         "Calculating your visibility score...",
       ];
 
@@ -143,6 +149,10 @@ function TeaserContent() {
     runTeaser();
   }, [domain, router]);
 
+  const shareUrl = data?.reportId
+    ? `https://cabbageseo.com/teaser/${data.reportId}`
+    : "https://cabbageseo.com";
+
   const shareText = data
     ? `I just checked if AI recommends my product (${domain})...\n\n` +
       `AI Visibility Score: ${data.summary.isInvisible ? "0/100" : `${Math.min(100, data.summary.mentionedCount * 25)}/100`}\n` +
@@ -152,7 +162,7 @@ function TeaserContent() {
       (data.summary.competitorsMentioned.length > 0
         ? `AI recommends ${data.summary.competitorsMentioned.length} competitors instead.\n`
         : "") +
-      `\nCheck yours free: cabbageseo.com`
+      `\nCheck yours free: ${shareUrl}`
     : "";
 
   const handleCopyResults = () => {
@@ -173,7 +183,7 @@ function TeaserContent() {
   const handleLinkedIn = () => {
     if (!shareText) return;
     window.open(
-      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://cabbageseo.com/teaser?domain=${domain}`)}`,
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
       "_blank"
     );
   };
@@ -189,6 +199,7 @@ function TeaserContent() {
       "Asking ChatGPT about your market...",
       "Asking Perplexity who they recommend...",
       "Extracting competitor mentions...",
+      "Generating your custom content preview...",
       "Calculating your visibility score...",
     ];
 
@@ -492,6 +503,20 @@ function TeaserContent() {
             </div>
           ))}
         </div>
+
+        {/* ========== SCAN A COMPETITOR ========== */}
+        <CompetitorScan
+          domain={domain!}
+          competitors={data.summary.competitorsMentioned || []}
+        />
+
+        {/* ========== AI CONTENT PREVIEW ========== */}
+        {data.contentPreview && (
+          <ContentPreview
+            domain={domain!}
+            preview={data.contentPreview}
+          />
+        )}
 
         {/* ========== 30-DAY FIX SECTION ========== */}
         <div className="bg-zinc-900 border border-emerald-500/20 rounded-2xl p-8 mb-8">
