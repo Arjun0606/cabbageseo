@@ -198,7 +198,7 @@ export async function PATCH(request: NextRequest) {
     // Build update object with only provided fields
     const updateData: Record<string, unknown> = {};
     if (Array.isArray(topics)) {
-      updateData.topics = topics;
+      updateData.main_topics = topics;
     }
     if (typeof name === "string" && name.trim()) {
       updateData.name = name.trim();
@@ -213,7 +213,7 @@ export async function PATCH(request: NextRequest) {
       .update(updateData)
       .eq("id", siteId)
       .eq("organization_id", userData.organization_id)
-      .select("id, domain, name, topics, geo_score_avg, total_citations")
+      .select("id, domain, name, main_topics, geo_score_avg, total_citations")
       .single();
 
     if (error) {
@@ -226,7 +226,7 @@ export async function PATCH(request: NextRequest) {
         id: updatedSite.id,
         domain: updatedSite.domain,
         name: updatedSite.name,
-        topics: updatedSite.topics,
+        topics: updatedSite.main_topics,
         geoScore: updatedSite.geo_score_avg || null,
         totalCitations: updatedSite.total_citations || 0,
       },

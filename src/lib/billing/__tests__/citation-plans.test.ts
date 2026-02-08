@@ -212,28 +212,32 @@ describe("Feature availability per tier", () => {
 
   it("Command: full intelligence + action plans + page generation, no white-label", () => {
     const f = CITATION_PLANS.command.features;
-    expect(f.hourlyAutoCheck).toBe(true);
+    expect(f.hourlyAutoCheck).toBe(false); // Not yet shipped
     expect(f.citationGapFull).toBe(true);
     expect(f.contentRecsUnlimited).toBe(true);
     expect(f.weeklyActionPlan).toBe(true);
     expect(f.competitorDeepDive).toBe(true);
     expect(f.pageGeneration).toBe(true);
-    expect(f.queryDiscovery).toBe(true);
+    expect(f.queryDiscovery).toBe(false); // Not yet shipped
     expect(f.prioritySupport).toBe(true);
     expect(f.whiteLabel).toBe(false);
     expect(f.apiAccess).toBe(false);
   });
 
-  it("Dominate: everything including white-label + API", () => {
+  it("Dominate: most features enabled, unshipped features disabled", () => {
     const f = CITATION_PLANS.dominate.features;
-    expect(f.realtimeAlerts).toBe(true);
-    expect(f.whiteLabel).toBe(true);
-    expect(f.apiAccess).toBe(true);
+    expect(f.realtimeAlerts).toBe(false); // Not yet shipped
+    expect(f.whiteLabel).toBe(false); // Not yet shipped
+    expect(f.apiAccess).toBe(false); // Not yet shipped
+    expect(f.hourlyAutoCheck).toBe(false); // Not yet shipped
+    expect(f.queryDiscovery).toBe(false); // Not yet shipped
     expect(f.prioritySupport).toBe(true);
-    // Verify ALL features are true
-    for (const [key, value] of Object.entries(f)) {
-      expect(value).toBe(true);
-    }
+    expect(f.dailyAutoCheck).toBe(true);
+    expect(f.emailAlerts).toBe(true);
+    expect(f.weeklyReport).toBe(true);
+    expect(f.competitorTracking).toBe(true);
+    expect(f.sprintFramework).toBe(true);
+    expect(f.pageGeneration).toBe(true);
   });
 });
 

@@ -98,6 +98,7 @@ export default function PageDetailPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -157,6 +158,27 @@ export default function PageDetailPage() {
       setError("Failed to regenerate");
     } finally {
       setRegenerating(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!page) return;
+    setPublishing(true);
+    try {
+      const res = await fetch(`/api/geo/pages/${pageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "published" }),
+      });
+      if (res.ok) {
+        setPage({ ...page, status: "published" });
+      } else {
+        setError("Failed to mark as published");
+      }
+    } catch {
+      setError("Failed to mark as published");
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -239,7 +261,11 @@ export default function PageDetailPage() {
             <Clock className="w-3 h-3" />
             {new Date(page.createdAt).toLocaleDateString()}
           </span>
-          <span className="px-2 py-0.5 bg-zinc-800 rounded">
+          <span className={`px-2 py-0.5 rounded ${
+            page.status === "published"
+              ? "bg-emerald-500/10 text-emerald-400"
+              : "bg-zinc-800 text-zinc-500"
+          }`}>
             {page.status}
           </span>
         </div>
@@ -269,6 +295,45 @@ export default function PageDetailPage() {
           />
         )}
       </div>
+
+      {/* Publish CTA */}
+      {page.status === "draft" && (
+        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5">
+          <h3 className="text-white font-semibold mb-1">Ready to publish?</h3>
+          <p className="text-zinc-400 text-sm mb-3">
+            Copy the content above and add it to your website. Then mark it as published
+            so we can track its impact on your next check.
+          </p>
+          <button
+            onClick={handlePublish}
+            disabled={publishing}
+            className="px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-600 disabled:opacity-50 transition-colors"
+          >
+            {publishing ? "Saving..." : "I Published This"}
+          </button>
+        </div>
+      )}
+      {page.status === "published" && (
+        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5">
+          <div className="flex items-start gap-3">
+            <Check className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-white font-semibold mb-1">Published on your site</h3>
+              <p className="text-zinc-400 text-sm mb-3">
+                AI models typically pick up new content within 1-2 weeks.
+                Run a follow-up check to see if AI starts recommending you for &ldquo;{page.query}&rdquo;.
+              </p>
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-600 transition-colors"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Run Follow-Up Check
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Meta preview */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">

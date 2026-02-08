@@ -33,38 +33,25 @@ export const competitorChangeAlert = inngest.createFunction(
 
     const supabase = createServiceClient();
 
-    // 1. Get the site owner's email
+    // 1. Get the site owner's email and notification preferences
     const userInfo = await step.run("get-owner-email", async () => {
       const { data } = await supabase
         .from("users")
-        .select("id, email")
+        .select("id, email, notification_settings")
         .eq("organization_id", organizationId)
         .eq("role", "owner")
         .single();
 
-      return data as { id: string; email: string } | null;
+      return data as { id: string; email: string; notification_settings?: Record<string, boolean> } | null;
     });
 
     if (!userInfo?.email) {
       return { sent: false, reason: "No owner email found" };
     }
 
-    // 2. Check notification preferences
-    const shouldSend = await step.run("check-preferences", async () => {
-      const { data } = await supabase
-        .from("notifications")
-        .select("email_competitor_cited")
-        .eq("user_id", userInfo.id)
-        .maybeSingle();
-
-      const prefs = data as { email_competitor_cited: boolean | null } | null;
-
-      // Default to false for competitor alerts (opt-in feature)
-      if (!prefs) return false;
-      return prefs.email_competitor_cited !== false;
-    });
-
-    if (!shouldSend) {
+    // 2. Check notification preferences (from users.notification_settings JSON)
+    const settings = userInfo.notification_settings || {};
+    if (settings.competitorAlerts === false) {
       return { sent: false, reason: "Competitor alerts disabled" };
     }
 

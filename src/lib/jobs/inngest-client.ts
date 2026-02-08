@@ -137,6 +137,18 @@ export interface CompetitorChangeDetectedEvent {
   };
 }
 
+export interface VisibilityDropDetectedEvent {
+  name: "visibility/drop.detected";
+  data: {
+    siteId: string;
+    domain: string;
+    organizationId: string;
+    previousScore: number;
+    newScore: number;
+    drop: number;
+  };
+}
+
 // Union type for all events
 export type CabbageSEOEvents =
   | CrawlSiteEvent
@@ -147,5 +159,6 @@ export type CabbageSEOEvents =
   | AutopilotRunEvent
   | ScheduledJobEvent
   | GEOSiteAddedEvent
-  | CompetitorChangeDetectedEvent;
+  | CompetitorChangeDetectedEvent
+  | VisibilityDropDetectedEvent;
 

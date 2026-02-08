@@ -1063,6 +1063,37 @@ export interface Database {
           last_verified_at?: string | null;
         };
       };
+      source_listings: {
+        Row: {
+          id: string;
+          site_id: string;
+          source_domain: string;
+          source_name: string;
+          profile_url: string | null;
+          status: string;
+          verified_at: string | null;
+          updated_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          site_id: string;
+          source_domain: string;
+          source_name: string;
+          profile_url?: string | null;
+          status?: string;
+          verified_at?: string | null;
+          updated_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          source_name?: string;
+          profile_url?: string | null;
+          status?: string;
+          verified_at?: string | null;
+          updated_at?: string | null;
+        };
+      };
       geo_analyses: {
         Row: {
           id: string;

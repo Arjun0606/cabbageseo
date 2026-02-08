@@ -573,7 +573,7 @@ CREATE INDEX content_ideas_site_idx ON content_ideas(site_id);
 CREATE INDEX content_ideas_status_idx ON content_ideas(status);
 
 -- ============================================
--- GENERATED PAGES (AI Page Generator)
+-- GENERATED PAGES (Support Pages)
 -- ============================================
 
 CREATE TABLE generated_pages (

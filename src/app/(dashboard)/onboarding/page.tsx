@@ -162,7 +162,7 @@ function OnboardingContent() {
               Welcome to CabbageSEO
             </h1>
             <p className="text-zinc-400">
-              Let&rsquo;s see if AI is recommending your product.
+              AI is already recommending products in your category — let&rsquo;s find out if you&rsquo;re the one they pick.
             </p>
           </div>
 

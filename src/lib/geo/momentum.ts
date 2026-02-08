@@ -50,7 +50,7 @@ export async function calculateMomentum(
   // 1. Get site citation counts
   const { data: site } = await db
     .from("sites")
-    .select("id, domain, total_citations, citations_this_week, citations_last_week")
+    .select("id, domain, category, total_citations, citations_this_week, citations_last_week")
     .eq("id", siteId)
     .maybeSingle();
 

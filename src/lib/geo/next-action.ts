@@ -6,14 +6,15 @@
  * action that applies. This keeps the dashboard focused on ONE thing.
  *
  * Priority order:
- * 1. No G2 listing
- * 2. No Capterra listing
- * 3. Zero citations anywhere
- * 4. No Product Hunt listing
- * 5. No comparison content (no "vs" or "alternative" queries)
- * 6. No Reddit presence
- * 7. Low GEO score (< 50)
- * 8. Default: run another check
+ * 1. Lost queries without Authority Pages (generate content to win them back)
+ * 2. No G2 listing
+ * 3. No Capterra listing
+ * 4. Zero citations anywhere
+ * 5. No Product Hunt listing
+ * 6. No comparison content (no "vs" or "alternative" queries)
+ * 7. No Reddit presence
+ * 8. Low GEO score (< 50)
+ * 9. Default: run another check
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -68,6 +69,8 @@ export async function getNextAction(
     citationCountResult,
     comparisonCitationResult,
     analysisResult,
+    snapshotResult,
+    pagesCountResult,
   ] = await Promise.all([
     // Source listings
     hasSourceListing(siteId, "g2.com", db),
@@ -103,6 +106,21 @@ export async function getNextAction(
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+
+    // Latest market share snapshot (queries lost count)
+    db
+      .from("market_share_snapshots")
+      .select("queries_lost")
+      .eq("site_id", siteId)
+      .order("snapshot_date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+
+    // Count of generated Authority Pages for this site
+    db
+      .from("generated_pages")
+      .select("id", { count: "exact", head: true })
+      .eq("site_id", siteId),
   ]);
 
   const site = siteResult.data;
@@ -113,9 +131,30 @@ export async function getNextAction(
     site?.geo_score_avg ??
     null;
 
+  const queriesLost = snapshotResult.data?.queries_lost ?? 0;
+  const pagesCount = pagesCountResult.count ?? 0;
+
   const topCompetitorDomain = await getTopCompetitorDomain(siteId, db);
 
-  // --- Priority 1: No G2 listing ---
+  // --- Priority 1: Lost queries without Authority Pages ---
+  if (queriesLost > 0 && pagesCount < queriesLost) {
+    const remaining = queriesLost - pagesCount;
+    return {
+      id: "generate_authority_pages",
+      title: `Generate Authority Pages for ${remaining} lost quer${remaining === 1 ? "y" : "ies"}`,
+      description:
+        `You're losing ${queriesLost} quer${queriesLost === 1 ? "y" : "ies"} to competitors. ` +
+        "Generate Authority Pages — AI-optimized content specifically " +
+        "crafted to make AI recommend you instead. Each page targets " +
+        "a query you're currently losing.",
+      priority: "critical",
+      estimatedMinutes: 5,
+      actionUrl: "/dashboard/pages",
+      category: "content",
+    };
+  }
+
+  // --- Priority 2: No G2 listing ---
   if (!hasG2) {
     return {
       id: "get_listed_g2",
@@ -131,7 +170,7 @@ export async function getNextAction(
     };
   }
 
-  // --- Priority 2: No Capterra listing ---
+  // --- Priority 3: No Capterra listing ---
   if (!hasCapterra) {
     return {
       id: "get_listed_capterra",
@@ -147,7 +186,7 @@ export async function getNextAction(
     };
   }
 
-  // --- Priority 3: Zero citations anywhere ---
+  // --- Priority 4: Zero citations anywhere ---
   if (totalCitations === 0) {
     return {
       id: "run_first_check",
@@ -162,7 +201,7 @@ export async function getNextAction(
     };
   }
 
-  // --- Priority 4: No Product Hunt listing ---
+  // --- Priority 5: No Product Hunt listing ---
   if (!hasProductHunt) {
     return {
       id: "launch_product_hunt",
@@ -178,7 +217,7 @@ export async function getNextAction(
     };
   }
 
-  // --- Priority 5: No comparison content ---
+  // --- Priority 6: No comparison content ---
   if (comparisonCitations === 0) {
     const competitorLabel = topCompetitorDomain || "Top Competitor";
     return {
@@ -194,7 +233,7 @@ export async function getNextAction(
     };
   }
 
-  // --- Priority 6: No Reddit presence ---
+  // --- Priority 7: No Reddit presence ---
   if (!hasReddit) {
     return {
       id: "post_on_reddit",
@@ -210,7 +249,7 @@ export async function getNextAction(
     };
   }
 
-  // --- Priority 7: Low GEO score ---
+  // --- Priority 8: Low GEO score ---
   if (geoScore !== null && geoScore < 50) {
     return {
       id: "improve_ai_readability",
@@ -226,7 +265,7 @@ export async function getNextAction(
     };
   }
 
-  // --- Priority 8: Default ---
+  // --- Priority 9: Default ---
   return {
     id: "run_another_check",
     title: "Run another check to track your progress",

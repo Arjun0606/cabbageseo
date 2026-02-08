@@ -147,9 +147,9 @@ function PagesContent() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">AI Pages</h1>
+          <h1 className="text-2xl font-bold text-white">Authority Pages</h1>
           <p className="text-zinc-500 text-sm mt-1">
-            Generate publish-ready pages optimized for AI citation
+            Generate comparison pages, explainers, and FAQs that reinforce your authority
           </p>
         </div>
 
@@ -158,11 +158,11 @@ function PagesContent() {
             <Lock className="w-8 h-8 text-zinc-500" />
           </div>
           <h2 className="text-xl font-semibold text-white mb-2">
-            AI Page Generation
+            Authority Pages
           </h2>
           <p className="text-zinc-400 max-w-md mx-auto mb-6">
-            Generate full, publish-ready pages that AI platforms will cite.
-            Not bullet points — actual content you can paste into your CMS and publish today.
+            Generate comparison pages, category explainers, and FAQs that reinforce
+            the trust signals AI already looks for when recommending products.
           </p>
           <Link
             href="/settings/billing"
@@ -184,9 +184,9 @@ function PagesContent() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">AI Pages</h1>
+        <h1 className="text-2xl font-bold text-white">Authority Pages</h1>
         <p className="text-zinc-500 text-sm mt-1">
-          Generate publish-ready pages optimized for AI citation
+          Generate comparison pages, explainers, and FAQs that reinforce your authority
         </p>
       </div>
 
@@ -239,7 +239,7 @@ function PagesContent() {
             No pages generated yet
           </h3>
           <p className="text-zinc-400 text-sm max-w-md mx-auto">
-            Enter a query above to generate your first AI-optimized page.
+            Enter a query above to generate your first support page.
             The page will be tailored to your site, competitors, and citation data.
           </p>
         </div>

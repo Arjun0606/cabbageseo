@@ -15,10 +15,8 @@ import { createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   calculateBuyerIntent,
-  calculateQueryValue,
   extractCompetitors,
   analyzeCompetitiveLoss,
-  formatMoneyLoss,
 } from "@/lib/ai-revenue";
 import {
   extractSources,
@@ -828,8 +826,7 @@ export async function POST(request: NextRequest) {
         : { userMentioned: r.cited, competitorsMentioned: [], isLoss: !r.cited, lossMessage: undefined };
       
       const buyerIntent = calculateBuyerIntent(r.query);
-      const queryValue = calculateQueryValue(r.query, category, competitiveAnalysis.competitorsMentioned.length);
-      
+
       // Extract sources from AI response
       const sources = r.snippet ? extractSources(r.snippet) : [];
       const trustedSources = sources
@@ -848,9 +845,7 @@ export async function POST(request: NextRequest) {
         isLoss: competitiveAnalysis.isLoss,
         lossMessage: competitiveAnalysis.lossMessage,
         buyerIntent,
-        estimatedValue: queryValue,
-        estimatedValueFormatted: formatMoneyLoss(queryValue),
-        // NEW: Trust sources
+        // Trust sources
         sources: trustedSources.map(s => ({
           domain: s.domain,
           name: s.name,
@@ -858,11 +853,6 @@ export async function POST(request: NextRequest) {
         })),
       };
     });
-    
-    // Calculate total estimated loss
-    const totalLoss = competitiveResults
-      .filter(r => !r.cited && !r.error)
-      .reduce((sum, r) => sum + r.estimatedValue, 0);
     
     // Get all unique competitors mentioned
     const allCompetitors = [...new Set(competitiveResults.flatMap(r => r.competitors))];
@@ -885,8 +875,35 @@ export async function POST(request: NextRequest) {
           queries_lost: totalMentions - yourMentions,
           snapshot_date: today,
         } as never, { onConflict: "site_id,snapshot_date" });
+
+      // Persist full check results to geo_analyses for dashboard persistence
+      if (orgId) {
+        try {
+          await db.from("geo_analyses").insert({
+            site_id: siteId,
+            organization_id: orgId,
+            score: {
+              overall: aiMarketShare,
+              queriesWon: yourMentions,
+              queriesLost: totalMentions - yourMentions,
+              totalQueries: totalMentions,
+            },
+            queries: competitiveResults
+              .filter((r) => r.isLoss && !r.error)
+              .map((r) => ({
+                query: r.query,
+                competitors: r.competitors,
+                platform: r.platform,
+                snippet: r.snippet,
+              })),
+            raw_data: competitiveResults,
+          } as never);
+        } catch (e) {
+          console.error("[check] Failed to persist geo_analyses:", e);
+        }
+      }
     }
-    
+
     // Collect all sources mentioned across results
     const allSources = [...new Set(competitiveResults.flatMap(r => r.sources.map(s => s.domain)))];
     
@@ -908,14 +925,12 @@ export async function POST(request: NextRequest) {
         citedCount,
         checkedAt: new Date().toISOString(),
       },
-      // Revenue intelligence data
+      // Market intelligence
       revenueIntelligence: {
         aiMarketShare,
         totalQueriesChecked: totalMentions,
         queriesWon: yourMentions,
         queriesLost: totalMentions - yourMentions,
-        estimatedMonthlyLoss: totalLoss,
-        estimatedMonthlyLossFormatted: formatMoneyLoss(totalLoss),
         topCompetitors: allCompetitors.slice(0, 5),
         category: category,
       },

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowRight, ExternalLink, Zap } from "lucide-react";
 
 interface NextAction {
@@ -87,15 +88,25 @@ export function DoThisNext({ action, loading }: DoThisNextProps) {
 
       <div className="flex items-center gap-3">
         {action.actionUrl && (
-          <a
-            href={action.actionUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-600 transition-colors"
-          >
-            Take action
-            <ExternalLink className="w-4 h-4" />
-          </a>
+          action.actionUrl.startsWith("/") ? (
+            <Link
+              href={action.actionUrl}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-600 transition-colors"
+            >
+              Take action
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          ) : (
+            <a
+              href={action.actionUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-600 transition-colors"
+            >
+              Take action
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          )
         )}
         <span className="text-xs text-zinc-600">
           {action.category === "source"

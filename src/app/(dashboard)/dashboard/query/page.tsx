@@ -19,7 +19,6 @@ import {
   RefreshCw,
   Sparkles,
 } from "lucide-react";
-
 interface WhyNotMeAnalysis {
   query: string;
   yourSite: string;
@@ -231,6 +230,11 @@ function QueryPageContent() {
           <p className="text-xl text-zinc-400">
             Query: &ldquo;{analysis.query}&rdquo;
           </p>
+          {analysis.competitors.length > 0 && (
+            <p className="text-red-400/80 text-lg mt-1">
+              {analysis.competitors.length} competitor{analysis.competitors.length !== 1 ? "s" : ""} recommended instead of you
+            </p>
+          )}
         </div>
 
         {/* Who AI recommended */}
@@ -389,12 +393,12 @@ function QueryPageContent() {
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5" />
-                      Generate AI-Ready Page
+                      Generate Authority Page
                     </>
                   )}
                 </button>
                 <p className="text-center text-xs text-zinc-500 mt-2">
-                  Creates a full, publish-ready page optimized for AI citation
+                  Creates a comparison page or explainer that reinforces your authority
                 </p>
               </div>
             </>
@@ -422,11 +426,11 @@ function QueryPageContent() {
                     <Lock className="w-5 h-5 text-zinc-400 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-white font-medium mb-1">
-                        Unlock full content strategy + AI page generation
+                        Unlock full content strategy + authority page generation
                       </p>
                       <p className="text-zinc-400 text-sm mb-3">
                         Scout plan includes: Exact page structure, section headings, key entities to mention,
-                        FAQs to answer, and <strong className="text-emerald-400">AI-generated publish-ready pages</strong> optimized for citation.
+                        FAQs to answer, and <strong className="text-emerald-400">authority pages</strong> that reinforce your credibility with AI systems.
                       </p>
                       <Link
                         href="/settings/billing"

@@ -118,3 +118,74 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed to get listings" }, { status: 500 });
   }
 }
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { siteId, sourceDomain, sourceName, status } = body;
+
+    if (!siteId || !sourceDomain || !sourceName) {
+      return NextResponse.json(
+        { error: "siteId, sourceDomain, and sourceName are required" },
+        { status: 400 }
+      );
+    }
+
+    // Auth check
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const organizationId = currentUser.organizationId;
+    if (!organizationId) {
+      return NextResponse.json({ error: "No organization" }, { status: 400 });
+    }
+
+    const db = createServiceClient();
+
+    // Verify site belongs to this org
+    const { data: site } = await db
+      .from("sites")
+      .select("id")
+      .eq("id", siteId)
+      .eq("organization_id", organizationId)
+      .single();
+
+    if (!site) {
+      return NextResponse.json({ error: "Site not found" }, { status: 404 });
+    }
+
+    // Check if listing already exists
+    const { data: existing } = await (db
+      .from("source_listings")
+      .select("id")
+      .eq("site_id", siteId)
+      .eq("source_domain", sourceDomain)
+      .maybeSingle() as any) as { data: { id: string } | null };
+
+    const resolvedStatus = status || "verified";
+    const now = new Date().toISOString();
+
+    if (existing) {
+      await (db.from("source_listings") as any).update({
+        status: resolvedStatus,
+        verified_at: now,
+        updated_at: now,
+      }).eq("id", existing.id);
+    } else {
+      await (db.from("source_listings") as any).insert({
+        site_id: siteId,
+        source_domain: sourceDomain,
+        source_name: sourceName,
+        status: resolvedStatus,
+        verified_at: now,
+      });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[Sites Listings] POST error:", error);
+    return NextResponse.json({ error: "Failed to update listing" }, { status: 500 });
+  }
+}

@@ -1,9 +1,9 @@
 /**
- * AI Page Generator
+ * Authority Page Generator
  *
- * Generates publish-ready pages optimized for AI citation.
+ * Generates comparison pages, category explainers, and FAQs that reinforce authority.
  * Uses existing citation data, gap analysis, and competitor intelligence
- * to create deeply contextual content that ChatGPT alone can't match.
+ * to create deeply contextual pages that support trust signals AI looks for.
  *
  * Cost: ~$0.003-0.006 per generation (gpt-5-mini)
  */

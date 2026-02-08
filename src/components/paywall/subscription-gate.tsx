@@ -17,7 +17,7 @@ interface SubscriptionStatus {
 const FEATURES = [
   "AI citation monitoring across ChatGPT, Perplexity, Gemini",
   "Citation gap analysis — why AI picks competitors over you",
-  "AI-optimized page generation",
+  "Authority page generation (comparisons, explainers, FAQs)",
   "30-day visibility sprint with action plans",
   "Competitor tracking and alerts",
   "Trust source mapping and recommendations",

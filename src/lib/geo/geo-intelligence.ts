@@ -124,12 +124,13 @@ Respond in JSON only:
               content: `Analyze this content for GEO/AI citation potential:\n\n${textToAnalyze.slice(0, 8000)}`
             }
           ],
-          response_format: { type: "json_object" },
+          max_completion_tokens: 4000,
         }),
       });
 
       const data = await response.json();
-      const analysis = JSON.parse(data.choices?.[0]?.message?.content || "{}");
+      const rawContent = data.choices?.[0]?.message?.content || "{}";
+      const analysis = JSON.parse(rawContent.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim());
       
       const breakdown = analysis.breakdown || this.getDefaultScore().breakdown;
       const overall = Math.round(
@@ -384,15 +385,17 @@ Return JSON array of strings only: ["question 1", "question 2", ...]`
               content: `Generate questions for the ${niche} niche that people commonly ask ChatGPT, Perplexity, or Google AI.`
             }
           ],
-          response_format: { type: "json_object" },
+          max_completion_tokens: 4000,
         }),
       });
 
       const data = await response.json();
       let queries: string[] = [];
-      
+
       try {
-        const parsed = JSON.parse(data.choices?.[0]?.message?.content || "{}");
+        const rawContent = data.choices?.[0]?.message?.content || "{}";
+        const cleaned = rawContent.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+        const parsed = JSON.parse(cleaned);
         queries = parsed.queries || parsed.questions || Object.values(parsed).flat().filter((q: unknown) => typeof q === "string");
       } catch {
         queries = [];

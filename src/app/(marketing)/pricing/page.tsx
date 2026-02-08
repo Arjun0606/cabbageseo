@@ -90,13 +90,16 @@ const tiers: PricingTier[] = [
     features: [
       "1 site monitored",
       "Track 3 competitors side by side",
-      "Daily automated monitoring",
+      "Weekly automated checks (Mondays)",
       "5 gap analyses per month",
-      "3 AI-generated pages per month",
-      "Trust Map: visualize who AI trusts in your space",
-      "30-day sprint to improve your visibility",
-      "Momentum scoring with weekly trends",
-      "Email alerts when your visibility changes",
+      "3 authority pages per month",
+      "5 custom query tracking slots",
+      "Score drop alerts (email + Slack)",
+      "30-day trend chart history",
+      "Slack integration",
+      "Trust Map + Get Listed Playbook",
+      "30-day sprint + momentum scoring",
+      "Weekly email digest + alerts",
     ],
   },
   {
@@ -116,12 +119,13 @@ const tiers: PricingTier[] = [
     features: [
       "5 sites monitored",
       "Track 10 competitors per site",
-      "Hourly automated monitoring",
+      "Auto-checks every 3 days",
       "Unlimited intelligence reports",
-      "15 AI-generated pages per month",
+      "15 authority pages per month",
+      "Unlimited custom query tracking",
+      "365-day trend chart history",
       "Weekly action plans — told exactly what to do",
       "Competitor deep dives",
-      "Query discovery",
       "5 team members",
       "Everything in Scout",
     ],
@@ -136,17 +140,17 @@ const tiers: PricingTier[] = [
     whoFor:
       "Agency or multi-product company. Track and win across multiple brands.",
     description:
-      "Full control across every brand and product line. White-label reports, API access, and a dedicated team behind you.",
+      "Full control across every brand and product line. Priority support and unlimited team behind you.",
     cta: "Get Dominate",
     href: "/signup?plan=dominate",
     icon: <Crown className="w-5 h-5 text-amber-400" />,
     features: [
       "25 sites monitored",
       "Track 25 competitors per site",
-      "Real-time alerts",
-      "Unlimited AI-generated pages",
-      "White-label reports for clients",
-      "API access for custom integrations",
+      "Daily + hourly auto-checks",
+      "Unlimited intelligence + authority pages",
+      "Unlimited custom query tracking",
+      "365-day trend chart history",
       "Unlimited team members",
       "Priority support",
       "Everything in Command",
@@ -191,9 +195,19 @@ const faqs: FAQItem[] = [
       "We offer a 7-day free trial on all paid plans so you can evaluate the platform before committing. If you\u2019re unhappy after subscribing, contact us within 14 days of your first payment and we\u2019ll issue a full refund. After 14 days, you can cancel anytime and your access continues until the end of your billing period.",
   },
   {
-    question: "What is AI Page Generation?",
+    question: "How do automated checks work?",
     answer:
-      "AI Page Generation creates full, publish-ready pages optimized for AI citation. Unlike generic AI writing tools, CabbageSEO uses your citation data, competitor intelligence, and gap analysis to create deeply contextual content. Scout gets 3 pages/month, Command gets 15, and Dominate gets unlimited.",
+      "CabbageSEO automatically scans your AI visibility across ChatGPT, Perplexity, and Google AI on a schedule based on your plan. Scout gets weekly checks (every Monday), Command gets checks every 3 days, and Dominate gets daily checks plus hourly monitoring. If your visibility score drops by 5 or more points, you\u2019ll get an instant alert via email and Slack (if configured). No manual action required \u2014 the system works while you sleep.",
+  },
+  {
+    question: "Does CabbageSEO integrate with Slack?",
+    answer:
+      "Yes. All paid plans include Slack integration. Connect your workspace by adding an incoming webhook URL in Settings > Notifications. You\u2019ll get automated messages for: check results (score and queries won/lost), score drop alerts (when visibility falls 5+ points), and weekly summary reports. Set it up once and alerts flow directly to your channel.",
+  },
+  {
+    question: "What are Authority Pages?",
+    answer:
+      "Authority Pages are comparison pages, category explainers, and FAQs designed to reinforce your credibility with AI systems. Unlike generic AI writing tools, CabbageSEO uses your citation data, competitor intelligence, and gap analysis to create pages that reinforce the trust signals AI already looks for. Authority Pages support third-party trust signals (reviews, listings, mentions) so AI can confidently cite you — they don't cause recommendations on their own. Scout gets 3 pages/month, Command gets 15, and Dominate gets unlimited.",
   },
 ];
 
@@ -484,8 +498,8 @@ export default function PricingPage() {
                 Agency or multi-brand company
               </h3>
               <p className="text-sm text-zinc-400 mb-6">
-                You manage multiple sites or client brands. You need white-label
-                reports, API access, and scale.
+                You manage multiple sites or client brands. You need scale,
+                unlimited team members, and priority support.
               </p>
               <div className="flex items-center gap-2">
                 <span className="text-amber-400 font-semibold text-sm">
@@ -544,7 +558,7 @@ export default function PricingPage() {
               <h3 className="text-lg font-semibold text-white mb-1">Command</h3>
               <p className="text-sm text-emerald-400 font-medium mb-3">Offense</p>
               <p className="text-sm text-zinc-500 leading-relaxed">
-                Hourly monitoring, unlimited reports, and weekly plays.
+                Daily monitoring, unlimited reports, and weekly plays.
                 Actively compete for every recommendation.
               </p>
             </div>
@@ -557,8 +571,8 @@ export default function PricingPage() {
               <h3 className="text-lg font-semibold text-white mb-1">Dominate</h3>
               <p className="text-sm text-emerald-400 font-medium mb-3">Control</p>
               <p className="text-sm text-zinc-500 leading-relaxed">
-                Multi-brand coverage, API access, and white-label
-                reports. Own your entire category.
+                Multi-brand coverage, unlimited team members, and
+                priority support. Own your entire category.
               </p>
             </div>
           </div>

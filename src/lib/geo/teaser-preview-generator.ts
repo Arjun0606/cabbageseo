@@ -90,7 +90,7 @@ Respond in this exact JSON format:
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        max_completion_tokens: 4000,
+        max_completion_tokens: 8000,
       }),
       signal: controller.signal,
     });

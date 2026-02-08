@@ -1,9 +1,9 @@
 /**
  * POST /api/geo/pages/generate
  *
- * Generate an AI-optimized page for a specific query.
+ * Generate a support page for a specific query.
  * Uses citation data, competitor intelligence, and gap analysis
- * to produce contextual, publish-ready content.
+ * to produce comparison pages, explainers, and FAQs that reinforce authority.
  */
 
 import { NextRequest, NextResponse } from "next/server";

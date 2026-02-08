@@ -514,9 +514,9 @@ describe("Alert features per tier", () => {
     expect(CITATION_PLANS.command.features.realtimeAlerts).toBe(false);
   });
 
-  it("Dominate: email + realtime alerts", () => {
+  it("Dominate: email alerts, no realtime (not yet shipped)", () => {
     expect(CITATION_PLANS.dominate.features.emailAlerts).toBe(true);
-    expect(CITATION_PLANS.dominate.features.realtimeAlerts).toBe(true);
+    expect(CITATION_PLANS.dominate.features.realtimeAlerts).toBe(false);
   });
 });
 
@@ -535,13 +535,13 @@ describe("Auto-check frequency per tier", () => {
     expect(CITATION_PLANS.scout.features.hourlyAutoCheck).toBe(false);
   });
 
-  it("Command: daily + hourly", () => {
+  it("Command: daily only (hourly not yet shipped)", () => {
     expect(CITATION_PLANS.command.features.dailyAutoCheck).toBe(true);
-    expect(CITATION_PLANS.command.features.hourlyAutoCheck).toBe(true);
+    expect(CITATION_PLANS.command.features.hourlyAutoCheck).toBe(false);
   });
 
-  it("Dominate: daily + hourly", () => {
+  it("Dominate: daily only (hourly not yet shipped)", () => {
     expect(CITATION_PLANS.dominate.features.dailyAutoCheck).toBe(true);
-    expect(CITATION_PLANS.dominate.features.hourlyAutoCheck).toBe(true);
+    expect(CITATION_PLANS.dominate.features.hourlyAutoCheck).toBe(false);
   });
 });

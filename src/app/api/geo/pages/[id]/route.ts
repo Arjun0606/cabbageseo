@@ -1,5 +1,6 @@
 /**
  * GET /api/geo/pages/[id] — Get a single generated page
+ * PATCH /api/geo/pages/[id] — Update page status (e.g. mark as published)
  * DELETE /api/geo/pages/[id] — Delete a generated page
  */
 
@@ -84,6 +85,75 @@ export async function GET(
     });
   } catch (error) {
     console.error("[/api/geo/pages/[id] GET] Error:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const organizationId = currentUser.organizationId;
+    if (!organizationId) {
+      return NextResponse.json({ error: "No organization" }, { status: 400 });
+    }
+
+    const db = getDbClient();
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+    const { status } = body;
+
+    if (!status || !["published", "archived"].includes(status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+
+    // Fetch the page to verify ownership
+    const { data: page } = await db
+      .from("generated_pages")
+      .select("id, site_id, status")
+      .eq("id", id)
+      .single();
+
+    if (!page) {
+      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+    }
+
+    // Verify ownership through site → organization
+    const { data: site } = await db
+      .from("sites")
+      .select("id")
+      .eq("id", page.site_id)
+      .eq("organization_id", organizationId)
+      .single();
+
+    if (!site) {
+      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+    }
+
+    // Update status
+    const { error: updateError } = await db
+      .from("generated_pages")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (updateError) {
+      console.error("[/api/geo/pages/[id] PATCH] Error:", updateError);
+      return NextResponse.json({ error: "Failed to update page" }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, data: { status } });
+  } catch (error) {
+    console.error("[/api/geo/pages/[id] PATCH] Error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

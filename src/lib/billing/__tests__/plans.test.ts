@@ -146,10 +146,14 @@ describe("plans.ts specific features", () => {
     expect(PLANS.command.features.whiteLabel).toBe(false);
   });
 
-  it("Dominate: everything enabled", () => {
-    for (const [key, value] of Object.entries(PLANS.dominate.features)) {
-      expect(value).toBe(true);
-    }
+  it("Dominate: most features enabled, unshipped features disabled", () => {
+    expect(PLANS.dominate.features.priorityQueue).toBe(true);
+    expect(PLANS.dominate.features.bulkOperations).toBe(true);
+    expect(PLANS.dominate.features.autopilotEligible).toBe(true);
+    // Not yet shipped — hidden from marketing
+    expect(PLANS.dominate.features.apiAccess).toBe(false);
+    expect(PLANS.dominate.features.whiteLabel).toBe(false);
+    expect(PLANS.dominate.features.customIntegrations).toBe(false);
   });
 
   it("Command is marked as popular", () => {
@@ -468,6 +472,6 @@ describe("getPlanLimits and getPlanFeatures", () => {
 
   it("getPlanFeatures returns correct features", () => {
     expect(getPlanFeatures("scout").apiAccess).toBe(false);
-    expect(getPlanFeatures("dominate").apiAccess).toBe(true);
+    expect(getPlanFeatures("dominate").apiAccess).toBe(false);
   });
 });

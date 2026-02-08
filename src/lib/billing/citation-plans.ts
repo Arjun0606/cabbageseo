@@ -31,8 +31,8 @@ export interface CitationPlanFeatures {
   // Monitoring
   manualChecks: boolean;
   dailyAutoCheck: boolean;
-  hourlyAutoCheck: boolean;
-  realtimeAlerts: boolean; // Dominate only
+  hourlyAutoCheck: boolean;   // Not yet shipped — hidden from marketing
+  realtimeAlerts: boolean;    // Not yet shipped — hidden from marketing
   emailAlerts: boolean;
   weeklyReport: boolean;
   csvExport: boolean;
@@ -48,7 +48,7 @@ export interface CitationPlanFeatures {
   weeklyActionPlan: boolean;
   competitorDeepDive: boolean;
   customQueries: boolean;
-  queryDiscovery: boolean;
+  queryDiscovery: boolean;     // Not yet shipped — hidden from marketing
 
   // Content Generation
   pageGeneration: boolean;
@@ -57,7 +57,7 @@ export interface CitationPlanFeatures {
   sprintFramework: boolean;
   monthlyCheckpoints: boolean;
 
-  // Scale (Dominate)
+  // Scale — not yet shipped, hidden from marketing
   whiteLabel: boolean;
   apiAccess: boolean;
   prioritySupport: boolean;
@@ -213,7 +213,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     features: {
       manualChecks: true,
       dailyAutoCheck: true,
-      hourlyAutoCheck: true,
+      hourlyAutoCheck: false,  // Not yet shipped
       realtimeAlerts: false,
       emailAlerts: true,
       weeklyReport: true,
@@ -228,7 +228,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       weeklyActionPlan: true,
       competitorDeepDive: true,
       customQueries: true,
-      queryDiscovery: true,
+      queryDiscovery: false,   // Not yet shipped
       pageGeneration: true,
       sprintFramework: true,
       monthlyCheckpoints: true,
@@ -263,8 +263,8 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     features: {
       manualChecks: true,
       dailyAutoCheck: true,
-      hourlyAutoCheck: true,
-      realtimeAlerts: true,
+      hourlyAutoCheck: false,  // Not yet shipped
+      realtimeAlerts: false,   // Not yet shipped
       emailAlerts: true,
       weeklyReport: true,
       csvExport: true,
@@ -278,12 +278,12 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       weeklyActionPlan: true,
       competitorDeepDive: true,
       customQueries: true,
-      queryDiscovery: true,
+      queryDiscovery: false,   // Not yet shipped
       pageGeneration: true,
       sprintFramework: true,
       monthlyCheckpoints: true,
-      whiteLabel: true,
-      apiAccess: true,
+      whiteLabel: false,       // Not yet shipped
+      apiAccess: false,        // Not yet shipped
       prioritySupport: true,
     },
   },
@@ -551,7 +551,7 @@ export function canGeneratePage(
   if (!plan.features.pageGeneration) {
     return {
       allowed: false,
-      reason: "AI Page Generation requires Scout plan or higher.",
+      reason: "Authority Pages requires Scout plan or higher.",
     };
   }
 

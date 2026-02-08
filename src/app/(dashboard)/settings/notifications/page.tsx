@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Mail, Check, Loader2 } from "lucide-react";
+import { Bell, Mail, Check, Loader2, MessageSquare, ExternalLink, AlertCircle } from "lucide-react";
 
 export default function NotificationsPage() {
   const [settings, setSettings] = useState({
@@ -14,21 +14,37 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Load notification settings on mount
+  // Slack state
+  const [slackUrl, setSlackUrl] = useState("");
+  const [slackConfigured, setSlackConfigured] = useState(false);
+  const [slackSaving, setSlackSaving] = useState(false);
+  const [slackTesting, setSlackTesting] = useState(false);
+  const [slackTestResult, setSlackTestResult] = useState<"success" | "error" | null>(null);
+
+  // Load notification settings + Slack config on mount
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const response = await fetch("/api/notifications");
-        if (response.ok) {
-          const data = await response.json();
+        const [notifRes, slackRes] = await Promise.all([
+          fetch("/api/notifications").catch(() => null),
+          fetch("/api/notifications/slack").catch(() => null),
+        ]);
+
+        if (notifRes?.ok) {
+          const data = await notifRes.json();
           if (data.settings) {
             setSettings({
               emailAlerts: data.settings.email_new_citation ?? true,
               competitorAlerts: data.settings.email_competitor_cited ?? true,
               weeklyReport: data.settings.email_weekly_digest ?? true,
-              marketingEmails: false, // Not stored in DB
+              marketingEmails: false,
             });
           }
+        }
+
+        if (slackRes?.ok) {
+          const data = await slackRes.json();
+          setSlackConfigured(data.configured || false);
         }
       } catch (error) {
         console.error("Failed to load notification settings:", error);
@@ -178,6 +194,141 @@ export default function NotificationsPage() {
                 />
               </button>
             </label>
+          </div>
+
+          {/* Slack Integration */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-emerald-400" />
+              Slack Integration
+              {slackConfigured && (
+                <span className="ml-auto text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                  Connected
+                </span>
+              )}
+            </h2>
+
+            <p className="text-zinc-400 text-sm mb-4">
+              Get AI visibility alerts directly in your Slack channel — check results, score drops, and weekly reports.
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-zinc-400 mb-1">Webhook URL</label>
+                <input
+                  type="url"
+                  value={slackUrl}
+                  onChange={(e) => {
+                    setSlackUrl(e.target.value);
+                    setSlackTestResult(null);
+                  }}
+                  placeholder="https://hooks.slack.com/services/T.../B.../..."
+                  className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={async () => {
+                    if (!slackUrl.startsWith("https://hooks.slack.com/")) {
+                      setSlackTestResult("error");
+                      return;
+                    }
+                    setSlackTesting(true);
+                    setSlackTestResult(null);
+                    try {
+                      const res = await fetch("/api/notifications/slack", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ webhookUrl: slackUrl, test: true }),
+                      });
+                      const data = await res.json();
+                      setSlackTestResult(data.success ? "success" : "error");
+                    } catch {
+                      setSlackTestResult("error");
+                    } finally {
+                      setSlackTesting(false);
+                    }
+                  }}
+                  disabled={!slackUrl || slackTesting}
+                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-800 disabled:opacity-50 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
+                >
+                  {slackTesting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Test Connection"
+                  )}
+                </button>
+
+                <button
+                  onClick={async () => {
+                    if (!slackUrl.startsWith("https://hooks.slack.com/")) {
+                      setSlackTestResult("error");
+                      return;
+                    }
+                    setSlackSaving(true);
+                    try {
+                      const res = await fetch("/api/notifications/slack", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ webhookUrl: slackUrl }),
+                      });
+                      if (res.ok) {
+                        setSlackConfigured(true);
+                        setSlackTestResult("success");
+                      }
+                    } finally {
+                      setSlackSaving(false);
+                    }
+                  }}
+                  disabled={!slackUrl || slackSaving}
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-zinc-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                >
+                  {slackSaving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Save Webhook"
+                  )}
+                </button>
+
+                {slackConfigured && (
+                  <button
+                    onClick={async () => {
+                      await fetch("/api/notifications/slack", { method: "DELETE" });
+                      setSlackConfigured(false);
+                      setSlackUrl("");
+                      setSlackTestResult(null);
+                    }}
+                    className="px-4 py-2 text-red-400 hover:text-red-300 text-sm transition-colors"
+                  >
+                    Disconnect
+                  </button>
+                )}
+              </div>
+
+              {slackTestResult === "success" && (
+                <div className="flex items-center gap-2 text-sm text-emerald-400">
+                  <Check className="w-4 h-4" />
+                  Connection successful — check your Slack channel
+                </div>
+              )}
+              {slackTestResult === "error" && (
+                <div className="flex items-center gap-2 text-sm text-red-400">
+                  <AlertCircle className="w-4 h-4" />
+                  Connection failed — check that your webhook URL is correct
+                </div>
+              )}
+
+              <a
+                href="https://api.slack.com/messaging/webhooks"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-400 transition-colors"
+              >
+                How to get a Slack webhook URL
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
           </div>
 
           {/* Save Button */}

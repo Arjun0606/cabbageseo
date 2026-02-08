@@ -60,6 +60,17 @@ interface TrialStatus {
   daysUsed: number;
 }
 
+export interface LostQuery {
+  query: string;
+  competitors: string[];
+  platform: string;
+  snippet?: string;
+}
+
+export interface CheckResult {
+  lostQueries: LostQuery[];
+}
+
 interface SiteContextType {
   // Data
   user: User | null;
@@ -68,17 +79,17 @@ interface SiteContextType {
   currentSite: Site | null;
   usage: Usage;
   trial: TrialStatus;
-  
+
   // State
   loading: boolean;
   error: string | null;
-  
+
   // Actions
   setCurrentSite: (site: Site) => void;
   refreshData: () => Promise<void>;
   addSite: (domain: string, category?: string) => Promise<Site | null>;
   deleteSite: (siteId: string) => Promise<boolean>;
-  runCheck: (siteId?: string, query?: string) => Promise<boolean>;
+  runCheck: (siteId?: string, query?: string) => Promise<CheckResult | null>;
 }
 
 const defaultUsage: Usage = {
@@ -265,11 +276,11 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     }
   }, [currentSite, sites]);
 
-  const runCheck = useCallback(async (siteId?: string, query?: string): Promise<boolean> => {
+  const runCheck = useCallback(async (siteId?: string, query?: string): Promise<CheckResult | null> => {
     const id = siteId || currentSite?.id;
     const domain = siteId ? sites.find(s => s.id === siteId)?.domain : currentSite?.domain;
 
-    if (!id || !domain) return false;
+    if (!id || !domain) return null;
 
     try {
       const body: Record<string, string> = { siteId: id, domain };
@@ -280,16 +291,27 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      
+
       if (res.ok) {
+        const data = await res.json();
         setUsage(prev => ({ ...prev, checksUsed: prev.checksUsed + 1 }));
-        // Refresh to get new citation data
         await refreshData();
-        return true;
+
+        // Extract lost queries from check results
+        const lostQueries: LostQuery[] = (data.results || [])
+          .filter((r: { isLoss?: boolean; error?: string }) => r.isLoss && !r.error)
+          .map((r: { query: string; competitors?: string[]; platform: string; snippet?: string }) => ({
+            query: r.query,
+            competitors: r.competitors || [],
+            platform: r.platform,
+            snippet: r.snippet,
+          }));
+
+        return { lostQueries };
       }
-      return false;
+      return null;
     } catch {
-      return false;
+      return null;
     }
   }, [currentSite, sites, refreshData]);
 

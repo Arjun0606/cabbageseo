@@ -20,7 +20,6 @@ import {
   ChevronRight,
   Crown,
   Search,
-  TrendingUp,
   FileText,
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -34,7 +33,6 @@ interface NavItem {
 const navItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Trust Map", href: "/dashboard/sources", icon: Search },
-  { title: "Intelligence", href: "/dashboard/intelligence", icon: TrendingUp },
   { title: "Pages", href: "/dashboard/pages", icon: FileText },
 ];
 

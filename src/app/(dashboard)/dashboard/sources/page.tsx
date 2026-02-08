@@ -10,12 +10,8 @@ import {
   X,
   ExternalLink,
   Loader2,
-  Lock,
   AlertTriangle,
   Globe,
-  Star,
-  Users,
-  MessageSquare,
 } from "lucide-react";
 
 interface TrustSource {
@@ -24,6 +20,8 @@ interface TrustSource {
   icon: string;
   description: string;
   importance: "critical" | "high" | "medium";
+  impact: "high" | "medium";
+  submissionUrl: string;
   competitorsListed: string[];
   youListed: boolean;
   profileUrl?: string;
@@ -39,6 +37,8 @@ const TRUST_SOURCES: Omit<TrustSource, "competitorsListed" | "youListed" | "prof
     icon: "🏆",
     description: "Software reviews and ratings platform",
     importance: "critical",
+    impact: "high",
+    submissionUrl: "https://sell.g2.com/create-a-profile",
     howToGetListed: [
       "Create a free G2 seller account",
       "Claim your product listing",
@@ -53,6 +53,8 @@ const TRUST_SOURCES: Omit<TrustSource, "competitorsListed" | "youListed" | "prof
     icon: "📊",
     description: "Business software comparison platform",
     importance: "critical",
+    impact: "high",
+    submissionUrl: "https://vendors.capterra.com/sign-up",
     howToGetListed: [
       "Create a Capterra vendor account",
       "Submit your product for review",
@@ -67,6 +69,8 @@ const TRUST_SOURCES: Omit<TrustSource, "competitorsListed" | "youListed" | "prof
     icon: "🚀",
     description: "Product discovery and launch platform",
     importance: "high",
+    impact: "high",
+    submissionUrl: "https://www.producthunt.com/posts/new",
     howToGetListed: [
       "Create a Product Hunt account",
       "Prepare launch assets (images, tagline)",
@@ -81,11 +85,13 @@ const TRUST_SOURCES: Omit<TrustSource, "competitorsListed" | "youListed" | "prof
     icon: "💬",
     description: "Community discussions and recommendations",
     importance: "high",
+    impact: "high",
+    submissionUrl: "https://www.reddit.com/subreddits/search",
     howToGetListed: [
-      "Find relevant subreddits",
+      "Find relevant subreddits for your niche",
       "Participate in discussions genuinely",
       "Share when contextually relevant",
-      "Build community presence",
+      "Build community presence over time",
     ],
     timeToList: "Ongoing",
   },
@@ -95,6 +101,8 @@ const TRUST_SOURCES: Omit<TrustSource, "competitorsListed" | "youListed" | "prof
     icon: "⭐",
     description: "Consumer review platform",
     importance: "medium",
+    impact: "medium",
+    submissionUrl: "https://business.trustpilot.com/signup",
     howToGetListed: [
       "Claim your business profile",
       "Verify your business",
@@ -109,6 +117,8 @@ const TRUST_SOURCES: Omit<TrustSource, "competitorsListed" | "youListed" | "prof
     icon: "🎯",
     description: "B2B software reviews",
     importance: "medium",
+    impact: "medium",
+    submissionUrl: "https://www.trustradius.com/vendor",
     howToGetListed: [
       "Create vendor profile",
       "Add product information",
@@ -126,7 +136,6 @@ export default function SourcesPage() {
   const [expandedSource, setExpandedSource] = useState<string | null>(null);
 
   const isPaidPlan = organization?.plan === "scout" || organization?.plan === "command" || organization?.plan === "dominate";
-  const isProPlan = organization?.plan === "command" || organization?.plan === "dominate";
 
   useEffect(() => {
     const fetchSources = async () => {
@@ -149,20 +158,6 @@ export default function SourcesPage() {
               youListed: l.status === "verified",
               profileUrl: l.profile_url,
             });
-          });
-
-          // Get competitors from citations (extract from source_domain in citations)
-          const citationsRes = await fetch(`/api/geo/citations?siteId=${currentSite.id}&full=true`);
-          const citationsData = await citationsRes.ok ? await citationsRes.json() : null;
-          const citations = citationsData?.citations || citationsData?.data?.citations || [];
-          
-          // Extract competitor domains from citations that mention sources
-          const competitorDomains = new Set<string>();
-          citations.forEach((c: any) => {
-            if (c.sourceDomain && c.sourceDomain !== currentSite.domain) {
-              // Extract competitor domains from snippet or source
-              // This is simplified - real implementation would parse better
-            }
           });
 
           // Build sources with real data
@@ -201,8 +196,7 @@ export default function SourcesPage() {
     fetchSources();
   }, [currentSite?.id]);
 
-  const sourcesWithCompetitors = sources.filter(s => s.competitorsListed.length > 0);
-  const sourcesYouNeed = sources.filter(s => s.competitorsListed.length > 0 && !s.youListed);
+  const sourcesYouNeed = sources.filter(s => !s.youListed);
 
   if (loading) {
     return (
@@ -304,6 +298,13 @@ export default function SourcesPage() {
                             <span className="px-2 py-0.5 bg-red-500/10 text-red-400 text-xs rounded">
                               Critical
                             </span>
+                            <span className={`px-2 py-0.5 text-xs rounded ${
+                              source.impact === "high"
+                                ? "bg-emerald-500/10 text-emerald-400"
+                                : "bg-zinc-700 text-zinc-400"
+                            }`}>
+                              {source.impact === "high" ? "High Impact" : "Medium Impact"}
+                            </span>
                           </div>
                           <p className="text-zinc-400 text-sm mb-2">
                             {source.description}
@@ -361,28 +362,15 @@ export default function SourcesPage() {
                                 <p className="text-zinc-300 text-sm">
                                   {source.howToGetListed[0]}
                                 </p>
-                                {source.name === "G2" && (
-                                  <a
-                                    href="https://sell.g2.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors text-sm"
-                                  >
-                                    Get started
-                                    <ExternalLink className="w-4 h-4" />
-                                  </a>
-                                )}
-                                {source.name === "Capterra" && (
-                                  <a
-                                    href="https://vendors.capterra.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors text-sm"
-                                  >
-                                    Get started
-                                    <ExternalLink className="w-4 h-4" />
-                                  </a>
-                                )}
+                                <a
+                                  href={source.submissionUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors text-sm"
+                                >
+                                  Submit Your Listing
+                                  <ExternalLink className="w-4 h-4" />
+                                </a>
                               </div>
                             )}
                           </div>
@@ -426,15 +414,58 @@ export default function SourcesPage() {
                             ))}
                           </ol>
 
-                          <a
-                            href={`https://${source.domain}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
-                          >
-                            Go to {source.name}
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
+                          <div className="flex items-center gap-3 mt-4">
+                            <a
+                              href={source.submissionUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+                            >
+                              Submit Your Listing
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                            {!source.youListed && (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (!currentSite?.id) return;
+                                  try {
+                                    const res = await fetch("/api/sites/listings", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({
+                                        siteId: currentSite.id,
+                                        sourceDomain: source.domain,
+                                        sourceName: source.name,
+                                        status: "verified",
+                                      }),
+                                    });
+                                    if (res.ok) {
+                                      setSources(prev =>
+                                        prev.map(s =>
+                                          s.domain === source.domain
+                                            ? { ...s, youListed: true }
+                                            : s
+                                        )
+                                      );
+                                    }
+                                  } catch {
+                                    // Silently fail
+                                  }
+                                }}
+                                className="inline-flex items-center gap-2 px-4 py-2 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 rounded-lg transition-colors"
+                              >
+                                <Check className="w-4 h-4" />
+                                Mark as Done
+                              </button>
+                            )}
+                            {source.youListed && (
+                              <span className="inline-flex items-center gap-2 px-4 py-2 text-emerald-400 text-sm">
+                                <Check className="w-4 h-4" />
+                                Listed
+                              </span>
+                            )}
+                          </div>
                         </>
                       )}
                     </div>
@@ -464,17 +495,17 @@ export default function SourcesPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-medium text-white">{source.name}</h3>
                         <span className={`px-2 py-0.5 text-xs rounded ${
-                          source.importance === "high"
-                            ? "bg-yellow-500/10 text-yellow-400"
+                          source.impact === "high"
+                            ? "bg-emerald-500/10 text-emerald-400"
                             : "bg-zinc-700 text-zinc-400"
                         }`}>
-                          {source.importance}
+                          {source.impact === "high" ? "High Impact" : "Medium Impact"}
                         </span>
                       </div>
                       <p className="text-zinc-400 text-sm mb-2">
                         {source.description}
                       </p>
-                      <div className="flex items-center gap-3 text-xs">
+                      <div className="flex items-center gap-3 text-xs mb-3">
                         <span className="text-emerald-400">
                           ✓ {source.competitorsListed.length} competitors
                         </span>
@@ -482,6 +513,59 @@ export default function SourcesPage() {
                           {source.youListed ? "✓ You're listed" : "✗ You're not listed"}
                         </span>
                       </div>
+                      {isPaidPlan && (
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={source.submissionUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors text-sm"
+                          >
+                            Submit Your Listing
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                          {!source.youListed && (
+                            <button
+                              onClick={async () => {
+                                if (!currentSite?.id) return;
+                                try {
+                                  const res = await fetch("/api/sites/listings", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                      siteId: currentSite.id,
+                                      sourceDomain: source.domain,
+                                      sourceName: source.name,
+                                      status: "verified",
+                                    }),
+                                  });
+                                  if (res.ok) {
+                                    setSources(prev =>
+                                      prev.map(s =>
+                                        s.domain === source.domain
+                                          ? { ...s, youListed: true }
+                                          : s
+                                      )
+                                    );
+                                  }
+                                } catch {
+                                  // Silently fail
+                                }
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 rounded-lg transition-colors text-sm"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              Mark as Done
+                            </button>
+                          )}
+                          {source.youListed && (
+                            <span className="inline-flex items-center gap-1.5 text-emerald-400 text-sm">
+                              <Check className="w-3.5 h-3.5" />
+                              Listed
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
