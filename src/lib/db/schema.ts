@@ -1395,6 +1395,75 @@ export const teaserSubscribers = pgTable(
 );
 
 // ============================================
+// AI RECOMMENDATIONS (Data Moat)
+// Every AI recommendation ever observed across all scans.
+// This is the proprietary dataset that becomes the moat.
+// ============================================
+
+export const aiRecommendations = pgTable(
+  "ai_recommendations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // What was queried
+    query: text("query").notNull(),
+    scannedDomain: text("scanned_domain").notNull(),
+    // What AI recommended
+    recommendedDomain: text("recommended_domain").notNull(),
+    platform: text("platform").notNull(), // perplexity, gemini, chatgpt
+    // Context
+    position: integer("position"), // 1st mentioned, 2nd, etc.
+    snippet: text("snippet"), // raw text around the recommendation
+    confidence: text("confidence").default("medium"), // high, medium, low
+    // Source
+    source: text("source").notNull().default("teaser"), // teaser, citation_check, bulk_scan
+    siteId: uuid("site_id"), // null for teaser scans (no auth)
+    // Timestamps
+    observedAt: timestamp("observed_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("ai_rec_domain_idx").on(table.recommendedDomain),
+    index("ai_rec_scanned_idx").on(table.scannedDomain),
+    index("ai_rec_platform_idx").on(table.platform),
+    index("ai_rec_observed_idx").on(table.observedAt),
+    index("ai_rec_query_idx").on(table.query),
+  ]
+);
+
+// ============================================
+// INDUSTRY BENCHMARKS (Aggregated insights)
+// Weekly rollups from ai_recommendations data.
+// Powers leaderboard, public reports, API.
+// ============================================
+
+export const industryBenchmarks = pgTable(
+  "industry_benchmarks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // Period
+    period: text("period").notNull(), // YYYY-WW (year-week)
+    // Category / segment
+    category: text("category").notNull().default("all"), // "all", "saas", "ecommerce", etc.
+    // Aggregated data
+    totalScans: integer("total_scans").notNull().default(0),
+    totalRecommendations: integer("total_recommendations").notNull().default(0),
+    uniqueDomains: integer("unique_domains").notNull().default(0),
+    // Top domains by recommendation count
+    topDomains: jsonb("top_domains").$type<Array<{ domain: string; count: number; platforms: string[] }>>().default([]),
+    // Platform breakdown
+    platformBreakdown: jsonb("platform_breakdown").$type<Record<string, number>>().default({}),
+    // Average visibility score across scans
+    avgVisibilityScore: integer("avg_visibility_score"),
+    // Timestamps
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("benchmark_period_idx").on(table.period),
+    index("benchmark_category_idx").on(table.category),
+    uniqueIndex("benchmark_period_category_unique").on(table.period, table.category),
+  ]
+);
+
+// ============================================
 // REFERRALS
 // ============================================
 

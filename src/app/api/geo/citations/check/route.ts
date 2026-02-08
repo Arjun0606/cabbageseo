@@ -28,6 +28,7 @@ import {
   canAccessProduct,
 } from "@/lib/billing/citation-plans";
 import { getUser } from "@/lib/api/get-user";
+import { logRecommendations, extractCitationRecommendations } from "@/lib/geo/recommendation-logger";
 
 function getDbClient(): SupabaseClient | null {
   try {
@@ -913,6 +914,10 @@ export async function POST(request: NextRequest) {
       .filter(r => !r.cited && r.competitors.length > 0)
       .flatMap(r => r.sources.map(s => s.name));
     const uniqueCompetitorSources = [...new Set(sourcesMentioningCompetitors)];
+
+    // Log AI recommendations to data moat (non-blocking, fire-and-forget)
+    const recEntries = extractCitationRecommendations(cleanDomain, siteId, results);
+    logRecommendations(recEntries);
 
     // Return enriched response with REVENUE INTELLIGENCE
     return NextResponse.json({

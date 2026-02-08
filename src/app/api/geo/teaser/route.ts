@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, teaserReports } from "@/lib/db";
 import { generateTeaserPreview, type ContentPreviewData } from "@/lib/geo/teaser-preview-generator";
+import { logRecommendations, extractTeaserRecommendations } from "@/lib/geo/recommendation-logger";
 
 // Rate limiting: simple in-memory store (in production, use Redis)
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
@@ -335,6 +336,10 @@ export async function POST(request: NextRequest) {
     } catch (err) {
       console.error("[Teaser] Failed to save report:", err);
     }
+
+    // Log AI recommendations to data moat (non-blocking, fire-and-forget)
+    const recEntries = extractTeaserRecommendations(cleanDomain, results);
+    logRecommendations(recEntries);
 
     return NextResponse.json({
       domain: cleanDomain,

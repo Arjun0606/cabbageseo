@@ -16,6 +16,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- DROP EXISTING TABLES (reverse dependency order)
 -- ============================================
 
+DROP TABLE IF EXISTS ai_recommendations CASCADE;
+DROP TABLE IF EXISTS industry_benchmarks CASCADE;
 DROP TABLE IF EXISTS teaser_subscribers CASCADE;
 DROP TABLE IF EXISTS teaser_reports CASCADE;
 DROP TABLE IF EXISTS generated_pages CASCADE;
@@ -1124,6 +1126,51 @@ CREATE INDEX teaser_subscribers_domain_idx ON teaser_subscribers(domain);
 CREATE INDEX teaser_subscribers_email_idx ON teaser_subscribers(email);
 
 -- ============================================
+-- AI RECOMMENDATIONS (Data Moat — raw observations)
+-- ============================================
+
+CREATE TABLE ai_recommendations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  query TEXT NOT NULL,
+  scanned_domain TEXT NOT NULL,
+  recommended_domain TEXT NOT NULL,
+  platform TEXT NOT NULL,
+  position INTEGER,
+  snippet TEXT,
+  confidence TEXT DEFAULT 'medium',
+  source TEXT NOT NULL DEFAULT 'teaser',
+  site_id UUID,
+  observed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX ai_rec_domain_idx ON ai_recommendations(recommended_domain);
+CREATE INDEX ai_rec_scanned_idx ON ai_recommendations(scanned_domain);
+CREATE INDEX ai_rec_platform_idx ON ai_recommendations(platform);
+CREATE INDEX ai_rec_observed_idx ON ai_recommendations(observed_at);
+CREATE INDEX ai_rec_query_idx ON ai_recommendations(query);
+
+-- ============================================
+-- INDUSTRY BENCHMARKS (Data Moat — weekly aggregates)
+-- ============================================
+
+CREATE TABLE industry_benchmarks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  period TEXT NOT NULL,
+  category TEXT NOT NULL DEFAULT 'all',
+  total_scans INTEGER NOT NULL DEFAULT 0,
+  total_recommendations INTEGER NOT NULL DEFAULT 0,
+  unique_domains INTEGER NOT NULL DEFAULT 0,
+  top_domains JSONB DEFAULT '[]',
+  platform_breakdown JSONB DEFAULT '{}',
+  avg_visibility_score INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX benchmark_period_idx ON industry_benchmarks(period);
+CREATE INDEX benchmark_category_idx ON industry_benchmarks(category);
+CREATE UNIQUE INDEX benchmark_period_category_unique ON industry_benchmarks(period, category);
+
+-- ============================================
 -- KEYWORDS → CONTENT FK (added after both tables exist)
 -- ============================================
 
@@ -1167,6 +1214,7 @@ ALTER TABLE monthly_checkpoints ENABLE ROW LEVEL SECURITY;
 ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE generated_pages ENABLE ROW LEVEL SECURITY;
 -- teaser_reports and teaser_subscribers are public (no auth), accessed via service client only
+-- ai_recommendations and industry_benchmarks are internal data moat tables, accessed via service client only
 
 -- ============================================
 -- RLS POLICIES - Organization-scoped access
