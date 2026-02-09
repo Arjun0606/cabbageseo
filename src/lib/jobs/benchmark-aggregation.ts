@@ -14,7 +14,7 @@
 
 import { inngest } from "./inngest-client";
 import { db, aiRecommendations, industryBenchmarks, sites } from "@/lib/db";
-import { sql, gte, count, countDistinct, isNotNull, eq } from "drizzle-orm";
+import { sql, gte, count, countDistinct, isNotNull, eq, and, inArray } from "drizzle-orm";
 
 /**
  * Aggregate recommendations for a given set of scanned domains (or all).
@@ -25,8 +25,11 @@ async function aggregateRecommendations(
   filterDomains?: string[]
 ) {
   const baseCondition = filterDomains
-    ? sql`${aiRecommendations.observedAt} >= ${weekAgo} AND ${aiRecommendations.scannedDomain} IN ${filterDomains}`
-    : sql`${aiRecommendations.observedAt} >= ${weekAgo}`;
+    ? and(
+        gte(aiRecommendations.observedAt, weekAgo),
+        inArray(aiRecommendations.scannedDomain, filterDomains)
+      )
+    : gte(aiRecommendations.observedAt, weekAgo);
 
   // Get total counts
   const totalResult = await db
@@ -68,7 +71,10 @@ async function aggregateRecommendations(
       .select({ platform: aiRecommendations.platform })
       .from(aiRecommendations)
       .where(
-        sql`${aiRecommendations.recommendedDomain} = ${row.domain} AND ${aiRecommendations.observedAt} >= ${weekAgo}`
+        and(
+          eq(aiRecommendations.recommendedDomain, row.domain),
+          gte(aiRecommendations.observedAt, weekAgo)
+        )
       )
       .groupBy(aiRecommendations.platform);
 
