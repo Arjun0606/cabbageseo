@@ -393,12 +393,12 @@ function QueryPageContent() {
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5" />
-                      Generate Authority Page
+                      Generate Fix Page
                     </>
                   )}
                 </button>
                 <p className="text-center text-xs text-zinc-500 mt-2">
-                  Creates a comparison page or explainer that reinforces your authority
+                  Creates a comparison page or explainer tailored to this query
                 </p>
               </div>
             </>

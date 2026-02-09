@@ -551,7 +551,7 @@ export function canGeneratePage(
   if (!plan.features.pageGeneration) {
     return {
       allowed: false,
-      reason: "Authority Pages requires Scout plan or higher.",
+      reason: "Fix pages require Scout plan or higher.",
     };
   }
 

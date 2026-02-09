@@ -192,9 +192,12 @@ function HomeContent() {
           </AnimateIn>
 
           <AnimateIn delay={0.6} direction="up">
-            <p className="text-lg text-zinc-400 mb-10 max-w-xl mx-auto">
+            <p className="text-lg text-zinc-400 mb-3 max-w-xl mx-auto">
               Enter your domain. We&rsquo;ll check ChatGPT, Perplexity, and
               Google AI in 10 seconds.
+            </p>
+            <p className="text-sm text-emerald-400/70 font-medium mb-8 max-w-xl mx-auto">
+              AI decides who gets recommended. We make sure you&rsquo;re in the conversation.
             </p>
           </AnimateIn>
 

@@ -178,7 +178,7 @@ export default function FeaturesPage() {
               See which plan fits
             </h2>
             <p className="text-zinc-400 mb-6">
-              Every plan starts with a free trial. No credit card required.
+              Every plan starts with a free trial. You&apos;ll know where you stand in 10 seconds.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link

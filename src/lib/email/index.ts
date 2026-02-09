@@ -15,8 +15,8 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-// Default sender
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "CabbageSEO <noreply@cabbageseo.com>";
+// Default sender — single source of truth for all email sends
+export const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "CabbageSEO <hello@cabbageseo.com>";
 
 // ============================================
 // EMAIL TEMPLATES

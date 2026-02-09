@@ -126,7 +126,7 @@ const groups: ChangelogGroup[] = [
       },
       {
         category: "new",
-        title: "Authority Pages",
+        title: "Fix Pages",
         description:
           "Generate comparison pages, category explainers, and FAQs that reinforce your credibility with AI systems using your citation data and competitor intelligence.",
         icon: <FileText className="w-5 h-5" />,

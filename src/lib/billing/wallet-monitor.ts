@@ -303,7 +303,7 @@ async function sendWalletAlertEmail(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "CabbageSEO Alerts <alerts@cabbageseo.com>",
+          from: process.env.RESEND_FROM_EMAIL || "CabbageSEO <hello@cabbageseo.com>",
           to: [to],
           subject: subjects[alertType],
           html: `

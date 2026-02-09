@@ -33,7 +33,13 @@ import {
   Globe,
   BarChart3,
   Users,
+  X,
+  Bell,
+  FileText,
+  Zap,
+  Search,
 } from "lucide-react";
+import Link from "next/link";
 import { useCheckout } from "@/hooks/use-checkout";
 import { getNextPlan } from "@/lib/billing/citation-plans";
 
@@ -111,6 +117,12 @@ function DashboardContent() {
     runCheck,
   } = useSite();
   const { checkout, loading: checkoutLoading } = useCheckout();
+
+  // Getting Started guide
+  const [showGuide, setShowGuide] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !localStorage.getItem("cabbage_dismissed_guide");
+  });
 
   // State — Zone 1 + 2 (immediate)
   const [momentum, setMomentum] = useState<MomentumData | null>(null);
@@ -514,6 +526,49 @@ function DashboardContent() {
         </button>
       </div>
 
+      {/* ═══ GETTING STARTED GUIDE ═══ */}
+      {showGuide && (
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 relative">
+          <button
+            onClick={() => {
+              setShowGuide(false);
+              localStorage.setItem("cabbage_dismissed_guide", "1");
+            }}
+            className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-300 transition-colors"
+            aria-label="Dismiss guide"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <h3 className="text-white font-semibold mb-1">Getting started</h3>
+          <p className="text-zinc-400 text-sm mb-4">Here&apos;s how to get the most out of CabbageSEO.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {[
+              { icon: Search, label: "Run your first AI check", href: "#", onClick: handleCheck },
+              { icon: Bell, label: "Set up email + Slack alerts", href: "/settings/notifications" },
+              { icon: FileText, label: "Review your fix pages", href: "/dashboard/pages" },
+              { icon: Zap, label: "Start your 30-day sprint", href: "#", onClick: () => setShowProgress(true) },
+              { icon: Users, label: "Track competitors", href: "/dashboard/competitors" },
+            ].map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={(e) => {
+                  if (item.onClick) {
+                    e.preventDefault();
+                    item.onClick();
+                  }
+                }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-zinc-900/60 hover:bg-zinc-800/80 border border-zinc-800 transition-colors group"
+              >
+                <item.icon className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="text-sm text-zinc-300 group-hover:text-white transition-colors">{item.label}</span>
+                <ArrowRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-zinc-400 ml-auto transition-colors" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ═══ TRIAL URGENCY (≤3 days) ═══ */}
       {trial?.isTrialUser && !trial?.expired && trial.daysRemaining <= 3 && (
         <div className="rounded-2xl p-5 bg-gradient-to-r from-red-500/10 via-red-500/5 to-transparent border border-red-500/20">
@@ -761,7 +816,7 @@ function DashboardContent() {
                         </span>
                       )}
                       {wonDelta === 0 && lostDelta === 0 && (
-                        <span className="text-sm text-zinc-500">No change yet — keep publishing Authority Pages</span>
+                        <span className="text-sm text-zinc-500">No change yet — keep publishing fix pages</span>
                       )}
                     </div>
                   </div>

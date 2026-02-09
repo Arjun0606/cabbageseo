@@ -147,9 +147,9 @@ function PagesContent() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Authority Pages</h1>
+          <h1 className="text-2xl font-bold text-white">Fix Pages</h1>
           <p className="text-zinc-500 text-sm mt-1">
-            Generate comparison pages, explainers, and FAQs that reinforce your authority
+            Generate comparison pages, explainers, and FAQs to improve your AI visibility
           </p>
         </div>
 
@@ -158,7 +158,7 @@ function PagesContent() {
             <Lock className="w-8 h-8 text-zinc-500" />
           </div>
           <h2 className="text-xl font-semibold text-white mb-2">
-            Authority Pages
+            Fix Pages
           </h2>
           <p className="text-zinc-400 max-w-md mx-auto mb-6">
             Generate comparison pages, category explainers, and FAQs that reinforce
@@ -184,7 +184,7 @@ function PagesContent() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Authority Pages</h1>
+        <h1 className="text-2xl font-bold text-white">Fix Pages</h1>
         <p className="text-zinc-500 text-sm mt-1">
           Generate comparison pages, explainers, and FAQs that reinforce your authority
         </p>

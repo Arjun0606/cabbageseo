@@ -45,6 +45,7 @@ interface PricingTier {
   icon: React.ReactNode;
   features: string[];
   highlight?: string;
+  promise?: string;
 }
 
 interface FAQItem {
@@ -74,6 +75,7 @@ const tiers: PricingTier[] = [
       "See who AI recommends instead",
       "7-day access, no credit card",
     ],
+    promise: "You\u2019ll know if AI ignores you.",
   },
   {
     name: "Scout",
@@ -92,6 +94,7 @@ const tiers: PricingTier[] = [
       "Gap analysis + 3 fix pages/mo",
       "Score drop alerts (email + Slack)",
     ],
+    promise: "After 30 days, you\u2019ll know exactly where you stand and what to fix.",
   },
   {
     name: "Command",
@@ -112,6 +115,7 @@ const tiers: PricingTier[] = [
       "Everything in Scout",
     ],
     highlight: "MOST POPULAR",
+    promise: "If AI isn\u2019t mentioning you more after your sprint, we\u2019ll show you why.",
   },
   {
     name: "Dominate",
@@ -130,6 +134,7 @@ const tiers: PricingTier[] = [
       "Priority support",
       "Everything in Command",
     ],
+    promise: "Full visibility across every AI platform, every day. No blind spots.",
   },
 ];
 
@@ -338,6 +343,13 @@ function PricingCard({
             </motion.li>
           ))}
         </ul>
+
+        {/* Promise */}
+        {tier.promise && (
+          <p className="mt-4 pt-4 border-t border-white/[0.06] text-sm text-emerald-400/80 italic">
+            &rarr; {tier.promise}
+          </p>
+        )}
       </GlassCard>
     </div>
   );

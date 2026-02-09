@@ -325,7 +325,7 @@ export const monthlyCheckpoint = inngest.createFunction(
         const resend = new Resend(process.env.RESEND_API_KEY);
 
         await resend.emails.send({
-          from: "CabbageSEO <reports@cabbageseo.com>",
+          from: process.env.RESEND_FROM_EMAIL || "CabbageSEO <hello@cabbageseo.com>",
           to: ownerData.email,
           subject: `📊 Monthly AI Visibility Report — ${site.domain}`,
           html: buildReportEmail({

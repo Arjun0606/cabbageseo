@@ -6,7 +6,7 @@
  * action that applies. This keeps the dashboard focused on ONE thing.
  *
  * Priority order:
- * 1. Lost queries without Authority Pages (generate content to win them back)
+ * 1. Lost queries without fix pages (generate content to win them back)
  * 2. No G2 listing
  * 3. No Capterra listing
  * 4. Zero citations anywhere
@@ -116,7 +116,7 @@ export async function getNextAction(
       .limit(1)
       .maybeSingle(),
 
-    // Count of generated Authority Pages for this site
+    // Count of generated fix pages for this site
     db
       .from("generated_pages")
       .select("id", { count: "exact", head: true })
@@ -136,15 +136,15 @@ export async function getNextAction(
 
   const topCompetitorDomain = await getTopCompetitorDomain(siteId, db);
 
-  // --- Priority 1: Lost queries without Authority Pages ---
+  // --- Priority 1: Lost queries without fix pages ---
   if (queriesLost > 0 && pagesCount < queriesLost) {
     const remaining = queriesLost - pagesCount;
     return {
-      id: "generate_authority_pages",
-      title: `Generate Authority Pages for ${remaining} lost quer${remaining === 1 ? "y" : "ies"}`,
+      id: "generate_fix_pages",
+      title: `Generate fix pages for ${remaining} lost quer${remaining === 1 ? "y" : "ies"}`,
       description:
         `You're losing ${queriesLost} quer${queriesLost === 1 ? "y" : "ies"} to competitors. ` +
-        "Generate Authority Pages — AI-optimized content specifically " +
+        "Generate fix pages — AI-optimized content specifically " +
         "crafted to make AI recommend you instead. Each page targets " +
         "a query you're currently losing.",
       priority: "critical",

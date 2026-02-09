@@ -387,7 +387,7 @@ export const sendCitationAlert = inngest.createFunction(
       const platformList = platforms.join(", ");
 
       await resend.emails.send({
-        from: "CabbageSEO <alerts@cabbageseo.com>",
+        from: process.env.RESEND_FROM_EMAIL || "CabbageSEO <hello@cabbageseo.com>",
         to: userEmail.email,
         subject: `⚔️ You just won a battle: ${domain} is being cited!`,
         html: `
@@ -634,7 +634,7 @@ export const weeklyReport = inngest.createFunction(
           : `Score ${momentumScore}/100 — weekly intel for ${primarySite.domain}`;
 
         await resend.emails.send({
-          from: "CabbageSEO <reports@cabbageseo.com>",
+          from: process.env.RESEND_FROM_EMAIL || "CabbageSEO <hello@cabbageseo.com>",
           to: userData.email,
           subject: subjectLine,
           html: `
@@ -896,7 +896,7 @@ export const sendVisibilityDropAlert = inngest.createFunction(
         : "";
 
       await resend.emails.send({
-        from: "CabbageSEO <alerts@cabbageseo.com>",
+        from: process.env.RESEND_FROM_EMAIL || "CabbageSEO <hello@cabbageseo.com>",
         to: userData.email,
         subject: `🚨 ${domain}: AI visibility dropped ${drop} points`,
         html: `
@@ -1071,7 +1071,7 @@ export const weeklyTeaserRescan = inngest.createFunction(
 
           try {
             await resend.emails.send({
-              from: "CabbageSEO <alerts@cabbageseo.com>",
+              from: process.env.RESEND_FROM_EMAIL || "CabbageSEO <hello@cabbageseo.com>",
               to: sub.email,
               subject,
               html: `

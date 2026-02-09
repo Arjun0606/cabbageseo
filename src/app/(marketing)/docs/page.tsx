@@ -138,17 +138,17 @@ This is your blueprint to win specific queries.`,
     ],
   },
   {
-    id: "authority-pages",
-    title: "Authority Pages",
+    id: "fix-pages",
+    title: "Fix Pages",
     icon: FileText,
     items: [
       {
-        title: "What are Authority Pages?",
-        content: `Authority Pages are comparison pages, category explainers, and FAQs designed to reinforce your credibility with AI systems. They work alongside your trust signals — G2 listings, Capterra reviews, Reddit mentions — by giving AI additional context to validate its recommendations.
+        title: "What are fix pages?",
+        content: `Fix pages are comparison pages, category explainers, and FAQs designed to reinforce your credibility with AI systems. They work alongside your trust signals — G2 listings, Capterra reviews, Reddit mentions — by giving AI additional context to validate its recommendations.
 
 Pages are generated using your citation data, competitor intelligence, and gap analysis to create deeply relevant content that generic AI tools can't match.
 
-Authority Pages reinforce third-party trust signals (reviews, listings, mentions) so AI platforms can confidently cite you — they don't cause recommendations on their own.`,
+Fix pages reinforce third-party trust signals (reviews, listings, mentions) so AI platforms can confidently cite you — they don't cause recommendations on their own.`,
       },
       {
         title: "How it works",
@@ -399,7 +399,7 @@ The preview runs non-blocking — if generation fails, your scan results still w
       },
       {
         title: "Full content on paid plans",
-        content: `On Scout, Command, and Dominate plans, you get full Authority Pages:
+        content: `On Scout, Command, and Dominate plans, you get full fix pages:
 • **Scout**: 3 pages per month
 • **Command**: 15 pages per month
 • **Dominate**: Unlimited pages

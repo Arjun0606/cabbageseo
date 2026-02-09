@@ -68,7 +68,7 @@ export const competitorChangeAlert = inngest.createFunction(
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://cabbageseo.com";
 
       await resend.emails.send({
-        from: "CabbageSEO <alerts@cabbageseo.com>",
+        from: process.env.RESEND_FROM_EMAIL || "CabbageSEO <hello@cabbageseo.com>",
         to: userInfo.email,
         subject: `⚠️ ${competitorDomain} gained ${change} new AI citations`,
         html: `

@@ -1,5 +1,5 @@
 /**
- * Authority Page Generator
+ * Fix Page Generator
  *
  * Generates comparison pages, category explainers, and FAQs that reinforce authority.
  * Uses existing citation data, gap analysis, and competitor intelligence

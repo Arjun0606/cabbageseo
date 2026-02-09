@@ -274,7 +274,7 @@ export default function ForSaaSPage() {
               },
               {
                 icon: <FileText className="w-6 h-6 text-emerald-400" />,
-                title: "Authority Pages",
+                title: "Fix Pages",
                 description:
                   "Generate comparison pages, category explainers, and FAQs that reinforce your credibility with AI systems.",
               },

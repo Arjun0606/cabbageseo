@@ -706,7 +706,7 @@ async function sendCitationAlertEmail(params: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "CabbageSEO <noreply@cabbageseo.com>",
+          from: process.env.RESEND_FROM_EMAIL || "CabbageSEO <hello@cabbageseo.com>",
           to: [to],
           subject: `🎉 ${domain} was cited by ${platform}!`,
           html: `

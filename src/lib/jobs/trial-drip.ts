@@ -380,7 +380,7 @@ export const trialDripEmail = inngest.createFunction(
         const resend = new Resend(process.env.RESEND_API_KEY);
 
         await resend.emails.send({
-          from: "CabbageSEO <hello@cabbageseo.com>",
+          from: process.env.RESEND_FROM_EMAIL || "CabbageSEO <hello@cabbageseo.com>",
           to: userData.email,
           subject: email.subject,
           html: email.html,
