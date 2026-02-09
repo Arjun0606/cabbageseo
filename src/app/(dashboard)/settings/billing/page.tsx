@@ -443,10 +443,12 @@ function BillingContent() {
                         </li>
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400" />
-                          {planData.features.hourlyAutoCheck
-                            ? "Hourly auto-checks"
-                            : planData.features.dailyAutoCheck
-                            ? "Daily auto-checks"
+                          {planData.id === "dominate"
+                            ? "Daily + hourly auto-checks"
+                            : planData.id === "command"
+                            ? "Every 3 days + hourly monitoring"
+                            : planData.id === "scout"
+                            ? "Weekly auto-checks"
                             : "Manual checks only"}
                         </li>
                         {planData.features.sprintFramework && (
