@@ -4,14 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Eye,
-  Search,
   Target,
   BarChart3,
-  ArrowRight,
   CheckCircle2,
   Globe,
-  Clock,
-  Zap,
   Map,
   HelpCircle,
   AlertTriangle,
@@ -21,9 +17,10 @@ import {
   PenTool,
   Database,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AnimateIn } from "@/components/motion/animate-in";
+import { GlassCard } from "@/components/ui/glass-card";
 
 const sections = [
   {
@@ -82,7 +79,7 @@ All numbers come from real AI responses. Citations in your dashboard represent a
 • **Command ($149/mo)**: Unlimited manual checks + auto-checks every 3 days
 • **Dominate ($349/mo)**: Unlimited manual checks + daily auto-checks + hourly monitoring
 
-**Note**: Automated checks run in the background and don't count against manual check limits. If your visibility score drops 5+ points, you'll get an instant alert via email and Slack (if configured).`,
+**Note**: Automated checks run in the background and don't count against manual check limits. If your AI visibility drops significantly, you'll get an instant alert via email and Slack (if configured).`,
       },
     ],
   },
@@ -275,17 +272,17 @@ Never be surprised by a competitor's move.`,
 4. Save — you'll now receive automated alerts
 
 **What you'll get in Slack:**
-• Check results (score and queries won/lost)
-• Score drop alerts (when visibility falls 5+ points)
+• Check results (queries won/lost)
+• Visibility drop alerts (when queries won drops)
 • Weekly summary reports (every Monday)`,
       },
       {
-        title: "Score Drop Alerts",
-        content: `When your AI visibility score drops by 5 or more points, you'll get an instant alert via:
-• **Email** — includes the score change and queries you're now losing
+        title: "Visibility Drop Alerts",
+        content: `When your AI visibility drops — meaning you're winning fewer queries than before — you'll get an instant alert via:
+• **Email** — includes the change and queries you're now losing
 • **Slack** — if configured, sent to your channel automatically
 
-Score drops are detected during automated checks. The alert includes specific queries you were winning but are now losing, so you can take targeted action.`,
+Drops are detected during automated checks. The alert includes specific queries you were winning but are now losing, so you can take targeted action.`,
       },
       {
         title: "Email Notifications",
@@ -545,23 +542,25 @@ export default function DocsPage() {
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-6xl mx-auto">
           {/* Title */}
-          <div className="text-center mb-12">
-            <Badge className="bg-emerald-500/10 text-emerald-400 mb-4">
-              Documentation
-            </Badge>
-            <h1 className="text-4xl font-bold text-white mb-4">
-              AI Visibility Intelligence
-            </h1>
-            <p className="text-xl text-zinc-400">
-              See who AI recommends in your market — and how to become one of
-              them
-            </p>
-          </div>
+          <AnimateIn direction="up" delay={0} once>
+            <div className="text-center mb-12">
+              <Badge className="bg-emerald-500/10 text-emerald-400 mb-4">
+                Documentation
+              </Badge>
+              <h1 className="text-4xl font-bold text-white mb-4">
+                AI Visibility Intelligence
+              </h1>
+              <p className="text-xl text-zinc-400">
+                See who AI recommends in your market — and how to become one of
+                them
+              </p>
+            </div>
+          </AnimateIn>
 
           <div className="flex gap-8">
             {/* Sticky Sidebar */}
             <aside className="hidden lg:block w-56 flex-shrink-0">
-              <nav className="sticky top-24 space-y-1">
+              <nav className="sticky top-24 space-y-1 bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
                 {sections.map((section) => (
                   <a
                     key={section.id}
@@ -569,7 +568,7 @@ export default function DocsPage() {
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                       activeSection === section.id
                         ? "bg-emerald-500/10 text-emerald-400"
-                        : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
+                        : "text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.06]"
                     }`}
                   >
                     <section.icon className="w-4 h-4 flex-shrink-0" />
@@ -587,7 +586,7 @@ export default function DocsPage() {
                   <a
                     key={section.id}
                     href={`#${section.id}`}
-                    className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-emerald-500/50 transition-colors"
+                    className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-4 hover:border-emerald-500/50 transition-colors"
                   >
                     <section.icon className="w-6 h-6 text-emerald-400 mb-2" />
                     <h3 className="text-white font-medium text-sm">
@@ -601,22 +600,22 @@ export default function DocsPage() {
               <div className="space-y-12">
                 {sections.map((section) => (
                   <div key={section.id} id={section.id}>
-                    <div className="flex items-center gap-3 mb-6">
-                      <section.icon className="w-6 h-6 text-emerald-400" />
-                      <h2 className="text-2xl font-bold text-white">
-                        {section.title}
-                      </h2>
-                    </div>
+                    <AnimateIn direction="up" delay={0} once>
+                      <div className="flex items-center gap-3 mb-6">
+                        <section.icon className="w-6 h-6 text-emerald-400" />
+                        <h2 className="text-2xl font-bold text-white">
+                          {section.title}
+                        </h2>
+                      </div>
+                    </AnimateIn>
 
                     <div className="space-y-4">
                       {section.items.map((item, i) => (
-                        <Card key={i} className="bg-zinc-900 border-zinc-800">
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-lg text-white">
+                        <AnimateIn key={i} direction="up" delay={i * 0.05} once>
+                          <GlassCard hover={false} padding="md">
+                            <h3 className="text-lg font-semibold text-white mb-2">
                               {item.title}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
+                            </h3>
                             <div className="text-zinc-400 whitespace-pre-wrap">
                               {item.content.split("\n").map((line, j) => {
                                 const parts = line.split(/(\*\*.*?\*\*)/g);
@@ -642,8 +641,8 @@ export default function DocsPage() {
                                 );
                               })}
                             </div>
-                          </CardContent>
-                        </Card>
+                          </GlassCard>
+                        </AnimateIn>
                       ))}
                     </div>
                   </div>
@@ -651,31 +650,33 @@ export default function DocsPage() {
               </div>
 
               {/* CTA */}
-              <div className="mt-16 text-center">
-                <h2 className="text-2xl font-bold text-white mb-4">
-                  Ready to see who AI recommends?
-                </h2>
-                <p className="text-zinc-400 mb-6">
-                  Enter your domain and find out in 10 seconds. No signup
-                  required.
-                </p>
-                <div className="flex justify-center gap-4">
-                  <Link href="/">
-                    <Button className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold">
-                      <Eye className="w-4 h-4 mr-2" />
-                      Check My Domain
-                    </Button>
-                  </Link>
-                  <Link href="/feedback">
-                    <Button
-                      variant="outline"
-                      className="border-zinc-700 text-zinc-300"
-                    >
-                      Questions? Contact Us
-                    </Button>
-                  </Link>
+              <AnimateIn direction="up" delay={0} once>
+                <div className="mt-16 text-center">
+                  <h2 className="text-2xl font-bold text-white mb-4">
+                    Ready to see who AI recommends?
+                  </h2>
+                  <p className="text-zinc-400 mb-6">
+                    Enter your domain and find out in 10 seconds. No signup
+                    required.
+                  </p>
+                  <div className="flex justify-center gap-4">
+                    <Link href="/">
+                      <Button className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold">
+                        <Eye className="w-4 h-4 mr-2" />
+                        Check My Domain
+                      </Button>
+                    </Link>
+                    <Link href="/feedback">
+                      <Button
+                        variant="outline"
+                        className="border-white/[0.06] text-zinc-300"
+                      >
+                        Questions? Contact Us
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              </AnimateIn>
             </div>
           </div>
         </div>

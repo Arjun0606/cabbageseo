@@ -9,7 +9,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { db, teaserReports } from "@/lib/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, ne, sql } from "drizzle-orm";
 
 // ============================================
 // DATA FETCHING
@@ -26,6 +26,21 @@ async function getLatestReport(domain: string) {
     return report || null;
   } catch {
     return null;
+  }
+}
+
+async function getRecentlyScannedDomains(excludeDomain: string): Promise<string[]> {
+  try {
+    const results = await db
+      .select({ domain: teaserReports.domain })
+      .from(teaserReports)
+      .where(ne(teaserReports.domain, excludeDomain))
+      .groupBy(teaserReports.domain)
+      .orderBy(sql`max(${teaserReports.createdAt}) desc`)
+      .limit(8);
+    return results.map((r) => r.domain);
+  } catch {
+    return [];
   }
 }
 
@@ -101,7 +116,10 @@ export default async function AiVisibilityPage({
   const brandName = cleanDomain.replace(/\.(com|io|co|ai|app|dev|org|net)$/, "");
   const titleBrand = brandName.charAt(0).toUpperCase() + brandName.slice(1);
 
-  const report = await getLatestReport(cleanDomain);
+  const [report, relatedDomains] = await Promise.all([
+    getLatestReport(cleanDomain),
+    getRecentlyScannedDomains(cleanDomain),
+  ]);
   const competitors = (report?.competitorsMentioned as string[] || []);
 
   // JSON-LD for the page
@@ -180,7 +198,7 @@ export default async function AiVisibilityPage({
 
             {/* Competitors */}
             {competitors.length > 0 && (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-8">
+              <div className="bg-white/[0.03] backdrop-blur-md border border-white/[0.06] rounded-xl p-6 mb-8">
                 <h3 className="text-lg font-semibold text-white mb-4">
                   AI recommends these instead of {titleBrand}
                 </h3>
@@ -239,7 +257,7 @@ export default async function AiVisibilityPage({
         ) : (
           <>
             {/* No data — prompt scan */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center mb-8">
+            <div className="bg-white/[0.03] backdrop-blur-md border border-white/[0.06] rounded-2xl p-8 text-center mb-8">
               <div className="text-5xl font-black text-zinc-600 mb-4">?</div>
               <h2 className="text-xl font-bold text-white mb-2">
                 No data yet for {cleanDomain}
@@ -283,26 +301,25 @@ export default async function AiVisibilityPage({
           </>
         )}
 
-        {/* Related domains */}
-        <div className="border-t border-zinc-800 pt-8">
-          <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wide mb-4">
-            Check other brands
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {["notion.com", "slack.com", "figma.com", "linear.app", "vercel.com", "ahrefs.com", "hubspot.com", "canva.com"]
-              .filter((d) => d !== cleanDomain)
-              .slice(0, 6)
-              .map((d) => (
+        {/* Related domains — real-time from DB */}
+        {relatedDomains.length > 0 && (
+          <div className="border-t border-white/[0.06] pt-8">
+            <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wide mb-4">
+              Recently scanned brands
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {relatedDomains.map((d) => (
                 <Link
                   key={d}
                   href={`/ai-visibility/${encodeURIComponent(d)}`}
-                  className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-400 hover:text-emerald-400 hover:border-emerald-500/20 transition-colors"
+                  className="px-4 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-zinc-400 hover:text-emerald-400 hover:border-emerald-500/20 transition-colors"
                 >
                   {d}
                 </Link>
               ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

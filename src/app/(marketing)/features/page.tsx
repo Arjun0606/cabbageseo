@@ -28,6 +28,10 @@ import {
   Mail,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { AnimateIn } from "@/components/motion/animate-in";
+import { StaggerGroup, StaggerItem } from "@/components/motion/stagger-group";
+import { GlassCard } from "@/components/ui/glass-card";
+import { GradientOrbs } from "@/components/backgrounds/gradient-orbs";
 
 interface Feature {
   name: string;
@@ -201,7 +205,7 @@ const planBadgeLabels = {
 
 function FeatureCard({ feature }: { feature: Feature }) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+    <GlassCard padding="md" className="h-full">
       <div className="flex items-start gap-4">
         <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0 text-emerald-400">
           {feature.icon}
@@ -221,7 +225,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
           <p className="text-sm text-zinc-400">{feature.description}</p>
         </div>
       </div>
-    </div>
+    </GlassCard>
   );
 }
 
@@ -267,7 +271,7 @@ export default function FeaturesPage() {
     <div className="min-h-screen bg-zinc-950">
       {/* Hero */}
       <section className="pt-20 pb-16">
-        <div className="max-w-4xl mx-auto px-6 text-center">
+        <AnimateIn className="max-w-4xl mx-auto px-6 text-center">
           <Badge
             variant="outline"
             className="mb-6 text-emerald-400 border-emerald-500/30"
@@ -288,13 +292,14 @@ export default function FeaturesPage() {
             Start Free Trial
             <ArrowRight className="w-5 h-5" />
           </Link>
-        </div>
+        </AnimateIn>
       </section>
 
       {/* Monitor */}
-      <section className="py-24 border-t border-zinc-800">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="mb-12">
+      <section className="py-24 border-t border-white/[0.06] relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.02] to-transparent pointer-events-none" />
+        <div className="max-w-6xl mx-auto px-6 relative">
+          <AnimateIn className="mb-12">
             <Badge
               variant="outline"
               className="mb-4 text-emerald-400 border-emerald-500/30"
@@ -308,19 +313,22 @@ export default function FeaturesPage() {
               Daily tracking across ChatGPT, Perplexity, and Google AI.
               See who gets recommended — and who doesn&apos;t.
             </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          </AnimateIn>
+          <StaggerGroup className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {monitorFeatures.map((f) => (
-              <FeatureCard key={f.name} feature={f} />
+              <StaggerItem key={f.name}>
+                <FeatureCard feature={f} />
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGroup>
         </div>
       </section>
 
       {/* Analyze */}
-      <section className="py-24 border-t border-zinc-800">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="mb-12">
+      <section className="py-24 border-t border-white/[0.06] relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-500/[0.02] to-transparent pointer-events-none" />
+        <div className="max-w-6xl mx-auto px-6 relative">
+          <AnimateIn className="mb-12">
             <Badge
               variant="outline"
               className="mb-4 text-blue-400 border-blue-500/30"
@@ -334,19 +342,22 @@ export default function FeaturesPage() {
               Deep intelligence on citation gaps, content opportunities, and
               competitor strategies.
             </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          </AnimateIn>
+          <StaggerGroup className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {analyzeFeatures.map((f) => (
-              <FeatureCard key={f.name} feature={f} />
+              <StaggerItem key={f.name}>
+                <FeatureCard feature={f} />
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGroup>
         </div>
       </section>
 
       {/* Act */}
-      <section className="py-24 border-t border-zinc-800">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="mb-12">
+      <section className="py-24 border-t border-white/[0.06] relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-amber-500/[0.02] to-transparent pointer-events-none" />
+        <div className="max-w-6xl mx-auto px-6 relative">
+          <AnimateIn className="mb-12">
             <Badge
               variant="outline"
               className="mb-4 text-amber-400 border-amber-500/30"
@@ -360,74 +371,78 @@ export default function FeaturesPage() {
               AI-generated content, structured sprints, and progress tracking.
               Not a dashboard — a program that works.
             </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          </AnimateIn>
+          <StaggerGroup className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {actFeatures.map((f) => (
-              <FeatureCard key={f.name} feature={f} />
+              <StaggerItem key={f.name}>
+                <FeatureCard feature={f} />
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGroup>
         </div>
       </section>
 
       {/* Plan Comparison Table */}
-      <section className="py-24 border-t border-zinc-800">
+      <section className="py-24 border-t border-white/[0.06]">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-12">
+          <AnimateIn className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-3">
               Compare plans
             </h2>
             <p className="text-zinc-400">
               Every feature, every tier. Pick the plan that fits.
             </p>
-          </div>
+          </AnimateIn>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-zinc-800">
-                  <th className="text-left py-4 px-4 text-sm font-medium text-zinc-500">
-                    Feature
-                  </th>
-                  <th className="text-center py-4 px-4 text-sm font-medium text-zinc-400">
-                    Free
-                  </th>
-                  <th className="text-center py-4 px-4 text-sm font-medium text-emerald-400">
-                    Scout
-                  </th>
-                  <th className="text-center py-4 px-4 text-sm font-medium text-blue-400">
-                    Command
-                  </th>
-                  <th className="text-center py-4 px-4 text-sm font-medium text-amber-400">
-                    Dominate
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {comparisonFeatures.map((row) => (
-                  <tr
-                    key={row.name}
-                    className="border-b border-zinc-800/50 hover:bg-zinc-900/50"
-                  >
-                    <td className="py-3 px-4 text-sm text-white">
-                      {row.name}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <CellValue value={row.free} />
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <CellValue value={row.scout} />
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <CellValue value={row.command} />
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <CellValue value={row.dominate} />
-                    </td>
+          <AnimateIn delay={0.2}>
+            <GlassCard padding="sm" hover={false} className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/[0.06]">
+                    <th className="text-left py-4 px-4 text-sm font-medium text-zinc-500">
+                      Feature
+                    </th>
+                    <th className="text-center py-4 px-4 text-sm font-medium text-zinc-400">
+                      Free
+                    </th>
+                    <th className="text-center py-4 px-4 text-sm font-medium text-emerald-400">
+                      Scout
+                    </th>
+                    <th className="text-center py-4 px-4 text-sm font-medium text-blue-400">
+                      Command
+                    </th>
+                    <th className="text-center py-4 px-4 text-sm font-medium text-amber-400">
+                      Dominate
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {comparisonFeatures.map((row) => (
+                    <tr
+                      key={row.name}
+                      className="border-b border-white/[0.04] transition-colors duration-200 hover:bg-white/[0.03]"
+                    >
+                      <td className="py-3 px-4 text-sm text-white">
+                        {row.name}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <CellValue value={row.free} />
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <CellValue value={row.scout} />
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <CellValue value={row.command} />
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <CellValue value={row.dominate} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </GlassCard>
+          </AnimateIn>
 
           <div className="text-center mt-8">
             <Link
@@ -441,29 +456,32 @@ export default function FeaturesPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 bg-emerald-950/30 border-t border-emerald-900/30">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-2xl font-bold text-white mb-3">
-            Ready to win AI recommendations?
-          </h2>
-          <p className="text-zinc-400 mb-6">
-            Start your free trial. See results in 30 days.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors"
-            >
-              Start Free Trial
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-            <Link
-              href="/pricing"
-              className="inline-flex items-center gap-2 px-8 py-4 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 rounded-xl transition-colors"
-            >
-              View Pricing
-            </Link>
-          </div>
+      <section className="py-16 border-t border-emerald-900/30 relative overflow-hidden">
+        <GradientOrbs variant="emerald" />
+        <div className="max-w-3xl mx-auto px-6 text-center relative z-10">
+          <AnimateIn>
+            <h2 className="text-2xl font-bold text-white mb-3">
+              Ready to win AI recommendations?
+            </h2>
+            <p className="text-zinc-400 mb-6">
+              Start your free trial. See results in 30 days.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                href="/signup"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors"
+              >
+                Start Free Trial
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+              <Link
+                href="/pricing"
+                className="inline-flex items-center gap-2 px-8 py-4 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 rounded-xl transition-colors"
+              >
+                View Pricing
+              </Link>
+            </div>
+          </AnimateIn>
         </div>
       </section>
     </div>
