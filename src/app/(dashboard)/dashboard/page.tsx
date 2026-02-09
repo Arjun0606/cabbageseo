@@ -182,21 +182,8 @@ function DashboardContent() {
         const data = await momentumRes.json();
         setMomentum(data.data || data);
       } else {
-        const won = currentSite.citationsThisWeek || 0;
-        const last = currentSite.citationsLastWeek || 0;
-        const total = currentSite.totalCitations || 0;
-        const change = last > 0 ? Math.round(((won - last) / last) * 100) : 0;
-        setMomentum({
-          score: Math.min(100, total * 5),
-          change,
-          trend: change > 0 ? "gaining" : change < 0 ? "losing" : "stable",
-          citationsWon: won,
-          citationsLost: Math.max(0, last - won),
-          queriesWon: total,
-          queriesTotal: total,
-          sourceCoverage: 0,
-          topCompetitor: null,
-        });
+        // Don't show a fake score — let the component show its empty state
+        setMomentum(null);
       }
 
       if (nextActionRes?.ok) {

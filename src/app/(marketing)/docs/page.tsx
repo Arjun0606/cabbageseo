@@ -160,7 +160,7 @@ Fix pages reinforce third-party trust signals (reviews, listings, mentions) so A
 Each page is tailored to your specific gaps and designed to reinforce the trust signals AI already looks for when recommending products.`,
       },
       {
-        title: "Authority page limits",
+        title: "Fix page limits",
         content: `• **Free**: Not available
 • **Scout**: 3 pages per month
 • **Command**: 15 pages per month

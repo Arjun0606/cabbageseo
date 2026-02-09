@@ -75,7 +75,7 @@ const tiers: PricingTier[] = [
       "See who AI recommends instead",
       "7-day access, no credit card",
     ],
-    promise: "You\u2019ll know if AI ignores you.",
+    promise: "See if AI knows you exist — before your competitors find out first.",
   },
   {
     name: "Scout",
@@ -94,7 +94,7 @@ const tiers: PricingTier[] = [
       "Gap analysis + 3 fix pages/mo",
       "Score drop alerts (email + Slack)",
     ],
-    promise: "After 30 days, you\u2019ll know exactly where you stand and what to fix.",
+    promise: "Weekly scans catch every shift. Your sprint gives you exactly what to fix, every month.",
   },
   {
     name: "Command",
@@ -111,11 +111,11 @@ const tiers: PricingTier[] = [
       "5 sites, 10 competitors",
       "Checks every 3 days + hourly monitoring",
       "Weekly action plans + competitor deep dives",
-      "15 fix pages/mo, 5 team members",
+      "15 fix pages/mo",
       "Everything in Scout",
     ],
     highlight: "MOST POPULAR",
-    promise: "If AI isn\u2019t mentioning you more after your sprint, we\u2019ll show you why.",
+    promise: "Competitors move fast. Checks every 3 days + weekly action plans keep you ahead.",
   },
   {
     name: "Dominate",
@@ -130,11 +130,11 @@ const tiers: PricingTier[] = [
     features: [
       "25 sites, 25 competitors",
       "Daily + hourly auto-checks",
-      "Unlimited fix pages + team members",
+      "Unlimited fix pages",
       "Priority support",
       "Everything in Command",
     ],
-    promise: "Full visibility across every AI platform, every day. No blind spots.",
+    promise: "Daily scans, hourly monitoring, unlimited fixes. The moment AI shifts, you already know.",
   },
 ];
 

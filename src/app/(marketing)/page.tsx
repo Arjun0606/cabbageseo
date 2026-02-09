@@ -197,7 +197,7 @@ function HomeContent() {
               Google AI in 10 seconds.
             </p>
             <p className="text-sm text-emerald-400/70 font-medium mb-8 max-w-xl mx-auto">
-              AI decides who gets recommended. We make sure you&rsquo;re in the conversation.
+              AI recommendations change weekly. We scan, find gaps, and tell you exactly what to fix.
             </p>
           </AnimateIn>
 

@@ -426,11 +426,11 @@ function QueryPageContent() {
                     <Lock className="w-5 h-5 text-zinc-400 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-white font-medium mb-1">
-                        Unlock full content strategy + authority page generation
+                        Unlock full content strategy + fix page generation
                       </p>
                       <p className="text-zinc-400 text-sm mb-3">
                         Scout plan includes: Exact page structure, section headings, key entities to mention,
-                        FAQs to answer, and <strong className="text-emerald-400">authority pages</strong> that reinforce your credibility with AI systems.
+                        FAQs to answer, and <strong className="text-emerald-400">fix pages</strong> that reinforce your credibility with AI systems.
                       </p>
                       <Link
                         href="/settings/billing"

@@ -61,7 +61,7 @@ const comparisonRows = [
   {
     feature: "Content generation",
     manual: "Write everything from scratch",
-    cabbage: "Authority pages that reinforce your credibility",
+    cabbage: "Fix pages that reinforce your credibility",
     icon: <BarChart3 className="w-4 h-4" />,
   },
   {

@@ -135,7 +135,7 @@ Copy the webhook secret and add to `DODO_PAYMENTS_WEBHOOK_KEY`.
 | Keywords tracked | 100 | 500 | 2,000 |
 | Audits/month | 5 | 20 | 100* |
 | AIO analyses/month | 20 | 100 | 500 |
-| Team members | 1 | 5 | 20 |
+
 | AI credits/month | 1,000 | 5,000 | 20,000 |
 
 *Pro+ audits shown as "Unlimited" with internal soft cap of 100.

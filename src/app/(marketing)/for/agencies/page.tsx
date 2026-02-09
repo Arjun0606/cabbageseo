@@ -367,10 +367,10 @@ export default function ForAgenciesPage() {
                     "Auto-checks every 3 days",
                     "Score drop alerts (email + Slack)",
                     "Full gap analysis + trend charts",
-                    "Authority pages (15/mo)",
+                    "Fix pages (15/mo)",
                     "Bulk scanning API",
                     "Slack integration",
-                    "5 team members",
+                    "CSV export",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-3 text-sm text-zinc-300">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
@@ -407,11 +407,11 @@ export default function ForAgenciesPage() {
                     "25 competitors per site",
                     "Daily + hourly auto-checks",
                     "Score drop alerts (email + Slack)",
-                    "Unlimited intelligence + authority pages",
+                    "Unlimited intelligence + fix pages",
                     "Bulk scanning API",
                     "365-day trend chart history",
                     "Slack integration",
-                    "Unlimited team members",
+                    "Monthly checkpoint reports",
                     "Priority support",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-3 text-sm text-zinc-300">
