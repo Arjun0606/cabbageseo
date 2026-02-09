@@ -299,7 +299,7 @@ function PricingCard({
       >
         {/* Popular badge */}
         {tier.highlight && (
-          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
+          <div className="text-center -mt-2 mb-4">
             <span className="inline-flex items-center gap-1.5 bg-emerald-500 text-black text-xs font-bold px-4 py-1.5 rounded-full shadow-lg">
               <Sparkles className="w-3.5 h-3.5" />
               {tier.highlight}
@@ -308,7 +308,7 @@ function PricingCard({
         )}
 
         {/* Header */}
-        <div className={`mb-6 ${tier.highlight ? "mt-4" : ""}`}>
+        <div className="mb-6">
           <div className="flex items-center gap-3 mb-3">
             <div
               className={`w-10 h-10 rounded-xl flex items-center justify-center ${
@@ -472,22 +472,12 @@ export default function PricingPage() {
 
           {/* Monthly / Annual Toggle */}
           <AnimateIn delay={0.3}>
-            <div className="inline-flex items-center gap-4 p-1.5 bg-white/[0.03] rounded-full border border-white/[0.06] relative">
-              {/* Animated slider background */}
-              <motion.div
-                className="absolute top-1.5 bottom-1.5 rounded-full bg-white/[0.08] shadow-sm"
-                initial={false}
-                animate={{
-                  left: annual ? "50%" : "6px",
-                  right: annual ? "6px" : "50%",
-                }}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              />
+            <div className="inline-flex items-center p-1 bg-white/[0.04] rounded-full border border-white/[0.06]">
               <button
                 onClick={() => setAnnual(false)}
-                className={`relative z-10 px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
                   !annual
-                    ? "text-white"
+                    ? "bg-white/[0.12] text-white shadow-sm"
                     : "text-zinc-500 hover:text-zinc-300"
                 }`}
               >
@@ -495,9 +485,9 @@ export default function PricingPage() {
               </button>
               <button
                 onClick={() => setAnnual(true)}
-                className={`relative z-10 px-5 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
                   annual
-                    ? "text-white"
+                    ? "bg-white/[0.12] text-white shadow-sm"
                     : "text-zinc-500 hover:text-zinc-300"
                 }`}
               >
