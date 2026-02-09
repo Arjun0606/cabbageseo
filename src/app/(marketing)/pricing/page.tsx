@@ -308,7 +308,7 @@ function PricingCard({
         )}
 
         {/* Header */}
-        <div className="mb-6">
+        <div className={`mb-6 ${tier.highlight ? "mt-4" : ""}`}>
           <div className="flex items-center gap-3 mb-3">
             <div
               className={`w-10 h-10 rounded-xl flex items-center justify-center ${
@@ -476,12 +476,12 @@ export default function PricingPage() {
               {/* Animated slider background */}
               <motion.div
                 className="absolute top-1.5 bottom-1.5 rounded-full bg-white/[0.08] shadow-sm"
-                layout
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                style={{
+                initial={false}
+                animate={{
                   left: annual ? "50%" : "6px",
                   right: annual ? "6px" : "50%",
                 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
               <button
                 onClick={() => setAnnual(false)}
