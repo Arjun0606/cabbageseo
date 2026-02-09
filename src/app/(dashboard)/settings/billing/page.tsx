@@ -93,7 +93,7 @@ function BillingContent() {
       const res = await fetch("/api/billing/portal", { method: "POST" });
       const data = await res.json();
       
-      const portalUrl = data.url || data.data?.url;
+      const portalUrl = data.data?.portalUrl || data.url;
       if (portalUrl) {
         window.location.href = portalUrl;
       } else if (data.error) {

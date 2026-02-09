@@ -62,13 +62,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get site data
+    // Get site data (with org ownership check)
     const { data: site } = await db
       .from("sites")
       .select(
-        "id, domain, category, geo_score_avg, total_citations, sprint_started_at, sprint_completed_at"
+        "id, domain, category, geo_score_avg, total_citations, sprint_started_at, sprint_completed_at, organization_id"
       )
       .eq("id", siteId)
+      .eq("organization_id", currentUser.organizationId)
       .single();
 
     if (!site) {
@@ -226,6 +227,29 @@ export async function POST(request: NextRequest) {
         { error: "actionId and valid status required" },
         { status: 400 }
       );
+    }
+
+    // Verify the action belongs to a site owned by the user's org
+    const { data: actionOwnership } = await db
+      .from("sprint_actions")
+      .select("id, site_id")
+      .eq("id", actionId)
+      .maybeSingle();
+
+    if (!actionOwnership) {
+      return NextResponse.json({ error: "Action not found" }, { status: 404 });
+    }
+
+    // Verify the site belongs to the user's organization
+    const { data: actionSite } = await db
+      .from("sites")
+      .select("id")
+      .eq("id", actionOwnership.site_id)
+      .eq("organization_id", currentUser.organizationId)
+      .maybeSingle();
+
+    if (!actionSite) {
+      return NextResponse.json({ error: "Action not found" }, { status: 404 });
     }
 
     const updateData: Record<string, unknown> = { status };

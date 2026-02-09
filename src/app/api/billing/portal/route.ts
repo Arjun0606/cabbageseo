@@ -113,8 +113,7 @@ export async function GET() {
         current_period_start,
         current_period_end,
         cancel_at_period_end,
-        dodo_customer_id,
-        overage_settings
+        dodo_customer_id
       `)
       .eq("id", profile.organization_id)
       .single();
@@ -128,7 +127,6 @@ export async function GET() {
       current_period_end?: string;
       cancel_at_period_end?: boolean;
       dodo_customer_id?: string;
-      overage_settings?: Record<string, unknown>;
     } | null;
 
     if (!orgData) {
@@ -146,7 +144,6 @@ export async function GET() {
         currentPeriodEnd: orgData.current_period_end,
         cancelAtPeriodEnd: orgData.cancel_at_period_end,
         hasPaymentMethod: !!orgData.dodo_customer_id,
-        overageSettings: orgData.overage_settings,
       },
     });
 

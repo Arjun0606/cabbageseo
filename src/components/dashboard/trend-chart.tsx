@@ -8,12 +8,12 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  Legend,
 } from "recharts";
 import { TrendingUp } from "lucide-react";
 
 export interface Snapshot {
   date: string;
-  score: number;
   queriesWon: number;
   queriesLost: number;
   totalQueries: number;
@@ -42,11 +42,13 @@ function CustomTooltip({
   return (
     <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-3 shadow-lg">
       <p className="text-zinc-400 text-xs mb-1">{formatDate(data.date)}</p>
-      <p className="text-white font-bold text-lg">{data.score}/100</p>
-      <div className="flex gap-3 mt-1 text-xs">
+      <div className="flex gap-3 text-sm font-medium">
         <span className="text-emerald-400">{data.queriesWon} won</span>
         <span className="text-red-400">{data.queriesLost} lost</span>
       </div>
+      <p className="text-zinc-500 text-xs mt-1">
+        {data.totalQueries} queries checked
+      </p>
     </div>
   );
 }
@@ -84,6 +86,8 @@ export function TrendChart({ snapshots, loading }: TrendChartProps) {
     dateLabel: formatDate(s.date),
   }));
 
+  const maxQueries = Math.max(...snapshots.map((s) => Math.max(s.queriesWon, s.queriesLost, s.totalQueries)));
+
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -102,20 +106,34 @@ export function TrendChart({ snapshots, loading }: TrendChartProps) {
             tickLine={false}
           />
           <YAxis
-            domain={[0, 100]}
+            domain={[0, Math.max(maxQueries + 1, 3)]}
+            allowDecimals={false}
             tick={{ fill: "#a1a1aa", fontSize: 12 }}
             stroke="#3f3f46"
             tickLine={false}
             width={35}
           />
           <Tooltip content={<CustomTooltip />} />
+          <Legend
+            wrapperStyle={{ fontSize: 12, color: "#a1a1aa" }}
+          />
           <Line
             type="monotone"
-            dataKey="score"
+            dataKey="queriesWon"
+            name="Queries Won"
             stroke="#10b981"
             strokeWidth={2}
             dot={{ fill: "#10b981", r: 3 }}
             activeDot={{ r: 5, fill: "#10b981" }}
+          />
+          <Line
+            type="monotone"
+            dataKey="queriesLost"
+            name="Queries Lost"
+            stroke="#ef4444"
+            strokeWidth={2}
+            dot={{ fill: "#ef4444", r: 3 }}
+            activeDot={{ r: 5, fill: "#ef4444" }}
           />
         </LineChart>
       </ResponsiveContainer>

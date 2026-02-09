@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     // Get citations - build query with optional limit
     let query = db
       .from("citations")
-      .select("id, platform, query, snippet, page_url, confidence, cited_at, created_at")
+      .select("id, platform, query, snippet, confidence, cited_at, created_at, page_id")
       .eq("site_id", siteId)
       .order("cited_at", { ascending: false });
 
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
       platform: string;
       query: string;
       snippet?: string;
-      page_url?: string;
+      page_id?: string;
       confidence?: string;
       cited_at: string;
       created_at: string;
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
       platform: c.platform,
       query: c.query,
       snippet: c.snippet || "",
-      pageUrl: c.page_url,
+      pageUrl: null,
       confidence: confidenceToNumber(c.confidence || null),
       discoveredAt: c.cited_at || c.created_at,
     }));

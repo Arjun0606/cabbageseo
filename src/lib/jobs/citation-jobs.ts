@@ -158,23 +158,23 @@ export const dailyCitationCheck = inngest.createFunction(
         totalNewCitations += result.newCitations;
       }
 
-      // Score drop detection: compare 2 most recent snapshots
+      // Visibility drop detection: compare queries_won in 2 most recent snapshots
       await step.run(`drop-check-${site.id}`, async () => {
         const { data: snapshots } = await supabase
           .from("market_share_snapshots")
-          .select("score, snapshot_date")
+          .select("queries_won, snapshot_date")
           .eq("site_id", site.id)
           .order("snapshot_date", { ascending: false })
           .limit(2);
 
-        const snaps = (snapshots || []) as Array<{ score: number | null; snapshot_date: string }>;
+        const snaps = (snapshots || []) as Array<{ queries_won: number | null; snapshot_date: string }>;
         if (snaps.length < 2) return;
 
-        const current = snaps[0].score || 0;
-        const previous = snaps[1].score || 0;
+        const current = snaps[0].queries_won || 0;
+        const previous = snaps[1].queries_won || 0;
         const drop = previous - current;
 
-        if (drop >= 5) {
+        if (drop >= 2) {
           await inngest.send({
             name: "visibility/drop.detected",
             data: {
@@ -263,21 +263,21 @@ export const dailyCitationCheck = inngest.createFunction(
 );
 
 // ============================================
-// HOURLY CITATION CHECK (Pro Users Only)
-// Runs every hour for Pro/Agency plans
+// HOURLY CITATION CHECK (Paid Plans)
+// Runs every hour for Command/Dominate plans
 // ============================================
 export const hourlyCitationCheck = inngest.createFunction(
   {
     id: "hourly-citation-check",
-    name: "Hourly Citation Check (Pro)",
+    name: "Hourly Citation Check (Paid)",
     retries: 1,
   },
   { cron: "0 * * * *" },
   async ({ step }) => {
     const supabase = createServiceClient();
-    
-    // Get sites from Pro/Agency organizations
-    const sites = await step.run("get-pro-sites", async () => {
+
+    // Get sites from Command/Dominate organizations
+    const sites = await step.run("get-paid-sites", async () => {
       const { data, error } = await supabase
         .from("sites")
         .select(`
@@ -290,20 +290,20 @@ export const hourlyCitationCheck = inngest.createFunction(
         .in("organizations.plan", ["command", "dominate"]);
       
       if (error) {
-        console.error("Failed to fetch pro sites:", error);
+        console.error("Failed to fetch paid sites:", error);
         return [];
       }
       return (data || []) as Array<{ id: string; domain: string; organization_id: string }>;
     });
 
     if (sites.length === 0) {
-      return { checked: 0, message: "No Pro sites to check" };
+      return { checked: 0, message: "No paid sites to check" };
     }
 
     const results = [];
 
     for (const site of sites) {
-      const result = await step.run(`check-pro-${site.id}`, async () => {
+      const result = await step.run(`check-paid-${site.id}`, async () => {
         const checkResult = await runCitationCheck(site.id, site.domain);
         
         if (checkResult.citedCount > 0) {
@@ -774,7 +774,7 @@ export const resetWeeklyCounts = inngest.createFunction(
 
 // ============================================
 // VISIBILITY DROP ALERT
-// Triggered when score drops 5+ points
+// Triggered when queries_won drops by 2+
 // ============================================
 export const sendVisibilityDropAlert = inngest.createFunction(
   {

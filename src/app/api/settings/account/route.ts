@@ -63,14 +63,16 @@ export async function GET() {
       // First, check if they have an org or create one
       let orgId: string | null = null;
       
-      const { data: existingOrg } = await serviceClient
-        .from("organizations")
-        .select("id")
-        .eq("owner_id", user.id)
-        .single();
-      
-      if (existingOrg) {
-        orgId = (existingOrg as { id: string }).id;
+      // Check if user already has an org via users table (owner_id doesn't exist on orgs)
+      const { data: existingUserOrg } = await serviceClient
+        .from("users")
+        .select("organization_id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const userOrgData = existingUserOrg as { organization_id?: string } | null;
+      if (userOrgData?.organization_id) {
+        orgId = userOrgData.organization_id;
       } else {
         // Create org with free plan
         const { data: newOrg, error: orgError } = await serviceClient
@@ -97,7 +99,7 @@ export async function GET() {
             id: user.id,
             organization_id: orgId,
             email: user.email!,
-            full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+            name: user.user_metadata?.full_name || user.user_metadata?.name || null,
             avatar_url: user.user_metadata?.avatar_url || null,
             role: "owner",
             email_verified: true,
@@ -288,7 +290,16 @@ export async function DELETE() {
       const siteIds = (sitesData as { id: string }[] | null)?.map(s => s.id) || [];
 
       if (siteIds.length > 0) {
-        // Delete all site-related data
+        // Delete all site-related data (child tables first)
+        await serviceClient.from("sprint_actions").delete().in("site_id", siteIds);
+        await serviceClient.from("competitors").delete().in("site_id", siteIds);
+        await serviceClient.from("source_listings").delete().in("site_id", siteIds);
+        await serviceClient.from("market_share_snapshots").delete().in("site_id", siteIds);
+        await serviceClient.from("geo_analyses").delete().in("site_id", siteIds);
+        await serviceClient.from("generated_pages").delete().in("site_id", siteIds);
+        await serviceClient.from("content_ideas").delete().in("site_id", siteIds);
+        await serviceClient.from("keyword_clusters").delete().in("site_id", siteIds);
+        await serviceClient.from("rankings").delete().in("site_id", siteIds);
         await serviceClient.from("aio_analyses").delete().in("site_id", siteIds);
         await serviceClient.from("entities").delete().in("site_id", siteIds);
         await serviceClient.from("citations").delete().in("site_id", siteIds);
@@ -301,6 +312,9 @@ export async function DELETE() {
       }
 
       // Delete organization-level data
+      await serviceClient.from("notifications").delete().eq("organization_id", orgId);
+      await serviceClient.from("monthly_checkpoints").delete().eq("organization_id", orgId);
+      await serviceClient.from("referrals").delete().eq("referrer_organization_id", orgId);
       await serviceClient.from("integrations").delete().eq("organization_id", orgId);
       await serviceClient.from("tasks").delete().eq("organization_id", orgId);
       await serviceClient.from("usage").delete().eq("organization_id", orgId);

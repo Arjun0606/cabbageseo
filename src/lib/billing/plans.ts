@@ -1,22 +1,17 @@
 /**
  * CabbageSEO Pricing Plans
- * 
+ *
  * Pricing Philosophy:
  * - Simple, predictable pricing
  * - Usage-based overages via spending caps (NOT prepaid credits)
  * - 85-95%+ margin on all operations
- * - 100% AI-powered (OpenAI only)
- * 
- * Third-Party Costs (per operation) - GPT-5-mini pricing (Jan 2026):
- * - AI Article (1500 words): ~$0.05 (GPT-5-mini + DALL-E image)
- * - 30 Keywords: ~$0.01 (AI keyword intelligence)
- * - GEO Analysis: ~$0.003 (AI content analysis)
- * - Audit (100 pages): ~$0.05 (crawl + AI analysis)
- * 
- * Margin Analysis (see bottom of file):
- * - Starter $24/mo: 94% margin
- * - Pro $66/mo: 95% margin
- * - Agency $166/mo: 96% margin
+ * - AI-powered (Perplexity, Google AI, OpenAI)
+ *
+ * Plans:
+ * - Free: 7-day trial
+ * - Scout $49/mo ($39/mo annual)
+ * - Command $149/mo ($119/mo annual)
+ * - Dominate $349/mo ($279/mo annual)
  */
 
 // ============================================
@@ -534,65 +529,3 @@ export function getPlanUpgrades(currentPlan: PlanId): Plan[] {
   return plans.filter((_, i) => i > currentIndex);
 }
 
-// ============================================
-// MARGIN ANALYSIS (Jan 2026 - GPT-5-mini)
-// ============================================
-//
-// STARTER ($24/mo yearly, $29/mo monthly)
-// Limits: 50 articles, 500 keywords, 100 GEO checks, 15 audits
-// 
-// Max usage cost breakdown:
-// - 50 articles × $0.09 = $4.50
-// - 500 keywords × $0.0003 = $0.15
-// - 100 GEO analyses × $0.003 = $0.30
-// - 15 audits × $0.05 = $0.75
-// TOTAL MAX COST: ~$5.70/month
-// 
-// Revenue: $24/month (yearly) 
-// Margin: $24 - $5.70 = $18.30 → 76% margin (if maxed out)
-// Typical usage (30%): ~$1.71 cost → 93% margin
-//
-// ---
-// 
-// PRO ($66/mo yearly, $79/mo monthly)
-// Limits: 150 articles, 2000 keywords, 300 GEO checks, 50 audits
-//
-// Max usage cost breakdown:
-// - 150 articles × $0.09 = $13.50
-// - 2000 keywords × $0.0003 = $0.60
-// - 300 GEO analyses × $0.003 = $0.90
-// - 50 audits × $0.05 = $2.50
-// TOTAL MAX COST: ~$17.50/month
-//
-// Revenue: $66/month (yearly)
-// Margin: $66 - $17.50 = $48.50 → 73% margin (if maxed out)
-// Typical usage (40%): ~$7.00 cost → 89% margin
-//
-// ---
-//
-// AGENCY ($166/mo yearly, $199/mo monthly)
-// Limits: 500 articles, 10000 keywords, 1000 GEO checks, 200 audits
-//
-// Max usage cost breakdown:
-// - 500 articles × $0.09 = $45.00
-// - 10000 keywords × $0.0003 = $3.00
-// - 1000 GEO analyses × $0.003 = $3.00
-// - 200 audits × $0.05 = $10.00
-// TOTAL MAX COST: ~$61.00/month
-//
-// Revenue: $166/month (yearly)
-// Margin: $166 - $61.00 = $105.00 → 63% margin (if maxed out)
-// Typical usage (25%): ~$15.25 cost → 91% margin
-//
-// ---
-//
-// SUMMARY (typical usage):
-// | Plan    | Revenue | Est. Cost | Margin |
-// |---------|---------|-----------|--------|
-// | Starter | $24     | ~$1.71    | 93%    |
-// | Pro     | $66     | ~$7.00    | 89%    |
-// | Agency  | $166    | ~$15.25   | 91%    |
-//
-// Key insight: 100% AI-powered approach makes unit economics
-// significantly better than traditional SEO tools.
-// ============================================

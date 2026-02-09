@@ -14,6 +14,26 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { verifyWebhookSignature } from "@/lib/billing/payments";
 import { createUsageTracker } from "@/lib/billing/usage-tracker";
 
+// Map Dodo product IDs to valid plan enum values
+function mapProductToPlan(productId: string | undefined): string | null {
+  if (!productId) return null;
+  const productToPlan: Record<string, string> = {
+    [process.env.DODO_SCOUT_MONTHLY_ID || ""]: "scout",
+    [process.env.DODO_SCOUT_YEARLY_ID || ""]: "scout",
+    [process.env.DODO_COMMAND_MONTHLY_ID || ""]: "command",
+    [process.env.DODO_COMMAND_YEARLY_ID || ""]: "command",
+    [process.env.DODO_DOMINATE_MONTHLY_ID || ""]: "dominate",
+    [process.env.DODO_DOMINATE_YEARLY_ID || ""]: "dominate",
+  };
+  // Remove empty string key if env vars are missing
+  delete productToPlan[""];
+  const plan = productToPlan[productId];
+  if (!plan) {
+    console.warn(`[Payments Webhook] Unknown product ID: ${productId}, skipping plan update`);
+  }
+  return plan || null;
+}
+
 export async function POST(request: NextRequest) {
   const payload = await request.text();
   const signature = request.headers.get("x-webhook-signature") || "";
@@ -55,13 +75,16 @@ export async function POST(request: NextRequest) {
         const subscription = event.data as Record<string, unknown>;
         const metadata = subscription.metadata as Record<string, string> | undefined;
         const organizationId = metadata?.organization_id;
-        
+
         if (organizationId) {
+          // Map product ID to valid plan enum — never write raw product IDs
+          const planId = metadata?.plan_id || mapProductToPlan(subscription.product_id as string | undefined);
+
           await supabase
             .from("organizations")
             .update({
               dodo_subscription_id: subscription.id as string,
-              plan: subscription.plan_id as string,
+              ...(planId && { plan: planId }),
               subscription_status: subscription.status as string,
               current_period_start: subscription.current_period_start as string,
               current_period_end: subscription.current_period_end as string,
@@ -83,7 +106,7 @@ export async function POST(request: NextRequest) {
             .from("organizations")
             .update({
               subscription_status: "canceled",
-              plan: "scout",
+              plan: "free",
               updated_at: new Date().toISOString(),
             } as never)
             .eq("id", organizationId);

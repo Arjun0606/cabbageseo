@@ -858,19 +858,18 @@ export async function POST(request: NextRequest) {
     // Get all unique competitors mentioned
     const allCompetitors = [...new Set(competitiveResults.flatMap(r => r.competitors))];
     
-    // Calculate AI market share (you vs competitors in this check)
+    // Count real query results
     const totalMentions = competitiveResults.filter(r => !r.error).length;
     const yourMentions = competitiveResults.filter(r => r.cited).length;
-    const aiMarketShare = totalMentions > 0 ? Math.round((yourMentions / totalMentions) * 100) : 0;
-    
-    // Record market share snapshot for AI Impact Tracking
+
+    // Record visibility snapshot with real query counts
     if (db && siteId && totalMentions > 0) {
       const today = new Date().toISOString().split("T")[0];
       await db
         .from("market_share_snapshots")
         .upsert({
           site_id: siteId,
-          market_share: aiMarketShare,
+          market_share: 0, // deprecated — use queries_won/queries_lost instead
           total_queries: totalMentions,
           queries_won: yourMentions,
           queries_lost: totalMentions - yourMentions,
@@ -884,7 +883,7 @@ export async function POST(request: NextRequest) {
             site_id: siteId,
             organization_id: orgId,
             score: {
-              overall: aiMarketShare,
+              overall: 0,
               queriesWon: yourMentions,
               queriesLost: totalMentions - yourMentions,
               totalQueries: totalMentions,
@@ -932,7 +931,6 @@ export async function POST(request: NextRequest) {
       },
       // Market intelligence
       revenueIntelligence: {
-        aiMarketShare,
         totalQueriesChecked: totalMentions,
         queriesWon: yourMentions,
         queriesLost: totalMentions - yourMentions,

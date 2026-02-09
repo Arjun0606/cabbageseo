@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/api/get-user";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 function getDbClient(): SupabaseClient | null {
@@ -23,6 +24,12 @@ function getDbClient(): SupabaseClient | null {
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth check — prevent unauthenticated referral abuse
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { referralCode, email, organizationId } = body as {
       referralCode: string;
@@ -34,6 +41,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "referralCode and organizationId are required" },
         { status: 400 }
+      );
+    }
+
+    // Verify the organizationId matches the authenticated user's org
+    if (organizationId !== currentUser.organizationId) {
+      return NextResponse.json(
+        { error: "Cannot track referral for another organization" },
+        { status: 403 }
       );
     }
 

@@ -35,6 +35,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Database not configured" }, { status: 500 });
     }
 
+    // Verify site belongs to user's organization
+    const { data: siteData } = await db
+      .from("sites")
+      .select("id")
+      .eq("id", siteId)
+      .eq("organization_id", currentUser.organizationId)
+      .maybeSingle();
+
+    if (!siteData) {
+      return NextResponse.json({ error: "Site not found" }, { status: 404 });
+    }
+
     // Fetch first, latest, and count in parallel
     const [firstResult, latestResult, countResult] = await Promise.all([
       db

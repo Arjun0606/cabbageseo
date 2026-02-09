@@ -18,6 +18,13 @@ export async function GET(request: NextRequest) {
     return new Response("Missing parameters", { status: 400 });
   }
 
+  // Sanitize domain to prevent XSS in HTML response
+  const safeDomain = domain
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
   try {
     await db
       .update(teaserSubscribers)
@@ -41,7 +48,7 @@ export async function GET(request: NextRequest) {
   <div style="text-align: center; max-width: 400px;">
     <h1 style="font-size: 24px; margin-bottom: 8px;">Unsubscribed</h1>
     <p style="color: #71717a; font-size: 14px; margin-bottom: 24px;">
-      You won't receive weekly score updates for ${domain} anymore.
+      You won't receive weekly score updates for ${safeDomain} anymore.
     </p>
     <a href="/" style="color: #10b981; font-size: 14px; text-decoration: none;">← Back to CabbageSEO</a>
   </div>

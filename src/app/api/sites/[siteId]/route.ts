@@ -17,18 +17,44 @@ interface SiteWithAudits {
   organization_id: string;
   settings: Record<string, unknown> | null;
   is_active: boolean;
-  pages_count: number | null;
+  last_crawl_pages_count: number | null;
   last_crawl_at: string | null;
   created_at: string;
   updated_at: string;
   audits: Array<{
     id: string;
-    seo_score: number | null;
+    overall_score: number | null;
     aio_score: number | null;
-    issues_count: number;
-    pages_crawled: number;
+    issues_found: number;
+    pages_scanned: number;
     completed_at: string | null;
   }>;
+}
+
+/**
+ * Get the authenticated user's organization ID.
+ * In TESTING_MODE, returns null (skips org check).
+ */
+async function getAuthOrgId(supabase: any): Promise<{ orgId: string | null; error?: NextResponse }> {
+  if (TESTING_MODE) return { orgId: null };
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { orgId: null, error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  }
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
+
+  const orgId = (userData as { organization_id?: string } | null)?.organization_id;
+  if (!orgId) {
+    return { orgId: null, error: NextResponse.json({ error: "No organization found" }, { status: 400 }) };
+  }
+
+  return { orgId };
 }
 
 export async function GET(
@@ -49,9 +75,13 @@ export async function GET(
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
+  // Verify org ownership
+  const auth = await getAuthOrgId(supabase);
+  if (auth.error) return auth.error;
+
   try {
     // Get site with latest audit data
-    const { data, error } = await supabase
+    let query = supabase
       .from("sites")
       .select(`
         id,
@@ -59,21 +89,27 @@ export async function GET(
         organization_id,
         settings,
         is_active,
-        pages_count,
+        last_crawl_pages_count,
         last_crawl_at,
         created_at,
         updated_at,
         audits (
           id,
-          seo_score,
+          overall_score,
           aio_score,
-          issues_count,
-          pages_crawled,
+          issues_found,
+          pages_scanned,
           completed_at
         )
       `)
-      .eq("id", siteId)
-      .single();
+      .eq("id", siteId);
+
+    // Add org ownership filter when not in testing mode
+    if (auth.orgId) {
+      query = query.eq("organization_id", auth.orgId);
+    }
+
+    const { data, error } = await query.single();
 
     if (error) {
       if (error.code === "PGRST116") {
@@ -86,7 +122,7 @@ export async function GET(
     const site = data as unknown as SiteWithAudits;
 
     // Get the latest audit
-    const latestAudit = site.audits?.sort((a, b) => 
+    const latestAudit = site.audits?.sort((a, b) =>
       new Date(b.completed_at || 0).getTime() - new Date(a.completed_at || 0).getTime()
     )[0];
 
@@ -98,10 +134,10 @@ export async function GET(
       organizationId: site.organization_id,
       settings: site.settings,
       isActive: site.is_active,
-      pagesCount: site.pages_count || latestAudit?.pages_crawled || 0,
-      seoScore: latestAudit?.seo_score || null,
+      pagesCount: site.last_crawl_pages_count || latestAudit?.pages_scanned || 0,
+      seoScore: latestAudit?.overall_score || null,
       aioScore: latestAudit?.aio_score || null,
-      issuesCount: latestAudit?.issues_count || 0,
+      issuesCount: latestAudit?.issues_found || 0,
       lastCrawlAt: site.last_crawl_at,
       createdAt: site.created_at,
       updatedAt: site.updated_at,
@@ -135,7 +171,24 @@ export async function PATCH(
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
+  // Verify org ownership
+  const auth = await getAuthOrgId(supabase);
+  if (auth.error) return auth.error;
+
   try {
+    // Verify site belongs to user's org
+    if (auth.orgId) {
+      const { data: siteCheck } = await supabase
+        .from("sites")
+        .select("id")
+        .eq("id", siteId)
+        .eq("organization_id", auth.orgId)
+        .maybeSingle();
+      if (!siteCheck) {
+        return NextResponse.json({ error: "Site not found" }, { status: 404 });
+      }
+    }
+
     const body = await request.json();
     const { name, settings } = body;
 
@@ -208,11 +261,22 @@ export async function DELETE(
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
+  // Verify org ownership
+  const auth = await getAuthOrgId(supabase);
+  if (auth.error) return auth.error;
+
   try {
-    const { error } = await supabase
+    let query = supabase
       .from("sites")
       .delete()
       .eq("id", siteId);
+
+    // Add org ownership filter when not in testing mode
+    if (auth.orgId) {
+      query = query.eq("organization_id", auth.orgId);
+    }
+
+    const { error } = await query;
 
     if (error) throw error;
 
@@ -225,4 +289,3 @@ export async function DELETE(
     );
   }
 }
-

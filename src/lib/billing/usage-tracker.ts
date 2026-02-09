@@ -11,7 +11,7 @@
  * Enforces plan limits and manages overage credits
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { getPlanLimits, type PlanLimits } from "./plans";
 
 // ============================================
@@ -68,7 +68,7 @@ export class UsageTracker {
    * Get or create usage record for current period
    */
   async getUsage(): Promise<UsageRecord> {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     if (!supabase) {
       return this.emptyUsage();
     }
@@ -83,18 +83,18 @@ export class UsageTracker {
       .single();
 
     if (error || !data) {
-      // Create new usage record
+      // Create new usage record (columns must match usage table schema)
       await supabase.from("usage").insert({
         organization_id: this.organizationId,
         period,
-        ai_credits_used: 0,
+        checks_used: 0,
+        sites_used: 0,
+        competitors_used: 0,
         articles_generated: 0,
         keywords_analyzed: 0,
-        audits_run: 0,
         serp_calls: 0,
         pages_crawled: 0,
         aio_analyses: 0,
-        backlink_checks: 0,
       } as never);
 
       return this.emptyUsage();
@@ -104,10 +104,10 @@ export class UsageTracker {
     return {
       organizationId: this.organizationId,
       period,
-      aiCredits: usage.ai_credits_used || 0,
+      aiCredits: usage.checks_used || 0,
       articles: usage.articles_generated || 0,
       keywords: usage.keywords_analyzed || 0,
-      audits: usage.audits_run || 0,
+      audits: usage.aio_analyses || 0,
       serpCalls: usage.serp_calls || 0,
       crawls: usage.pages_crawled || 0,
     };
@@ -117,8 +117,8 @@ export class UsageTracker {
    * Get organization's plan
    */
   async getPlan(): Promise<string> {
-    const supabase = await createClient();
-    if (!supabase) return "scout";
+    const supabase = createServiceClient();
+    if (!supabase) return "free";
 
     const { data } = await supabase
       .from("organizations")
@@ -127,7 +127,7 @@ export class UsageTracker {
       .single();
 
     const org = data as { plan?: string } | null;
-    return org?.plan || "scout";
+    return org?.plan || "free";
   }
 
   /**
@@ -167,15 +167,15 @@ export class UsageTracker {
     resource: "aiCredits" | "articles" | "keywords" | "audits" | "serpCalls" | "crawls",
     amount: number = 1
   ): Promise<{ success: boolean; overageUsed: number }> {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     if (!supabase) return { success: false, overageUsed: 0 };
 
     const period = this.getCurrentPeriod();
     const columnMap: Record<string, string> = {
-      aiCredits: "ai_credits_used",
+      aiCredits: "checks_used",
       articles: "articles_generated",
       keywords: "keywords_analyzed",
-      audits: "audits_run",
+      audits: "aio_analyses",
       serpCalls: "serp_calls",
       crawls: "pages_crawled",
     };
@@ -232,7 +232,7 @@ export class UsageTracker {
    * Get prepaid credit balance
    */
   async getCreditBalance(): Promise<CreditBalance> {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     if (!supabase) {
       return { prepaidCredits: 0, bonusCredits: 0, totalCredits: 0, expiresAt: null };
     }
@@ -262,7 +262,7 @@ export class UsageTracker {
    * Add prepaid credits
    */
   async addCredits(amount: number, bonusAmount: number = 0): Promise<boolean> {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     if (!supabase) return false;
 
     const current = await this.getCreditBalance();
@@ -288,7 +288,7 @@ export class UsageTracker {
    * Deduct credits for overage
    */
   private async deductCredits(amount: number): Promise<boolean> {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     if (!supabase) return false;
 
     const current = await this.getCreditBalance();
@@ -366,9 +366,9 @@ export class UsageTracker {
       articlesPerMonth: "articles",
       keywordsTracked: "keywords",
       auditsPerMonth: "audits",
-      sites: "crawls",
+      sites: "aiCredits",
       pagesPerSite: "crawls",
-      teamMembers: "crawls",
+      teamMembers: "aiCredits",
     };
     const key = mapping[resource] || "aiCredits";
     const value = usage[key];

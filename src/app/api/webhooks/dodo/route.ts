@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
   if (signature.includes(",")) {
     // Svix/Dodo format: "v1,base64signature"
     const parts = signature.split(",");
-    const v1Sig = parts.find(p => p.startsWith("v1,"))?.replace("v1,", "") || parts[1];
-    signatureToCompare = v1Sig || signature;
+    // After split(","), parts are e.g. ["v1", "base64sig"] — just use the second part
+    signatureToCompare = parts[1] || signature;
   }
 
   // Try different comparison methods
@@ -256,10 +256,9 @@ async function handleSubscriptionCreated(
 
   console.log(`[Dodo Webhook] Subscription created for org ${orgId}: ${planId}`);
 
-  // Send welcome/upgrade notification
-  await createNotification(supabase, orgId, {
+  // Log welcome/upgrade notification
+  logNotification(orgId, {
     type: "success",
-    category: "billing",
     title: "Subscription Activated",
     message: `Your ${planId.replace("_", " ")} plan is now active!`,
   });
@@ -298,9 +297,8 @@ async function handleSubscriptionUpdated(
 
   // Notify if plan changed
   if (newPlan !== oldPlan) {
-    await createNotification(supabase, (org as { id: string }).id, {
+    logNotification((org as { id: string }).id, {
       type: "info",
-      category: "billing",
       title: "Plan Updated",
       message: `Your plan has been changed to ${newPlan.replace("_", " ")}.`,
     });
@@ -326,15 +324,15 @@ async function handleSubscriptionCanceled(
   await supabase
     .from("organizations")
     .update({
+      plan: "free",
       subscription_status: "canceled",
       cancel_at_period_end: true,
       updated_at: new Date().toISOString(),
     })
     .eq("id", orgId);
 
-  await createNotification(supabase, orgId, {
+  logNotification(orgId, {
     type: "warning",
-    category: "billing",
     title: "Subscription Canceled",
     message: "Your subscription has been canceled. You'll retain access until the end of your billing period.",
   });
@@ -450,9 +448,8 @@ async function handlePaymentFailed(
 
   if (!org) return;
 
-  await createNotification(supabase, (org as { id: string }).id, {
+  logNotification((org as { id: string }).id, {
     type: "error",
-    category: "billing",
     title: "Payment Failed",
     message: "Your payment could not be processed. Please update your payment method.",
   });
@@ -478,43 +475,18 @@ function getPlanFromProductId(productId: string): string {
   return productToPlan[productId] || "free";
 }
 
-async function createNotification(
-  supabase: any,
+/**
+ * Log notification intent. The notifications table stores email preferences,
+ * not notification records. In-app notifications would need a separate table.
+ */
+function logNotification(
   organizationId: string,
   notification: {
-    type: "info" | "success" | "warning" | "error";
-    category: string;
+    type: string;
     title: string;
     message: string;
   }
 ) {
-  try {
-    // Find an owner/admin user to notify
-    const { data: users } = await supabase
-      .from("users")
-      .select("id")
-      .eq("organization_id", organizationId)
-      .in("role", ["owner", "admin"])
-      .limit(1);
-
-    if (!users || users.length === 0) {
-      console.log(`[Dodo Webhook] No users found for org ${organizationId}, skipping notification`);
-      return;
-    }
-
-    await supabase.from("notifications").insert({
-      user_id: users[0].id,
-      organization_id: organizationId,
-      type: notification.type,
-      category: notification.category,
-      title: notification.title,
-      description: notification.message,
-      read_at: null,
-      created_at: new Date().toISOString(),
-    });
-  } catch (error) {
-    // Don't fail webhook if notification fails
-    console.error("[Dodo Webhook] Failed to create notification:", error);
-  }
+  console.log(`[Dodo Webhook] Notification for org ${organizationId}: [${notification.type}] ${notification.title} - ${notification.message}`);
 }
 

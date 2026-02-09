@@ -7,6 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import { DodoPayments } from "dodopayments";
 
 // Initialize Dodo client
@@ -25,8 +26,17 @@ function getDodoClient() {
 }
 
 export async function GET(request: NextRequest) {
+  // Auth check
+  const supabase = await createClient();
+  if (supabase) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+  }
+
   const sessionId = request.nextUrl.searchParams.get("session_id");
-  
+
   if (!sessionId) {
     return NextResponse.json({ success: false, error: "Missing session_id" }, { status: 400 });
   }

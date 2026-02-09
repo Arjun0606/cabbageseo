@@ -16,11 +16,11 @@ export async function GET(request: NextRequest) {
 
     // Auth check
     const currentUser = await getUser();
-    if (!currentUser) {
+    if (!currentUser || !currentUser.organizationId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch site data
+    // Fetch site data (with org ownership check)
     const [site] = await db
       .select({
         sprintStartedAt: sites.sprintStartedAt,
@@ -28,7 +28,12 @@ export async function GET(request: NextRequest) {
         createdAt: sites.createdAt,
       })
       .from(sites)
-      .where(eq(sites.id, siteId))
+      .where(
+        and(
+          eq(sites.id, siteId),
+          eq(sites.organizationId, currentUser.organizationId)
+        )
+      )
       .limit(1);
 
     if (!site) {

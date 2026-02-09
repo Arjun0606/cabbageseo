@@ -191,7 +191,7 @@ export async function requireSubscription(
   }
 
   // Check minimum plan requirement
-  const planOrder: PlanId[] = ["scout", "command", "dominate"];
+  const planOrder = ["free", "scout", "command", "dominate"] as PlanId[];
   const currentPlanIndex = planOrder.indexOf(subscriptionInfo.plan);
   const minPlanIndex = planOrder.indexOf(minPlan);
 
@@ -248,14 +248,14 @@ export async function requireAuth(
   const organizationId = (userData as { organization_id?: string } | null)?.organization_id;
 
   // Get plan info if org exists
-  let plan: PlanId = "scout";
+  let plan: PlanId = "free" as PlanId;
   if (organizationId) {
     const { data: org } = await supabase
       .from("organizations")
       .select("plan")
       .eq("id", organizationId)
       .single();
-    plan = ((org as { plan?: string } | null)?.plan as PlanId) || "scout";
+    plan = ((org as { plan?: string } | null)?.plan as PlanId) || ("free" as PlanId);
   }
 
   return {

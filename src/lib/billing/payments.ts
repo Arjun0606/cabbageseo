@@ -338,6 +338,10 @@ export function verifyWebhookSignature(
     .update(payload)
     .digest("hex");
 
+  if (signature.length !== expectedSignature.length) {
+    return false;
+  }
+
   return crypto.timingSafeEqual(
     Buffer.from(signature),
     Buffer.from(expectedSignature)

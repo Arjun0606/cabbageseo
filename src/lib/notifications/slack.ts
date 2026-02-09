@@ -37,47 +37,6 @@ export async function sendSlackNotification(
   }
 }
 
-export function buildCheckCompleteBlocks(data: {
-  domain: string;
-  score: number;
-  queriesWon: number;
-  queriesLost: number;
-  topCompetitor?: string;
-}): SlackPayload {
-  const emoji = data.score >= 60 ? ":white_check_mark:" : data.score >= 30 ? ":warning:" : ":red_circle:";
-  return {
-    text: `AI check complete for ${data.domain}: Score ${data.score}/100`,
-    blocks: [
-      {
-        type: "header",
-        text: {
-          type: "plain_text",
-          text: `${emoji} AI Visibility Check: ${data.domain}`,
-          emoji: true,
-        },
-      },
-      {
-        type: "section",
-        fields: [
-          { type: "mrkdwn", text: `*Score:* ${data.score}/100` },
-          {
-            type: "mrkdwn",
-            text: `*Queries:* ${data.queriesWon} won / ${data.queriesLost} lost`,
-          },
-          ...(data.topCompetitor
-            ? [
-                {
-                  type: "mrkdwn",
-                  text: `*Top Competitor:* ${data.topCompetitor}`,
-                },
-              ]
-            : []),
-        ],
-      },
-    ],
-  };
-}
-
 export function buildScoreDropBlocks(data: {
   domain: string;
   previousScore: number;
@@ -86,13 +45,13 @@ export function buildScoreDropBlocks(data: {
   lostQueries?: string[];
 }): SlackPayload {
   return {
-    text: `:rotating_light: Score drop: ${data.domain} dropped ${data.drop} points (${data.previousScore} → ${data.newScore})`,
+    text: `:rotating_light: Visibility drop: ${data.domain} — queries won dropped from ${data.previousScore} to ${data.newScore}`,
     blocks: [
       {
         type: "header",
         text: {
           type: "plain_text",
-          text: `:rotating_light: Score Drop Alert: ${data.domain}`,
+          text: `:rotating_light: Visibility Drop Alert: ${data.domain}`,
           emoji: true,
         },
       },
@@ -100,7 +59,7 @@ export function buildScoreDropBlocks(data: {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `AI visibility dropped from *${data.previousScore}* to *${data.newScore}* (-${data.drop} points)`,
+          text: `Queries won dropped from *${data.previousScore}* to *${data.newScore}* (-${data.drop})`,
         },
       },
       ...(data.lostQueries && data.lostQueries.length > 0

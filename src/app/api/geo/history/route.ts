@@ -1,7 +1,7 @@
 /**
  * GET /api/geo/history?siteId=X&days=90
  *
- * Returns historical market_share_snapshots for trend charting.
+ * Returns historical visibility snapshots (queries won/lost) for trend charting.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -42,11 +42,23 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Verify site belongs to user's organization
+    const { data: siteData } = await db
+      .from("sites")
+      .select("id")
+      .eq("id", siteId)
+      .eq("organization_id", currentUser.organizationId)
+      .maybeSingle();
+
+    if (!siteData) {
+      return NextResponse.json({ error: "Site not found" }, { status: 404 });
+    }
+
     // Fetch snapshots ordered by date ascending for charting
     const { data: snapshots } = await db
       .from("market_share_snapshots")
       .select(
-        "market_share, queries_won, queries_lost, total_queries, snapshot_date",
+        "queries_won, queries_lost, total_queries, snapshot_date",
       )
       .eq("site_id", siteId)
       .order("snapshot_date", { ascending: true })
@@ -57,7 +69,6 @@ export async function GET(request: NextRequest) {
       data: {
         snapshots: (
           (snapshots as Array<{
-            market_share: number;
             queries_won: number | null;
             queries_lost: number | null;
             total_queries: number | null;
@@ -65,7 +76,6 @@ export async function GET(request: NextRequest) {
           }>) || []
         ).map((s) => ({
           date: s.snapshot_date,
-          score: s.market_share,
           queriesWon: s.queries_won || 0,
           queriesLost: s.queries_lost || 0,
           totalQueries: s.total_queries || 0,

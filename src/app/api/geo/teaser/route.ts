@@ -163,33 +163,6 @@ function extractMentionedDomains(text: string, citations: string[] = []): string
     domains.add(match[1].toLowerCase());
   }
   
-  // Also look for common product names
-  const products = [
-    { name: "notion", domain: "notion.so" },
-    { name: "clickup", domain: "clickup.com" },
-    { name: "asana", domain: "asana.com" },
-    { name: "trello", domain: "trello.com" },
-    { name: "monday", domain: "monday.com" },
-    { name: "airtable", domain: "airtable.com" },
-    { name: "hubspot", domain: "hubspot.com" },
-    { name: "salesforce", domain: "salesforce.com" },
-    { name: "pipedrive", domain: "pipedrive.com" },
-    { name: "zoho", domain: "zoho.com" },
-    { name: "slack", domain: "slack.com" },
-    { name: "discord", domain: "discord.com" },
-    { name: "figma", domain: "figma.com" },
-    { name: "canva", domain: "canva.com" },
-    { name: "stripe", domain: "stripe.com" },
-    { name: "shopify", domain: "shopify.com" },
-  ];
-  
-  const textLower = text.toLowerCase();
-  for (const product of products) {
-    if (textLower.includes(product.name)) {
-      domains.add(product.domain);
-    }
-  }
-  
   return Array.from(domains);
 }
 

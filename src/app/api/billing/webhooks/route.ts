@@ -212,6 +212,7 @@ export async function POST(request: NextRequest) {
         const { error } = await supabase
           .from("organizations")
           .update({
+            plan: "free",
             subscription_status: "canceled",
             current_period_end: new Date().toISOString(),
           } as never)

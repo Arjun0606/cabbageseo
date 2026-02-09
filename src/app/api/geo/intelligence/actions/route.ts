@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
       .select("*")
       .eq("organization_id", organizationId)
       .eq("period", currentMonth)
-      .single();
+      .maybeSingle();
 
     const gapAnalysesUsed = (usage as Record<string, number> | null)?.gap_analyses_used || 0;
     const contentIdeasUsed = (usage as Record<string, number> | null)?.content_ideas_used || 0;
@@ -286,7 +286,7 @@ export async function GET() {
       .select("*")
       .eq("organization_id", organizationId)
       .eq("period", currentMonth)
-      .single();
+      .maybeSingle();
 
     const gapAnalysesUsed = (usage as Record<string, number> | null)?.gap_analyses_used || 0;
     const contentIdeasUsed = (usage as Record<string, number> | null)?.content_ideas_used || 0;

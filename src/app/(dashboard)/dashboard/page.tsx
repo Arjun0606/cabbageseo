@@ -22,6 +22,7 @@ import { FirstCitationGoal } from "@/components/dashboard/first-citation-goal";
 import { RevenueAtRisk, type LostQuery } from "@/components/dashboard/revenue-at-risk";
 import { TrendChart, type Snapshot } from "@/components/dashboard/trend-chart";
 import { CustomQueries } from "@/components/dashboard/custom-queries";
+import { BenchmarkCard } from "@/components/dashboard/benchmark-card";
 import { getCitationPlanLimits } from "@/lib/billing/citation-plans";
 import {
   RefreshCw,
@@ -117,6 +118,14 @@ function DashboardContent() {
   >([]);
   const [checkResult, setCheckResult] = useState<{ lostQueries: LostQuery[] } | null>(null);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [benchmark, setBenchmark] = useState<{
+    domain: string;
+    totalRecommendations: number;
+    percentileRank: number;
+    totalDomainsTracked: number;
+    platforms: string[];
+    weekOverWeek: { current: number; previous: number; change: number; changePercent: number };
+  } | null>(null);
   const [customQueries, setCustomQueries] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
@@ -128,7 +137,7 @@ function DashboardContent() {
     setLoading(true);
     try {
       // Fetch dashboard data in parallel
-      const [momentumRes, sprintRes, nextActionRes, listingsRes, pagesRes, improvementRes, lostQueriesRes, historyRes] =
+      const [momentumRes, sprintRes, nextActionRes, listingsRes, pagesRes, improvementRes, lostQueriesRes, historyRes, benchmarkRes] =
         await Promise.all([
           fetch(`/api/geo/momentum?siteId=${currentSite.id}`).catch(() => null),
           fetch(`/api/geo/sprint?siteId=${currentSite.id}`).catch(() => null),
@@ -138,6 +147,7 @@ function DashboardContent() {
           fetch(`/api/geo/improvement?siteId=${currentSite.id}`).catch(() => null),
           fetch(`/api/geo/lost-queries?siteId=${currentSite.id}`).catch(() => null),
           fetch(`/api/geo/history?siteId=${currentSite.id}`).catch(() => null),
+          fetch(`/api/geo/benchmark?siteId=${currentSite.id}`).catch(() => null),
         ]);
 
       // Parse momentum
@@ -212,6 +222,11 @@ function DashboardContent() {
         const data = await historyRes.json();
         setSnapshots(data.data?.snapshots || []);
       }
+      // Parse benchmark data
+      if (benchmarkRes?.ok) {
+        const data = await benchmarkRes.json();
+        setBenchmark(data.data || null);
+      }
     } catch (err) {
       console.error("Dashboard fetch error:", err);
     } finally {
@@ -257,6 +272,13 @@ function DashboardContent() {
     }
   };
 
+  // Initialize custom queries from site data
+  useEffect(() => {
+    if (currentSite) {
+      setCustomQueries(currentSite.customQueries || []);
+    }
+  }, [currentSite]);
+
   // Redirect to onboarding if no sites
   if (!siteLoading && sites.length === 0) {
     router.push("/onboarding");
@@ -267,13 +289,6 @@ function DashboardContent() {
   const isPaid = plan !== "free";
   const planLimits = getCitationPlanLimits(plan);
   const maxCustomQueries = planLimits.customQueriesPerSite;
-
-  // Initialize custom queries from site data
-  useEffect(() => {
-    if (currentSite) {
-      setCustomQueries(currentSite.customQueries || []);
-    }
-  }, [currentSite]);
 
   // Build pages map for fix pipeline (query → page info)
   const pagesMap = new Map(
@@ -447,6 +462,17 @@ function DashboardContent() {
 
       {/* AI Visibility Over Time */}
       <TrendChart snapshots={snapshots} loading={loading} />
+
+      {/* Industry Benchmark */}
+      <BenchmarkCard
+        domain={benchmark?.domain || currentSite?.domain || ""}
+        totalRecommendations={benchmark?.totalRecommendations || 0}
+        percentileRank={benchmark?.percentileRank || 0}
+        totalDomainsTracked={benchmark?.totalDomainsTracked || 0}
+        platforms={benchmark?.platforms || []}
+        weekOverWeek={benchmark?.weekOverWeek || { current: 0, previous: 0, change: 0, changePercent: 0 }}
+        loading={loading}
+      />
 
       {/* Queries You're Losing */}
       <RevenueAtRisk
