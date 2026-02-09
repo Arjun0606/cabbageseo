@@ -1,6 +1,6 @@
 "use client";
 
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Clock } from "lucide-react";
 
 interface MomentumScoreProps {
   score: number;
@@ -9,6 +9,7 @@ interface MomentumScoreProps {
   queriesWon: number;
   queriesTotal: number;
   loading?: boolean;
+  trialDaysRemaining?: number;
 }
 
 export function MomentumScore({
@@ -18,6 +19,7 @@ export function MomentumScore({
   queriesWon,
   queriesTotal,
   loading,
+  trialDaysRemaining,
 }: MomentumScoreProps) {
   if (loading) {
     return (
@@ -61,7 +63,17 @@ export function MomentumScore({
         : "Holding steady";
 
   return (
-    <div className={`rounded-2xl p-8 border ${trendBg}`}>
+    <div className={`rounded-2xl p-8 border ${trendBg} relative`}>
+      {/* Trial countdown pill */}
+      {typeof trialDaysRemaining === "number" && trialDaysRemaining >= 0 && (
+        <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
+          <Clock className="w-3.5 h-3.5 text-amber-400" />
+          <span className="text-xs font-medium text-amber-400">
+            {trialDaysRemaining === 0 ? "Trial ends today" : `${trialDaysRemaining}d left in trial`}
+          </span>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">
           AI Momentum

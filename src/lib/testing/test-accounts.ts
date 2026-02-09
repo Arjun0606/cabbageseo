@@ -80,6 +80,7 @@ export function getTestAccount(email: string | null | undefined): TestAccount | 
  * Set TESTING_MODE=true in .env to enable
  */
 export function isTestingModeEnabled(): boolean {
+  if (process.env.NODE_ENV === "production") return false;
   return process.env.TESTING_MODE === "true" || process.env.NEXT_PUBLIC_TESTING_MODE === "true";
 }
 

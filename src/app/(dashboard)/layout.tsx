@@ -15,27 +15,33 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Search,
-  TrendingUp,
+  Zap,
   FileText,
   Settings,
   Menu,
   X,
   Home,
   ChevronDown,
-  LogOut
+  LogOut,
+  Plus,
+  Loader2,
+  ArrowRight,
+  Clock,
 } from "lucide-react";
 import { SiteProvider, useSite } from "@/context/site-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { TrialExpiredPaywall } from "@/components/paywall/trial-expired";
+import { useCheckout } from "@/hooks/use-checkout";
+import { CITATION_PLANS, getNextPlan, TRIAL_DAYS } from "@/lib/billing/citation-plans";
 
-// Navigation items - Simplified, sprint-focused
+// Navigation items — simplified 3-item nav
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/sources", label: "Trust Map", icon: Search },
-  { href: "/dashboard/intelligence", label: "Intelligence", icon: TrendingUp },
+  { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+  { href: "/dashboard/actions", label: "Actions", icon: Zap },
   { href: "/dashboard/pages", label: "Pages", icon: FileText },
 ];
 
@@ -43,10 +49,13 @@ const navItems = [
 function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { organization, currentSite, sites } = useSite();
+  const { organization, currentSite, sites, trial } = useSite();
   const [sitesOpen, setSitesOpen] = useState(false);
+  const { checkout, loading: checkoutLoading } = useCheckout();
 
   const plan = organization?.plan || "free";
+  const nextPlanId = getNextPlan(plan);
+  const nextPlan = nextPlanId ? CITATION_PLANS[nextPlanId] : null;
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -96,7 +105,7 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
             <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${sitesOpen ? "rotate-180" : ""}`} />
           </button>
           
-          {sitesOpen && sites.length > 1 && (
+          {sitesOpen && (
             <div className="mt-2 space-y-1">
               {sites.filter(s => s.id !== currentSite.id).map(site => (
                 <Link
@@ -111,6 +120,17 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
                   {site.domain}
                 </Link>
               ))}
+              <Link
+                href="/onboarding"
+                onClick={() => {
+                  setSitesOpen(false);
+                  if (onClose) onClose();
+                }}
+                className="flex items-center gap-2 p-2 text-sm text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg"
+              >
+                <Plus className="w-4 h-4" />
+                Add site
+              </Link>
             </div>
           )}
         </div>
@@ -155,28 +175,86 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
 
       {/* Footer */}
       <div className="p-4 border-t border-zinc-800 space-y-3">
-        {/* Plan badge */}
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-zinc-500">Plan</span>
-          <Badge className={`text-xs ${
-            plan === "dominate" ? "bg-amber-500" :
-            plan === "command" ? "bg-violet-500" :
-            plan === "scout" ? "bg-emerald-500" :
-            "bg-zinc-600"
+        {/* Upgrade card */}
+        {nextPlan && plan === "free" && (
+          <div className={`rounded-xl p-3 space-y-2.5 ${
+            trial.daysRemaining <= 2
+              ? "bg-red-500/10 border border-red-500/20"
+              : "bg-amber-500/10 border border-amber-500/20"
           }`}>
-            {plan.charAt(0).toUpperCase() + plan.slice(1)}
-          </Badge>
-        </div>
-        
+            <div className="flex items-center gap-2">
+              <Clock className={`w-3.5 h-3.5 ${trial.daysRemaining <= 2 ? "text-red-400" : "text-amber-400"}`} />
+              <span className={`text-xs font-semibold ${trial.daysRemaining <= 2 ? "text-red-400" : "text-amber-400"}`}>
+                {trial.daysRemaining <= 0 ? "Trial ended" : `${trial.daysRemaining} day${trial.daysRemaining !== 1 ? "s" : ""} left`}
+              </span>
+            </div>
+            <Progress
+              value={(trial.daysUsed / TRIAL_DAYS) * 100}
+              className={`h-1.5 ${trial.daysRemaining <= 2 ? "bg-red-900/50" : "bg-amber-900/50"}`}
+            />
+            <button
+              onClick={() => checkout("scout", "yearly")}
+              disabled={checkoutLoading}
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
+            >
+              {checkoutLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  Upgrade to Scout
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {nextPlan && plan !== "free" && (
+          <div className="rounded-xl p-3 bg-zinc-800/50 border border-zinc-700/50 space-y-2">
+            <p className="text-xs font-medium text-white">
+              {plan === "scout" ? "Unlock AI Tools" : "Go Unlimited"}
+            </p>
+            <p className="text-[11px] text-zinc-400">
+              {plan === "scout"
+                ? "Weekly playbooks & competitor deep dives"
+                : "25 sites, unlimited everything"}
+            </p>
+            <button
+              onClick={() => checkout(nextPlanId!, "yearly")}
+              disabled={checkoutLoading}
+              className="w-full flex items-center justify-center gap-2 py-1.5 px-3 bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+            >
+              {checkoutLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <>
+                  {nextPlan.name} — ${nextPlan.monthlyPrice}/mo
+                  <ArrowRight className="w-3 h-3" />
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Plan badge for Dominate users */}
+        {!nextPlan && (
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-zinc-500">Plan</span>
+            <Badge className="text-xs bg-amber-500">
+              Dominate
+            </Badge>
+          </div>
+        )}
+
         {/* Links */}
         <Link
           href="/"
           className="flex items-center gap-2 text-sm text-zinc-500 hover:text-white transition-colors"
         >
           <Home className="w-4 h-4" />
-          Back to Home
+          Marketing Site
         </Link>
-        
+
         <button
           onClick={handleLogout}
           className="flex items-center gap-2 text-sm text-zinc-500 hover:text-white transition-colors w-full"
@@ -191,7 +269,7 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
 
 // Header component
 function Header({ onMenuClick }: { onMenuClick: () => void }) {
-  const { currentSite, runCheck } = useSite();
+  const { currentSite, runCheck, trial, organization } = useSite();
   const [checking, setChecking] = useState(false);
 
   const handleCheck = async () => {
@@ -201,45 +279,82 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
     setChecking(false);
   };
 
+  const isPaid = organization?.plan && organization.plan !== "free";
+  const showTrialBanner = trial.isTrialUser && !trial.expired && !isPaid;
+  const urgent = trial.daysRemaining <= 2;
+
   return (
-    <header className="h-16 border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm flex items-center justify-between px-4 lg:px-6">
-      <div className="flex items-center gap-4">
-        <button 
-          onClick={onMenuClick}
-          className="lg:hidden text-zinc-400 hover:text-white"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
-        
-        {currentSite && (
-          <div className="hidden sm:block">
-            <h1 className="text-white font-medium">{currentSite.domain}</h1>
-            <p className="text-xs text-zinc-500">
-              AI Revenue Tracking
-            </p>
-          </div>
-        )}
-      </div>
-      
-      <div className="flex items-center gap-3">
-        {currentSite && (
-          <Button
-            onClick={handleCheck}
-            disabled={checking}
-            size="sm"
-            className="bg-emerald-500 hover:bg-emerald-400 text-black"
+    <>
+      {/* Trial countdown banner */}
+      {showTrialBanner && (
+        <div className={`px-4 py-2 text-center text-sm font-medium border-b ${
+          urgent
+            ? "bg-red-500/10 border-red-500/20 text-red-400"
+            : "bg-amber-500/10 border-amber-500/20 text-amber-400"
+        }`}>
+          {urgent ? (
+            <>
+              {trial.daysRemaining === 0 ? "Last day" : `${trial.daysRemaining} day${trial.daysRemaining !== 1 ? "s" : ""} left`} on your free trial —{" "}
+              <Link href="/settings/billing" className="underline font-semibold hover:text-white">
+                Upgrade now to keep your data
+              </Link>
+            </>
+          ) : (
+            <>
+              {trial.daysRemaining} day{trial.daysRemaining !== 1 ? "s" : ""} left in your free trial —{" "}
+              <Link href="/settings/billing" className="underline hover:text-white">
+                Upgrade to Scout
+              </Link>
+            </>
+          )}
+        </div>
+      )}
+      <header className="h-16 border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm flex items-center justify-between px-4 lg:px-6">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden text-zinc-400 hover:text-white"
           >
-            {checking ? "Checking..." : "Check Now"}
-          </Button>
-        )}
-      </div>
-    </header>
+            <Menu className="w-6 h-6" />
+          </button>
+
+          {currentSite && (
+            <div className="hidden sm:block">
+              <h1 className="text-white font-medium">{currentSite.domain}</h1>
+              <p className="text-xs text-zinc-500">
+                AI Revenue Tracking
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {currentSite && (
+            <Button
+              onClick={handleCheck}
+              disabled={checking}
+              size="sm"
+              className="bg-emerald-500 hover:bg-emerald-400 text-black"
+            >
+              {checking ? "Checking..." : "Check Now"}
+            </Button>
+          )}
+        </div>
+      </header>
+    </>
   );
 }
 
 // Main layout
 function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const { trial, loading } = useSite();
+
+  // Show paywall when trial expired (allow billing/settings for upgrade)
+  const exemptRoutes = ["/settings/billing", "/settings", "/onboarding"];
+  const isExemptRoute = exemptRoutes.some((r) => pathname?.startsWith(r));
+  const showPaywall = !loading && trial.isTrialUser && trial.expired && !isExemptRoute;
 
   return (
     <div className="min-h-screen bg-zinc-950 flex">
@@ -251,9 +366,9 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       {/* Mobile sidebar */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div 
-            className="absolute inset-0 bg-black/60" 
-            onClick={() => setMobileMenuOpen(false)} 
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setMobileMenuOpen(false)}
           />
           <div className="absolute left-0 top-0 h-full w-64">
             <Sidebar mobile onClose={() => setMobileMenuOpen(false)} />
@@ -266,7 +381,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         <Header onMenuClick={() => setMobileMenuOpen(true)} />
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <div className="max-w-6xl mx-auto">
-            {children}
+            {showPaywall ? <TrialExpiredPaywall /> : children}
           </div>
         </main>
       </div>

@@ -20,7 +20,7 @@ export interface UserInfo {
   isTestAccount: boolean;
 }
 
-const TESTING_MODE = process.env.TESTING_MODE === "true";
+const TESTING_MODE = process.env.TESTING_MODE === "true" && process.env.NODE_ENV !== "production";
 
 function getDbClient(): SupabaseClient | null {
   try {

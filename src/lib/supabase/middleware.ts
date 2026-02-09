@@ -12,7 +12,7 @@ import { getTestSession } from "@/lib/testing/test-session";
 // Set TESTING_MODE=true in .env for local testing
 // Set ENABLE_TEST_ACCOUNTS=true to allow test account sessions
 // ============================================
-const TESTING_MODE = process.env.TESTING_MODE === "true";
+const TESTING_MODE = process.env.TESTING_MODE === "true" && process.env.NODE_ENV !== "production";
 const TEST_ACCOUNTS_ENABLED = TESTING_MODE;
 
 export async function updateSession(request: NextRequest) {

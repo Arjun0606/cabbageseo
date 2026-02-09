@@ -607,3 +607,13 @@ body {
 .glow-blue { box-shadow: 0 0 30px rgba(59, 130, 246, 0.15); }
 .glow-red { box-shadow: 0 0 30px rgba(239, 68, 68, 0.15); }
 .glow-gold { box-shadow: 0 0 30px rgba(234, 179, 8, 0.15); }
+
+/* Social proof ticker */
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-ticker {
+  animation: ticker 30s linear infinite;
+}

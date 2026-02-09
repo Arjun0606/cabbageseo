@@ -8,12 +8,14 @@ import { NextResponse } from "next/server";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getSubscriptionInfo, type PlanId } from "@/lib/billing";
 import { createServiceClient } from "@/lib/supabase/server";
+import { checkTrialStatus } from "@/lib/billing/citation-plans";
 
 // ============================================
 // 🔓 TESTING MODE - SUBSCRIPTION CHECKS DISABLED
 // Set TESTING_MODE=true in .env for local testing
+// NEVER active in production
 // ============================================
-const TESTING_MODE = process.env.TESTING_MODE === "true";
+const TESTING_MODE = process.env.TESTING_MODE === "true" && process.env.NODE_ENV !== "production";
 
 export interface SubscriptionCheckResult {
   authorized: boolean;
@@ -102,13 +104,16 @@ export async function requireSubscription(
   if (!organizationId) {
     const slug = (user.email?.split("@")[0]?.replace(/[^a-z0-9]/gi, "") || "user") + "-" + Date.now();
     
+    const autoTrialEndsAt = new Date();
+    autoTrialEndsAt.setDate(autoTrialEndsAt.getDate() + 7);
     const { data: newOrg } = await serviceClient
       .from("organizations")
       .insert({
         name: user.user_metadata?.name || user.email?.split("@")[0] || "My Organization",
         slug,
         plan: "free",
-        subscription_status: "active",
+        subscription_status: "trialing",
+        trial_ends_at: autoTrialEndsAt.toISOString(),
       })
       .select("id")
       .single();
@@ -145,24 +150,24 @@ export async function requireSubscription(
   // Get organization subscription info (use serviceClient to bypass RLS)
   const { data: org } = await serviceClient
     .from("organizations")
-    .select("plan, subscription_status, current_period_end")
+    .select("plan, subscription_status, current_period_end, created_at")
     .eq("id", organizationId)
     .single();
 
   const subscriptionInfo = getSubscriptionInfo(org);
 
-  // Check if user can access paid features
-  if (!subscriptionInfo.canAccessPaidFeatures) {
-    // Allow trial users if option is set
-    if (subscriptionInfo.isTrial && !allowTrial) {
+  // Check if trial has actually expired (status may still say "trialing")
+  if (subscriptionInfo.isTrial && !subscriptionInfo.isPaid && org?.created_at) {
+    const trialStatus = checkTrialStatus(org.created_at);
+    if (trialStatus.expired) {
       return {
         authorized: false,
         organizationId,
         userId: user.id,
         plan: subscriptionInfo.plan,
         error: NextResponse.json(
-          { 
-            error: "Trial expired. Please upgrade to continue.",
+          {
+            error: "Your 7-day free trial has expired. Upgrade to continue.",
             code: "TRIAL_EXPIRED",
             upgradeUrl: "/pricing",
           },
@@ -170,7 +175,10 @@ export async function requireSubscription(
         ),
       };
     }
+  }
 
+  // Check if user can access paid features
+  if (!subscriptionInfo.canAccessPaidFeatures) {
     // Free users can't access paid features
     if (!subscriptionInfo.isPaid && !subscriptionInfo.isTrial) {
       return {
@@ -179,7 +187,7 @@ export async function requireSubscription(
         userId: user.id,
         plan: subscriptionInfo.plan,
         error: NextResponse.json(
-          { 
+          {
             error: "This feature requires a paid subscription.",
             code: "SUBSCRIPTION_REQUIRED",
             upgradeUrl: "/pricing",

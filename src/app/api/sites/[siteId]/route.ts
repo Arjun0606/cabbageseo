@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 
-const TESTING_MODE = process.env.TESTING_MODE === "true";
+const TESTING_MODE = process.env.TESTING_MODE === "true" && process.env.NODE_ENV !== "production";
 
 // Type for site with audits
 interface SiteWithAudits {

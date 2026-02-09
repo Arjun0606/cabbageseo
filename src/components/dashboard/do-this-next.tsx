@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ExternalLink, Zap } from "lucide-react";
+import { ArrowRight, ExternalLink, Zap, Check, SkipForward, RefreshCw } from "lucide-react";
 
 interface NextAction {
   id: string;
@@ -16,15 +16,65 @@ interface NextAction {
 interface DoThisNextProps {
   action: NextAction | null;
   loading?: boolean;
+  onComplete?: (actionId: string) => void;
+  onSkip?: (actionId: string) => void;
+  needsRecheck?: boolean;
+  onRunCheck?: () => void;
+  checking?: boolean;
 }
 
-export function DoThisNext({ action, loading }: DoThisNextProps) {
+export function DoThisNext({
+  action,
+  loading,
+  onComplete,
+  onSkip,
+  needsRecheck,
+  onRunCheck,
+  checking,
+}: DoThisNextProps) {
   if (loading) {
     return (
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 animate-pulse">
         <div className="h-4 w-24 bg-zinc-800 rounded mb-3" />
         <div className="h-6 w-64 bg-zinc-800 rounded mb-2" />
         <div className="h-4 w-full bg-zinc-800 rounded" />
+      </div>
+    );
+  }
+
+  // Recheck variant
+  if (needsRecheck) {
+    return (
+      <div className="rounded-2xl p-6 border border-amber-500/30 bg-amber-500/5">
+        <div className="flex items-center gap-2 mb-3">
+          <RefreshCw className="w-5 h-5 text-amber-400" />
+          <span className="text-sm font-medium text-amber-400 uppercase tracking-wide">
+            Re-check needed
+          </span>
+        </div>
+        <h3 className="text-xl font-bold text-white mb-2">
+          See if AI is citing you now
+        </h3>
+        <p className="text-zinc-400 text-sm mb-4">
+          You&apos;ve published new pages since your last check. Run a scan to see if AI platforms are starting to recommend you.
+        </p>
+        <button
+          onClick={onRunCheck}
+          disabled={checking}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-700 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          {checking ? (
+            <>
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              Checking...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="w-4 h-4" />
+              Run Check Now
+            </>
+          )}
+        </button>
       </div>
     );
   }
@@ -86,7 +136,7 @@ export function DoThisNext({ action, loading }: DoThisNextProps) {
       <h3 className="text-xl font-bold text-white mb-2">{action.title}</h3>
       <p className="text-zinc-400 text-sm mb-4">{action.description}</p>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         {action.actionUrl && (
           action.actionUrl.startsWith("/") ? (
             <Link
@@ -108,15 +158,37 @@ export function DoThisNext({ action, loading }: DoThisNextProps) {
             </a>
           )
         )}
-        <span className="text-xs text-zinc-600">
-          {action.category === "source"
-            ? "Trust source"
-            : action.category === "content"
-              ? "Content"
-              : action.category === "technical"
-                ? "Technical"
-                : "Monitoring"}
-        </span>
+
+        {onComplete && (
+          <button
+            onClick={() => onComplete(action.id)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 border border-emerald-500/30 text-emerald-400 text-sm font-medium rounded-lg hover:bg-emerald-500/10 transition-colors"
+          >
+            <Check className="w-4 h-4" />
+            Done
+          </button>
+        )}
+        {onSkip && (
+          <button
+            onClick={() => onSkip(action.id)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 border border-zinc-700 text-zinc-400 text-sm rounded-lg hover:bg-zinc-800 transition-colors"
+          >
+            <SkipForward className="w-4 h-4" />
+            Skip
+          </button>
+        )}
+
+        {!onComplete && !onSkip && (
+          <span className="text-xs text-zinc-600">
+            {action.category === "source"
+              ? "Trust source"
+              : action.category === "content"
+                ? "Content"
+                : action.category === "technical"
+                  ? "Technical"
+                  : "Monitoring"}
+          </span>
+        )}
       </div>
     </div>
   );

@@ -317,6 +317,10 @@ export const monthlyCheckpoint = inngest.createFunction(
 
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://cabbageseo.com";
 
+        if (!process.env.RESEND_API_KEY) {
+          console.error("[Monthly Checkpoint] RESEND_API_KEY not configured, skipping email");
+          return { sent: false, reason: "RESEND_API_KEY not configured" };
+        }
         const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
 

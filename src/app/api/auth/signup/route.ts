@@ -70,13 +70,16 @@ export async function POST(request: NextRequest) {
 
       // Create a default organization for the user and link it
       const orgSlug = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "-");
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 7);
       const { data: newOrg, error: orgError } = await (supabase as any)
         .from("organizations")
         .insert({
           name: `${fullName || email.split("@")[0]}'s Organization`,
           slug: `${orgSlug}-${Date.now()}`,
           plan: "free",
-          subscription_status: "active",
+          subscription_status: "trialing",
+          trial_ends_at: trialEndsAt.toISOString(),
         })
         .select("id")
         .single();

@@ -137,8 +137,15 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       
       // Fetch user data
       const meRes = await fetch("/api/me");
-      const meData = await meRes.json();
-      
+      let meData;
+      try {
+        meData = await meRes.json();
+      } catch {
+        setError("Failed to connect to server. Please try again.");
+        setLoading(false);
+        return;
+      }
+
       if (!meData.authenticated) {
         router.push("/login");
         return;
@@ -161,30 +168,39 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       
       // Fetch sites
       const sitesRes = await fetch("/api/sites");
-      const sitesData = await sitesRes.json();
-      const siteList: Site[] = (sitesData.sites || []).map((s: any) => ({
-        id: s.id,
-        domain: s.domain,
-        name: s.name,
-        totalCitations: s.total_citations || 0,
-        citationsThisWeek: s.citations_this_week || 0,
-        citationsLastWeek: s.citations_last_week || 0,
-        lastCheckedAt: s.last_checked_at,
-        geoScore: s.geo_score_avg,
-        category: s.category || null,
+      let sitesData;
+      try {
+        sitesData = await sitesRes.json();
+      } catch {
+        setError("Failed to load sites. Please try again.");
+        setLoading(false);
+        return;
+      }
+      const siteList: Site[] = (sitesData.sites || []).map((s: Record<string, unknown>) => ({
+        id: s.id as string,
+        domain: s.domain as string,
+        name: s.name as string | undefined,
+        totalCitations: (s.total_citations as number) || 0,
+        citationsThisWeek: (s.citations_this_week as number) || 0,
+        citationsLastWeek: (s.citations_last_week as number) || 0,
+        lastCheckedAt: (s.last_checked_at as string | null),
+        geoScore: (s.geo_score_avg as number | null),
+        category: (s.category as string | null) || null,
         customQueries: Array.isArray(s.custom_queries) ? s.custom_queries : [],
       }));
       
       setSites(siteList);
       
-      // Set current site
-      const savedSiteId = localStorage.getItem("cabbageseo_site_id");
+      // Set current site (guard localStorage for SSR)
+      const savedSiteId = typeof window !== "undefined" ? localStorage.getItem("cabbageseo_site_id") : null;
       const savedSite = siteList.find(s => s.id === savedSiteId);
       if (savedSite) {
         setCurrentSiteState(savedSite);
       } else if (siteList.length > 0) {
         setCurrentSiteState(siteList[0]);
-        localStorage.setItem("cabbageseo_site_id", siteList[0].id);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("cabbageseo_site_id", siteList[0].id);
+        }
       }
       
       // Fetch usage
@@ -214,7 +230,9 @@ export function SiteProvider({ children }: { children: ReactNode }) {
 
   const setCurrentSite = useCallback((site: Site) => {
     setCurrentSiteState(site);
-    localStorage.setItem("cabbageseo_site_id", site.id);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("cabbageseo_site_id", site.id);
+    }
   }, []);
 
   const addSite = useCallback(async (domain: string, category?: string): Promise<Site | null> => {
@@ -342,6 +360,30 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     deleteSite,
     runCheck,
   };
+
+  if (error && !loading) {
+    return (
+      <SiteContext.Provider value={value}>
+        <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-6">
+          <div className="max-w-sm text-center">
+            <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h2 className="text-white text-lg font-semibold mb-1">Connection error</h2>
+            <p className="text-zinc-400 text-sm mb-4">{error}</p>
+            <button
+              onClick={() => { setError(null); setLoading(true); refreshData(); }}
+              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-medium rounded-lg transition-colors text-sm"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      </SiteContext.Provider>
+    );
+  }
 
   return (
     <SiteContext.Provider value={value}>

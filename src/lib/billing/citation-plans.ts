@@ -31,7 +31,7 @@ export interface CitationPlanFeatures {
   // Monitoring
   manualChecks: boolean;
   dailyAutoCheck: boolean;
-  hourlyAutoCheck: boolean;   // Not yet shipped — hidden from marketing
+  hourlyAutoCheck: boolean;
   realtimeAlerts: boolean;    // Not yet shipped — hidden from marketing
   emailAlerts: boolean;
   weeklyReport: boolean;
@@ -213,7 +213,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     features: {
       manualChecks: true,
       dailyAutoCheck: true,
-      hourlyAutoCheck: false,  // Not yet shipped
+      hourlyAutoCheck: true,
       realtimeAlerts: false,
       emailAlerts: true,
       weeklyReport: true,
@@ -228,7 +228,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       weeklyActionPlan: true,
       competitorDeepDive: true,
       customQueries: true,
-      queryDiscovery: false,   // Not yet shipped
+      queryDiscovery: false,
       pageGeneration: true,
       sprintFramework: true,
       monthlyCheckpoints: true,
@@ -263,8 +263,8 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     features: {
       manualChecks: true,
       dailyAutoCheck: true,
-      hourlyAutoCheck: false,  // Not yet shipped
-      realtimeAlerts: false,   // Not yet shipped
+      hourlyAutoCheck: true,
+      realtimeAlerts: false,
       emailAlerts: true,
       weeklyReport: true,
       csvExport: true,
@@ -599,4 +599,57 @@ export function getIntelligenceFeatureSummary(planId: CitationPlanId | string): 
       ? "Full competitor breakdown"
       : "Command only",
   };
+}
+
+// ============================================
+// UPGRADE HELPERS (used by checkout hooks, sidebar, modals)
+// ============================================
+
+const PLAN_ORDER: CitationPlanId[] = ["free", "scout", "command", "dominate"];
+
+/** Get the next upgrade tier, or null if already on Dominate */
+export function getNextPlan(currentPlan: string): CitationPlanId | null {
+  const idx = PLAN_ORDER.indexOf(currentPlan as CitationPlanId);
+  return idx >= 0 && idx < PLAN_ORDER.length - 1 ? PLAN_ORDER[idx + 1] : null;
+}
+
+/** Annual savings in dollars (monthly vs yearly over 12 months) */
+export function getAnnualSavings(planId: string): number {
+  const plan = CITATION_PLANS[planId as CitationPlanId];
+  if (!plan || plan.monthlyPrice === 0) return 0;
+  return (plan.monthlyPrice - plan.yearlyPrice) * 12;
+}
+
+/** Get key limit differences between two plans (for upgrade modal comparison) */
+export function getPlanDiffs(currentPlanId: string, targetPlanId: string): Array<{ label: string; current: string; target: string }> {
+  const current = CITATION_PLANS[currentPlanId as CitationPlanId];
+  const target = CITATION_PLANS[targetPlanId as CitationPlanId];
+  if (!current || !target) return [];
+
+  const fmt = (v: number) => (v === -1 ? "Unlimited" : String(v));
+  const diffs: Array<{ label: string; current: string; target: string }> = [];
+
+  if (current.limits.sites !== target.limits.sites) {
+    diffs.push({ label: "Sites", current: fmt(current.limits.sites), target: fmt(target.limits.sites) });
+  }
+  if (current.limits.competitors !== target.limits.competitors) {
+    diffs.push({ label: "Competitors", current: fmt(current.limits.competitors), target: fmt(target.limits.competitors) });
+  }
+  if (current.limits.teamMembers !== target.limits.teamMembers) {
+    diffs.push({ label: "Team members", current: fmt(current.limits.teamMembers), target: fmt(target.limits.teamMembers) });
+  }
+  if (current.limits.customQueriesPerSite !== target.limits.customQueriesPerSite) {
+    diffs.push({ label: "Custom queries", current: fmt(current.limits.customQueriesPerSite), target: fmt(target.limits.customQueriesPerSite) });
+  }
+  if (!current.features.competitorDeepDive && target.features.competitorDeepDive) {
+    diffs.push({ label: "Competitor deep dive", current: "No", target: "Yes" });
+  }
+  if (!current.features.weeklyActionPlan && target.features.weeklyActionPlan) {
+    diffs.push({ label: "Weekly action plans", current: "No", target: "Yes" });
+  }
+  if (!current.features.sprintFramework && target.features.sprintFramework) {
+    diffs.push({ label: "30-day sprint", current: "No", target: "Yes" });
+  }
+
+  return diffs;
 }

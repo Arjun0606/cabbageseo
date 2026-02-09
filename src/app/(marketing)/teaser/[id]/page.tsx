@@ -119,8 +119,8 @@ export default async function ShareableTeaserPage({
     notFound();
   }
 
-  const summary = report.summary as TeaserSummary;
-  const results = report.results as TeaserResult[];
+  const summary = (report.summary as TeaserSummary) || { totalQueries: 0, mentionedCount: 0, isInvisible: true, competitorsMentioned: [], message: "" };
+  const results = (report.results as TeaserResult[]) || [];
   const competitorCount = (report.competitorsMentioned || []).length;
 
   return (

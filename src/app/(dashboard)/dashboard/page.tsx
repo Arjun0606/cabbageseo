@@ -1,19 +1,17 @@
 "use client";
 
 /**
- * DASHBOARD — Score → Fix → Proof
+ * DASHBOARD — Score → Task → Progress
  *
- * Layout:
- * 1. Momentum Score + Do This Next (2-col)
- * 2. Your Improvement (before/after)
- * 3. Queries You're Losing (with fix pipeline)
- * 4. Impact Stats (pages generated)
- * 5. Sprint Progress (paid) / Upgrade CTA (free)
+ * Three zones:
+ * 1. Score Hero (full-width momentum score with trial pill)
+ * 2. The Task (single action card — first citation goal, next action, or recheck)
+ * 3. Progress (collapsible — improvement, lost queries, sprint)
  */
 
 import { useEffect, useState, Suspense, useCallback } from "react";
+import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { useSite } from "@/context/site-context";
 import { MomentumScore } from "@/components/dashboard/momentum-score";
 import { SprintProgress } from "@/components/dashboard/sprint-progress";
@@ -21,17 +19,23 @@ import { DoThisNext } from "@/components/dashboard/do-this-next";
 import { FirstCitationGoal } from "@/components/dashboard/first-citation-goal";
 import { RevenueAtRisk, type LostQuery } from "@/components/dashboard/revenue-at-risk";
 import { TrendChart, type Snapshot } from "@/components/dashboard/trend-chart";
-import { CustomQueries } from "@/components/dashboard/custom-queries";
-import { BenchmarkCard } from "@/components/dashboard/benchmark-card";
-import { getCitationPlanLimits } from "@/lib/billing/citation-plans";
+import { FixPagesReady } from "@/components/dashboard/fix-pages-ready";
+import { RecheckResult } from "@/components/dashboard/recheck-result";
 import {
   RefreshCw,
   Loader2,
   ArrowRight,
-  FileText,
+  ChevronDown,
+  ChevronUp,
   TrendingUp,
   TrendingDown,
+  Clock,
+  Globe,
+  BarChart3,
+  Users,
 } from "lucide-react";
+import { useCheckout } from "@/hooks/use-checkout";
+import { getNextPlan } from "@/lib/billing/citation-plans";
 
 interface MomentumData {
   score: number;
@@ -102,60 +106,70 @@ function DashboardContent() {
     sites,
     loading: siteLoading,
     organization,
+    trial,
+    usage,
     runCheck,
   } = useSite();
+  const { checkout, loading: checkoutLoading } = useCheckout();
 
-  const isWelcome = searchParams.get("welcome") === "true";
-
-  // State
+  // State — Zone 1 + 2 (immediate)
   const [momentum, setMomentum] = useState<MomentumData | null>(null);
-  const [sprint, setSprint] = useState<SprintData | null>(null);
   const [nextAction, setNextAction] = useState<NextActionData | null>(null);
-  const [improvement, setImprovement] = useState<ImprovementData | null>(null);
   const [listings, setListings] = useState<{ listedCount: number } | null>(null);
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
+  const [dashError, setDashError] = useState<string | null>(null);
+
+  // State — Zone 3 (deferred)
+  const [showProgress, setShowProgress] = useState(false);
+  const [sprint, setSprint] = useState<SprintData | null>(null);
+  const [improvement, setImprovement] = useState<ImprovementData | null>(null);
+  const [checkResult, setCheckResult] = useState<{ lostQueries: LostQuery[] } | null>(null);
   const [generatedPages, setGeneratedPages] = useState<
     Array<{ id: string; query: string; status: string; wordCount: number | null; updatedAt: string | null }>
   >([]);
-  const [checkResult, setCheckResult] = useState<{ lostQueries: LostQuery[] } | null>(null);
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [benchmark, setBenchmark] = useState<{
-    domain: string;
-    totalRecommendations: number;
-    percentileRank: number;
-    totalDomainsTracked: number;
-    platforms: string[];
-    weekOverWeek: { current: number; previous: number; change: number; changePercent: number };
-  } | null>(null);
-  const [customQueries, setCustomQueries] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [checking, setChecking] = useState(false);
+  const [progressLoaded, setProgressLoaded] = useState(false);
 
-  // Fetch all dashboard data
-  const fetchDashboardData = useCallback(async () => {
+  // Recheck delta state
+  const [showRecheckResult, setShowRecheckResult] = useState(false);
+  const [recheckDelta, setRecheckDelta] = useState<{
+    beforeWon: number; afterWon: number; beforeTotal: number; afterTotal: number; delta: number;
+  } | null>(null);
+
+  // First-scan detection
+  const justScanned = searchParams.get("justScanned") === "true";
+  const [generatingPages, setGeneratingPages] = useState(justScanned);
+  const [generationTimedOut, setGenerationTimedOut] = useState(false);
+
+  // Fetch immediate data (Zone 1 + 2)
+  const fetchImmediateData = useCallback(async () => {
     if (!currentSite?.id) return;
 
     setLoading(true);
     try {
-      // Fetch dashboard data in parallel
-      const [momentumRes, sprintRes, nextActionRes, listingsRes, pagesRes, improvementRes, lostQueriesRes, historyRes, benchmarkRes] =
+      const [momentumRes, nextActionRes, listingsRes, historyRes, pagesRes] =
         await Promise.all([
           fetch(`/api/geo/momentum?siteId=${currentSite.id}`).catch(() => null),
-          fetch(`/api/geo/sprint?siteId=${currentSite.id}`).catch(() => null),
           fetch(`/api/geo/next-action?siteId=${currentSite.id}`).catch(() => null),
           fetch(`/api/sites/listings?siteId=${currentSite.id}`).catch(() => null),
-          fetch(`/api/geo/pages?siteId=${currentSite.id}`).catch(() => null),
-          fetch(`/api/geo/improvement?siteId=${currentSite.id}`).catch(() => null),
-          fetch(`/api/geo/lost-queries?siteId=${currentSite.id}`).catch(() => null),
           fetch(`/api/geo/history?siteId=${currentSite.id}`).catch(() => null),
-          fetch(`/api/geo/benchmark?siteId=${currentSite.id}`).catch(() => null),
+          fetch(`/api/geo/pages?siteId=${currentSite.id}`).catch(() => null),
         ]);
 
-      // Parse momentum
+      // Detect total connection failure
+      const allFailed = !momentumRes && !nextActionRes && !listingsRes && !historyRes && !pagesRes;
+      if (allFailed) {
+        setDashError("Couldn't load dashboard data. Check your connection and try again.");
+        setLoading(false);
+        return;
+      }
+      setDashError(null);
+
       if (momentumRes?.ok) {
         const data = await momentumRes.json();
         setMomentum(data.data || data);
       } else {
-        // Fallback momentum from site data
         const won = currentSite.citationsThisWeek || 0;
         const last = currentSite.citationsLastWeek || 0;
         const total = currentSite.totalCitations || 0;
@@ -173,43 +187,63 @@ function DashboardContent() {
         });
       }
 
-      // Parse sprint
-      if (sprintRes?.ok) {
-        const data = await sprintRes.json();
-        setSprint(data.data);
-      }
-
-      // Parse next action
       if (nextActionRes?.ok) {
         const data = await nextActionRes.json();
         setNextAction(data.data || data);
       }
 
-      // Parse listings (for first citation goal)
       if (listingsRes?.ok) {
         const data = await listingsRes.json();
         setListings({ listedCount: data.listedCount || 0 });
       }
-      // Parse generated pages (for fix pipeline + impact stats)
+
+      if (historyRes?.ok) {
+        const data = await historyRes.json();
+        setSnapshots(data.data?.snapshots || []);
+      }
+
       if (pagesRes?.ok) {
         const data = await pagesRes.json();
         const pages = data.data?.pages || [];
         setGeneratedPages(
           pages.map((p: { id: string; query: string; status: string; wordCount: number | null; updatedAt: string | null }) => ({
-            id: p.id,
-            query: p.query,
-            status: p.status,
-            wordCount: p.wordCount,
-            updatedAt: p.updatedAt,
+            id: p.id, query: p.query, status: p.status, wordCount: p.wordCount, updatedAt: p.updatedAt,
           }))
         );
+        if (pages.filter((p: { status: string }) => p.status === "draft").length > 0) {
+          setGeneratingPages(false);
+        }
       }
-      // Parse improvement (before/after)
+
+    } catch {
+      // Individual section fallbacks handle display
+    } finally {
+      setLoading(false);
+    }
+  }, [currentSite]);
+
+  // Fetch deferred data (Zone 3) — only when expanded
+  const fetchProgressData = useCallback(async () => {
+    if (!currentSite?.id || progressLoaded) return;
+
+    try {
+      const [sprintRes, improvementRes, lostQueriesRes, pagesRes] = await Promise.all([
+        fetch(`/api/geo/sprint?siteId=${currentSite.id}`).catch(() => null),
+        fetch(`/api/geo/improvement?siteId=${currentSite.id}`).catch(() => null),
+        fetch(`/api/geo/lost-queries?siteId=${currentSite.id}`).catch(() => null),
+        fetch(`/api/geo/pages?siteId=${currentSite.id}`).catch(() => null),
+      ]);
+
+      if (sprintRes?.ok) {
+        const data = await sprintRes.json();
+        setSprint(data.data);
+      }
+
       if (improvementRes?.ok) {
         const data = await improvementRes.json();
         setImprovement(data.data || null);
       }
-      // Parse persisted lost queries (so they survive page refresh)
+
       if (lostQueriesRes?.ok) {
         const data = await lostQueriesRes.json();
         const lostQueries = data.data?.lostQueries || [];
@@ -217,43 +251,160 @@ function DashboardContent() {
           setCheckResult({ lostQueries });
         }
       }
-      // Parse historical snapshots for trend chart
-      if (historyRes?.ok) {
-        const data = await historyRes.json();
-        setSnapshots(data.data?.snapshots || []);
+
+      if (pagesRes?.ok) {
+        const data = await pagesRes.json();
+        const pages = data.data?.pages || [];
+        setGeneratedPages(
+          pages.map((p: { id: string; query: string; status: string; wordCount: number | null; updatedAt: string | null }) => ({
+            id: p.id, query: p.query, status: p.status, wordCount: p.wordCount, updatedAt: p.updatedAt,
+          }))
+        );
       }
-      // Parse benchmark data
-      if (benchmarkRes?.ok) {
-        const data = await benchmarkRes.json();
-        setBenchmark(data.data || null);
-      }
-    } catch (err) {
-      console.error("Dashboard fetch error:", err);
-    } finally {
-      setLoading(false);
+
+      setProgressLoaded(true);
+    } catch {
+      // Silent — sections show empty state
     }
-  }, [currentSite]);
+  }, [currentSite, progressLoaded]);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+    fetchImmediateData();
+  }, [fetchImmediateData]);
 
-  // Handle check
+  // Load progress data when section is expanded
+  useEffect(() => {
+    if (showProgress && !progressLoaded) {
+      fetchProgressData();
+    }
+  }, [showProgress, progressLoaded, fetchProgressData]);
+
+  // Poll for auto-generated pages after first scan
+  useEffect(() => {
+    if (!justScanned || !currentSite?.id || !generatingPages) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/geo/pages?siteId=${currentSite.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          const pages = data.data?.pages || [];
+          const drafts = pages.filter((p: { status: string }) => p.status === "draft");
+          if (drafts.length > 0) {
+            setGeneratedPages(
+              pages.map((p: { id: string; query: string; status: string; wordCount: number | null; updatedAt: string | null }) => ({
+                id: p.id, query: p.query, status: p.status, wordCount: p.wordCount, updatedAt: p.updatedAt,
+              }))
+            );
+            setGeneratingPages(false);
+            setGenerationTimedOut(false);
+            clearInterval(interval);
+          }
+        }
+      } catch {
+        // Silent
+      }
+    }, 3000);
+
+    // Stop polling after 2 minutes
+    const timeout = setTimeout(() => {
+      setGeneratingPages(false);
+      setGenerationTimedOut(true);
+      clearInterval(interval);
+    }, 120000);
+
+    return () => { clearInterval(interval); clearTimeout(timeout); };
+  }, [justScanned, currentSite?.id, generatingPages]);
+
+  // Handle check with before/after comparison
   const handleCheck = async () => {
     if (checking) return;
+
+    // Capture snapshot before check
+    const beforeSnapshot = {
+      queriesWon: momentum?.queriesWon || 0,
+      queriesTotal: momentum?.queriesTotal || 0,
+    };
+
     setChecking(true);
+    setShowRecheckResult(false);
     try {
       const result = await runCheck();
       if (result) {
         setCheckResult({ lostQueries: result.lostQueries });
       }
-      await fetchDashboardData();
+      setProgressLoaded(false);
+      await fetchImmediateData();
+
+      // Show before/after delta (only if this isn't the first check)
+      // Read fresh data directly from API — state closure is stale after setMomentum()
+      if (beforeSnapshot.queriesTotal > 0 && currentSite?.id) {
+        try {
+          const freshRes = await fetch(`/api/geo/momentum?siteId=${currentSite.id}`);
+          if (freshRes.ok) {
+            const freshData = await freshRes.json();
+            const after = freshData.data || freshData;
+            const afterWon = after.queriesWon || 0;
+            const afterTotal = after.queriesTotal || 0;
+            setRecheckDelta({
+              beforeWon: beforeSnapshot.queriesWon,
+              afterWon,
+              beforeTotal: beforeSnapshot.queriesTotal,
+              afterTotal,
+              delta: afterWon - beforeSnapshot.queriesWon,
+            });
+            setShowRecheckResult(true);
+          }
+        } catch {
+          // Non-fatal — skip delta display
+        }
+      }
+    } catch {
+      toast.error("Check failed. Please try again.");
     } finally {
       setChecking(false);
     }
   };
 
-  // Handle sprint action complete/skip
+  // Handle next action complete/skip
+  const handleActionComplete = async (actionId: string) => {
+    try {
+      await fetch("/api/geo/sprint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actionId, status: "completed" }),
+      });
+      const res = await fetch(`/api/geo/next-action?siteId=${currentSite?.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setNextAction(data.data || data);
+      }
+      setProgressLoaded(false);
+      toast.success("Action completed");
+    } catch {
+      toast.error("Failed to save. Please try again.");
+    }
+  };
+
+  const handleActionSkip = async (actionId: string) => {
+    try {
+      await fetch("/api/geo/sprint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actionId, status: "skipped" }),
+      });
+      const res = await fetch(`/api/geo/next-action?siteId=${currentSite?.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setNextAction(data.data || data);
+      }
+      setProgressLoaded(false);
+    } catch {
+      // Retry possible
+    }
+  };
+
+  // Handle sprint action complete/skip (in progress section)
   const handleSprintAction = async (actionId: string, status: "completed" | "skipped", proofUrl?: string, notes?: string) => {
     try {
       await fetch("/api/geo/sprint", {
@@ -261,23 +412,22 @@ function DashboardContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ actionId, status, proofUrl, notes }),
       });
-      // Re-fetch sprint data
       const res = await fetch(`/api/geo/sprint?siteId=${currentSite?.id}`);
       if (res.ok) {
         const data = await res.json();
         setSprint(data.data);
       }
-    } catch (err) {
-      console.error("Sprint action error:", err);
+    } catch {
+      // Sprint action failed
     }
   };
 
-  // Initialize custom queries from site data
-  useEffect(() => {
-    if (currentSite) {
-      setCustomQueries(currentSite.customQueries || []);
-    }
-  }, [currentSite]);
+  // Handle marking a page as published (local state update)
+  const handleMarkPublished = (pageId: string) => {
+    setGeneratedPages((prev) =>
+      prev.map((p) => (p.id === pageId ? { ...p, status: "published" } : p))
+    );
+  };
 
   // Redirect to onboarding if no sites
   if (!siteLoading && sites.length === 0) {
@@ -287,31 +437,25 @@ function DashboardContent() {
 
   const plan = organization?.plan || "free";
   const isPaid = plan !== "free";
-  const planLimits = getCitationPlanLimits(plan);
-  const maxCustomQueries = planLimits.customQueriesPerSite;
-
-  // Build pages map for fix pipeline (query → page info)
-  const pagesMap = new Map(
-    generatedPages.map((p) => [p.query.toLowerCase(), { id: p.id, status: p.status }])
-  );
-  const pagesGenerated = generatedPages.length;
-  const totalWords = generatedPages.reduce((sum, p) => sum + (p.wordCount || 0), 0);
-  const publishedPages = generatedPages.filter((p) => p.status === "published");
-  const lastCheckDate = currentSite?.lastCheckedAt ? new Date(currentSite.lastCheckedAt) : null;
-  const pagesPublishedSinceLastCheck = publishedPages.filter((p) => {
-    if (!lastCheckDate || !p.updatedAt) return true; // no check yet = needs re-check
-    return new Date(p.updatedAt) > lastCheckDate;
-  });
-  const needsFollowUpCheck = pagesPublishedSinceLastCheck.length > 0;
-
   const totalCitations = currentSite?.totalCitations || 0;
   const showFirstCitationGoal = totalCitations === 0;
+
+  // Determine if we need a follow-up check
+  const lastCheckDate = currentSite?.lastCheckedAt ? new Date(currentSite.lastCheckedAt) : null;
+  const publishedPages = generatedPages.filter((p) => p.status === "published");
+  const pagesPublishedSinceLastCheck = publishedPages.filter((p) => {
+    if (!lastCheckDate || !p.updatedAt) return true;
+    return new Date(p.updatedAt) > lastCheckDate;
+  });
+  const needsFollowUpCheck = pagesPublishedSinceLastCheck.length > 0 && totalCitations > 0;
+
+  // Build first-citation steps
   const goalSteps = showFirstCitationGoal
     ? [
         {
           label: "Set up your trust sources",
           completed: (listings?.listedCount || 0) > 0,
-          href: "/dashboard/sources",
+          href: "/dashboard/actions",
         },
         {
           label: "Run your first AI check",
@@ -324,8 +468,23 @@ function DashboardContent() {
       ]
     : [];
 
+  // Draft pages for fix-pages-ready card
+  const draftPages = generatedPages.filter((p) => p.status === "draft");
+  const recentPages = generatedPages.filter((p) => p.status === "draft" || p.status === "published");
+
+  // Build pages map for fix pipeline
+  const pagesMap = new Map(
+    generatedPages.map((p) => [p.query.toLowerCase(), { id: p.id, status: p.status }])
+  );
+
+  // Progress summary for collapsed state
+  const checksCount = improvement?.checksCount || 0;
+  const queriesWonDelta = improvement?.latestCheck && improvement?.firstCheck
+    ? improvement.latestCheck.queriesWon - improvement.firstCheck.queriesWon
+    : 0;
+
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -355,228 +514,331 @@ function DashboardContent() {
         </button>
       </div>
 
-      {/* Welcome banner */}
-      {isWelcome && (
-        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
-          <p className="text-emerald-300 font-medium">
-            Your first scan is running. We&apos;re checking which competitors AI recommends instead of you — results appear below.
-          </p>
+      {/* ═══ TRIAL URGENCY (≤3 days) ═══ */}
+      {trial?.isTrialUser && !trial?.expired && trial.daysRemaining <= 3 && (
+        <div className="rounded-2xl p-5 bg-gradient-to-r from-red-500/10 via-red-500/5 to-transparent border border-red-500/20">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                <Clock className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <p className="text-white font-semibold">
+                  {trial.daysRemaining === 0 ? "Last day!" : `${trial.daysRemaining} day${trial.daysRemaining !== 1 ? "s" : ""} left`}
+                </p>
+                <p className="text-zinc-400 text-sm">
+                  You tracked {totalCitations} citation{totalCitations !== 1 ? "s" : ""}. Don&apos;t lose access.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => checkout("scout", "yearly")}
+              disabled={checkoutLoading}
+              className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold rounded-lg transition-colors disabled:opacity-50"
+            >
+              {checkoutLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  Upgrade — $49/mo
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </div>
         </div>
       )}
 
-      {/* First Citation Goal (shown when 0 citations) */}
-      {showFirstCitationGoal && (
+      {/* ═══ CONNECTION ERROR ═══ */}
+      {dashError && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center justify-between">
+          <p className="text-red-400 text-sm">{dashError}</p>
+          <button
+            onClick={() => { setDashError(null); fetchImmediateData(); }}
+            className="text-sm text-white bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* ═══ ZONE 1: Score Hero ═══ */}
+      <MomentumScore
+        score={momentum?.score || 0}
+        change={momentum?.change || 0}
+        trend={momentum?.trend || "stable"}
+        queriesWon={momentum?.queriesWon || 0}
+        queriesTotal={momentum?.queriesTotal || 0}
+        loading={loading}
+        trialDaysRemaining={trial?.isTrialUser && !trial?.expired ? trial.daysRemaining : undefined}
+      />
+
+      {/* ═══ USAGE METERS ═══ */}
+      {plan !== "dominate" && !loading && (
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Sites", used: usage.sitesUsed, limit: usage.sitesLimit, icon: Globe },
+            { label: "Checks today", used: usage.checksUsed, limit: usage.checksLimit, icon: BarChart3 },
+            { label: "Competitors", used: usage.competitorsUsed, limit: usage.competitorsLimit, icon: Users },
+          ].map((meter) => {
+            const pct = meter.limit > 0 ? (meter.used / meter.limit) * 100 : 0;
+            const atLimit = meter.used >= meter.limit;
+            const nearLimit = pct >= 80;
+            return (
+              <div key={meter.label} className="rounded-xl p-3 bg-zinc-900 border border-zinc-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <meter.icon className="w-3.5 h-3.5 text-zinc-500" />
+                  <span className="text-xs text-zinc-500">{meter.label}</span>
+                </div>
+                <p className={`text-lg font-bold mb-1.5 ${atLimit ? "text-red-400" : "text-white"}`}>
+                  {meter.used}<span className="text-zinc-500 font-normal text-sm">/{meter.limit}</span>
+                </p>
+                <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      atLimit ? "bg-red-500" : nearLimit ? "bg-amber-500" : "bg-emerald-500"
+                    }`}
+                    style={{ width: `${Math.min(100, pct)}%` }}
+                  />
+                </div>
+                {atLimit && (
+                  <button
+                    onClick={() => checkout(getNextPlan(plan) || "scout", "yearly")}
+                    className="text-xs text-emerald-400 hover:text-emerald-300 mt-1.5 transition-colors"
+                  >
+                    Upgrade for more →
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ═══ RECHECK RESULT BANNER ═══ */}
+      {showRecheckResult && recheckDelta && (
+        <RecheckResult
+          delta={recheckDelta}
+          onDismiss={() => setShowRecheckResult(false)}
+        />
+      )}
+
+      {/* ═══ ZONE 2: The Task ═══ */}
+      {generationTimedOut && generatedPages.filter(p => p.status === "draft").length === 0 ? (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6">
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5 text-amber-400" />
+            <div>
+              <h3 className="text-white font-semibold">
+                Page generation is still running in the background
+              </h3>
+              <p className="text-zinc-400 text-sm">
+                Check the <a href="/dashboard/pages" className="text-emerald-400 hover:text-emerald-300 underline">Pages tab</a> in a few minutes. Your fix pages are being created.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : generatingPages ? (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+          <div className="flex items-center gap-3">
+            <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
+            <div>
+              <h3 className="text-white font-semibold">
+                Generating your fix pages...
+              </h3>
+              <p className="text-zinc-400 text-sm">
+                Analyzing your lost queries and creating content to improve your AI visibility
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : recentPages.length > 0 ? (
+        <FixPagesReady
+          pages={recentPages}
+          onMarkPublished={handleMarkPublished}
+          onRecheck={handleCheck}
+          checking={checking}
+        />
+      ) : showFirstCitationGoal ? (
         <FirstCitationGoal
           steps={goalSteps}
           loading={loading}
           onRecheck={handleCheck}
           checking={checking}
         />
-      )}
-
-      {/* Row 1: Momentum Score + Do This Next */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <MomentumScore
-          score={momentum?.score || 0}
-          change={momentum?.change || 0}
-          trend={momentum?.trend || "stable"}
-          queriesWon={momentum?.queriesWon || 0}
-          queriesTotal={momentum?.queriesTotal || 0}
-          loading={loading}
-        />
-        <DoThisNext action={nextAction} loading={loading} />
-      </div>
-
-      {/* Your Improvement (before/after) */}
-      {improvement && improvement.checksCount >= 2 && improvement.firstCheck && improvement.latestCheck ? (
-        (() => {
-          const wonDelta = improvement.latestCheck.queriesWon - improvement.firstCheck.queriesWon;
-          const lostDelta = improvement.latestCheck.queriesLost - improvement.firstCheck.queriesLost;
-          const isImproving = wonDelta > 0 || lostDelta < 0;
-          const formatDate = (d: string) =>
-            new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-
-          return (
-            <div className={`rounded-2xl p-6 border ${isImproving ? "border-emerald-500/20 bg-emerald-500/5" : "border-zinc-800 bg-zinc-900"}`}>
-              <div className="flex items-center gap-2 mb-4">
-                {isImproving ? (
-                  <TrendingUp className="w-5 h-5 text-emerald-400" />
-                ) : (
-                  <TrendingDown className="w-5 h-5 text-zinc-400" />
-                )}
-                <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">
-                  Your Improvement
-                </h3>
-                <span className="text-xs text-zinc-600 ml-auto">
-                  Based on {improvement.checksCount} checks
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6 mb-4">
-                <div>
-                  <p className="text-xs text-zinc-500 mb-1">
-                    First Check ({formatDate(improvement.firstCheck.date)})
-                  </p>
-                  <p className="text-lg font-semibold text-zinc-400">
-                    {improvement.firstCheck.queriesWon} of {improvement.firstCheck.totalQueries} queries won
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-zinc-500 mb-1">
-                    Latest Check ({formatDate(improvement.latestCheck.date)})
-                  </p>
-                  <p className="text-lg font-semibold text-white">
-                    {improvement.latestCheck.queriesWon} of {improvement.latestCheck.totalQueries} queries won
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 pt-3 border-t border-zinc-800">
-                {wonDelta !== 0 && (
-                  <span className={`text-sm font-medium ${wonDelta > 0 ? "text-emerald-400" : "text-red-400"}`}>
-                    {wonDelta > 0 ? "+" : ""}{wonDelta} queries won
-                  </span>
-                )}
-                {lostDelta !== 0 && (
-                  <span className={`text-sm font-medium ${lostDelta < 0 ? "text-emerald-400" : "text-red-400"}`}>
-                    {lostDelta < 0 ? "" : "+"}{lostDelta} queries lost
-                  </span>
-                )}
-                {wonDelta === 0 && lostDelta === 0 && (
-                  <span className="text-sm text-zinc-500">No change yet — keep publishing Authority Pages</span>
-                )}
-              </div>
-            </div>
-          );
-        })()
-      ) : improvement && improvement.checksCount < 2 ? (
-        <div className="rounded-2xl p-4 border border-zinc-800 bg-zinc-900">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-zinc-500" />
-            <span className="text-sm text-zinc-500">
-              Run another check to start tracking your improvement
-            </span>
-          </div>
-        </div>
-      ) : null}
-
-      {/* AI Visibility Over Time */}
-      <TrendChart snapshots={snapshots} loading={loading} />
-
-      {/* Industry Benchmark */}
-      <BenchmarkCard
-        domain={benchmark?.domain || currentSite?.domain || ""}
-        totalRecommendations={benchmark?.totalRecommendations || 0}
-        percentileRank={benchmark?.percentileRank || 0}
-        totalDomainsTracked={benchmark?.totalDomainsTracked || 0}
-        platforms={benchmark?.platforms || []}
-        weekOverWeek={benchmark?.weekOverWeek || { current: 0, previous: 0, change: 0, changePercent: 0 }}
-        loading={loading}
-      />
-
-      {/* Queries You're Losing */}
-      <RevenueAtRisk
-        queriesLost={(momentum?.queriesTotal || 0) - (momentum?.queriesWon || 0)}
-        queriesTotal={momentum?.queriesTotal || 0}
-        topCompetitor={momentum?.topCompetitor}
-        lostQueries={checkResult?.lostQueries}
-        existingPages={pagesMap}
-        checking={checking}
-        loading={loading}
-        onRunCheck={handleCheck}
-      />
-
-      {/* Custom Query Tracking */}
-      {currentSite && (
-        <CustomQueries
-          siteId={currentSite.id}
-          queries={customQueries}
-          maxQueries={maxCustomQueries}
-          onUpdate={setCustomQueries}
-        />
-      )}
-
-      {/* Impact stats (shown when pages have been generated) */}
-      {pagesGenerated > 0 && (
-        <div className="flex items-center gap-6 px-4 py-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
-          <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-emerald-400" />
-            <span className="text-sm text-emerald-300">
-              {pagesGenerated} authority page{pagesGenerated !== 1 ? "s" : ""} generated
-            </span>
-          </div>
-          {totalWords > 0 && (
-            <span className="text-sm text-zinc-500">
-              {totalWords.toLocaleString()} words of AI-optimized content
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Follow-up check nudge (when pages published since last check) */}
-      {needsFollowUpCheck && !checking && (
-        <div className="rounded-2xl p-5 border border-amber-500/20 bg-amber-500/5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-white font-semibold text-sm mb-1">
-                {pagesPublishedSinceLastCheck.length} page{pagesPublishedSinceLastCheck.length !== 1 ? "s" : ""} published since your last check
-              </h3>
-              <p className="text-zinc-400 text-sm">
-                Run a follow-up check to see if AI is starting to recommend you for these queries.
-              </p>
-            </div>
-            <button
-              onClick={handleCheck}
-              className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors flex-shrink-0 ml-4"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Re-Check Now
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Sprint Progress (full width for paid users) */}
-      {isPaid ? (
-        <SprintProgress
-          progress={
-            sprint?.progress || {
-              totalActions: 0,
-              completedActions: 0,
-              percentComplete: 0,
-              currentDay: 1,
-              currentWeek: 1,
-              daysRemaining: 30,
-              isComplete: false,
-            }
-          }
-          actions={sprint?.actions || []}
-          onComplete={(id, proofUrl, notes) => handleSprintAction(id, "completed", proofUrl, notes)}
-          onSkip={(id) => handleSprintAction(id, "skipped")}
-          loading={loading}
+      ) : needsFollowUpCheck ? (
+        <DoThisNext
+          action={null}
+          needsRecheck
+          onRunCheck={handleCheck}
+          checking={checking}
         />
       ) : (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-2">
-            30-Day AI Visibility Sprint
-          </h3>
-          <p className="text-red-400/80 text-sm mb-2">
-            Every recommendation you&apos;re missing is a customer going to a competitor you can&apos;t track.
-          </p>
-          <p className="text-zinc-400 text-sm mb-4">
-            Get a structured 4-week program to become AI&apos;s recommended choice.
-            Week-by-week actions, progress tracking, and momentum scoring.
-          </p>
-          <Link
-            href="/settings/billing"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-600 transition-colors"
-          >
-            Upgrade to Scout
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+        <DoThisNext
+          action={nextAction}
+          loading={loading}
+          onComplete={handleActionComplete}
+          onSkip={handleActionSkip}
+        />
       )}
 
+      {/* ═══ ZONE 3: Progress (collapsible) ═══ */}
+      <div>
+        <button
+          onClick={() => setShowProgress(!showProgress)}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 transition-colors"
+        >
+          <span className="text-sm text-zinc-400">
+            {showProgress
+              ? "Hide progress"
+              : checksCount > 0
+                ? `${checksCount} check${checksCount !== 1 ? "s" : ""} done${queriesWonDelta > 0 ? ` · +${queriesWonDelta} queries won` : ""} · Show progress`
+                : "Show progress"
+            }
+          </span>
+          {showProgress ? (
+            <ChevronUp className="w-4 h-4 text-zinc-500" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-zinc-500" />
+          )}
+        </button>
+
+        {showProgress && (
+          <div className="mt-4 space-y-6">
+            {/* Improvement card */}
+            {improvement && improvement.checksCount >= 2 && improvement.firstCheck && improvement.latestCheck ? (
+              (() => {
+                const wonDelta = improvement.latestCheck.queriesWon - improvement.firstCheck.queriesWon;
+                const lostDelta = improvement.latestCheck.queriesLost - improvement.firstCheck.queriesLost;
+                const isImproving = wonDelta > 0 || lostDelta < 0;
+                const formatDate = (d: string) =>
+                  new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+                return (
+                  <div className={`rounded-2xl p-6 border ${isImproving ? "border-emerald-500/20 bg-emerald-500/5" : "border-zinc-800 bg-zinc-900"}`}>
+                    <div className="flex items-center gap-2 mb-4">
+                      {isImproving ? (
+                        <TrendingUp className="w-5 h-5 text-emerald-400" />
+                      ) : (
+                        <TrendingDown className="w-5 h-5 text-zinc-400" />
+                      )}
+                      <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">
+                        Your Improvement
+                      </h3>
+                      <span className="text-xs text-zinc-600 ml-auto">
+                        Based on {improvement.checksCount} checks
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6 mb-4">
+                      <div>
+                        <p className="text-xs text-zinc-500 mb-1">
+                          First Check ({formatDate(improvement.firstCheck.date)})
+                        </p>
+                        <p className="text-lg font-semibold text-zinc-400">
+                          {improvement.firstCheck.queriesWon} of {improvement.firstCheck.totalQueries} queries won
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-zinc-500 mb-1">
+                          Latest ({formatDate(improvement.latestCheck.date)})
+                        </p>
+                        <p className="text-lg font-semibold text-white">
+                          {improvement.latestCheck.queriesWon} of {improvement.latestCheck.totalQueries} queries won
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 pt-3 border-t border-zinc-800">
+                      {wonDelta !== 0 && (
+                        <span className={`text-sm font-medium ${wonDelta > 0 ? "text-emerald-400" : "text-red-400"}`}>
+                          {wonDelta > 0 ? "+" : ""}{wonDelta} queries won
+                        </span>
+                      )}
+                      {lostDelta !== 0 && (
+                        <span className={`text-sm font-medium ${lostDelta < 0 ? "text-emerald-400" : "text-red-400"}`}>
+                          {lostDelta < 0 ? "" : "+"}{lostDelta} queries lost
+                        </span>
+                      )}
+                      {wonDelta === 0 && lostDelta === 0 && (
+                        <span className="text-sm text-zinc-500">No change yet — keep publishing Authority Pages</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()
+            ) : improvement && improvement.checksCount < 2 ? (
+              <div className="rounded-2xl p-4 border border-zinc-800 bg-zinc-900">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-zinc-500" />
+                  <span className="text-sm text-zinc-500">
+                    Run another check to start tracking your improvement
+                  </span>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Trend Chart */}
+            <TrendChart snapshots={snapshots} loading={loading} />
+
+            {/* Lost Queries */}
+            <RevenueAtRisk
+              queriesLost={(momentum?.queriesTotal || 0) - (momentum?.queriesWon || 0)}
+              queriesTotal={momentum?.queriesTotal || 0}
+              topCompetitor={momentum?.topCompetitor}
+              lostQueries={checkResult?.lostQueries}
+              existingPages={pagesMap}
+              checking={checking}
+              loading={loading}
+              onRunCheck={handleCheck}
+            />
+
+            {/* Sprint Progress (paid) / Upgrade CTA (free) */}
+            {isPaid ? (
+              <SprintProgress
+                progress={
+                  sprint?.progress || {
+                    totalActions: 0,
+                    completedActions: 0,
+                    percentComplete: 0,
+                    currentDay: 1,
+                    currentWeek: 1,
+                    daysRemaining: 30,
+                    isComplete: false,
+                  }
+                }
+                actions={sprint?.actions || []}
+                onComplete={(id, proofUrl, notes) => handleSprintAction(id, "completed", proofUrl, notes)}
+                onSkip={(id) => handleSprintAction(id, "skipped")}
+                loading={loading}
+              />
+            ) : (
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  30-Day AI Visibility Sprint
+                </h3>
+                <p className="text-zinc-400 text-sm mb-4">
+                  Get a structured 4-week program to become AI&apos;s recommended choice.
+                </p>
+                <button
+                  onClick={() => checkout("scout", "yearly")}
+                  disabled={checkoutLoading}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {checkoutLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      Upgrade to Scout — $49/mo
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

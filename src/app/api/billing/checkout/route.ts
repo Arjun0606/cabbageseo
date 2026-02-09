@@ -116,12 +116,15 @@ export async function POST(request: NextRequest) {
       console.log("[Checkout] Creating user and org for:", user.email);
       
       // Create organization first (plan defaults to 'free' in DB)
+      const checkoutTrialEndsAt = new Date();
+      checkoutTrialEndsAt.setDate(checkoutTrialEndsAt.getDate() + 7);
       const { data: newOrg, error: orgError } = await serviceClient
         .from("organizations")
         .insert({
           name: `${user.email?.split("@")[0] || "My"}'s Organization`,
           slug: `org-${user.id.slice(0, 8)}-${Date.now()}`,
           subscription_status: "trialing",
+          trial_ends_at: checkoutTrialEndsAt.toISOString(),
         } as never)
         .select("id")
         .single();

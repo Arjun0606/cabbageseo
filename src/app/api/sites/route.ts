@@ -93,13 +93,16 @@ export async function POST(request: NextRequest) {
       const userEmail = currentUser.email || "";
       const slug = (userEmail.split("@")[0]?.replace(/[^a-z0-9]/gi, "") || "user") + "-" + Date.now();
 
+      const sitesTrialEndsAt = new Date();
+      sitesTrialEndsAt.setDate(sitesTrialEndsAt.getDate() + 7);
       const { data: newOrg } = await db
         .from("organizations")
         .insert({
           name: userEmail.split("@")[0] || "My Organization",
           slug,
           plan: "free",
-          subscription_status: "active",
+          subscription_status: "trialing",
+          trial_ends_at: sitesTrialEndsAt.toISOString(),
         })
         .select("id, created_at")
         .single();

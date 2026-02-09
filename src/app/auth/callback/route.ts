@@ -59,14 +59,19 @@ export async function GET(request: NextRequest) {
             // Create organization first
             const orgSlug = `org-${user.id.slice(0, 8)}-${Date.now()}`;
             
+            // Calculate trial end date
+            const trialEndsAt = new Date();
+            trialEndsAt.setDate(trialEndsAt.getDate() + 7);
+
             const { data: newOrg, error: orgError } = await serviceClient
               .from("organizations")
               .insert({
-                name: user.user_metadata?.full_name 
+                name: user.user_metadata?.full_name
                   ? `${user.user_metadata.full_name}'s Organization`
                   : `${user.email?.split("@")[0] || "My"}'s Organization`,
                 slug: orgSlug,
                 subscription_status: "trialing",
+                trial_ends_at: trialEndsAt.toISOString(),
               } as never)
               .select("id")
               .single();

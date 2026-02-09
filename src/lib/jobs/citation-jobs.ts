@@ -26,9 +26,8 @@ async function runCitationCheck(siteId: string, domain: string): Promise<{
     error?: string;
   }>;
 }> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}` 
-    : "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
   try {
     // Call our own API endpoint
@@ -376,6 +375,11 @@ export const sendCitationAlert = inngest.createFunction(
     }
 
     // Send the email - FEAR + ACTION copy
+    if (!process.env.RESEND_API_KEY) {
+      console.error("[Citation Alert] RESEND_API_KEY not configured, skipping email");
+      return { sent: false, reason: "RESEND_API_KEY not configured" };
+    }
+
     await step.run("send-email", async () => {
       const { Resend } = await import("resend");
       const resend = new Resend(process.env.RESEND_API_KEY);
@@ -600,7 +604,24 @@ export const weeklyReport = inngest.createFunction(
           // Non-fatal
         }
 
+        // Count draft pages ready to publish
+        let draftPagesCount = 0;
+        try {
+          const { count } = await supabase
+            .from("generated_pages")
+            .select("id", { count: "exact", head: true })
+            .eq("site_id", primarySite.id)
+            .eq("status", "draft");
+          draftPagesCount = count || 0;
+        } catch {
+          // Non-fatal
+        }
+
         // Send email - enhanced with momentum score, competitor, next action, AI quotes
+        if (!process.env.RESEND_API_KEY) {
+          console.error("[Weekly Report] RESEND_API_KEY not configured, skipping email");
+          return;
+        }
         const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -683,8 +704,30 @@ export const weeklyReport = inngest.createFunction(
                     <div style="font-size: 13px; color: #fff; margin-bottom: 4px;">&ldquo;${q.query}&rdquo;</div>
                     <div style="font-size: 12px; color: #fca5a5; font-style: italic;">&ldquo;${q.snippet}...&rdquo;</div>
                     <div style="font-size: 11px; color: #71717a; margin-top: 2px;">— ${q.platform}</div>
+                    <div style="margin-top: 6px;">
+                      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://cabbageseo.com"}/dashboard/pages?generate=${encodeURIComponent(q.query)}"
+                         style="font-size: 12px; color: #10b981; text-decoration: none; font-weight: 600;">
+                        Generate fix page &rarr;
+                      </a>
+                    </div>
                   </div>
                 `).join('')}
+              </div>
+              ` : ''}
+
+              ${draftPagesCount > 0 ? `
+              <!-- Draft Pages Ready -->
+              <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                <div style="font-size: 12px; color: #10b981; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Fix Pages Ready</div>
+                <p style="margin: 0; color: #a7f3d0; font-size: 14px;">
+                  You have ${draftPagesCount} fix page${draftPagesCount !== 1 ? 's' : ''} ready to publish. Publish them on your site, then recheck to see if AI picks them up.
+                </p>
+                <div style="margin-top: 12px;">
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://cabbageseo.com"}/dashboard/pages"
+                     style="display: inline-block; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px;">
+                    View fix pages &rarr;
+                  </a>
+                </div>
               </div>
               ` : ''}
 
@@ -830,6 +873,11 @@ export const sendVisibilityDropAlert = inngest.createFunction(
     });
 
     // Send email
+    if (!process.env.RESEND_API_KEY) {
+      console.error("[Visibility Drop] RESEND_API_KEY not configured, skipping email");
+      return { sent: false, reason: "RESEND_API_KEY not configured" };
+    }
+
     await step.run("send-drop-email", async () => {
       const { Resend } = await import("resend");
       const resend = new Resend(process.env.RESEND_API_KEY);
@@ -998,6 +1046,11 @@ export const weeklyTeaserRescan = inngest.createFunction(
         : `${process.env.NEXT_PUBLIC_APP_URL || "https://cabbageseo.com"}/teaser?domain=${encodeURIComponent(domain)}`;
 
       // Email each subscriber for this domain
+      if (!process.env.RESEND_API_KEY) {
+        console.error("[Teaser Rescan] RESEND_API_KEY not configured, skipping emails");
+        continue;
+      }
+
       await step.run(`email-${domain}`, async () => {
         const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);

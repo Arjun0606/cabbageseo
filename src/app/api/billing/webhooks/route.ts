@@ -51,19 +51,18 @@ function buildProductMappings(): Record<string, string> {
   return mappings;
 }
 
-// Get plan ID from product ID
+// Get plan ID from product ID — NEVER default to "free" on unknown IDs
 function getPlanFromProductId(productId: string | undefined): string {
   if (!productId) {
-    console.warn("[Webhook] No product ID provided, defaulting to 'free'");
-    return "free";
+    throw new Error("[Webhook] No product ID provided in subscription data");
   }
 
   const productMappings = buildProductMappings();
   const plan = productMappings[productId];
 
   if (!plan) {
-    console.warn(`[Webhook] Unknown product ID: ${productId}, defaulting to 'free'`);
-    return "free";
+    // Check metadata fallback before failing
+    throw new Error(`[Webhook] Unknown product ID: ${productId}. Check DODO_*_ID env vars match your Dodo dashboard.`);
   }
 
   return plan;
@@ -108,6 +107,8 @@ export async function POST(request: NextRequest) {
     let event;
     const webhookKey = process.env.DODO_PAYMENTS_WEBHOOK_KEY || process.env.DODO_WEBHOOK_SECRET;
     
+    const isProductionEnv = process.env.NODE_ENV === "production";
+
     if (webhookKey) {
       try {
         event = dodo.webhooks.unwrap(rawBody, { headers });
@@ -115,9 +116,13 @@ export async function POST(request: NextRequest) {
         console.error("[Webhook] Signature verification failed:", error);
         return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
       }
+    } else if (isProductionEnv) {
+      // NEVER skip verification in production
+      console.error("[Webhook] CRITICAL: No webhook key in production. Set DODO_PAYMENTS_WEBHOOK_KEY.");
+      return NextResponse.json({ error: "Webhook key not configured" }, { status: 500 });
     } else {
-      // Development mode - skip verification
-      console.warn("[Webhook] No webhook key configured, skipping verification");
+      // Development only — skip verification
+      console.warn("[Webhook] Dev mode: skipping signature verification");
       event = dodo.webhooks.unsafeUnwrap(rawBody);
     }
 
@@ -142,7 +147,21 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "Missing organization_id" }, { status: 400 });
         }
         
-        const plan = getPlanFromProductId(subscriptionData.product_id);
+        // Resolve plan from product ID, fall back to metadata if product mapping fails
+        let plan: string;
+        try {
+          plan = getPlanFromProductId(subscriptionData.product_id);
+        } catch (e) {
+          // Fallback: use plan_id from checkout metadata (we set this in checkout route)
+          const metadataPlan = metadata?.plan_id;
+          if (metadataPlan && ["scout", "command", "dominate"].includes(metadataPlan)) {
+            console.warn(`[Webhook] Using metadata plan_id fallback: ${metadataPlan}`);
+            plan = metadataPlan;
+          } else {
+            console.error("[Webhook] Cannot resolve plan:", e);
+            throw e;
+          }
+        }
         const interval = getIntervalFromProductId(subscriptionData.product_id);
         
         // Safely access customer_id with optional chaining

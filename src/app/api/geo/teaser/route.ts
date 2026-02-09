@@ -312,7 +312,7 @@ export async function POST(request: NextRequest) {
 
     // Log AI recommendations to data moat (non-blocking, fire-and-forget)
     const recEntries = extractTeaserRecommendations(cleanDomain, results);
-    logRecommendations(recEntries);
+    logRecommendations(recEntries).catch(() => {});
 
     return NextResponse.json({
       domain: cleanDomain,

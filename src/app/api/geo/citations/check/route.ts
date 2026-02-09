@@ -918,6 +918,29 @@ export async function POST(request: NextRequest) {
     const recEntries = extractCitationRecommendations(cleanDomain, siteId, results);
     logRecommendations(recEntries);
 
+    // Auto-generate fix pages for lost queries (non-blocking, fire-and-forget)
+    if (siteId && orgId && plan !== "free") {
+      const lostForPages = competitiveResults
+        .filter(r => r.isLoss && !r.error)
+        .slice(0, 3)
+        .map(r => ({ query: r.query, competitors: r.competitors, platform: r.platform }));
+
+      if (lostForPages.length > 0) {
+        const autoGenUrl = process.env.NEXT_PUBLIC_APP_URL
+          || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+        fetch(`${autoGenUrl}/api/geo/pages/auto-generate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+          },
+          body: JSON.stringify({ siteId, organizationId: orgId, lostQueries: lostForPages }),
+        })
+          .then(r => r.text()) // Consume response body
+          .catch(err => console.error("[auto-gen] fire-and-forget failed:", err));
+      }
+    }
+
     // Return enriched response with REVENUE INTELLIGENCE
     return NextResponse.json({
       success: true,

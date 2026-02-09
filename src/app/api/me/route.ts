@@ -23,7 +23,7 @@ function getDbClient(): SupabaseClient | null {
   }
 }
 
-const TESTING_MODE = process.env.TESTING_MODE === "true";
+const TESTING_MODE = process.env.TESTING_MODE === "true" && process.env.NODE_ENV !== "production";
 
 // Check for test bypass session (only active in TESTING_MODE)
 async function getBypassSession() {
@@ -132,13 +132,16 @@ export async function GET() {
       // Create organization for user (free trial)
       const slug = (user.email?.split("@")[0]?.replace(/[^a-z0-9]/gi, "") || "user") + "-" + Date.now();
       
+      const meTrialEndsAt = new Date();
+      meTrialEndsAt.setDate(meTrialEndsAt.getDate() + 7);
       const { data: newOrg } = await db
         .from("organizations")
         .insert({
           name: user.user_metadata?.name || user.email?.split("@")[0] || "My Organization",
           slug,
           plan: "free",
-          subscription_status: "active",
+          subscription_status: "trialing",
+          trial_ends_at: meTrialEndsAt.toISOString(),
         })
         .select("id, created_at")
         .single();

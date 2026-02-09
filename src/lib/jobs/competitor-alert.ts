@@ -56,6 +56,11 @@ export const competitorChangeAlert = inngest.createFunction(
     }
 
     // 3. Send the fear-driven email
+    if (!process.env.RESEND_API_KEY) {
+      console.error("[Competitor Alert] RESEND_API_KEY not configured, skipping email");
+      return { sent: false, reason: "RESEND_API_KEY not configured" };
+    }
+
     await step.run("send-alert-email", async () => {
       const { Resend } = await import("resend");
       const resend = new Resend(process.env.RESEND_API_KEY);

@@ -30,20 +30,69 @@ import { CITATION_PLANS, TRIAL_DAYS } from "@/lib/billing/citation-plans";
 function BillingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { organization, usage, trial, loading } = useSite();
-  
+  const { organization, usage, trial, loading, refreshData } = useSite();
+
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("yearly");
   const [error, setError] = useState<string | null>(null);
+  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+  const [pollingPayment, setPollingPayment] = useState(false);
+  const [pollingTimedOut, setPollingTimedOut] = useState(false);
 
   const currentPlan = organization?.plan || "free";
   const selectedPlan = searchParams.get("plan");
+  const sessionId = searchParams.get("session_id");
 
-  // Auto-redirect to checkout if plan selected from URL
+  // Post-checkout polling: when returning from Dodo, poll until plan updates
+  useEffect(() => {
+    if (!sessionId || loading || pollingPayment || checkoutSuccess) return;
+
+    // Only poll if still on free plan (payment not yet processed by webhook)
+    if (currentPlan !== "free") {
+      setCheckoutSuccess(true);
+      // Clean session_id from URL
+      router.replace("/settings/billing", { scroll: false });
+      return;
+    }
+
+    setPollingPayment(true);
+    let attempts = 0;
+    const maxAttempts = 15; // 15 x 2s = 30 seconds max
+
+    const pollInterval = setInterval(async () => {
+      attempts++;
+      try {
+        await refreshData();
+      } catch {
+        // ignore refresh errors during polling
+      }
+
+      if (attempts >= maxAttempts) {
+        clearInterval(pollInterval);
+        setPollingPayment(false);
+        setPollingTimedOut(true);
+      }
+    }, 2000);
+
+    return () => clearInterval(pollInterval);
+  }, [sessionId, loading]);
+
+  // Detect when plan updates during polling
+  useEffect(() => {
+    if (pollingPayment && currentPlan !== "free") {
+      setPollingPayment(false);
+      setPollingTimedOut(false);
+      setCheckoutSuccess(true);
+      router.replace("/settings/billing", { scroll: false });
+    }
+  }, [currentPlan, pollingPayment]);
+
+  // Show which plan was pre-selected from URL (don't auto-redirect to checkout)
+  const [highlightedPlan, setHighlightedPlan] = useState<string | null>(null);
   useEffect(() => {
     if (selectedPlan && selectedPlan !== currentPlan) {
-      handleUpgrade(selectedPlan);
+      setHighlightedPlan(selectedPlan);
     }
   }, [selectedPlan, currentPlan]);
 
@@ -67,19 +116,15 @@ function BillingContent() {
       const checkoutUrl = data.data?.checkoutUrl || data.url || data.checkoutUrl;
       
       if (checkoutUrl) {
-        console.log("[Billing] Redirecting to checkout:", checkoutUrl);
         window.location.href = checkoutUrl;
       } else if (data.error) {
-        console.error("[Billing] Checkout error:", data.error);
         setError(data.error);
         setUpgrading(null);
       } else {
-        console.error("[Billing] No checkout URL in response:", data);
         setError("Failed to create checkout session. Please try again.");
         setUpgrading(null);
       }
     } catch (err) {
-      console.error("[Billing] Checkout failed:", err);
       setError("Network error. Please check your connection and try again.");
       setUpgrading(null);
     }
@@ -100,7 +145,6 @@ function BillingContent() {
         setError(data.error);
       }
     } catch (err) {
-      console.error("[Billing] Portal access failed:", err);
       setError("Failed to access billing portal.");
     } finally {
       setPortalLoading(false);
@@ -137,6 +181,52 @@ function BillingContent() {
           <h1 className="text-3xl font-bold text-white mb-2">Billing</h1>
           <p className="text-xl text-zinc-400">Manage your subscription</p>
         </div>
+
+      {/* Post-checkout: Processing payment */}
+      {pollingPayment && (
+        <Card className="bg-emerald-500/10 border-emerald-500/30">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
+              <p className="text-emerald-400 font-medium">Processing your payment... This may take a few seconds.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Post-checkout: Polling timed out */}
+      {pollingTimedOut && !checkoutSuccess && (
+        <Card className="bg-amber-500/10 border-amber-500/30">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-400" />
+              <div>
+                <p className="text-amber-400 font-medium">
+                  Your payment was received. Your plan may take a few minutes to update.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="text-sm text-amber-300 hover:text-amber-200 underline mt-1"
+                >
+                  Refresh the page to check
+                </button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Post-checkout: Success */}
+      {checkoutSuccess && (
+        <Card className="bg-emerald-500/10 border-emerald-500/30">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Check className="w-5 h-5 text-emerald-400" />
+              <p className="text-emerald-400 font-medium">Payment successful! You&apos;re now on the {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)} plan.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Error Message */}
       {error && (
@@ -322,7 +412,9 @@ function BillingContent() {
                     <div
                       key={planId}
                       className={`p-4 rounded-xl border ${
-                        planId === "command"
+                        planId === highlightedPlan
+                          ? "bg-emerald-500/5 border-emerald-500/30 ring-2 ring-emerald-500/40"
+                          : planId === "command"
                           ? "bg-emerald-500/5 border-emerald-500/30"
                           : "bg-zinc-800/50 border-zinc-700"
                       }`}

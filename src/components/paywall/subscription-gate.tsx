@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Loader2, Lock, ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,9 +28,8 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   // 🔓 TESTING MODE - PAYWALL DISABLED
   // Set NEXT_PUBLIC_TESTING_MODE=true in .env for local testing
   // ============================================
-  const TESTING_MODE = process.env.NEXT_PUBLIC_TESTING_MODE === "true";
+  const TESTING_MODE = process.env.NEXT_PUBLIC_TESTING_MODE === "true" && process.env.NODE_ENV !== "production";
 
-  const router = useRouter();
   const pathname = usePathname();
   const [status, setStatus] = useState<SubscriptionStatus>({
     hasSubscription: TESTING_MODE, // Auto-grant access in testing mode

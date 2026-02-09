@@ -18,7 +18,7 @@ import {
   LogOut,
   Globe,
   Mail,
-  Gift,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -26,18 +26,25 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSite } from "@/context/site-context";
+import { CustomQueries } from "@/components/dashboard/custom-queries";
+import { getCitationPlanLimits } from "@/lib/billing/citation-plans";
 
 const settingsNav = [
   { href: "/settings/billing", label: "Billing", icon: CreditCard, description: "Subscription & invoices" },
-  { href: "/settings/referrals", label: "Referrals", icon: Gift, description: "Earn free months" },
 ];
 
 export default function SettingsPage() {
-  const { user, organization, sites, loading, deleteSite } = useSite();
-  
+  const { user, organization, sites, currentSite, loading, deleteSite } = useSite();
+
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">("idle");
   const [deletingSite, setDeletingSite] = useState<string | null>(null);
+  const [customQueries, setCustomQueries] = useState<string[]>([]);
+
+  const plan = organization?.plan || "free";
+  const planLimits = getCitationPlanLimits(plan);
+  const maxCustomQueries = planLimits.customQueriesPerSite;
 
   useEffect(() => {
     if (user?.name) {
@@ -45,16 +52,27 @@ export default function SettingsPage() {
     }
   }, [user?.name]);
 
+  useEffect(() => {
+    if (currentSite) {
+      setCustomQueries(currentSite.customQueries || []);
+    }
+  }, [currentSite]);
+
   const handleSave = async () => {
     setSaving(true);
+    setSaveStatus("idle");
     try {
-      await fetch("/api/settings/account", {
+      const res = await fetch("/api/settings/account", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       });
-    } catch (err) {
-      console.error("Failed to save:", err);
+      setSaveStatus(res.ok ? "saved" : "error");
+      if (res.ok) {
+        setTimeout(() => setSaveStatus("idle"), 2000);
+      }
+    } catch {
+      setSaveStatus("error");
     } finally {
       setSaving(false);
     }
@@ -138,14 +156,22 @@ export default function SettingsPage() {
                 onChange={(e) => setName(e.target.value)}
                 className="max-w-xs bg-zinc-800 border-zinc-700"
               />
-              <Button 
-                onClick={handleSave} 
+              <Button
+                onClick={handleSave}
                 disabled={saving || name === user?.name}
                 variant="outline"
                 className="border-zinc-700"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
               </Button>
+              {saveStatus === "saved" && (
+                <span className="text-sm text-emerald-400 flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5" /> Saved
+                </span>
+              )}
+              {saveStatus === "error" && (
+                <span className="text-sm text-red-400">Failed to save</span>
+              )}
             </div>
           </div>
           
@@ -216,6 +242,24 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Custom Query Tracking */}
+      {currentSite && (
+        <Card className="bg-zinc-900/50 border-zinc-800">
+          <CardHeader>
+            <CardTitle className="text-white">Custom Query Tracking</CardTitle>
+            <CardDescription>Track specific AI queries for your site</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CustomQueries
+              siteId={currentSite.id}
+              queries={customQueries}
+              maxQueries={maxCustomQueries}
+              onUpdate={setCustomQueries}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Danger Zone */}
       <Card className="bg-zinc-900/50 border-red-500/20">

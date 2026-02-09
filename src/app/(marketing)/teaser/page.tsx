@@ -108,6 +108,10 @@ function TeaserContent() {
       return;
     }
 
+    // Redirect to homepage scanner — teaser page is now just for shareable reports
+    router.replace(`/?domain=${encodeURIComponent(domain)}`);
+    return;
+
     const runTeaser = async () => {
       const steps = [
         "Connecting to AI platforms...",

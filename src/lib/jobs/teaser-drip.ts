@@ -337,6 +337,10 @@ export const teaserDripEmail = inngest.createFunction(
         }
 
         // Send via Resend
+        if (!process.env.RESEND_API_KEY) {
+          console.error("[Teaser Drip] RESEND_API_KEY not configured, skipping email");
+          return { sent: false, reason: "RESEND_API_KEY not configured" };
+        }
         const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
 
