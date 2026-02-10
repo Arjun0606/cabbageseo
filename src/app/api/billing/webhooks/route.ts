@@ -102,12 +102,9 @@ export async function POST(request: NextRequest) {
 
     const dodo = getDodoClient();
     
-    // Use SDK's unwrap method for verification if webhook key is configured
-    // Otherwise use unsafeUnwrap for development
     let event;
     const webhookKey = process.env.DODO_PAYMENTS_WEBHOOK_KEY || process.env.DODO_WEBHOOK_SECRET;
-    
-    const isProductionEnv = process.env.NODE_ENV === "production";
+    const isLocalDev = !process.env.VERCEL_ENV && process.env.NODE_ENV !== "production";
 
     if (webhookKey) {
       try {
@@ -116,14 +113,12 @@ export async function POST(request: NextRequest) {
         console.error("[Webhook] Signature verification failed:", error);
         return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
       }
-    } else if (isProductionEnv) {
-      // NEVER skip verification in production
-      console.error("[Webhook] CRITICAL: No webhook key in production. Set DODO_PAYMENTS_WEBHOOK_KEY.");
-      return NextResponse.json({ error: "Webhook key not configured" }, { status: 500 });
-    } else {
-      // Development only — skip verification
-      console.warn("[Webhook] Dev mode: skipping signature verification");
+    } else if (isLocalDev) {
+      console.warn("[Webhook] Local dev: skipping signature verification");
       event = dodo.webhooks.unsafeUnwrap(rawBody);
+    } else {
+      console.error("[Webhook] CRITICAL: No webhook key configured. Set DODO_PAYMENTS_WEBHOOK_KEY.");
+      return NextResponse.json({ error: "Webhook key not configured" }, { status: 500 });
     }
 
     const { type, data, business_id, timestamp } = event;

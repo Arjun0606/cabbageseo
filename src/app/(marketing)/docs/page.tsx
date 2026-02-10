@@ -160,8 +160,8 @@ Each page is tailored to your specific gaps and designed to reinforce the trust 
       },
       {
         title: "Fix page limits",
-        content: `• **Scout**: 3 pages per month
-• **Command**: 15 pages per month
+        content: `• **Scout**: 5 pages per month
+• **Command**: 25 pages per month
 • **Dominate**: Unlimited pages
 
 Pages are counted per calendar month and reset on the 1st.`,
@@ -396,8 +396,8 @@ The preview runs non-blocking — if generation fails, your scan results still w
       {
         title: "Full content on paid plans",
         content: `On Scout, Command, and Dominate plans, you get full fix pages:
-• **Scout**: 3 pages per month
-• **Command**: 15 pages per month
+• **Scout**: 5 pages per month
+• **Command**: 25 pages per month
 • **Dominate**: Unlimited pages
 
 Each page includes headings, body content, FAQ schema, and structured data — ready to publish.`,

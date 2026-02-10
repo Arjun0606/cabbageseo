@@ -6,6 +6,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useSite } from "@/context/site-context";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   ArrowLeft,
   Copy,
@@ -102,6 +103,7 @@ export default function PageDetailPage() {
   const [regenerating, setRegenerating] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (pageId) {
@@ -127,7 +129,6 @@ export default function PageDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this page?")) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/geo/pages/${pageId}`, { method: "DELETE" });
@@ -232,7 +233,7 @@ export default function PageDetailPage() {
             Regenerate
           </button>
           <button
-            onClick={handleDelete}
+            onClick={() => setShowDeleteConfirm(true)}
             disabled={deleting}
             className="flex items-center gap-2 px-3 py-1.5 text-zinc-400 hover:text-red-400 text-sm transition-colors disabled:opacity-50"
           >
@@ -423,6 +424,16 @@ export default function PageDetailPage() {
           </pre>
         </div>
       )}
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+        title="Delete this page?"
+        description="This action cannot be undone. The generated content will be permanently removed."
+        confirmLabel="Delete"
+        variant="destructive"
+      />
     </div>
   );
 }

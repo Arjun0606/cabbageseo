@@ -23,7 +23,11 @@ export async function POST(request: NextRequest) {
     // Verify internal auth (service role key) with timing-safe comparison
     const authHeader = request.headers.get("Authorization");
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!authHeader || !serviceKey || !safeCompare(authHeader, `Bearer ${serviceKey}`)) {
+    if (!serviceKey || serviceKey.length < 32) {
+      console.error("[auto-generate] CRITICAL: Invalid or missing SUPABASE_SERVICE_ROLE_KEY");
+      return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+    }
+    if (!authHeader || !safeCompare(authHeader, `Bearer ${serviceKey}`)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

@@ -6,7 +6,7 @@
  * Radically simplified: one field, one scan, done.
  */
 
-import { useEffect, useState, Suspense, useCallback } from "react";
+import { useEffect, useState, Suspense, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, AlertTriangle, ArrowRight } from "lucide-react";
 
@@ -20,6 +20,7 @@ function OnboardingContent() {
   );
   const [domain, setDomain] = useState(domainFromUrl || "");
   const [error, setError] = useState("");
+  const scanStarted = useRef(false);
 
   const handleDomainSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +92,8 @@ function OnboardingContent() {
   }, [domain, router]);
 
   useEffect(() => {
-    if (step === "scanning") {
+    if (step === "scanning" && !scanStarted.current) {
+      scanStarted.current = true;
       startScan();
     }
   }, [step, startScan]);

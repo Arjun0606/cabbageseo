@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSite } from "@/context/site-context";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { CustomQueries } from "@/components/dashboard/custom-queries";
 import { getCitationPlanLimits } from "@/lib/billing/citation-plans";
 
@@ -43,6 +44,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">("idle");
   const [deletingSite, setDeletingSite] = useState<string | null>(null);
+  const [deleteConfirmSite, setDeleteConfirmSite] = useState<string | null>(null);
   const [customQueries, setCustomQueries] = useState<string[]>([]);
 
   const plan = organization?.plan || "free";
@@ -82,8 +84,6 @@ export default function SettingsPage() {
   };
 
   const handleDeleteSite = async (siteId: string) => {
-    if (!confirm("Are you sure you want to delete this site? All citations will be lost.")) return;
-    
     setDeletingSite(siteId);
     await deleteSite(siteId);
     setDeletingSite(null);
@@ -229,7 +229,7 @@ export default function SettingsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDeleteSite(site.id)}
+                    onClick={() => setDeleteConfirmSite(site.id)}
                     disabled={deletingSite === site.id}
                     className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                   >
@@ -285,6 +285,15 @@ export default function SettingsPage() {
           </Link>
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={!!deleteConfirmSite}
+        onConfirm={() => deleteConfirmSite && handleDeleteSite(deleteConfirmSite)}
+        onCancel={() => setDeleteConfirmSite(null)}
+        title="Delete this site?"
+        description="All citations, history, and generated pages for this site will be permanently lost."
+        confirmLabel="Delete Site"
+        variant="destructive"
+      />
       </div>
     </div>
   );

@@ -367,7 +367,7 @@ export default function ForAgenciesPage() {
                     "Daily auto-checks + hourly monitoring",
                     "Score drop alerts (email + Slack)",
                     "Full gap analysis + trend charts",
-                    "Fix pages (15/mo)",
+                    "Fix pages (25/mo)",
                     "Bulk scanning API",
                     "Slack integration",
                     "CSV export",

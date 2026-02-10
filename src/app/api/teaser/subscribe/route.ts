@@ -10,9 +10,17 @@
 
 import { db, teaserSubscribers } from "@/lib/db";
 import { and, eq } from "drizzle-orm";
+import { authLimiter } from "@/lib/api/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    // Rate limit by IP (public endpoint)
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const rateLimit = authLimiter.check(ip);
+    if (!rateLimit.allowed) {
+      return Response.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const body = await request.json();
     const { email, domain, reportId } = body;
 

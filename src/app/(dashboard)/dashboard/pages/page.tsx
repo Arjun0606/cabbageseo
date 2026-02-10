@@ -16,6 +16,7 @@ import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSite } from "@/context/site-context";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Sparkles,
   Loader2,
@@ -106,6 +107,7 @@ function ContentEngineContent() {
 
   // UI state
   const [showAllOpps, setShowAllOpps] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const plan = organization?.plan || "free";
   const canGenerate = plan !== "free";
@@ -200,8 +202,6 @@ function ContentEngineContent() {
   };
 
   const handleDelete = async (pageId: string) => {
-    if (!confirm("Delete this generated page?")) return;
-
     try {
       const res = await fetch(`/api/geo/pages/${pageId}`, { method: "DELETE" });
       if (res.ok) {
@@ -552,7 +552,7 @@ function ContentEngineContent() {
                     </h3>
                   </Link>
                   <button
-                    onClick={() => handleDelete(page.id)}
+                    onClick={() => setDeleteTarget(page.id)}
                     className="p-1 text-zinc-600 hover:text-red-400 transition-colors ml-2 shrink-0"
                     title="Delete"
                   >
@@ -584,6 +584,16 @@ function ContentEngineContent() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+        title="Delete this page?"
+        description="This action cannot be undone. The generated content will be permanently removed."
+        confirmLabel="Delete"
+        variant="destructive"
+      />
     </div>
   );
 }

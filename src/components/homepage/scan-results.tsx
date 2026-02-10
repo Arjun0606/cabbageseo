@@ -622,7 +622,7 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
             </div>
 
             <p className="mt-3 text-black/60 text-sm">
-              From $39/mo &bull; 14-day money-back guarantee &bull; Cancel anytime
+              From $49/mo &bull; 14-day money-back guarantee &bull; Cancel anytime
             </p>
           </div>
         </div>

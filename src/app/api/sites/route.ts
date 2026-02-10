@@ -82,13 +82,22 @@ export async function POST(request: NextRequest) {
     const { domain: rawDomain, category } = body;
     let domain = rawDomain;
 
-    if (!domain) {
+    if (!domain || typeof domain !== "string") {
       return NextResponse.json({ error: "Domain is required" }, { status: 400 });
+    }
+
+    if (domain.length > 253) {
+      return NextResponse.json({ error: "Domain too long" }, { status: 400 });
     }
 
     // Clean domain
     domain = domain.trim().toLowerCase();
     domain = domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
+
+    // Validate domain format
+    if (!/^[a-z0-9]([a-z0-9\-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9\-]*[a-z0-9])?)*\.[a-z]{2,}$/.test(domain)) {
+      return NextResponse.json({ error: "Invalid domain format" }, { status: 400 });
+    }
 
     const db = getDbClient();
     if (!db) {
