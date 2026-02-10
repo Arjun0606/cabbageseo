@@ -394,7 +394,7 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
                   />
                 </svg>
               )}
-              Start your free trial
+              Sign up &amp; subscribe
             </button>
 
             {authError && (
@@ -411,7 +411,7 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
             </div>
 
             <p className="mt-3 text-black/60 text-sm">
-              7-day free trial &bull; No credit card &bull; Cancel anytime
+              14-day money-back guarantee &bull; Cancel anytime
             </p>
           </div>
         </div>

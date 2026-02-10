@@ -42,17 +42,17 @@ export async function POST(request: NextRequest) {
     // Get org plan
     const { data: org } = await db
       .from("organizations")
-      .select("plan, trial_ends_at")
+      .select("plan")
       .eq("id", organizationId)
       .single();
     const planId = org?.plan || "free";
     const citationPlan = getCitationPlan(planId);
 
-    // Trial expiry check for free users
-    if (planId === "free" && org?.trial_ends_at) {
-      const access = canAccessProduct("free", org.trial_ends_at, currentUser.email, true);
+    // Subscription check for free users
+    if (planId === "free") {
+      const access = canAccessProduct("free", null, currentUser.email);
       if (!access.allowed) {
-        return NextResponse.json({ error: "Trial expired", code: "TRIAL_EXPIRED", upgradeRequired: true }, { status: 403 });
+        return NextResponse.json({ error: access.reason, code: "SUBSCRIPTION_REQUIRED", upgradeRequired: true }, { status: 403 });
       }
     }
 

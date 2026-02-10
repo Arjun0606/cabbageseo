@@ -431,7 +431,7 @@ export default function ForAgenciesPage() {
           </StaggerGroup>
 
           <p className="text-sm text-zinc-500 text-center mt-8">
-            All plans include a 7-day free trial. Annual billing saves 20%.
+            Annual billing saves 20%. 14-day money-back guarantee.
           </p>
         </div>
       </section>

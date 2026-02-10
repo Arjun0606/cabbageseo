@@ -12,7 +12,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { TRIAL_DAYS, checkTrialStatus, canAccessProduct } from "@/lib/billing/citation-plans";
+// canAccessProduct no longer needed — trial logic removed, paywall checks plan directly
 
 // ============================================
 // TYPES
@@ -105,7 +105,7 @@ const defaultUsage: Usage = {
 const defaultTrial: TrialStatus = {
   isTrialUser: false,
   expired: false,
-  daysRemaining: TRIAL_DAYS,
+  daysRemaining: 0,
   daysUsed: 0,
 };
 
@@ -155,17 +155,14 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       setUser(meData.user);
       setOrganization(meData.organization);
       
-      // Calculate trial status (prefer trial_ends_at, fall back to created_at)
+      // Free plan = no dashboard access (subscription required)
       if (meData.organization) {
-        const isTrialUser = meData.organization.plan === "free";
-        const hasTrialEndsAt = !!meData.organization.trialEndsAt;
-        const trialDate = meData.organization.trialEndsAt || meData.organization.createdAt || new Date().toISOString();
-        const trialStatus = checkTrialStatus(trialDate, hasTrialEndsAt);
+        const isFreeUser = meData.organization.plan === "free";
         setTrial({
-          isTrialUser,
-          expired: isTrialUser && trialStatus.expired,
-          daysRemaining: trialStatus.daysRemaining,
-          daysUsed: trialStatus.daysUsed,
+          isTrialUser: isFreeUser,
+          expired: isFreeUser, // Free = always blocked
+          daysRemaining: 0,
+          daysUsed: 0,
         });
       }
       

@@ -614,32 +614,29 @@ export async function POST(request: NextRequest) {
     let plan = "free";
     let category: string | null = null;
     let customQueries: string[] = [];
-    let orgTrialEndsAt: string | undefined;
-
     if (orgId) {
       // Fetch org plan from database
       const { data: orgData } = await db
         .from("organizations")
-        .select("plan, trial_ends_at")
+        .select("plan")
         .eq("id", orgId)
         .maybeSingle();
 
       if (orgData) {
         plan = orgData.plan || "free";
-        orgTrialEndsAt = orgData.trial_ends_at;
       }
 
       // ============================================
       // PLAN ENFORCEMENT - CRITICAL
       // ============================================
 
-      // Check if free user's trial has expired (bypass for test accounts)
-      if (plan === "free" && orgTrialEndsAt) {
-        const access = canAccessProduct(plan, orgTrialEndsAt, userEmail, true);
+      // Check if free user needs to subscribe (bypass for test accounts)
+      if (plan === "free") {
+        const access = canAccessProduct(plan, null, userEmail);
         if (!access.allowed) {
           return NextResponse.json({
-            error: access.reason || "Trial expired. Upgrade to continue.",
-            code: "TRIAL_EXPIRED",
+            error: access.reason || "A subscription is required.",
+            code: "SUBSCRIPTION_REQUIRED",
             upgradeRequired: true,
           }, { status: 403 });
         }
@@ -659,7 +656,7 @@ export async function POST(request: NextRequest) {
         const checksToday = todayUsage?.checks_used || 0;
         
         // Verify can run check
-        const canCheck = canRunManualCheck(plan, checksToday, orgTrialEndsAt, true);
+        const canCheck = canRunManualCheck(plan, checksToday);
         if (!canCheck.allowed) {
           return NextResponse.json({
             error: canCheck.reason || "Daily limit reached. Upgrade for unlimited checks.",

@@ -130,19 +130,16 @@ export async function GET() {
     if (existingUser?.organization_id) {
       orgId = existingUser.organization_id;
     } else {
-      // Create organization for user (free trial)
+      // Create organization for user (free — must subscribe to access dashboard)
       const slug = (user.email?.split("@")[0]?.replace(/[^a-z0-9]/gi, "") || "user") + "-" + Date.now();
-      
-      const meTrialEndsAt = new Date();
-      meTrialEndsAt.setDate(meTrialEndsAt.getDate() + 7);
+
       const { data: newOrg } = await db
         .from("organizations")
         .insert({
           name: user.user_metadata?.name || user.email?.split("@")[0] || "My Organization",
           slug,
           plan: "free",
-          subscription_status: "trialing",
-          trial_ends_at: meTrialEndsAt.toISOString(),
+          subscription_status: "inactive",
         })
         .select("id, created_at")
         .single();

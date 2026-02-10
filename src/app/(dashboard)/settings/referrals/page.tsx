@@ -182,7 +182,7 @@ export default function ReferralsPage() {
                 </div>
                 <h3 className="font-medium text-white mb-1">2. They get 14 days</h3>
                 <p className="text-sm text-zinc-500">
-                  Your friend gets an extended 14-day free trial
+                  Your friend gets 20% off their first month
                 </p>
               </div>
               <div className="text-center">

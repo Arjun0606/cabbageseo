@@ -93,7 +93,7 @@ export default function UpgradeGate({ domain, isInvisible, competitorCount }: Up
         <ArrowRight className="w-4 h-4" />
       </Link>
       <p className="text-xs text-zinc-500 text-center mt-2">
-        Free 7-day trial &bull; No credit card required
+        14-day money-back guarantee &bull; Cancel anytime
       </p>
     </div>
   );

@@ -561,40 +561,6 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* ═══ TRIAL URGENCY (≤3 days) ═══ */}
-      {trial?.isTrialUser && !trial?.expired && trial.daysRemaining <= 3 && (
-        <div className="rounded-2xl p-5 bg-gradient-to-r from-red-500/10 via-red-500/5 to-transparent border border-red-500/20">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
-                <Clock className="w-5 h-5 text-red-400" />
-              </div>
-              <div>
-                <p className="text-white font-semibold">
-                  {trial.daysRemaining === 0 ? "Last day!" : `${trial.daysRemaining} day${trial.daysRemaining !== 1 ? "s" : ""} left`}
-                </p>
-                <p className="text-zinc-400 text-sm">
-                  You tracked {totalCitations} citation{totalCitations !== 1 ? "s" : ""}. Don&apos;t lose access.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => checkout("scout", "yearly")}
-              disabled={checkoutLoading}
-              className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold rounded-lg transition-colors disabled:opacity-50"
-            >
-              {checkoutLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  Upgrade — $39/mo (billed annually)
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ═══ CONNECTION ERROR ═══ */}
       {dashError && (
@@ -617,7 +583,6 @@ function DashboardContent() {
         queriesWon={momentum?.queriesWon || 0}
         queriesTotal={momentum?.queriesTotal || 0}
         loading={loading}
-        trialDaysRemaining={trial?.isTrialUser && !trial?.expired ? trial.daysRemaining : undefined}
       />
 
       {/* ═══ USAGE METERS ═══ */}

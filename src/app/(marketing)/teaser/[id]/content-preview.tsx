@@ -129,7 +129,7 @@ export default function ContentPreview({ domain, preview }: ContentPreviewProps)
           <ArrowRight className="w-4 h-4" />
         </Link>
         <p className="text-xs text-zinc-500 text-center mt-2">
-          Free 7-day trial — We generate the content, you just publish it
+          We generate the content, you just publish it
         </p>
       </div>
     </div>

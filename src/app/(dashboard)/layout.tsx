@@ -2,7 +2,7 @@
 
 /**
  * Dashboard Layout
- * 
+ *
  * Clean sidebar with:
  * - Logo
  * - Main navigation
@@ -26,17 +26,15 @@ import {
   Plus,
   Loader2,
   ArrowRight,
-  Clock,
 } from "lucide-react";
 import { SiteProvider, useSite } from "@/context/site-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { TrialExpiredPaywall } from "@/components/paywall/trial-expired";
+import { SubscriptionRequired } from "@/components/paywall/subscription-required";
 import { useCheckout } from "@/hooks/use-checkout";
-import { CITATION_PLANS, getNextPlan, TRIAL_DAYS } from "@/lib/billing/citation-plans";
+import { CITATION_PLANS, getNextPlan } from "@/lib/billing/citation-plans";
 
 // Navigation items — simplified 3-item nav
 const navItems = [
@@ -49,7 +47,7 @@ const navItems = [
 function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { organization, currentSite, sites, trial, setCurrentSite } = useSite();
+  const { organization, currentSite, sites, setCurrentSite } = useSite();
   const [sitesOpen, setSitesOpen] = useState(false);
   const { checkout, loading: checkoutLoading } = useCheckout();
 
@@ -71,9 +69,9 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
       <div className="p-4 border-b border-zinc-800">
         <div className="flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <img 
-              src="/apple-touch-icon.png" 
-              alt="CabbageSEO" 
+            <img
+              src="/apple-touch-icon.png"
+              alt="CabbageSEO"
               className="w-9 h-9 rounded-xl"
             />
             <div>
@@ -92,7 +90,7 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
       {/* Site selector */}
       {currentSite && (
         <div className="p-4 border-b border-zinc-800">
-          <button 
+          <button
             onClick={() => setSitesOpen(!sitesOpen)}
             className="w-full flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg hover:bg-zinc-800 transition-colors"
           >
@@ -104,7 +102,7 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
             </div>
             <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${sitesOpen ? "rotate-180" : ""}`} />
           </button>
-          
+
           {sitesOpen && (
             <div className="mt-2 space-y-1">
               {sites.filter(s => s.id !== currentSite.id).map(site => (
@@ -156,7 +154,7 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
             </Link>
           );
         })}
-        
+
         <div className="pt-4 mt-4 border-t border-zinc-800">
           <Link
             href="/settings"
@@ -175,23 +173,15 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
 
       {/* Footer */}
       <div className="p-4 border-t border-zinc-800 space-y-3">
-        {/* Upgrade card */}
+        {/* Subscribe card for free users */}
         {nextPlan && plan === "free" && (
-          <div className={`rounded-xl p-3 space-y-2.5 ${
-            trial.daysRemaining <= 2
-              ? "bg-red-500/10 border border-red-500/20"
-              : "bg-amber-500/10 border border-amber-500/20"
-          }`}>
+          <div className="rounded-xl p-3 space-y-2.5 bg-emerald-500/10 border border-emerald-500/20">
             <div className="flex items-center gap-2">
-              <Clock className={`w-3.5 h-3.5 ${trial.daysRemaining <= 2 ? "text-red-400" : "text-amber-400"}`} />
-              <span className={`text-xs font-semibold ${trial.daysRemaining <= 2 ? "text-red-400" : "text-amber-400"}`}>
-                {trial.daysRemaining <= 0 ? "Trial ended" : `${trial.daysRemaining} day${trial.daysRemaining !== 1 ? "s" : ""} left`}
+              <Zap className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-xs font-semibold text-emerald-400">
+                Subscribe to start
               </span>
             </div>
-            <Progress
-              value={(trial.daysUsed / TRIAL_DAYS) * 100}
-              className={`h-1.5 ${trial.daysRemaining <= 2 ? "bg-red-900/50" : "bg-amber-900/50"}`}
-            />
             <button
               onClick={() => checkout("scout", "yearly")}
               disabled={checkoutLoading}
@@ -201,7 +191,7 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  Upgrade to Scout
+                  Get Scout — $39/mo
                   <ArrowRight className="w-3.5 h-3.5" />
                 </>
               )}
@@ -209,6 +199,7 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
           </div>
         )}
 
+        {/* Upgrade card for paid users */}
         {nextPlan && plan !== "free" && (
           <div className="rounded-xl p-3 bg-zinc-800/50 border border-zinc-700/50 space-y-2">
             <p className="text-xs font-medium text-white">
@@ -269,7 +260,7 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
 
 // Header component
 function Header({ onMenuClick }: { onMenuClick: () => void }) {
-  const { currentSite, runCheck, trial, organization } = useSite();
+  const { currentSite, runCheck } = useSite();
   const [checking, setChecking] = useState(false);
 
   const handleCheck = async () => {
@@ -279,69 +270,39 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
     setChecking(false);
   };
 
-  const isPaid = organization?.plan && organization.plan !== "free";
-  const showTrialBanner = trial.isTrialUser && !trial.expired && !isPaid;
-  const urgent = trial.daysRemaining <= 2;
-
   return (
-    <>
-      {/* Trial countdown banner */}
-      {showTrialBanner && (
-        <div className={`px-4 py-2 text-center text-sm font-medium border-b ${
-          urgent
-            ? "bg-red-500/10 border-red-500/20 text-red-400"
-            : "bg-amber-500/10 border-amber-500/20 text-amber-400"
-        }`}>
-          {urgent ? (
-            <>
-              {trial.daysRemaining === 0 ? "Last day" : `${trial.daysRemaining} day${trial.daysRemaining !== 1 ? "s" : ""} left`} on your free trial —{" "}
-              <Link href="/settings/billing" className="underline font-semibold hover:text-white">
-                Upgrade now to keep your data
-              </Link>
-            </>
-          ) : (
-            <>
-              {trial.daysRemaining} day{trial.daysRemaining !== 1 ? "s" : ""} left in your free trial —{" "}
-              <Link href="/settings/billing" className="underline hover:text-white">
-                Upgrade to Scout
-              </Link>
-            </>
-          )}
-        </div>
-      )}
-      <header className="h-16 border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm flex items-center justify-between px-4 lg:px-6">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={onMenuClick}
-            className="lg:hidden text-zinc-400 hover:text-white"
+    <header className="h-16 border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm flex items-center justify-between px-4 lg:px-6">
+      <div className="flex items-center gap-4">
+        <button
+          onClick={onMenuClick}
+          className="lg:hidden text-zinc-400 hover:text-white"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+
+        {currentSite && (
+          <div className="hidden sm:block">
+            <h1 className="text-white font-medium">{currentSite.domain}</h1>
+            <p className="text-xs text-zinc-500">
+              AI Revenue Tracking
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-3">
+        {currentSite && (
+          <Button
+            onClick={handleCheck}
+            disabled={checking}
+            size="sm"
+            className="bg-emerald-500 hover:bg-emerald-400 text-black"
           >
-            <Menu className="w-6 h-6" />
-          </button>
-
-          {currentSite && (
-            <div className="hidden sm:block">
-              <h1 className="text-white font-medium">{currentSite.domain}</h1>
-              <p className="text-xs text-zinc-500">
-                AI Revenue Tracking
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          {currentSite && (
-            <Button
-              onClick={handleCheck}
-              disabled={checking}
-              size="sm"
-              className="bg-emerald-500 hover:bg-emerald-400 text-black"
-            >
-              {checking ? "Checking..." : "Check Now"}
-            </Button>
-          )}
-        </div>
-      </header>
-    </>
+            {checking ? "Checking..." : "Check Now"}
+          </Button>
+        )}
+      </div>
+    </header>
   );
 }
 
@@ -351,10 +312,10 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { trial, loading } = useSite();
 
-  // Show paywall when trial expired (allow billing/settings for upgrade)
+  // Show paywall for free (unpaid) users (allow billing/settings for upgrade)
   const exemptRoutes = ["/settings/billing", "/settings", "/onboarding"];
   const isExemptRoute = exemptRoutes.some((r) => pathname?.startsWith(r));
-  const showPaywall = !loading && trial.isTrialUser && trial.expired && !isExemptRoute;
+  const showPaywall = !loading && trial.isTrialUser && !isExemptRoute;
 
   return (
     <div className="min-h-screen bg-zinc-950 flex">
@@ -381,7 +342,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         <Header onMenuClick={() => setMobileMenuOpen(true)} />
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <div className="max-w-6xl mx-auto">
-            {showPaywall ? <TrialExpiredPaywall /> : children}
+            {showPaywall ? <SubscriptionRequired /> : children}
           </div>
         </main>
       </div>

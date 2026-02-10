@@ -15,7 +15,8 @@ import { inngest } from "@/lib/jobs/inngest-client";
 import { citationFunctions } from "@/lib/jobs/citation-jobs";
 import { monthlyCheckpointFunctions } from "@/lib/jobs/monthly-checkpoint";
 import { competitorAlertFunctions } from "@/lib/jobs/competitor-alert";
-import { trialDripFunctions } from "@/lib/jobs/trial-drip";
+// Trial drip disabled — no more free trial, subscription required
+// import { trialDripFunctions } from "@/lib/jobs/trial-drip";
 import { teaserDripFunctions } from "@/lib/jobs/teaser-drip";
 import { benchmarkFunctions } from "@/lib/jobs/benchmark-aggregation";
 
@@ -26,7 +27,7 @@ export const { GET, POST, PUT } = serve({
     ...citationFunctions,
     ...monthlyCheckpointFunctions,
     ...competitorAlertFunctions,
-    ...trialDripFunctions,
+    // ...trialDripFunctions, // Disabled — no more free trial
     ...teaserDripFunctions,
     ...benchmarkFunctions,
   ],

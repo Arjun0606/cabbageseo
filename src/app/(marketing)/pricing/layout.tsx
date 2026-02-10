@@ -3,7 +3,7 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Pricing – AI Visibility Plans Starting at $49/mo",
   description:
-    "Scout ($49/mo), Command ($149/mo), and Dominate ($349/mo) plans. Track AI citations from ChatGPT & Perplexity, monitor competitors, and get AI-generated content. Free 7-day trial, no credit card.",
+    "Scout ($49/mo), Command ($149/mo), and Dominate ($349/mo) plans. Track AI citations from ChatGPT & Perplexity, monitor competitors, and get AI-generated content. Free scan available.",
   keywords: [
     "CabbageSEO pricing",
     "AI SEO tool pricing",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "CabbageSEO Pricing – Plans from $49/mo",
     description:
-      "Free trial → Scout → Command → Dominate. Daily AI monitoring, competitor tracking, and auto-generated comparison pages.",
+      "Scout → Command → Dominate. AI monitoring, competitor tracking, and auto-generated comparison pages. Free scan available.",
   },
 };
 
@@ -108,7 +108,7 @@ const faqJsonLd = {
       name: "Do you offer refunds?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "We offer a 7-day free trial on all paid plans so you can evaluate the platform before committing. If you're unhappy after subscribing, contact us within 14 days of your first payment and we'll issue a full refund.",
+        text: "If you're unhappy after subscribing, contact us within 14 days of your first payment and we'll issue a full refund. You can also run a free scan before subscribing to see where you stand.",
       },
     },
   ],

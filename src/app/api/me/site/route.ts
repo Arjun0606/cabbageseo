@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
           name: user.user_metadata?.name || user.email?.split("@")[0] || "My Organization",
           slug,
           plan: "free",
-          subscription_status: "trialing",
+          subscription_status: "inactive",
         })
         .select("id")
         .single();

@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "CabbageSEO for SaaS – Win AI Product Recommendations",
     description:
-      "Track if AI recommends your SaaS product. Monitor competitors. Generate comparison pages that AI can cite. Start free.",
+      "Track if AI recommends your SaaS product. Monitor competitors. Generate comparison pages that AI can cite. Free scan available.",
   },
 };
 

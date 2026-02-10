@@ -127,13 +127,6 @@ const jsonLdApp = {
   offers: [
     {
       "@type": "Offer",
-      name: "Free Trial",
-      price: "0",
-      priceCurrency: "USD",
-      description: "7-day free trial with full access",
-    },
-    {
-      "@type": "Offer",
       name: "Scout",
       price: "49",
       priceCurrency: "USD",

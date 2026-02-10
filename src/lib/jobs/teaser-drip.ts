@@ -109,7 +109,7 @@ function day0Email(report: SubscriberReport, email: string): { subject: string; 
       ${ctaButton("Start fixing your AI visibility →", `${APP_URL}/signup?domain=${encodeURIComponent(report.domain)}`)}
 
       <p style="text-align: center; color: #52525b; font-size: 12px;">
-        Free 7-day trial &bull; No credit card required
+        14-day money-back guarantee &bull; Cancel anytime
       </p>
     `, email, report.domain),
   };
@@ -157,7 +157,7 @@ function day2Email(report: SubscriberReport, email: string): { subject: string; 
       ${ctaButton("Start your 30-day sprint →", `${APP_URL}/signup?domain=${encodeURIComponent(report.domain)}`)}
 
       <p style="text-align: center; color: #52525b; font-size: 12px;">
-        Free 7-day trial &bull; We build the action plan for you
+        We build the action plan for you &bull; Cancel anytime
       </p>
     `, email, report.domain),
   };
@@ -225,7 +225,7 @@ function day5Email(report: SubscriberReport, email: string): { subject: string; 
       ${ctaButton("Get your full action plan →", `${APP_URL}/signup?domain=${encodeURIComponent(report.domain)}`)}
 
       <p style="text-align: center; color: #52525b; font-size: 12px;">
-        Free 7-day trial &bull; Cancel anytime
+        14-day money-back guarantee &bull; Cancel anytime
       </p>
     `, email, report.domain),
   };

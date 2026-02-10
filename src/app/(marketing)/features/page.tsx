@@ -125,7 +125,7 @@ export default function FeaturesPage() {
             href="/signup"
             className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors"
           >
-            Start Free Trial
+            Run a Free Scan
             <ArrowRight className="w-5 h-5" />
           </Link>
         </AnimateIn>
@@ -178,14 +178,14 @@ export default function FeaturesPage() {
               See which plan fits
             </h2>
             <p className="text-zinc-400 mb-6">
-              Every plan starts with a free trial. You&apos;ll know where you stand in 10 seconds.
+              Run a free scan to see where you stand. Subscribe when you&apos;re ready.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/signup"
+                href="/"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors"
               >
-                Start Free Trial
+                Run a Free Scan
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link

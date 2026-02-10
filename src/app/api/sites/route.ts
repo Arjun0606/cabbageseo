@@ -93,16 +93,13 @@ export async function POST(request: NextRequest) {
       const userEmail = currentUser.email || "";
       const slug = (userEmail.split("@")[0]?.replace(/[^a-z0-9]/gi, "") || "user") + "-" + Date.now();
 
-      const sitesTrialEndsAt = new Date();
-      sitesTrialEndsAt.setDate(sitesTrialEndsAt.getDate() + 7);
       const { data: newOrg } = await db
         .from("organizations")
         .insert({
           name: userEmail.split("@")[0] || "My Organization",
           slug,
           plan: "free",
-          subscription_status: "trialing",
-          trial_ends_at: sitesTrialEndsAt.toISOString(),
+          subscription_status: "inactive",
         })
         .select("id, created_at")
         .single();
@@ -126,19 +123,19 @@ export async function POST(request: NextRequest) {
     // Get plan from DB
     const { data: org } = await db
       .from("organizations")
-      .select("plan, trial_ends_at")
+      .select("plan")
       .eq("id", orgId)
       .single();
 
     const plan = org?.plan || "free";
 
-    // Check if free user's trial has expired
-    if (plan === "free" && org?.trial_ends_at) {
-      const access = canAccessProduct(plan, org.trial_ends_at, currentUser.email || null, true);
+    // Check if free user needs to subscribe
+    if (plan === "free") {
+      const access = canAccessProduct(plan, null, currentUser.email || null);
       if (!access.allowed) {
         return NextResponse.json({
-          error: access.reason || "Trial expired. Upgrade to continue.",
-          code: "TRIAL_EXPIRED",
+          error: access.reason || "A subscription is required.",
+          code: "SUBSCRIPTION_REQUIRED",
           upgradeRequired: true,
         }, { status: 403 });
       }

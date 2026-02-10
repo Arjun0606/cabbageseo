@@ -75,16 +75,13 @@ export async function GET() {
         orgId = userOrgData.organization_id;
       } else {
         // Create org with free plan
-        const acctTrialEndsAt = new Date();
-        acctTrialEndsAt.setDate(acctTrialEndsAt.getDate() + 7);
         const { data: newOrg, error: orgError } = await serviceClient
           .from("organizations")
           .insert({
             name: `${user.email?.split("@")[0] || "My"}'s Organization`,
             slug: `org-${user.id.slice(0, 8)}-${Date.now()}`,
             plan: "free",
-            subscription_status: "trialing",
-            trial_ends_at: acctTrialEndsAt.toISOString(),
+            subscription_status: "inactive",
           } as never)
           .select("id")
           .single();

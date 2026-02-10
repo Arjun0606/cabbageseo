@@ -8,7 +8,7 @@
  * - AI-powered (Perplexity, Google AI, OpenAI)
  *
  * Plans:
- * - Free: 7-day trial
+ * - Free: Unpaid (dashboard blocked — free teaser scan only)
  * - Scout $49/mo ($39/mo annual)
  * - Command $149/mo ($119/mo annual)
  * - Dominate $349/mo ($279/mo annual)

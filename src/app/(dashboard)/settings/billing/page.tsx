@@ -25,7 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useSite } from "@/context/site-context";
-import { CITATION_PLANS, TRIAL_DAYS } from "@/lib/billing/citation-plans";
+import { CITATION_PLANS } from "@/lib/billing/citation-plans";
 
 function BillingContent() {
   const router = useRouter();
@@ -248,34 +248,19 @@ function BillingContent() {
         </Card>
       )}
 
-      {/* Trial Warning */}
+      {/* No subscription */}
       {trial.isTrialUser && (
-        <Card className={`border-2 ${
-          trial.daysRemaining <= 3 ? "bg-red-500/5 border-red-500/30" : "bg-amber-500/5 border-amber-500/30"
-        }`}>
+        <Card className="border-2 bg-emerald-500/5 border-emerald-500/30">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                trial.daysRemaining <= 3 ? "bg-red-500/20" : "bg-amber-500/20"
-              }`}>
-                <AlertTriangle className={`w-6 h-6 ${
-                  trial.daysRemaining <= 3 ? "text-red-400" : "text-amber-400"
-                }`} />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/20">
+                <Zap className="w-6 h-6 text-emerald-400" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-white">
-                  {trial.daysRemaining <= 0 
-                    ? "Your trial has ended" 
-                    : `${trial.daysRemaining} day${trial.daysRemaining !== 1 ? "s" : ""} left in your trial`
-                  }
-                </h3>
+                <h3 className="font-semibold text-white">No active subscription</h3>
                 <p className="text-sm text-zinc-400 mt-1">
-                  Upgrade to keep tracking your AI citations.
+                  Choose a plan below to start tracking your AI visibility.
                 </p>
-                <Progress 
-                  value={(trial.daysUsed / TRIAL_DAYS) * 100} 
-                  className={`h-2 mt-3 ${trial.daysRemaining <= 3 ? "bg-red-900" : "bg-amber-900"}`} 
-                />
               </div>
             </div>
           </CardContent>

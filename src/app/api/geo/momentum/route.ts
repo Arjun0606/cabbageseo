@@ -56,18 +56,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Trial expiry check for free users
+    // Subscription check for free users
     if (currentUser.plan === "free") {
-      const { data: org } = await db
-        .from("organizations")
-        .select("trial_ends_at")
-        .eq("id", organizationId)
-        .maybeSingle();
-      if (org?.trial_ends_at) {
-        const access = canAccessProduct("free", org.trial_ends_at, currentUser.email, true);
-        if (!access.allowed) {
-          return NextResponse.json({ error: "Trial expired", code: "TRIAL_EXPIRED" }, { status: 403 });
-        }
+      const access = canAccessProduct("free", null, currentUser.email);
+      if (!access.allowed) {
+        return NextResponse.json({ error: access.reason, code: "SUBSCRIPTION_REQUIRED" }, { status: 403 });
       }
     }
 

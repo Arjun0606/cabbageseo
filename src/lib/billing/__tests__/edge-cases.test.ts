@@ -12,69 +12,33 @@ import {
   getCitationPlanLimits,
   getCitationPlanFeatures,
   canAccessProduct,
-  checkTrialStatus,
   CITATION_PLANS,
 } from "../citation-plans";
 
 // ============================================
-// canRunManualCheck + TRIAL EXPIRY INTERACTION
+// canRunManualCheck (no more trial — free = daily limit only)
 // ============================================
 
-describe("canRunManualCheck + trial expiry interaction", () => {
-  it("Free + active trial + 0 checks: allowed", () => {
-    const activeDate = new Date();
-    activeDate.setDate(activeDate.getDate() - 1);
-    expect(canRunManualCheck("free", 0, activeDate).allowed).toBe(true);
-  });
-
-  it("Free + active trial + 2 checks: allowed", () => {
-    const activeDate = new Date();
-    activeDate.setDate(activeDate.getDate() - 3);
-    expect(canRunManualCheck("free", 2, activeDate).allowed).toBe(true);
-  });
-
-  it("Free + active trial + 3 checks: DENIED (daily limit)", () => {
-    const activeDate = new Date();
-    activeDate.setDate(activeDate.getDate() - 1);
-    const result = canRunManualCheck("free", 3, activeDate);
-    expect(result.allowed).toBe(false);
-    expect(result.reason).toContain("Daily limit");
-  });
-
-  it("Free + EXPIRED trial + 0 checks: DENIED (trial expired, not daily limit)", () => {
-    const expiredDate = new Date();
-    expiredDate.setDate(expiredDate.getDate() - 10);
-    const result = canRunManualCheck("free", 0, expiredDate);
-    expect(result.allowed).toBe(false);
-    expect(result.reason).toContain("trial");
-  });
-
-  it("Free + EXPIRED trial + 3 checks: DENIED (trial takes precedence)", () => {
-    const expiredDate = new Date();
-    expiredDate.setDate(expiredDate.getDate() - 10);
-    const result = canRunManualCheck("free", 3, expiredDate);
-    expect(result.allowed).toBe(false);
-    // Should mention trial, not daily limit (trial check comes first)
-    expect(result.reason).toContain("trial");
-  });
-
-  it("Free + no createdAt + 0 checks: allowed (no trial check without date)", () => {
+describe("canRunManualCheck — free plan daily limit", () => {
+  it("Free + 0 checks: allowed", () => {
     expect(canRunManualCheck("free", 0).allowed).toBe(true);
   });
 
-  it("Free + no createdAt + 3 checks: denied (daily limit only)", () => {
+  it("Free + 2 checks: allowed", () => {
+    expect(canRunManualCheck("free", 2).allowed).toBe(true);
+  });
+
+  it("Free + 3 checks: DENIED (daily limit)", () => {
     const result = canRunManualCheck("free", 3);
     expect(result.allowed).toBe(false);
     expect(result.reason).toContain("Daily limit");
   });
 
-  it("Scout + expired trial date + 999 checks: allowed (paid = unlimited, no trial)", () => {
-    const expiredDate = new Date();
-    expiredDate.setDate(expiredDate.getDate() - 100);
-    expect(canRunManualCheck("scout", 999, expiredDate).allowed).toBe(true);
+  it("Scout + 999 checks: allowed (paid = unlimited)", () => {
+    expect(canRunManualCheck("scout", 999).allowed).toBe(true);
   });
 
-  it("Command + any date + any checks: allowed", () => {
+  it("Command + any checks: allowed", () => {
     expect(canRunManualCheck("command", 999999).allowed).toBe(true);
   });
 });
@@ -264,38 +228,25 @@ describe("Boundary values", () => {
 });
 
 // ============================================
-// TRIAL BOUNDARY: DAY 7 IS THE EXACT CUTOFF
+// FREE PLAN ACCESS (no more trial)
 // ============================================
 
-describe("Trial expiry boundary precision", () => {
-  it("Day 6 (144 hours): not expired", () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 6);
-    const result = checkTrialStatus(date);
-    expect(result.expired).toBe(false);
-    expect(result.daysRemaining).toBe(1);
-  });
-
-  it("Day 7 (168 hours): expired", () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 7);
-    const result = checkTrialStatus(date);
-    expect(result.expired).toBe(true);
-    expect(result.daysRemaining).toBe(0);
-  });
-
-  it("canAccessProduct at day 6: allowed", () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 6);
-    expect(canAccessProduct("free", date).allowed).toBe(true);
-  });
-
-  it("canAccessProduct at day 7: denied", () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 7);
-    const result = canAccessProduct("free", date);
+describe("Free plan access — always denied", () => {
+  it("Free plan: denied regardless of date", () => {
+    const result = canAccessProduct("free");
     expect(result.allowed).toBe(false);
     expect(result.upgradeRequired).toBe(true);
+  });
+
+  it("Free plan with recent date: still denied", () => {
+    const result = canAccessProduct("free", new Date());
+    expect(result.allowed).toBe(false);
+  });
+
+  it("Paid plans: always allowed", () => {
+    expect(canAccessProduct("scout").allowed).toBe(true);
+    expect(canAccessProduct("command").allowed).toBe(true);
+    expect(canAccessProduct("dominate").allowed).toBe(true);
   });
 });
 
@@ -433,12 +384,9 @@ describe("Denial messages are user-friendly", () => {
     expect(result.reason).toContain("15");
   });
 
-  it("trial expired message mentions trial days", () => {
-    const expiredDate = new Date();
-    expiredDate.setDate(expiredDate.getDate() - 10);
-    const result = canAccessProduct("free", expiredDate);
-    expect(result.reason).toContain("7-day");
-    expect(result.reason).toContain("trial");
+  it("free plan denied message mentions subscription", () => {
+    const result = canAccessProduct("free");
+    expect(result.reason).toContain("subscription");
   });
 });
 

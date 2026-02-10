@@ -59,10 +59,6 @@ export async function GET(request: NextRequest) {
             // Create organization first
             const orgSlug = `org-${user.id.slice(0, 8)}-${Date.now()}`;
             
-            // Calculate trial end date
-            const trialEndsAt = new Date();
-            trialEndsAt.setDate(trialEndsAt.getDate() + 7);
-
             const { data: newOrg, error: orgError } = await serviceClient
               .from("organizations")
               .insert({
@@ -71,8 +67,7 @@ export async function GET(request: NextRequest) {
                   : `${user.email?.split("@")[0] || "My"}'s Organization`,
                 slug: orgSlug,
                 plan: "free",
-                subscription_status: "trialing",
-                trial_ends_at: trialEndsAt.toISOString(),
+                subscription_status: "inactive",
               } as never)
               .select("id")
               .single();

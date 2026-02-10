@@ -1,9 +1,9 @@
 /**
  * AI Visibility Intelligence Pricing Plans
  *
- * NEW PRICING (Jan 2026) — Optimized for $100k MRR
+ * PRICING (Feb 2026) — Optimized for $100k MRR
  *
- * Free: 7-day trial, limited manual checks
+ * Free: Unpaid (blocked from dashboard — free teaser scan only)
  * Scout ($49/mo): Monitor + know your status
  * Command ($149/mo): Full intelligence + action plans
  * Dominate ($349/mo): Scale across brands, white-label
@@ -13,6 +13,7 @@
  * = blended ARPU ~$127 → ~785 customers
  */
 
+/** @deprecated Trial removed — kept for backward compat with test imports */
 export const TRIAL_DAYS = 7;
 
 export type CitationPlanId = "free" | "scout" | "command" | "dominate";
@@ -88,12 +89,10 @@ export interface CitationPlan {
 export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
   free: {
     id: "free",
-    name: "Free Trial",
-    description: `${TRIAL_DAYS}-day trial to explore`,
-    tagline: "The wake-up call",
+    name: "Free",
+    description: "Sign up to get started",
     monthlyPrice: 0,
     yearlyPrice: 0,
-    isTrial: true,
     limits: {
       sites: 1,
       manualChecksPerDay: 3,
@@ -336,9 +335,9 @@ export function checkTrialStatus(
 
 export function canAccessProduct(
   planId: CitationPlanId | string,
-  trialEndsAtOrCreatedAt: string | Date,
+  _trialEndsAtOrCreatedAt?: string | Date | null,
   userEmail?: string | null,
-  isTrialEndsAt: boolean = false
+  _isTrialEndsAt: boolean = false
 ): { allowed: boolean; reason?: string; upgradeRequired?: boolean } {
   if (userEmail) {
     const { shouldBypassPaywall } = require("@/lib/testing/test-accounts");
@@ -347,21 +346,17 @@ export function canAccessProduct(
     }
   }
 
+  // Paid plans always have access
   if (planId !== "free") {
     return { allowed: true };
   }
 
-  const trial = checkTrialStatus(trialEndsAtOrCreatedAt, isTrialEndsAt);
-
-  if (trial.expired) {
-    return {
-      allowed: false,
-      reason: `Your ${TRIAL_DAYS}-day free trial has ended. Upgrade to continue.`,
-      upgradeRequired: true,
-    };
-  }
-
-  return { allowed: true };
+  // Free = no dashboard access — subscription required
+  return {
+    allowed: false,
+    reason: "A subscription is required to access the dashboard. Choose a plan to get started.",
+    upgradeRequired: true,
+  };
 }
 
 // ============================================

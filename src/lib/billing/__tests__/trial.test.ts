@@ -1,115 +1,37 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { checkTrialStatus, canAccessProduct, TRIAL_DAYS } from "../citation-plans";
+import { describe, it, expect } from "vitest";
+import { canAccessProduct, TRIAL_DAYS } from "../citation-plans";
 
 // ============================================
-// checkTrialStatus
+// TRIAL_DAYS (deprecated — kept for backward compat)
 // ============================================
 
-describe("checkTrialStatus", () => {
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("TRIAL_DAYS is 7", () => {
+describe("TRIAL_DAYS (deprecated)", () => {
+  it("TRIAL_DAYS is 7 (kept for backward compatibility)", () => {
     expect(TRIAL_DAYS).toBe(7);
-  });
-
-  it("created today: not expired, 7 days remaining", () => {
-    const now = new Date();
-    const result = checkTrialStatus(now);
-    expect(result.expired).toBe(false);
-    expect(result.daysRemaining).toBe(7);
-    expect(result.daysUsed).toBe(0);
-  });
-
-  it("created 1 day ago: not expired, 6 days remaining", () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 1);
-    const result = checkTrialStatus(date);
-    expect(result.expired).toBe(false);
-    expect(result.daysRemaining).toBe(6);
-    expect(result.daysUsed).toBe(1);
-  });
-
-  it("created 3 days ago: not expired, 4 days remaining", () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 3);
-    const result = checkTrialStatus(date);
-    expect(result.expired).toBe(false);
-    expect(result.daysRemaining).toBe(4);
-    expect(result.daysUsed).toBe(3);
-  });
-
-  it("created 6 days ago: not expired, 1 day remaining", () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 6);
-    const result = checkTrialStatus(date);
-    expect(result.expired).toBe(false);
-    expect(result.daysRemaining).toBe(1);
-    expect(result.daysUsed).toBe(6);
-  });
-
-  it("created 7 days ago: expired, 0 days remaining", () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 7);
-    const result = checkTrialStatus(date);
-    expect(result.expired).toBe(true);
-    expect(result.daysRemaining).toBe(0);
-    expect(result.daysUsed).toBe(7);
-  });
-
-  it("created 30 days ago: expired, 0 days remaining", () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    const result = checkTrialStatus(date);
-    expect(result.expired).toBe(true);
-    expect(result.daysRemaining).toBe(0);
-    expect(result.daysUsed).toBe(30);
-  });
-
-  it("accepts ISO string date", () => {
-    const date = new Date();
-    const result = checkTrialStatus(date.toISOString());
-    expect(result.expired).toBe(false);
-    expect(result.daysRemaining).toBe(7);
   });
 });
 
 // ============================================
-// canAccessProduct
+// canAccessProduct — No More Free Trial
+// Free plan = always denied (must subscribe)
 // ============================================
 
 describe("canAccessProduct", () => {
-  it("Free + created today: allowed", () => {
-    const now = new Date();
-    const result = canAccessProduct("free", now);
-    expect(result.allowed).toBe(true);
-  });
-
-  it("Free + created 3 days ago: allowed", () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 3);
-    const result = canAccessProduct("free", date);
-    expect(result.allowed).toBe(true);
-  });
-
-  it("Free + created 6 days ago: allowed (still in trial)", () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 6);
-    const result = canAccessProduct("free", date);
-    expect(result.allowed).toBe(true);
-  });
-
-  it("Free + created 8 days ago: denied + upgradeRequired", () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 8);
-    const result = canAccessProduct("free", date);
+  it("Free plan: always denied (no trial)", () => {
+    const result = canAccessProduct("free");
     expect(result.allowed).toBe(false);
     expect(result.upgradeRequired).toBe(true);
-    expect(result.reason).toContain("trial");
+    expect(result.reason).toContain("subscription");
   });
 
-  it("Free + created 30 days ago: denied", () => {
+  it("Free plan with recent date: still denied (no trial)", () => {
+    const now = new Date();
+    const result = canAccessProduct("free", now);
+    expect(result.allowed).toBe(false);
+    expect(result.upgradeRequired).toBe(true);
+  });
+
+  it("Free plan with old date: denied", () => {
     const date = new Date();
     date.setDate(date.getDate() - 30);
     const result = canAccessProduct("free", date);
@@ -118,21 +40,36 @@ describe("canAccessProduct", () => {
   });
 
   // Paid plans should ALWAYS be allowed regardless of creation date
-  it("Scout + expired trial date: allowed (paid plan bypasses trial)", () => {
+  it("Scout: allowed", () => {
+    const result = canAccessProduct("scout");
+    expect(result.allowed).toBe(true);
+  });
+
+  it("Command: allowed", () => {
+    const result = canAccessProduct("command");
+    expect(result.allowed).toBe(true);
+  });
+
+  it("Dominate: allowed", () => {
+    const result = canAccessProduct("dominate");
+    expect(result.allowed).toBe(true);
+  });
+
+  it("Scout + old date: allowed (paid plan)", () => {
     const date = new Date();
     date.setDate(date.getDate() - 100);
     const result = canAccessProduct("scout", date);
     expect(result.allowed).toBe(true);
   });
 
-  it("Command + expired trial date: allowed", () => {
+  it("Command + old date: allowed", () => {
     const date = new Date();
     date.setDate(date.getDate() - 365);
     const result = canAccessProduct("command", date);
     expect(result.allowed).toBe(true);
   });
 
-  it("Dominate + expired trial date: allowed", () => {
+  it("Dominate + old date: allowed", () => {
     const date = new Date();
     date.setDate(date.getDate() - 999);
     const result = canAccessProduct("dominate", date);
@@ -140,17 +77,18 @@ describe("canAccessProduct", () => {
   });
 
   // Legacy plan names should also work
-  it("Legacy 'starter' (=scout) + expired date: allowed", () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 100);
-    const result = canAccessProduct("starter", date);
+  it("Legacy 'starter' (=scout): allowed", () => {
+    const result = canAccessProduct("starter");
     expect(result.allowed).toBe(true);
   });
 
-  it("Legacy 'pro' (=command) + expired date: allowed", () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 100);
-    const result = canAccessProduct("pro", date);
+  it("Legacy 'pro' (=command): allowed", () => {
+    const result = canAccessProduct("pro");
+    expect(result.allowed).toBe(true);
+  });
+
+  it("Legacy 'pro_plus' (=dominate): allowed", () => {
+    const result = canAccessProduct("pro_plus");
     expect(result.allowed).toBe(true);
   });
 });

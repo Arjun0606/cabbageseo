@@ -289,14 +289,14 @@ export default function ChangelogPage() {
               Try the latest features
             </h2>
             <p className="text-zinc-400 mb-6">
-              Start your free trial and see how CabbageSEO helps you win AI recommendations.
+              Run a free scan and see how CabbageSEO helps you win AI recommendations.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/signup"
+                href="/"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors"
               >
-                Start Free Trial
+                Run a Free Scan
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link

@@ -1109,7 +1109,7 @@ export const weeklyTeaserRescan = inngest.createFunction(
                       Want daily monitoring, competitor tracking, and an action plan?
                     </p>
                     <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://cabbageseo.com"}/signup?domain=${encodeURIComponent(domain)}" style="color: #10b981; font-size: 13px; text-decoration: none; font-weight: 600;">
-                      Start your free trial →
+                      Sign up &amp; subscribe →
                     </a>
                   </div>
 

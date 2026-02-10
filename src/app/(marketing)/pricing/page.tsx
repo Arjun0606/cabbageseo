@@ -14,7 +14,6 @@ import {
   Check,
   ArrowRight,
   Zap,
-  Target,
   TrendingUp,
   Crown,
   ChevronDown,
@@ -58,25 +57,6 @@ interface FAQItem {
 // ============================================
 
 const tiers: PricingTier[] = [
-  {
-    name: "Free Trial",
-    tagline: "The wake-up call",
-    monthlyPrice: 0,
-    annualPrice: 0,
-    period: "for 7 days",
-    description:
-      "See where you stand. No credit card, no commitment.",
-    cta: "Start Free Trial",
-    href: "/signup",
-    icon: <Target className="w-5 h-5 text-zinc-400" />,
-    features: [
-      "1 site, 3 manual checks per day",
-      "AI visibility score",
-      "See who AI recommends instead",
-      "7-day access, no credit card",
-    ],
-    promise: "See if AI knows you exist — before your competitors find out first.",
-  },
   {
     name: "Scout",
     tagline: "Know your blind spots",
@@ -167,7 +147,7 @@ const faqs: FAQItem[] = [
   {
     question: "Do you offer refunds?",
     answer:
-      "We offer a 7-day free trial on all paid plans so you can evaluate the platform before committing. If you\u2019re unhappy after subscribing, contact us within 14 days of your first payment and we\u2019ll issue a full refund. After 14 days, you can cancel anytime and your access continues until the end of your billing period.",
+      "If you\u2019re unhappy after subscribing, contact us within 14 days of your first payment and we\u2019ll issue a full refund. After 14 days, you can cancel anytime and your access continues until the end of your billing period. You can also run a free scan before subscribing to see where you stand.",
   },
 ];
 
@@ -371,7 +351,7 @@ export default function PricingPage() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 mb-8">
               <Sparkles className="w-4 h-4 text-emerald-400" />
               <span className="text-emerald-400 text-sm font-medium">
-                Free trial available &middot; No credit card required
+                Free scan available &middot; No credit card required
               </span>
             </div>
           </AnimateIn>
@@ -380,7 +360,7 @@ export default function PricingPage() {
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
               Simple pricing.
               <br className="hidden sm:block" />
-              <span className="text-emerald-400"> Start free.</span>
+              <span className="text-emerald-400"> No surprises.</span>
             </h1>
           </AnimateIn>
 
@@ -427,7 +407,7 @@ export default function PricingPage() {
         <div className="max-w-7xl mx-auto">
           <StaggerGroup
             stagger={0.12}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4 xl:gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-4 xl:gap-6"
           >
             {tiers.map((tier) => (
               <StaggerItem key={tier.name}>
@@ -486,27 +466,27 @@ export default function PricingPage() {
           </AnimateIn>
           <AnimateIn delay={0.1}>
             <p className="text-lg text-zinc-400 mb-8 leading-relaxed">
-              Start with a free scan or free trial. No credit card required.
+              Start with a free scan. Subscribe when you&apos;re ready.
             </p>
           </AnimateIn>
           <AnimateIn delay={0.2}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/signup">
+              <Link href="/">
                 <Button
                   size="lg"
                   className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-8 shadow-lg shadow-emerald-500/20"
                 >
-                  Start Free Trial
+                  Run a Free Scan
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Link href="/">
+              <Link href="/signup">
                 <Button
                   size="lg"
                   variant="outline"
                   className="border-white/[0.1] text-zinc-300 hover:text-white hover:bg-white/[0.06] hover:border-white/[0.15] px-8"
                 >
-                  Run a Free Scan
+                  Sign Up
                 </Button>
               </Link>
             </div>
