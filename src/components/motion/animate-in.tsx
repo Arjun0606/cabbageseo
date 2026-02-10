@@ -20,6 +20,15 @@ const directionOffset = {
   right: { x: -40, y: 0 },
 };
 
+// Pre-built motion components — never create inside render (causes remount every re-render)
+const motionElements = {
+  div: motion.div,
+  section: motion.section,
+  span: motion.span,
+  li: motion.li,
+  article: motion.article,
+};
+
 export function AnimateIn({
   children,
   direction = "up",
@@ -33,7 +42,7 @@ export function AnimateIn({
   const isInView = useInView(ref, { once, margin: "-80px" });
   const offset = directionOffset[direction];
 
-  const MotionComponent = motion.create(as);
+  const MotionComponent = motionElements[as];
 
   return (
     <MotionComponent
