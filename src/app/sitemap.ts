@@ -1,10 +1,13 @@
 import type { MetadataRoute } from "next";
+import { db, teaserReports } from "@/lib/db";
+import { sql } from "drizzle-orm";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://cabbageseo.com";
   const now = new Date();
 
-  return [
+  // Static pages
+  const staticPages: MetadataRoute.Sitemap = [
     // Core pages
     {
       url: baseUrl,
@@ -29,6 +32,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/what-is-geo`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.85,
     },
 
     // Solution pages
@@ -113,4 +122,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.2,
     },
   ];
+
+  // Dynamic pages: /ai-visibility/[domain] for recently scanned domains
+  let dynamicPages: MetadataRoute.Sitemap = [];
+  try {
+    const recentDomains = await db
+      .select({ domain: teaserReports.domain })
+      .from(teaserReports)
+      .groupBy(teaserReports.domain)
+      .orderBy(sql`max(${teaserReports.createdAt}) desc`)
+      .limit(200);
+
+    dynamicPages = recentDomains.map((row) => ({
+      url: `${baseUrl}/ai-visibility/${encodeURIComponent(row.domain)}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    }));
+  } catch {
+    // DB may not be available during build — skip dynamic pages
+  }
+
+  return [...staticPages, ...dynamicPages];
 }

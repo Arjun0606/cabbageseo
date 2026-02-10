@@ -129,11 +129,14 @@ export const monthlyCheckpoint = inngest.createFunction(
     const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
     const prevPeriod = `${twoMonthsAgo.getFullYear()}-${String(twoMonthsAgo.getMonth() + 1).padStart(2, "0")}`;
 
-    // 1. Get all active sites with their organizations
-    const sites = await step.run("get-active-sites", async () => {
+    // 1. Get all active sites with their organizations (paid plans only)
+    const allSites = await step.run("get-active-sites", async () => {
       const { data, error } = await supabase
         .from("sites")
-        .select("id, domain, organization_id, momentum_score, momentum_change, total_citations")
+        .select(`
+          id, domain, organization_id, momentum_score, momentum_change, total_citations,
+          organizations!inner(plan)
+        `)
         .eq("status", "active");
 
       if (error) {
@@ -147,11 +150,19 @@ export const monthlyCheckpoint = inngest.createFunction(
         momentum_score: number | null;
         momentum_change: number | null;
         total_citations: number | null;
+        organizations: { plan: string };
       }>;
     });
 
+    // Resolve legacy plan names and filter out free-tier
+    const legacyMap: Record<string, string> = { starter: "scout", pro: "command", pro_plus: "dominate" };
+    const sites = allSites.filter((s) => {
+      const plan = legacyMap[s.organizations?.plan] || s.organizations?.plan || "free";
+      return plan !== "free";
+    });
+
     if (sites.length === 0) {
-      return { processed: 0, message: "No active sites" };
+      return { processed: 0, message: "No active paid sites" };
     }
 
     let checkpointsCreated = 0;
@@ -299,20 +310,14 @@ export const monthlyCheckpoint = inngest.createFunction(
         // Get owner email
         const { data: owner } = await supabase
           .from("users")
-          .select("email, notification_settings")
+          .select("email")
           .eq("organization_id", site.organization_id)
           .eq("role", "owner")
           .single();
 
-        const ownerData = owner as { email: string; notification_settings?: Record<string, boolean> } | null;
+        const ownerData = owner as { email: string } | null;
         if (!ownerData?.email) {
           return { sent: false, reason: "No owner email" };
-        }
-
-        // Check notification preferences
-        const settings = ownerData.notification_settings || {};
-        if (settings.weeklyReport === false) {
-          return { sent: false, reason: "Reports disabled" };
         }
 
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://cabbageseo.com";

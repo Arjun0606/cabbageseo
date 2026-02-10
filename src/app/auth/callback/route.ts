@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
                   ? `${user.user_metadata.full_name}'s Organization`
                   : `${user.email?.split("@")[0] || "My"}'s Organization`,
                 slug: orgSlug,
+                plan: "free",
                 subscription_status: "trialing",
                 trial_ends_at: trialEndsAt.toISOString(),
               } as never)
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
                   id: user.id,
                   organization_id: orgId,
                   email: user.email!,
-                  full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+                  name: user.user_metadata?.full_name || user.user_metadata?.name || null,
                   avatar_url: user.user_metadata?.avatar_url || null,
                   role: "owner",
                   email_verified: true,

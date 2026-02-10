@@ -119,7 +119,7 @@ export function UpgradePrompt({
         </div>
 
         <p className="text-xs text-zinc-400 mt-4">
-          Starting at $49/month
+          Starting at $39/month
         </p>
       </CardContent>
     </Card>

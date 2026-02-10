@@ -4,6 +4,11 @@ export const metadata: Metadata = {
   title: "Changelog – New Features & Updates",
   description:
     "See what's new in CabbageSEO. Latest features, improvements, and updates to our AI visibility tracking platform.",
+  keywords: [
+    "CabbageSEO updates",
+    "GEO tool changelog",
+    "AI visibility tool updates",
+  ],
   openGraph: {
     title: "CabbageSEO Changelog",
     description:

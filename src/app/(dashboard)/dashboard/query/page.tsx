@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { useSite } from "@/context/site-context";
 import {
   ArrowLeft,
@@ -145,10 +146,10 @@ function QueryPageContent() {
       if (response.ok && data.data?.page?.id) {
         router.push(`/dashboard/pages/${data.data.page.id}`);
       } else {
-        alert(data.error || "Failed to generate page. Please try again.");
+        toast.error(data.error || "Failed to generate page. Please try again.");
       }
     } catch {
-      alert("Failed to generate page. Please try again.");
+      toast.error("Failed to generate page. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -306,7 +307,7 @@ function QueryPageContent() {
           </div>
 
           <Link
-            href="/dashboard/sources"
+            href="/dashboard/actions"
             className="inline-flex items-center gap-2 mt-4 text-emerald-400 hover:text-emerald-300 text-sm font-medium"
           >
             View full Trust Map
@@ -436,7 +437,7 @@ function QueryPageContent() {
                         href="/settings/billing"
                         className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors"
                       >
-                        Upgrade to Scout ($49/mo)
+                        Upgrade to Scout ($39/mo)
                         <ArrowRight className="w-5 h-5" />
                       </Link>
                     </div>
@@ -454,7 +455,7 @@ function QueryPageContent() {
           </h2>
           <div className="space-y-3">
             <Link
-              href="/dashboard/sources"
+              href="/dashboard/actions"
               className="flex items-center justify-between p-4 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors"
             >
               <div className="flex items-center gap-3">
@@ -470,7 +471,7 @@ function QueryPageContent() {
             </Link>
 
             <Link
-              href="/dashboard/roadmap"
+              href="/dashboard/actions"
               className="flex items-center justify-between p-4 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors"
             >
               <div className="flex items-center gap-3">
@@ -478,8 +479,8 @@ function QueryPageContent() {
                   <Target className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
-                  <p className="text-white font-medium">Get your roadmap</p>
-                  <p className="text-zinc-400 text-sm">Step-by-step visibility plan</p>
+                  <p className="text-white font-medium">View your action plan</p>
+                  <p className="text-zinc-400 text-sm">Step-by-step visibility actions</p>
                 </div>
               </div>
               <ArrowRight className="w-5 h-5 text-zinc-400" />

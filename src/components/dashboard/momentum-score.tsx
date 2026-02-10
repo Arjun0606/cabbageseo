@@ -3,7 +3,7 @@
 import { TrendingUp, TrendingDown, Minus, Clock } from "lucide-react";
 
 interface MomentumScoreProps {
-  score: number;
+  score: number | null;
   change: number;
   trend: "gaining" | "losing" | "stable";
   queriesWon: number;
@@ -27,6 +27,24 @@ export function MomentumScore({
         <div className="h-6 w-32 bg-zinc-800 rounded mb-4" />
         <div className="h-16 w-24 bg-zinc-800 rounded mb-2" />
         <div className="h-4 w-48 bg-zinc-800 rounded" />
+      </div>
+    );
+  }
+
+  // Empty state — no data yet
+  if (score === null) {
+    return (
+      <div className="rounded-2xl p-8 border bg-zinc-800 border-zinc-700">
+        <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wide mb-4">
+          AI Momentum
+        </h3>
+        <div className="flex items-end gap-4 mb-3">
+          <span className="text-6xl font-bold text-zinc-600">—</span>
+          <span className="text-2xl text-zinc-600 mb-2">/100</span>
+        </div>
+        <p className="text-sm text-zinc-500">
+          Run your first check to see your AI momentum score
+        </p>
       </div>
     );
   }

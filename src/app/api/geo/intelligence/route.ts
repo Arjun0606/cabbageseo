@@ -129,6 +129,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Plan gating — free users cannot run GEO analysis
+    if (currentUser.plan === "free") {
+      return NextResponse.json(
+        { error: "Upgrade to a paid plan to run GEO analysis" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { siteId } = body;
 

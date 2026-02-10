@@ -293,13 +293,36 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
 // TRIAL HELPERS
 // ============================================
 
-export function checkTrialStatus(createdAt: string | Date): {
+/**
+ * Check trial status using trial_ends_at (the source of truth).
+ * Falls back to created_at + TRIAL_DAYS if trial_ends_at is not available.
+ */
+export function checkTrialStatus(
+  trialEndsAtOrCreatedAt: string | Date | null,
+  isTrialEndsAt: boolean = false
+): {
   expired: boolean;
   daysRemaining: number;
   daysUsed: number;
 } {
-  const created = new Date(createdAt);
+  if (!trialEndsAtOrCreatedAt) {
+    return { expired: false, daysRemaining: TRIAL_DAYS, daysUsed: 0 };
+  }
+
   const now = new Date();
+
+  if (isTrialEndsAt) {
+    // Direct trial_ends_at: check against the actual end date
+    const endsAt = new Date(trialEndsAtOrCreatedAt);
+    const remainingMs = endsAt.getTime() - now.getTime();
+    const daysRemaining = Math.max(0, Math.ceil(remainingMs / (1000 * 60 * 60 * 24)));
+    const expired = now >= endsAt;
+    const daysUsed = Math.max(0, TRIAL_DAYS - daysRemaining);
+    return { expired, daysRemaining, daysUsed };
+  }
+
+  // Legacy fallback: calculate from created_at + TRIAL_DAYS
+  const created = new Date(trialEndsAtOrCreatedAt);
   const diffMs = now.getTime() - created.getTime();
   const daysUsed = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   const daysRemaining = Math.max(0, TRIAL_DAYS - daysUsed);
@@ -313,8 +336,9 @@ export function checkTrialStatus(createdAt: string | Date): {
 
 export function canAccessProduct(
   planId: CitationPlanId | string,
-  createdAt: string | Date,
-  userEmail?: string | null
+  trialEndsAtOrCreatedAt: string | Date,
+  userEmail?: string | null,
+  isTrialEndsAt: boolean = false
 ): { allowed: boolean; reason?: string; upgradeRequired?: boolean } {
   if (userEmail) {
     const { shouldBypassPaywall } = require("@/lib/testing/test-accounts");
@@ -327,7 +351,7 @@ export function canAccessProduct(
     return { allowed: true };
   }
 
-  const trial = checkTrialStatus(createdAt);
+  const trial = checkTrialStatus(trialEndsAtOrCreatedAt, isTrialEndsAt);
 
   if (trial.expired) {
     return {
@@ -370,10 +394,11 @@ export function isPaidPlan(planId: string): boolean {
 export function canRunManualCheck(
   planId: CitationPlanId | string,
   checksToday: number,
-  createdAt?: string | Date
+  trialEndsAt?: string | Date,
+  isTrialEndsAt: boolean = false
 ): { allowed: boolean; reason?: string } {
-  if (planId === "free" && createdAt) {
-    const access = canAccessProduct(planId, createdAt);
+  if (planId === "free" && trialEndsAt) {
+    const access = canAccessProduct(planId, trialEndsAt, null, isTrialEndsAt);
     if (!access.allowed) {
       return { allowed: false, reason: access.reason };
     }

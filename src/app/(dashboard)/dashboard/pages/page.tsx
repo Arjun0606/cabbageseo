@@ -169,7 +169,7 @@ function PagesContent() {
             className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors"
           >
             <Zap className="w-5 h-5" />
-            Upgrade to Scout ($49/mo)
+            Upgrade to Scout ($39/mo)
             <ArrowRight className="w-5 h-5" />
           </Link>
           <p className="text-zinc-600 text-xs mt-3">

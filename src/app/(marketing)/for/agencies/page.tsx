@@ -43,8 +43,8 @@ export default function ForAgenciesPage() {
 
           <AnimateIn direction="up" delay={0.2}>
             <p className="text-xl text-zinc-300 mb-12 max-w-2xl mx-auto">
-              Manage AI citation tracking across all your client brands. Multi-site
-              management, weekly digests, and competitive intelligence at scale.
+              Manage GEO (Generative Engine Optimization) across all your client brands. Multi-site
+              AI citation tracking, weekly digests, and competitive intelligence at scale.
             </p>
           </AnimateIn>
 

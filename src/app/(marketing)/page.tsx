@@ -309,7 +309,7 @@ function HomeContent() {
               How it works
             </h2>
             <p className="text-zinc-500 text-center mb-12 max-w-xl mx-auto">
-              One loop. Five steps. Repeat until AI recommends you.
+              The GEO loop: scan, find gaps, fix, verify, monitor. Repeat until AI recommends you.
             </p>
           </AnimateIn>
 

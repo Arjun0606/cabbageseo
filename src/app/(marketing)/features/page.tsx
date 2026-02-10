@@ -118,8 +118,8 @@ export default function FeaturesPage() {
             One loop. Five steps. Real results.
           </h1>
           <p className="text-lg text-zinc-400 max-w-2xl mx-auto mb-8">
-            CabbageSEO runs a simple cycle: scan, find gaps, fix, verify,
-            repeat. Here&apos;s what powers each step.
+            CabbageSEO runs the GEO (Generative Engine Optimization) cycle:
+            scan, find gaps, fix, verify, repeat. Here&apos;s what powers each step.
           </p>
           <Link
             href="/signup"
@@ -146,7 +146,7 @@ export default function FeaturesPage() {
               Everything that powers the loop
             </h2>
             <p className="text-zinc-400 max-w-2xl">
-              Six capabilities that work together: scan AI engines, find your
+              Six GEO capabilities that work together: scan AI engines, find your
               gaps, fix them, and track the results.
             </p>
           </AnimateIn>

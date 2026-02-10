@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/api/get-user";
-import { getCitationPlan, canGeneratePage } from "@/lib/billing/citation-plans";
+import { getCitationPlan, canGeneratePage, canAccessProduct } from "@/lib/billing/citation-plans";
 import { generatePage } from "@/lib/geo/page-generator";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -42,11 +42,19 @@ export async function POST(request: NextRequest) {
     // Get org plan
     const { data: org } = await db
       .from("organizations")
-      .select("plan")
+      .select("plan, trial_ends_at")
       .eq("id", organizationId)
       .single();
     const planId = org?.plan || "free";
     const citationPlan = getCitationPlan(planId);
+
+    // Trial expiry check for free users
+    if (planId === "free" && org?.trial_ends_at) {
+      const access = canAccessProduct("free", org.trial_ends_at, currentUser.email, true);
+      if (!access.allowed) {
+        return NextResponse.json({ error: "Trial expired", code: "TRIAL_EXPIRED", upgradeRequired: true }, { status: 403 });
+      }
+    }
 
     // Parse request
     const body = await request.json();
@@ -75,7 +83,7 @@ export async function POST(request: NextRequest) {
       .select("pages_generated")
       .eq("organization_id", organizationId)
       .eq("period", currentMonth)
-      .single();
+      .maybeSingle();
 
     const pagesUsed = (usage as Record<string, number> | null)?.pages_generated || 0;
     const canUse = canGeneratePage(citationPlan.id, pagesUsed);

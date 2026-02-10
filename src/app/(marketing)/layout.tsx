@@ -29,6 +29,7 @@ import { StaggerGroup, StaggerItem } from "@/components/motion/stagger-group";
 const navLinks = [
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/what-is-geo", label: "What is GEO?" },
   { href: "/for/saas", label: "For Teams" },
 ];
 
@@ -174,6 +175,12 @@ function Footer() {
       { href: "/changelog", label: "Changelog" },
       { href: "/teaser", label: "Free AI Scan" },
     ],
+    resources: [
+      { href: "/what-is-geo", label: "What is GEO?" },
+      { href: "/docs", label: "Documentation" },
+      { href: "/leaderboard", label: "AI Leaderboard" },
+      { href: "/blog", label: "Blog" },
+    ],
     legal: [
       { href: "/privacy", label: "Privacy Policy" },
       { href: "/terms", label: "Terms of Service" },
@@ -187,7 +194,7 @@ function Footer() {
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
 
       <div className="max-w-6xl mx-auto px-6 py-16">
-        <StaggerGroup stagger={0.08} className="grid grid-cols-2 md:grid-cols-3 gap-8 mb-12">
+        <StaggerGroup stagger={0.08} className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           {/* Brand */}
           <StaggerItem className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4 group">
@@ -225,6 +232,20 @@ function Footer() {
             <h3 className="text-white font-semibold mb-4">Product</h3>
             <ul className="space-y-2.5">
               {footerLinks.product.map(link => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-zinc-500 hover:text-white text-sm transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </StaggerItem>
+
+          {/* Resources */}
+          <StaggerItem>
+            <h3 className="text-white font-semibold mb-4">Resources</h3>
+            <ul className="space-y-2.5">
+              {footerLinks.resources.map(link => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-zinc-500 hover:text-white text-sm transition-colors">
                     {link.label}

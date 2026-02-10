@@ -65,7 +65,7 @@ export default function ForSaaSPage() {
 
           <AnimateIn direction="up" delay={0.2}>
             <p className="text-xl text-zinc-300 mb-12 max-w-2xl mx-auto">
-              CabbageSEO helps SaaS founders track, analyze, and win AI
+              CabbageSEO is a GEO (Generative Engine Optimization) platform that helps SaaS founders track, analyze, and win AI
               recommendations across ChatGPT, Perplexity, and Google AI.
             </p>
           </AnimateIn>

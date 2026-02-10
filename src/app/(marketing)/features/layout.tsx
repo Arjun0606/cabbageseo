@@ -4,6 +4,14 @@ export const metadata: Metadata = {
   title: "Features – AI Visibility Tracking, Competitor Intelligence & Content Generation",
   description:
     "Track who AI recommends in your market. Monitor ChatGPT, Perplexity & Google AI citations daily. Get competitor alerts, 30-day sprints, and AI-generated comparison pages.",
+  keywords: [
+    "AI citation scanning",
+    "GEO tool",
+    "generative engine optimization tool",
+    "AI visibility features",
+    "competitor intelligence AI",
+    "AI search monitoring",
+  ],
   openGraph: {
     title: "CabbageSEO Features – AI Visibility Intelligence",
     description:

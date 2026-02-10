@@ -74,7 +74,7 @@ export function TrialExpiredPaywall() {
         <div className="space-y-3">
           <Link href="/settings/billing" className="block">
             <Button className="w-full bg-emerald-600 hover:bg-emerald-500 text-white h-12 text-base font-semibold">
-              Keep tracking — $49/mo
+              Keep tracking — $39/mo
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </Link>

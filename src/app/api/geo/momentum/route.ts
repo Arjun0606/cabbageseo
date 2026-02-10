@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/api/get-user";
 import { calculateMomentum } from "@/lib/geo/momentum";
+import { canAccessProduct } from "@/lib/billing/citation-plans";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 function getDbClient(): SupabaseClient | null {
@@ -53,6 +54,21 @@ export async function GET(request: NextRequest) {
         { error: "Database not configured" },
         { status: 500 },
       );
+    }
+
+    // Trial expiry check for free users
+    if (currentUser.plan === "free") {
+      const { data: org } = await db
+        .from("organizations")
+        .select("trial_ends_at")
+        .eq("id", organizationId)
+        .maybeSingle();
+      if (org?.trial_ends_at) {
+        const access = canAccessProduct("free", org.trial_ends_at, currentUser.email, true);
+        if (!access.allowed) {
+          return NextResponse.json({ error: "Trial expired", code: "TRIAL_EXPIRED" }, { status: 403 });
+        }
+      }
     }
 
     // Verify site belongs to user's organization

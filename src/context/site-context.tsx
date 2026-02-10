@@ -42,6 +42,7 @@ interface Organization {
   plan: string;
   status: string;
   createdAt: string;
+  trialEndsAt: string | null;
 }
 
 interface Usage {
@@ -154,10 +155,12 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       setUser(meData.user);
       setOrganization(meData.organization);
       
-      // Calculate trial status
+      // Calculate trial status (prefer trial_ends_at, fall back to created_at)
       if (meData.organization) {
         const isTrialUser = meData.organization.plan === "free";
-        const trialStatus = checkTrialStatus(meData.organization.createdAt || new Date().toISOString());
+        const hasTrialEndsAt = !!meData.organization.trialEndsAt;
+        const trialDate = meData.organization.trialEndsAt || meData.organization.createdAt || new Date().toISOString();
+        const trialStatus = checkTrialStatus(trialDate, hasTrialEndsAt);
         setTrial({
           isTrialUser,
           expired: isTrialUser && trialStatus.expired,
@@ -279,20 +282,23 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   const deleteSite = useCallback(async (siteId: string): Promise<boolean> => {
     try {
       const res = await fetch(`/api/sites?id=${siteId}`, { method: "DELETE" });
-      
+
       if (res.ok) {
-        setSites(prev => prev.filter(s => s.id !== siteId));
-        if (currentSite?.id === siteId) {
-          const remaining = sites.filter(s => s.id !== siteId);
-          setCurrentSiteState(remaining[0] || null);
-        }
+        setSites(prev => {
+          const remaining = prev.filter(s => s.id !== siteId);
+          // If deleting the current site, switch to the first remaining site
+          if (currentSite?.id === siteId) {
+            setCurrentSiteState(remaining[0] || null);
+          }
+          return remaining;
+        });
         return true;
       }
       return false;
     } catch {
       return false;
     }
-  }, [currentSite, sites]);
+  }, [currentSite]);
 
   const runCheck = useCallback(async (siteId?: string, query?: string): Promise<CheckResult | null> => {
     const id = siteId || currentSite?.id;

@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   User,
+  Users,
   CreditCard,
   Shield,
   ChevronRight,
@@ -31,6 +32,8 @@ import { getCitationPlanLimits } from "@/lib/billing/citation-plans";
 
 const settingsNav = [
   { href: "/settings/billing", label: "Billing", icon: CreditCard, description: "Subscription & invoices" },
+  { href: "/settings/notifications", label: "Notifications", icon: Mail, description: "Email & alert preferences" },
+  { href: "/settings/referrals", label: "Referrals", icon: Users, description: "Invite friends, earn rewards" },
 ];
 
 export default function SettingsPage() {

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useSite } from "@/context/site-context";
 import {
   ArrowLeft,
   Copy,
@@ -92,6 +93,7 @@ function markdownToHtml(md: string): string {
 export default function PageDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { currentSite } = useSite();
   const pageId = params.id as string;
 
   const [page, setPage] = useState<GeneratedPage | null>(null);
@@ -343,7 +345,7 @@ export default function PageDetailPage() {
         <div className="space-y-1">
           <p className="text-blue-400 text-lg">{page.title}</p>
           <p className="text-emerald-400 text-sm">
-            https://{page.siteId.slice(0, 8)}...
+            https://{currentSite?.domain || "yoursite.com"}/...
           </p>
           <p className="text-zinc-400 text-sm">
             {page.metaDescription || "No meta description"}

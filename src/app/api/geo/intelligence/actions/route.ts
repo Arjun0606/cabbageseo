@@ -15,6 +15,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/api/get-user";
 import {
   getCitationPlan,
+  canAccessProduct,
   canUseGapAnalysis,
   canUseContentRecommendations,
   canUseActionPlan,
@@ -67,10 +68,18 @@ export async function POST(request: NextRequest) {
     // Get org plan from DB
     const { data: org } = await db
       .from("organizations")
-      .select("plan, created_at")
+      .select("plan, trial_ends_at")
       .eq("id", organizationId)
       .single();
     const planId = org?.plan || "free";
+
+    // Trial expiry check for free users
+    if (planId === "free" && org?.trial_ends_at) {
+      const access = canAccessProduct("free", org.trial_ends_at, currentUser.email, true);
+      if (!access.allowed) {
+        return NextResponse.json({ error: "Trial expired", code: "TRIAL_EXPIRED", upgradeRequired: true }, { status: 403 });
+      }
+    }
 
     const citationPlan = getCitationPlan(planId);
     const body: RequestBody = await request.json();

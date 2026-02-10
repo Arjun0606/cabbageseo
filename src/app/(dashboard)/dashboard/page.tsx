@@ -271,6 +271,11 @@ function DashboardContent() {
     fetchImmediateData();
   }, [fetchImmediateData]);
 
+  // Reset progress data when site changes so Zone 3 refetches
+  useEffect(() => {
+    setProgressLoaded(false);
+  }, [currentSite?.id]);
+
   // Load progress data when section is expanded
   useEffect(() => {
     if (showProgress && !progressLoaded) {
@@ -534,7 +539,7 @@ function DashboardContent() {
               { icon: Bell, label: "Set up email + Slack alerts", href: "/settings/notifications" },
               { icon: FileText, label: "Review your fix pages", href: "/dashboard/pages" },
               { icon: Zap, label: "Start your 30-day sprint", href: "#", onClick: () => setShowProgress(true) },
-              { icon: Users, label: "Track competitors", href: "/dashboard/competitors" },
+              { icon: Users, label: "Track competitors", href: "/dashboard/actions" },
             ].map((item) => (
               <Link
                 key={item.label}
@@ -582,7 +587,7 @@ function DashboardContent() {
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  Upgrade — $49/mo
+                  Upgrade — $39/mo
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -606,7 +611,7 @@ function DashboardContent() {
 
       {/* ═══ ZONE 1: Score Hero ═══ */}
       <MomentumScore
-        score={momentum?.score || 0}
+        score={momentum?.score ?? null}
         change={momentum?.change || 0}
         trend={momentum?.trend || "stable"}
         queriesWon={momentum?.queriesWon || 0}
@@ -620,11 +625,12 @@ function DashboardContent() {
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: "Sites", used: usage.sitesUsed, limit: usage.sitesLimit, icon: Globe },
-            { label: "Checks today", used: usage.checksUsed, limit: usage.checksLimit, icon: BarChart3 },
+            { label: "Checks today", used: usage.checksUsed, limit: usage.checksLimit === 999999 ? -1 : usage.checksLimit, icon: BarChart3 },
             { label: "Competitors", used: usage.competitorsUsed, limit: usage.competitorsLimit, icon: Users },
           ].map((meter) => {
-            const pct = meter.limit > 0 ? (meter.used / meter.limit) * 100 : 0;
-            const atLimit = meter.used >= meter.limit;
+            const isUnlimited = meter.limit === -1;
+            const pct = isUnlimited ? 0 : meter.limit > 0 ? (meter.used / meter.limit) * 100 : 0;
+            const atLimit = !isUnlimited && meter.used >= meter.limit;
             const nearLimit = pct >= 80;
             return (
               <div key={meter.label} className="rounded-xl p-3 bg-zinc-900 border border-zinc-800">
@@ -633,7 +639,7 @@ function DashboardContent() {
                   <span className="text-xs text-zinc-500">{meter.label}</span>
                 </div>
                 <p className={`text-lg font-bold mb-1.5 ${atLimit ? "text-red-400" : "text-white"}`}>
-                  {meter.used}<span className="text-zinc-500 font-normal text-sm">/{meter.limit}</span>
+                  {meter.used}<span className="text-zinc-500 font-normal text-sm">/{meter.limit === -1 ? "∞" : meter.limit}</span>
                 </p>
                 <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
                   <div
@@ -871,7 +877,7 @@ function DashboardContent() {
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
-                      Upgrade to Scout — $49/mo
+                      Upgrade to Scout — $39/mo
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}

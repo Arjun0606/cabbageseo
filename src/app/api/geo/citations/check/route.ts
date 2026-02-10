@@ -114,38 +114,59 @@ const CATEGORY_QUERIES: Record<string, string[]> = {
 
 // Generate queries based on domain, category, and plan
 function generateQueries(
-  domain: string, 
-  category: string | null, 
-  customQueries: string[], 
+  domain: string,
+  category: string | null,
+  customQueries: string[],
   plan: string
 ): string[] {
   const name = domain.split(".")[0];
   const cleanName = name.charAt(0).toUpperCase() + name.slice(1);
-  
-  // Base queries (always included)
+
+  // Base queries (always included — simulate real buyer questions)
   const baseQueries = [
     `What is ${cleanName} and what do they do?`,
     `Tell me about ${domain}`,
     `What are the best alternatives to ${cleanName}?`,
   ];
-  
+
+  // Expanded intent queries for paid plans (work for any domain/category)
+  const intentQueries = [
+    `Best alternatives to ${cleanName} ${new Date().getFullYear()}`,
+    `${cleanName} vs competitors comparison`,
+    `Is ${cleanName} any good?`,
+    `Products similar to ${cleanName}`,
+    `${cleanName} reviews and pricing`,
+    `Should I use ${cleanName}?`,
+    `${cleanName} pros and cons`,
+    `Who competes with ${cleanName}?`,
+    `Top tools like ${cleanName}`,
+    `What do people think about ${cleanName}?`,
+    `How does ${cleanName} compare to other options?`,
+    `${cleanName} features overview`,
+    `Recommend something like ${domain}`,
+    `Why do people choose ${cleanName}?`,
+    `${cleanName} for small businesses`,
+  ];
+
   // Category-specific queries
-  const categoryQueries = category && CATEGORY_QUERIES[category.toLowerCase()] 
-    ? CATEGORY_QUERIES[category.toLowerCase()] 
+  const categoryQueries = category && CATEGORY_QUERIES[category.toLowerCase()]
+    ? CATEGORY_QUERIES[category.toLowerCase()]
     : [];
-  
-  // Determine query count by plan
+
+  // Determine query count by plan (must match queriesPerCheck in citation-plans.ts)
   let maxQueries = 3; // Free
   if (plan === "scout") maxQueries = 10;
-  if (plan === "command" || plan === "dominate") maxQueries = 20;
+  if (plan === "command") maxQueries = 20;
+  if (plan === "dominate") maxQueries = 30;
 
-  // Combine: custom queries first, then base, then category
+  // Combine: custom queries first, then base, then category, then intent
   const allQueries = [
-    ...customQueries.slice(0, (plan === "command" || plan === "dominate") ? 100 : 5), // Custom queries (limited for scout)
+    ...customQueries.slice(0, (plan === "command" || plan === "dominate") ? 100 : 5),
     ...baseQueries,
     ...categoryQueries,
+    ...intentQueries,
   ];
-  
+
   // Return unique queries up to the plan limit
   return [...new Set(allQueries)].slice(0, maxQueries);
 }
@@ -273,9 +294,8 @@ async function checkTrustSourcePresence(
 // ============================================
 // PERPLEXITY - Real API with Citations
 // ============================================
-async function checkPerplexity(domain: string, queries: string[]): Promise<CheckResult> {
+async function checkPerplexity(domain: string, query: string): Promise<CheckResult> {
   const apiKey = process.env.PERPLEXITY_API_KEY;
-  const query = queries[0];
   
   if (!apiKey) {
     return {
@@ -359,9 +379,8 @@ async function checkPerplexity(domain: string, queries: string[]): Promise<Check
 // ============================================
 // GOOGLE AI (Gemini) - With Search Grounding
 // ============================================
-async function checkGoogleAI(domain: string, queries: string[]): Promise<CheckResult> {
+async function checkGoogleAI(domain: string, query: string): Promise<CheckResult> {
   const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
-  const query = queries[1];
   
   if (!apiKey) {
     return {
@@ -454,9 +473,8 @@ async function checkGoogleAI(domain: string, queries: string[]): Promise<CheckRe
 // ============================================
 // CHATGPT - Knowledge Check (No Web Access)
 // ============================================
-async function checkChatGPT(domain: string, queries: string[]): Promise<CheckResult> {
+async function checkChatGPT(domain: string, query: string): Promise<CheckResult> {
   const apiKey = process.env.OPENAI_API_KEY;
-  const query = queries[2];
   
   if (!apiKey) {
     return {
@@ -594,28 +612,28 @@ export async function POST(request: NextRequest) {
     let customQueries: string[] = [];
     const orgId = currentUser.organizationId;
 
-    let orgCreatedAt: string | undefined;
+    let orgTrialEndsAt: string | undefined;
 
     if (orgId) {
       // Fetch org plan from database
       const { data: orgData } = await db
         .from("organizations")
-        .select("plan, created_at")
+        .select("plan, trial_ends_at")
         .eq("id", orgId)
         .maybeSingle();
 
       if (orgData) {
         plan = orgData.plan || "free";
-        orgCreatedAt = orgData.created_at;
+        orgTrialEndsAt = orgData.trial_ends_at;
       }
-      
+
       // ============================================
       // PLAN ENFORCEMENT - CRITICAL
       // ============================================
-      
+
       // Check if free user's trial has expired (bypass for test accounts)
-      if (plan === "free" && orgCreatedAt) {
-        const access = canAccessProduct(plan, orgCreatedAt, userEmail);
+      if (plan === "free" && orgTrialEndsAt) {
+        const access = canAccessProduct(plan, orgTrialEndsAt, userEmail, true);
         if (!access.allowed) {
           return NextResponse.json({
             error: access.reason || "Trial expired. Upgrade to continue.",
@@ -639,7 +657,7 @@ export async function POST(request: NextRequest) {
         const checksToday = todayUsage?.checks_used || 0;
         
         // Verify can run check
-        const canCheck = canRunManualCheck(plan, checksToday, orgCreatedAt);
+        const canCheck = canRunManualCheck(plan, checksToday, orgTrialEndsAt, true);
         if (!canCheck.allowed) {
           return NextResponse.json({
             error: canCheck.reason || "Daily limit reached. Upgrade for unlimited checks.",
@@ -669,23 +687,34 @@ export async function POST(request: NextRequest) {
     // Generate queries based on plan, category, and custom queries
     const generatedQueries = generateQueries(cleanDomain, category, customQueries, plan);
 
-    // If single query re-check, use that query for all platforms
-    const queries = singleQuery
-      ? [singleQuery, singleQuery, singleQuery]
-      : generatedQueries;
+    console.log(`[Citation Check] Plan: ${plan}, Category: ${category}, Queries: ${generatedQueries.length}${singleQuery ? ' (single re-check)' : ''}`);
 
-    console.log(`[Citation Check] Plan: ${plan}, Category: ${category}, Queries: ${queries.length}${singleQuery ? ' (single re-check)' : ''}`);
+    // Build check tasks — distribute queries across all 3 AI platforms.
+    // Free (3 queries): 1 per platform. Scout (10): 3-4 each. Command (20): 6-7 each. Dominate (30): 10 each.
+    const checkTasks: Promise<CheckResult>[] = [];
 
-    // Run ALL checks in parallel - real API calls only
-    const [perplexityResult, googleResult, chatgptResult, trustSourceResults] = await Promise.all([
-      checkPerplexity(cleanDomain, queries),
-      checkGoogleAI(cleanDomain, queries),
-      checkChatGPT(cleanDomain, queries),
-      // Also check if domain is listed on key trust sources
+    if (singleQuery) {
+      // Single query re-check: test the same query on all 3 platforms
+      checkTasks.push(checkPerplexity(cleanDomain, singleQuery));
+      checkTasks.push(checkGoogleAI(cleanDomain, singleQuery));
+      checkTasks.push(checkChatGPT(cleanDomain, singleQuery));
+    } else {
+      // Full scan: round-robin distribute generated queries across platforms
+      const platformCheckers = [
+        (q: string) => checkPerplexity(cleanDomain, q),
+        (q: string) => checkGoogleAI(cleanDomain, q),
+        (q: string) => checkChatGPT(cleanDomain, q),
+      ];
+      for (let i = 0; i < generatedQueries.length; i++) {
+        checkTasks.push(platformCheckers[i % 3](generatedQueries[i]));
+      }
+    }
+
+    // Run ALL checks in parallel (plus trust source presence)
+    const [results, trustSourceResults] = await Promise.all([
+      Promise.all(checkTasks),
       checkTrustSourcePresence(cleanDomain, ["g2.com", "capterra.com", "producthunt.com", "trustpilot.com"]),
     ]);
-
-    const results = [perplexityResult, googleResult, chatgptResult];
     
     // Count how many APIs were actually called
     const apisCalled = results.filter(r => r.apiCalled).length;
@@ -960,15 +989,14 @@ export async function POST(request: NextRequest) {
         topCompetitors: allCompetitors.slice(0, 5),
         category: category,
       },
-      // NEW: Distribution intelligence
+      // Distribution intelligence (based on actual check results)
       distributionIntelligence: {
         sourcesFound: allSources.length,
         sourcesMentioningCompetitors: uniqueCompetitorSources,
-        knownTrustSources: TRUST_SOURCES.slice(0, 10).map(s => ({
-          domain: s.domain,
-          name: s.name,
-          trustScore: s.trustScore,
-          howToGetListed: s.howToGetListed,
+        trustSourcePresence: trustSources.map(t => ({
+          source: t.source,
+          isListed: t.isListed,
+          profileUrl: t.profileUrl,
         })),
       },
     });

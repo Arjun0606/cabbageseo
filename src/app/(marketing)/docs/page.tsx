@@ -30,7 +30,7 @@ const sections = [
     items: [
       {
         title: "What is AI Visibility Intelligence?",
-        content: `CabbageSEO shows you who AI recommends when people search for products like yours. When someone asks ChatGPT "what's the best CRM?" or asks Perplexity for "project management tool alternatives" — AI picks winners. We show you if you're one of them, or if your competitors are getting all the recommendations.`,
+        content: `CabbageSEO is a GEO (Generative Engine Optimization) platform that shows you who AI recommends when people search for products like yours. When someone asks ChatGPT "what's the best CRM?" or asks Perplexity for "project management tool alternatives" — AI picks winners. We show you if you're one of them, or if your competitors are getting all the recommendations.`,
       },
       {
         title: "How does it work?",

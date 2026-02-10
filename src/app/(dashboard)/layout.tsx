@@ -49,7 +49,7 @@ const navItems = [
 function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { organization, currentSite, sites, trial } = useSite();
+  const { organization, currentSite, sites, trial, setCurrentSite } = useSite();
   const [sitesOpen, setSitesOpen] = useState(false);
   const { checkout, loading: checkoutLoading } = useCheckout();
 
@@ -108,17 +108,17 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
           {sitesOpen && (
             <div className="mt-2 space-y-1">
               {sites.filter(s => s.id !== currentSite.id).map(site => (
-                <Link
+                <button
                   key={site.id}
-                  href={`/dashboard?site=${site.id}`}
                   onClick={() => {
+                    setCurrentSite(site);
                     setSitesOpen(false);
                     if (onClose) onClose();
                   }}
-                  className="block p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg"
+                  className="block w-full text-left p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg"
                 >
                   {site.domain}
-                </Link>
+                </button>
               ))}
               <Link
                 href="/onboarding"
@@ -228,7 +228,7 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <>
-                  {nextPlan.name} — ${nextPlan.monthlyPrice}/mo
+                  {nextPlan.name} — ${nextPlan.yearlyPrice}/mo
                   <ArrowRight className="w-3 h-3" />
                 </>
               )}
@@ -236,12 +236,12 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
           </div>
         )}
 
-        {/* Plan badge for Dominate users */}
+        {/* Plan badge for top-tier users */}
         {!nextPlan && (
           <div className="flex items-center justify-between">
             <span className="text-xs text-zinc-500">Plan</span>
             <Badge className="text-xs bg-amber-500">
-              Dominate
+              {CITATION_PLANS[plan as keyof typeof CITATION_PLANS]?.name || plan}
             </Badge>
           </div>
         )}

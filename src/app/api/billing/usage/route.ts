@@ -70,19 +70,21 @@ export async function GET() {
       .select("id", { count: "exact", head: true })
       .eq("organization_id", orgId);
 
-    // Get total competitors count
-    const { data: sites } = await db
+    // Get max competitors per site (limit is per-site, not org-wide)
+    const { data: orgSites } = await db
       .from("sites")
       .select("id")
       .eq("organization_id", orgId);
 
     let competitorsCount = 0;
-    if (sites && sites.length > 0) {
-      const { count } = await db
-        .from("competitors")
-        .select("id", { count: "exact", head: true })
-        .in("site_id", sites.map(s => s.id));
-      competitorsCount = count || 0;
+    if (orgSites && orgSites.length > 0) {
+      for (const s of orgSites) {
+        const { count } = await db
+          .from("competitors")
+          .select("id", { count: "exact", head: true })
+          .eq("site_id", s.id);
+        competitorsCount = Math.max(competitorsCount, count || 0);
+      }
     }
 
     // Calculate checks limit based on plan

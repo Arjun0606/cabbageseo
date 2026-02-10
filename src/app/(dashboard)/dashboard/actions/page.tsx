@@ -312,7 +312,7 @@ function AIToolRow({
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    {planInfo?.name || "Upgrade"} — ${planInfo?.monthlyPrice || 49}/mo
+                    {planInfo?.name || "Upgrade"} — ${planInfo?.yearlyPrice || 39}/mo
                     <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}
@@ -414,7 +414,7 @@ function SourceUpgradeGate() {
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
           <>
-            Unlock with Scout — $49/mo
+            Unlock with Scout — $39/mo
             <ArrowRight className="w-3.5 h-3.5" />
           </>
         )}
@@ -616,7 +616,7 @@ export default function ActionsPage() {
                       </ol>
                       {!isPaid && source.howToGetListed.length > 1 && (
                         <p className="text-zinc-500 text-xs mb-3">
-                          See all {source.howToGetListed.length} steps — <button onClick={() => checkout("scout", "yearly")} className="text-emerald-400 hover:text-emerald-300">upgrade to Scout ($49/mo)</button>
+                          See all {source.howToGetListed.length} steps — <button onClick={() => checkout("scout", "yearly")} className="text-emerald-400 hover:text-emerald-300">upgrade to Scout ($39/mo)</button>
                         </p>
                       )}
                       <div className="flex items-center gap-2">

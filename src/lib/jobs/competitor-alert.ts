@@ -33,29 +33,23 @@ export const competitorChangeAlert = inngest.createFunction(
 
     const supabase = createServiceClient();
 
-    // 1. Get the site owner's email and notification preferences
+    // 1. Get the site owner's email
     const userInfo = await step.run("get-owner-email", async () => {
       const { data } = await supabase
         .from("users")
-        .select("id, email, notification_settings")
+        .select("id, email")
         .eq("organization_id", organizationId)
         .eq("role", "owner")
         .single();
 
-      return data as { id: string; email: string; notification_settings?: Record<string, boolean> } | null;
+      return data as { id: string; email: string } | null;
     });
 
     if (!userInfo?.email) {
       return { sent: false, reason: "No owner email found" };
     }
 
-    // 2. Check notification preferences (from users.notification_settings JSON)
-    const settings = userInfo.notification_settings || {};
-    if (settings.competitorAlerts === false) {
-      return { sent: false, reason: "Competitor alerts disabled" };
-    }
-
-    // 3. Send the fear-driven email
+    // 2. Send the fear-driven email
     if (!process.env.RESEND_API_KEY) {
       console.error("[Competitor Alert] RESEND_API_KEY not configured, skipping email");
       return { sent: false, reason: "RESEND_API_KEY not configured" };

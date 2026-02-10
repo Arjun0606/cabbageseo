@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         .insert({
           id: authData.user.id,
           email: authData.user.email!,
-          full_name: fullName || null,
+          name: fullName || null,
         });
 
       if (profileError) {

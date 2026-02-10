@@ -311,24 +311,15 @@ export const trialDripEmail = inngest.createFunction(
         // Get the org owner's email
         const { data: user } = await supabase
           .from("users")
-          .select("email, notification_settings")
+          .select("email")
           .eq("organization_id", org.id)
           .eq("role", "owner")
           .single();
 
-        const userData = user as {
-          email: string;
-          notification_settings?: Record<string, boolean>;
-        } | null;
+        const userData = user as { email: string } | null;
 
         if (!userData?.email) {
           return { sent: false, reason: "No owner email" };
-        }
-
-        // Check if user has unsubscribed from marketing emails
-        const settings = userData.notification_settings || {};
-        if (settings.marketingEmails === false || settings.trialEmails === false) {
-          return { sent: false, reason: "Unsubscribed" };
         }
 
         // Get primary site data for personalization

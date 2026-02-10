@@ -113,10 +113,11 @@ export async function GET() {
 
     // Get or create user profile with organization
     let orgId: string | null = null;
-    let orgData: { 
-      plan: string; 
+    let orgData: {
+      plan: string;
       subscription_status: string;
       created_at: string;
+      trial_ends_at: string | null;
     } | null = null;
 
     // Check if user exists in our users table
@@ -160,15 +161,15 @@ export async function GET() {
       }
     }
 
-    // Get organization details (including created_at for trial calculation)
+    // Get organization details (including trial_ends_at for trial calculation)
     if (orgId) {
       const { data: org } = await db
         .from("organizations")
-        .select("plan, subscription_status, created_at")
+        .select("plan, subscription_status, created_at, trial_ends_at")
         .eq("id", orgId)
         .maybeSingle();
-      
-      orgData = org as { plan: string; subscription_status: string; created_at: string } | null;
+
+      orgData = org as { plan: string; subscription_status: string; created_at: string; trial_ends_at: string | null } | null;
     }
     
     const finalPlan = orgData?.plan || "free";
@@ -231,6 +232,7 @@ export async function GET() {
         plan: finalPlan,
         status: orgData?.subscription_status || "active",
         createdAt: orgData?.created_at || new Date().toISOString(),
+        trialEndsAt: orgData?.trial_ends_at || null,
       } : null,
       sites,
       currentSite: sites.length > 0 ? sites[0] : null,

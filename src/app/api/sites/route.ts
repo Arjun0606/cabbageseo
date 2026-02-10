@@ -126,16 +126,15 @@ export async function POST(request: NextRequest) {
     // Get plan from DB
     const { data: org } = await db
       .from("organizations")
-      .select("plan, created_at")
+      .select("plan, trial_ends_at")
       .eq("id", orgId)
       .single();
 
     const plan = org?.plan || "free";
-    const orgCreatedAt = org?.created_at;
 
     // Check if free user's trial has expired
-    if (plan === "free" && orgCreatedAt) {
-      const access = canAccessProduct(plan, orgCreatedAt, currentUser.email || null);
+    if (plan === "free" && org?.trial_ends_at) {
+      const access = canAccessProduct(plan, org.trial_ends_at, currentUser.email || null, true);
       if (!access.allowed) {
         return NextResponse.json({
           error: access.reason || "Trial expired. Upgrade to continue.",

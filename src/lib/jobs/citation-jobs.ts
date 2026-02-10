@@ -15,6 +15,18 @@ import { inngest } from "./inngest-client";
 import { createServiceClient } from "@/lib/supabase/server";
 
 // ============================================
+// HELPER: Resolve legacy plan names to current
+// ============================================
+function resolvePlan(plan: string): string {
+  const map: Record<string, string> = {
+    starter: "scout",
+    pro: "command",
+    pro_plus: "dominate",
+  };
+  return map[plan] || plan;
+}
+
+// ============================================
 // HELPER: Run citation check for a site
 // ============================================
 async function runCitationCheck(siteId: string, domain: string): Promise<{
@@ -107,7 +119,7 @@ export const dailyCitationCheck = inngest.createFunction(
     const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / 86400000);
 
     const sites = allSites.filter((site) => {
-      const plan = site.organizations?.plan || "free";
+      const plan = resolvePlan(site.organizations?.plan || "free");
       if (plan === "free") return false;
       if (plan === "scout") return utcDay === 1; // Monday only
       if (plan === "command") return dayOfYear % 3 === 0; // Every 3 days
@@ -286,7 +298,7 @@ export const hourlyCitationCheck = inngest.createFunction(
           organizations!inner(plan)
         `)
         .eq("status", "active")
-        .in("organizations.plan", ["command", "dominate"]);
+        .in("organizations.plan", ["command", "dominate", "pro", "pro_plus"]);
       
       if (error) {
         console.error("Failed to fetch paid sites:", error);
@@ -356,22 +368,16 @@ export const sendCitationAlert = inngest.createFunction(
     const userEmail = await step.run("get-user-email", async () => {
       const { data } = await supabase
         .from("users")
-        .select("email, notification_settings")
+        .select("email")
         .eq("organization_id", organizationId)
         .eq("role", "owner")
         .single();
-      
-      return data as { email: string; notification_settings?: Record<string, boolean> } | null;
+
+      return data as { email: string } | null;
     });
 
     if (!userEmail?.email) {
       return { sent: false, reason: "No email found" };
-    }
-
-    // Check if user wants citation alerts
-    const settings = userEmail.notification_settings || {} as Record<string, boolean>;
-    if (settings.citationAlerts === false) {
-      return { sent: false, reason: "Alerts disabled" };
     }
 
     // Send the email - FEAR + ACTION copy
@@ -482,22 +488,21 @@ export const weeklyReport = inngest.createFunction(
 
     let reportsSent = 0;
 
-    for (const org of orgs) {
+    // Skip free-tier orgs — they don't get weekly reports
+    const paidOrgs = orgs.filter((o) => resolvePlan(o.plan) !== "free");
+
+    for (const org of paidOrgs) {
       await step.run(`report-${org.id}`, async () => {
         // Get user email
         const { data: user } = await supabase
           .from("users")
-          .select("email, notification_settings")
+          .select("email")
           .eq("organization_id", org.id)
           .eq("role", "owner")
           .single();
 
-        const userData = user as { email: string; notification_settings?: Record<string, boolean> } | null;
+        const userData = user as { email: string } | null;
         if (!userData?.email) return;
-
-        // Check if weekly reports enabled
-        const settings = userData.notification_settings || {};
-        if (settings.weeklyReport === false) return;
 
         // Get site data (including momentum + last_checked_at for recheck nudge)
         const { data: sites } = await supabase
@@ -831,26 +836,20 @@ export const sendVisibilityDropAlert = inngest.createFunction(
 
     const supabase = createServiceClient();
 
-    // Get user email + notification preferences
+    // Get user email
     const userData = await step.run("get-user-email", async () => {
       const { data } = await supabase
         .from("users")
-        .select("email, notification_settings")
+        .select("email")
         .eq("organization_id", organizationId)
         .eq("role", "owner")
         .single();
 
-      return data as { email: string; notification_settings?: Record<string, boolean> } | null;
+      return data as { email: string } | null;
     });
 
     if (!userData?.email) {
       return { sent: false, reason: "No email found" };
-    }
-
-    // Check if citation alerts enabled (drop alerts use same toggle)
-    const settings = userData.notification_settings || {};
-    if (settings.citationAlerts === false) {
-      return { sent: false, reason: "Alerts disabled" };
     }
 
     // Get top 3 lost queries for context
