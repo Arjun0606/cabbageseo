@@ -210,14 +210,25 @@ interface PlatformResult {
   mentionedYou: boolean;
   snippet: string;
   inCitations: boolean;
+  domainFound: boolean; // Full domain (e.g. "snapcommit.dev") found — strong signal
   mentionPosition: number; // 0-1 (lower = earlier), -1 = not found
   mentionCount: number;
 }
 
 /**
- * Granular visibility scoring across 6 factors.
- * Each factor maps to a real, measurable signal from the AI responses.
- * Total: 0-100 with continuous values (e.g. 17, 34, 47, 63, 82).
+ * Honest visibility scoring across 6 factors.
+ *
+ * Key insight: queries contain the brand name (e.g. "best snapcommit alternatives"),
+ * so AI will echo the name in its response. This is NOT a recommendation — it's just
+ * acknowledging the query. We must distinguish:
+ *
+ *   - Citation: domain in actual source links → strongest signal (40 pts)
+ *   - Domain found: full domain (e.g. "snapcommit.dev") in text → strong signal (25 pts)
+ *   - Brand echo: brand name in text but no domain/citation → near-worthless (8 pts)
+ *
+ * Unknown brands with no marketing should score 5-15.
+ * Known brands should score 40-70.
+ * Dominant brands should score 70-95.
  */
 function calculateVisibilityScore(
   results: PlatformResult[],
@@ -225,12 +236,12 @@ function calculateVisibilityScore(
 ): {
   score: number;
   factors: {
-    domainMentioned: number;    // 0-30: Were you mentioned at all?
-    inCitations: number;        // 0-20: Were you in official citations?
-    positionBonus: number;      // 0-15: Were you mentioned early/prominently?
-    competitorDensity: number;  // 0-15: How crowded is the field?
-    mentionDepth: number;       // 0-10: How detailed were mentions?
-    brandRecognition: number;   // 0-10: Did multiple platforms recognize you?
+    citationPresence: number;    // 0-40: Domain in citation links
+    domainVisibility: number;    // 0-25: Full domain in response text
+    brandEcho: number;           // 0-8: Brand name only (likely query echo)
+    positionBonus: number;       // 0-12: Mentioned early (genuine only)
+    mentionDepth: number;        // 0-10: Multiple genuine mentions
+    competitorDensity: number;   // 0-5: Market crowding
   };
   explanation: string;
 } {
@@ -238,71 +249,67 @@ function calculateVisibilityScore(
   if (platformCount === 0) {
     return {
       score: 0,
-      factors: { domainMentioned: 0, inCitations: 0, positionBonus: 0, competitorDensity: 0, mentionDepth: 0, brandRecognition: 0 },
+      factors: { citationPresence: 0, domainVisibility: 0, brandEcho: 0, positionBonus: 0, mentionDepth: 0, competitorDensity: 0 },
       explanation: "No AI platforms responded.",
     };
   }
 
-  const mentionedResults = results.filter(r => r.mentionedYou);
-  const mentionedCount = mentionedResults.length;
-  const citedResults = results.filter(r => r.inCitations);
+  // Tier 1: Citation presence (0-40) — domain in actual source citations/links
+  const citedCount = results.filter(r => r.inCitations).length;
+  const citationPresence = Math.round(40 * (citedCount / platformCount));
 
-  // Factor 1: Domain Mentioned (0-30)
-  // Smooth curve: 0 platforms = 0, 1 = 12, 2 = 22, 3 = 30
-  const mentionRatio = mentionedCount / platformCount;
-  const domainMentioned = Math.round(30 * (1 - Math.exp(-2.5 * mentionRatio)));
+  // Tier 2: Domain visibility (0-25) — full domain found in response text
+  const domainFoundCount = results.filter(r => r.domainFound).length;
+  const domainVisibility = Math.round(25 * (domainFoundCount / platformCount));
 
-  // Factor 2: In Citations (0-20)
-  // Being in actual citation lists/sources is a stronger signal
-  const citationRatio = citedResults.length / platformCount;
-  const inCitations = Math.round(20 * citationRatio);
+  // Tier 3: Brand echo (0-8) — brand name in text but no domain/citation
+  // This is nearly worthless because AI echoes the brand from the query
+  const brandOnlyCount = results.filter(r => r.mentionedYou && !r.domainFound && !r.inCitations).length;
+  const brandEcho = Math.round(8 * (brandOnlyCount / platformCount));
 
-  // Factor 3: Position Bonus (0-15)
-  // Earlier mentions = more prominent. Average position across platforms.
+  // Tier 4: Position bonus (0-12) — only for genuine mentions (domain or citation)
   let positionBonus = 0;
-  const validPositions = mentionedResults.map(r => r.mentionPosition).filter(p => p >= 0);
-  if (validPositions.length > 0) {
-    const avgPosition = validPositions.reduce((a, b) => a + b, 0) / validPositions.length;
-    // Position 0 (top) = 15 points, position 0.5 (middle) = 7.5, position 1 (bottom) = 0
-    positionBonus = Math.round(15 * (1 - avgPosition));
+  const genuineMentions = results.filter(r => r.domainFound || r.inCitations);
+  if (genuineMentions.length > 0) {
+    const positions = genuineMentions.map(r => r.mentionPosition).filter(p => p >= 0);
+    if (positions.length > 0) {
+      const avgPos = positions.reduce((a, b) => a + b, 0) / positions.length;
+      positionBonus = Math.round(12 * (1 - avgPos));
+    }
   }
 
-  // Factor 4: Competitor Density (0-15)
-  // Fewer competitors recommended = less crowded = better for you
-  // 0 competitors = 15 (you're the only one!), 10+ = 2 (very crowded)
-  const competitorDensity = Math.round(15 * Math.exp(-competitorCount / 4));
+  // Tier 5: Mention depth (0-10) — multiple genuine mentions only
+  const genuineMentionCount = results
+    .filter(r => r.domainFound || r.inCitations)
+    .reduce((sum, r) => sum + r.mentionCount, 0);
+  const mentionDepth = Math.round(10 * (1 - Math.exp(-genuineMentionCount / 3)));
 
-  // Factor 5: Mention Depth (0-10)
-  // More mentions = deeper coverage. Sum across platforms.
-  const totalMentions = results.reduce((sum, r) => sum + r.mentionCount, 0);
-  // 0 mentions = 0, 1 = 4, 3 = 7, 5 = 9, 8+ = 10
-  const mentionDepth = Math.round(10 * (1 - Math.exp(-totalMentions / 3)));
+  // Tier 6: Competition density (0-5) — fewer competitors = less crowded
+  const competitorDensity = Math.round(5 * Math.exp(-competitorCount / 4));
 
-  // Factor 6: Brand Recognition (0-10)
-  // How many platforms independently recognized the brand?
-  // 0/3 = 0, 1/3 = 3, 2/3 = 7, 3/3 = 10
-  const recognitionRatio = mentionedCount / platformCount;
-  const brandRecognition = Math.round(10 * Math.pow(recognitionRatio, 0.7));
+  const score = Math.min(100, citationPresence + domainVisibility + brandEcho + positionBonus + mentionDepth + competitorDensity);
 
-  const score = Math.min(100, domainMentioned + inCitations + positionBonus + competitorDensity + mentionDepth + brandRecognition);
-
-  // Build explanation
+  // Build honest explanation
   const parts: string[] = [];
-  if (mentionedCount === 0) {
-    parts.push(`Not mentioned by any of ${platformCount} AI platforms`);
-  } else {
-    parts.push(`Mentioned by ${mentionedCount}/${platformCount} platforms`);
+  if (citedCount > 0) {
+    parts.push(`Cited as a source by ${citedCount}/${platformCount} platforms`);
   }
-  if (citedResults.length > 0) {
-    parts.push(`cited as a source by ${citedResults.length}`);
+  if (domainFoundCount > 0) {
+    parts.push(`Domain found in ${domainFoundCount}/${platformCount} responses`);
+  }
+  if (brandOnlyCount > 0 && citedCount === 0 && domainFoundCount === 0) {
+    parts.push(`Brand name echoed by ${brandOnlyCount} platform${brandOnlyCount !== 1 ? "s" : ""} (from your query, not a genuine recommendation)`);
+  }
+  if (citedCount === 0 && domainFoundCount === 0 && brandOnlyCount === 0) {
+    parts.push(`Not found by any AI platform`);
   }
   if (competitorCount > 0) {
-    parts.push(`${competitorCount} competitor${competitorCount !== 1 ? "s" : ""} also recommended`);
+    parts.push(`${competitorCount} competitor${competitorCount !== 1 ? "s" : ""} recommended`);
   }
 
   return {
     score,
-    factors: { domainMentioned, inCitations, positionBonus, competitorDensity, mentionDepth, brandRecognition },
+    factors: { citationPresence, domainVisibility, brandEcho, positionBonus, mentionDepth, competitorDensity },
     explanation: parts.join(". ") + ".",
   };
 }
@@ -353,6 +360,7 @@ export async function POST(request: NextRequest) {
     if (perplexitySettled.status === "fulfilled") {
       const r = perplexitySettled.value;
       const mentioned = extractMentionedDomains(r.response, r.citations);
+      const domainInResponse = mentioned.includes(cleanDomain);
       const inCitations = r.citations.some(c => {
         try { return new URL(c).hostname.replace(/^www\./, "").includes(cleanDomain); } catch { return false; }
       });
@@ -360,9 +368,10 @@ export async function POST(request: NextRequest) {
         query: queries[0],
         platform: "perplexity",
         aiRecommends: mentioned.filter(d => d !== cleanDomain).slice(0, 5),
-        mentionedYou: mentioned.includes(cleanDomain) || isBrandMentioned(r.response, cleanDomain),
+        mentionedYou: domainInResponse || inCitations || isBrandMentioned(r.response, cleanDomain),
         snippet: r.response.slice(0, 300),
         inCitations,
+        domainFound: domainInResponse || inCitations,
         mentionPosition: findMentionPosition(r.response, cleanDomain),
         mentionCount: countMentions(r.response, cleanDomain),
       });
@@ -375,13 +384,16 @@ export async function POST(request: NextRequest) {
     if (geminiSettled.status === "fulfilled") {
       const r = geminiSettled.value;
       const mentioned = extractMentionedDomains(r.response, r.mentions);
+      const domainInResponse = mentioned.includes(cleanDomain);
+      const domainInMentions = r.mentions.some(m => m.includes(cleanDomain));
       results.push({
         query: queries[1],
         platform: "gemini",
         aiRecommends: mentioned.filter(d => d !== cleanDomain).slice(0, 5),
-        mentionedYou: mentioned.includes(cleanDomain) || isBrandMentioned(r.response, cleanDomain),
+        mentionedYou: domainInResponse || domainInMentions || isBrandMentioned(r.response, cleanDomain),
         snippet: r.response.slice(0, 300),
-        inCitations: r.mentions.some(m => m.includes(cleanDomain)),
+        inCitations: domainInMentions,
+        domainFound: domainInResponse || domainInMentions,
         mentionPosition: findMentionPosition(r.response, cleanDomain),
         mentionCount: countMentions(r.response, cleanDomain),
       });
@@ -394,13 +406,15 @@ export async function POST(request: NextRequest) {
     if (chatgptSettled.status === "fulfilled") {
       const r = chatgptSettled.value;
       const mentioned = extractMentionedDomains(r.response);
+      const domainInResponse = mentioned.includes(cleanDomain);
       results.push({
         query: queries[2],
         platform: "chatgpt",
         aiRecommends: mentioned.filter(d => d !== cleanDomain).slice(0, 5),
-        mentionedYou: mentioned.includes(cleanDomain) || isBrandMentioned(r.response, cleanDomain),
+        mentionedYou: domainInResponse || isBrandMentioned(r.response, cleanDomain),
         snippet: r.response.slice(0, 300),
         inCitations: false, // ChatGPT doesn't provide citation sources
+        domainFound: domainInResponse,
         mentionPosition: findMentionPosition(r.response, cleanDomain),
         mentionCount: countMentions(r.response, cleanDomain),
       });
@@ -430,16 +444,28 @@ export async function POST(request: NextRequest) {
     const visibilityScore = scoring.score;
 
     const mentionedCount = results.filter(r => r.mentionedYou).length;
-    const isInvisible = mentionedCount === 0;
+    // "Invisible" = no genuine mentions (domain/citations). Brand echoes don't count.
+    const genuinelyMentioned = results.filter(r => r.domainFound || r.inCitations).length;
+    const isInvisible = genuinelyMentioned === 0;
 
-    // Per-platform scores (0-100 each)
+    // Per-platform scores (0-100 each) — weighted by signal strength
     const platformScores: Record<string, number> = {};
     for (const r of results) {
       let ps = 0;
-      if (r.mentionedYou) ps += 40;
-      if (r.inCitations) ps += 25;
-      if (r.mentionPosition >= 0) ps += Math.round(20 * (1 - r.mentionPosition));
-      ps += Math.min(15, r.mentionCount * 5);
+      if (r.inCitations) {
+        ps += 45;  // Cited as a source — strongest signal
+      } else if (r.domainFound) {
+        ps += 30;  // Full domain mentioned — strong signal
+      } else if (r.mentionedYou) {
+        ps += 10;  // Brand name only — likely echoing the query
+      }
+      // Position & depth bonuses only for genuine mentions
+      if (r.mentionPosition >= 0 && (r.domainFound || r.inCitations)) {
+        ps += Math.round(20 * (1 - r.mentionPosition));
+      }
+      if (r.domainFound || r.inCitations) {
+        ps += Math.min(15, r.mentionCount * 5);
+      }
       platformScores[r.platform] = Math.min(100, ps);
     }
 
@@ -452,11 +478,13 @@ export async function POST(request: NextRequest) {
       platformScores,
       scoreBreakdown: scoring.factors,
       scoreExplanation: scoring.explanation,
-      message: isInvisible
-        ? "You are invisible to AI search."
-        : mentionedCount < results.length
-          ? "AI sometimes recommends you, but competitors get more visibility."
-          : "AI is recommending you!",
+      message: visibilityScore < 15
+        ? "You are invisible to AI. Brand echoes from your query don't count as recommendations."
+        : visibilityScore < 40
+          ? "AI barely knows you. You need more citations and domain references."
+          : visibilityScore < 60
+            ? "AI sometimes mentions you, but competitors may still be winning."
+            : "AI recommends you — focus on maintaining and growing your visibility.",
       ...(platformErrors.length > 0 && {
         platformsChecked: results.length,
         platformErrors,

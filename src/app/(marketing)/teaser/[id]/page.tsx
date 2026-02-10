@@ -28,6 +28,8 @@ interface TeaserResult {
   aiRecommends: string[];
   mentionedYou: boolean;
   snippet: string;
+  inCitations?: boolean;
+  domainFound?: boolean;
 }
 
 interface TeaserSummary {
@@ -151,7 +153,7 @@ export default async function ShareableTeaserPage({
         {/* Verdict Card */}
         <div
           className={`relative overflow-hidden rounded-2xl p-8 mb-8 ${
-            report.isInvisible
+            report.visibilityScore < 40
               ? "bg-gradient-to-br from-red-950/80 via-zinc-900 to-zinc-900 border-2 border-red-500/30"
               : "bg-gradient-to-br from-emerald-950/80 via-zinc-900 to-zinc-900 border-2 border-emerald-500/30"
           }`}
@@ -180,7 +182,12 @@ export default async function ShareableTeaserPage({
             {/* Score */}
             <div className="text-center mb-4">
               <div
-                className={`text-8xl font-black tabular-nums ${report.isInvisible ? "text-red-500" : "text-emerald-500"}`}
+                className={`text-8xl font-black tabular-nums ${
+                  report.visibilityScore < 20 ? "text-red-500"
+                    : report.visibilityScore < 40 ? "text-red-400"
+                    : report.visibilityScore < 60 ? "text-amber-400"
+                    : "text-emerald-500"
+                }`}
               >
                 {report.visibilityScore}
               </div>
@@ -207,15 +214,39 @@ export default async function ShareableTeaserPage({
 
             {/* Verdict */}
             <div className="text-center mb-8">
-              {report.isInvisible ? (
+              {report.visibilityScore < 15 ? (
                 <>
                   <h1 className="text-3xl font-bold text-white mb-2">
                     {report.domain} is{" "}
                     <span className="text-red-400">invisible</span> to AI
                   </h1>
                   <p className="text-zinc-400 text-lg">
-                    When buyers ask AI for the best tool — {report.domain}{" "}
+                    When buyers ask AI for recommendations &mdash; {report.domain}{" "}
                     doesn&rsquo;t appear.
+                  </p>
+                </>
+              ) : report.visibilityScore < 40 ? (
+                <>
+                  <h1 className="text-3xl font-bold text-white mb-2">
+                    AI{" "}
+                    <span className="text-amber-400">
+                      barely knows {report.domain}
+                    </span>
+                  </h1>
+                  <p className="text-zinc-400 text-lg">
+                    More citations and domain references are needed.
+                  </p>
+                </>
+              ) : report.visibilityScore < 60 ? (
+                <>
+                  <h1 className="text-3xl font-bold text-white mb-2">
+                    AI{" "}
+                    <span className="text-amber-400">
+                      sometimes mentions {report.domain}
+                    </span>
+                  </h1>
+                  <p className="text-zinc-400 text-lg">
+                    {summary.message}
                   </p>
                 </>
               ) : (
@@ -223,12 +254,11 @@ export default async function ShareableTeaserPage({
                   <h1 className="text-3xl font-bold text-white mb-2">
                     AI{" "}
                     <span className="text-emerald-400">
-                      knows about {report.domain}
+                      recommends {report.domain}
                     </span>
                   </h1>
                   <p className="text-zinc-400 text-lg">
-                    Mentioned {summary.mentionedCount} time(s). But competitors
-                    may still be winning.
+                    Being cited and recommended. Focus on keeping the lead.
                   </p>
                 </>
               )}
@@ -317,12 +347,14 @@ export default async function ShareableTeaserPage({
                 </div>
                 <div
                   className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium ${
-                    result.mentionedYou
+                    result.inCitations || result.domainFound
                       ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                      : "bg-red-500/10 text-red-400 border border-red-500/20"
+                      : result.mentionedYou
+                        ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                        : "bg-red-500/10 text-red-400 border border-red-500/20"
                   }`}
                 >
-                  {result.mentionedYou ? "Mentioned" : "Not mentioned"}
+                  {result.inCitations ? "Cited" : result.domainFound ? "Domain found" : result.mentionedYou ? "Name echoed" : "Not found"}
                 </div>
               </div>
 

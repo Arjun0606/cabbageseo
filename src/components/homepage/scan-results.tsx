@@ -24,6 +24,7 @@ export interface TeaserResult {
   mentionedYou: boolean;
   snippet: string;
   inCitations?: boolean;
+  domainFound?: boolean;
   mentionPosition?: number;
   mentionCount?: number;
 }
@@ -40,12 +41,12 @@ export interface TeaserData {
     visibilityScore?: number;
     platformScores?: Record<string, number>;
     scoreBreakdown?: {
-      domainMentioned: number;
-      inCitations: number;
+      citationPresence: number;
+      domainVisibility: number;
+      brandEcho: number;
       positionBonus: number;
-      competitorDensity: number;
       mentionDepth: number;
-      brandRecognition: number;
+      competitorDensity: number;
     };
     scoreExplanation?: string;
   };
@@ -60,12 +61,12 @@ const PLATFORM_LABELS: Record<string, { name: string; color: string }> = {
 };
 
 const FACTOR_LABELS: Record<string, { label: string; max: number }> = {
-  domainMentioned: { label: "Mentioned by AI", max: 30 },
-  inCitations: { label: "In citations", max: 20 },
-  positionBonus: { label: "Mention prominence", max: 15 },
-  competitorDensity: { label: "Market crowding", max: 15 },
+  citationPresence: { label: "Cited as source", max: 40 },
+  domainVisibility: { label: "Domain referenced", max: 25 },
+  brandEcho: { label: "Brand echo (weak)", max: 8 },
+  positionBonus: { label: "Mention prominence", max: 12 },
   mentionDepth: { label: "Mention depth", max: 10 },
-  brandRecognition: { label: "Brand recognition", max: 10 },
+  competitorDensity: { label: "Market crowding", max: 5 },
 };
 
 function getCtaHeadline(score: number): string {
@@ -167,7 +168,7 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
       <AnimateIn>
         <div
           className={`relative overflow-hidden rounded-2xl p-8 mb-8 ${
-            summary.isInvisible
+            visibilityScore < 40
               ? "bg-gradient-to-br from-red-950/80 via-zinc-900 to-zinc-900 border-2 border-red-500/30"
               : "bg-gradient-to-br from-emerald-950/80 via-zinc-900 to-zinc-900 border-2 border-emerald-500/30"
           }`}
@@ -262,26 +263,45 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
             )}
 
             <div className="text-center mb-8">
-              {summary.isInvisible ? (
+              {visibilityScore < 15 ? (
                 <>
                   <h2 className="text-3xl font-bold text-white mb-2">
                     You are{" "}
                     <span className="text-red-400">invisible</span> to AI
                   </h2>
                   <p className="text-zinc-400 text-lg">
-                    When buyers ask AI &ldquo;what&rsquo;s the best
-                    tool&rdquo; &mdash; you don&rsquo;t exist.
+                    When buyers ask AI for recommendations &mdash; you
+                    don&rsquo;t exist.
+                  </p>
+                </>
+              ) : visibilityScore < 40 ? (
+                <>
+                  <h2 className="text-3xl font-bold text-white mb-2">
+                    AI{" "}
+                    <span className="text-amber-400">barely knows you</span>
+                  </h2>
+                  <p className="text-zinc-400 text-lg">
+                    You need more citations and domain references to rank.
+                  </p>
+                </>
+              ) : visibilityScore < 60 ? (
+                <>
+                  <h2 className="text-3xl font-bold text-white mb-2">
+                    AI{" "}
+                    <span className="text-amber-400">sometimes mentions you</span>
+                  </h2>
+                  <p className="text-zinc-400 text-lg">
+                    {summary.message}
                   </p>
                 </>
               ) : (
                 <>
                   <h2 className="text-3xl font-bold text-white mb-2">
                     AI{" "}
-                    <span className="text-emerald-400">knows about you</span>
+                    <span className="text-emerald-400">recommends you</span>
                   </h2>
                   <p className="text-zinc-400 text-lg">
-                    You were mentioned {summary.mentionedCount} time(s). But
-                    competitors may still be winning.
+                    You&rsquo;re being cited and recommended. Keep your lead.
                   </p>
                 </>
               )}
@@ -487,12 +507,14 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
                       </div>
                       <div
                         className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium ${
-                          result.mentionedYou
+                          result.inCitations || result.domainFound
                             ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                            : "bg-red-500/10 text-red-400 border border-red-500/20"
+                            : result.mentionedYou
+                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              : "bg-red-500/10 text-red-400 border border-red-500/20"
                         }`}
                       >
-                        {result.mentionedYou ? "Mentioned" : "Not mentioned"}
+                        {result.inCitations ? "Cited" : result.domainFound ? "Domain found" : result.mentionedYou ? "Name echoed" : "Not found"}
                       </div>
                     </div>
 
