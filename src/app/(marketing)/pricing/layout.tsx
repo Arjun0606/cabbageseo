@@ -54,7 +54,7 @@ const pricingJsonLd = {
       availability: "https://schema.org/InStock",
       priceValidUntil: "2027-12-31",
       url: "https://cabbageseo.com/pricing",
-      description: "25 sites, 25 competitors, real-time AI monitoring",
+      description: "25 sites, 25 competitors, daily + hourly AI monitoring",
     },
   ],
 };
@@ -92,7 +92,7 @@ const faqJsonLd = {
       name: "How do automated checks work?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "CabbageSEO automatically scans your AI visibility across ChatGPT, Perplexity, and Google AI on a schedule based on your plan. Scout gets weekly checks (every Monday), Command gets checks every 3 days, and Dominate gets daily checks plus hourly monitoring. If your visibility score drops by 5 or more points, you'll get an instant alert via email and Slack.",
+        text: "CabbageSEO automatically scans your AI visibility across ChatGPT, Perplexity, and Google AI on a schedule based on your plan. Scout gets weekly checks (every Monday), Command gets checks every 3 days, and Dominate gets daily checks plus hourly monitoring. If your visibility score drops by 2 or more points, you'll get an instant alert via email and Slack.",
       },
     },
     {

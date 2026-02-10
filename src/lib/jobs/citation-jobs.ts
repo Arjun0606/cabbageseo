@@ -3,7 +3,7 @@
  * 
  * AUTOMATED CITATION TRACKING
  * - Daily checks for all users
- * - Hourly checks for Pro users  
+ * - Hourly checks for Command/Dominate users
  * - Weekly reports
  * - Alert emails
  * 
@@ -298,7 +298,7 @@ export const hourlyCitationCheck = inngest.createFunction(
           organizations!inner(plan)
         `)
         .eq("status", "active")
-        .in("organizations.plan", ["command", "dominate"]);
+        .in("organizations.plan", ["command", "dominate", "pro", "pro_plus"]);
       
       if (error) {
         console.error("Failed to fetch paid sites:", error);

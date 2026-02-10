@@ -535,13 +535,13 @@ describe("Auto-check frequency per tier", () => {
     expect(CITATION_PLANS.scout.features.hourlyAutoCheck).toBe(false);
   });
 
-  it("Command: daily only (hourly not yet shipped)", () => {
+  it("Command: daily + hourly", () => {
     expect(CITATION_PLANS.command.features.dailyAutoCheck).toBe(true);
-    expect(CITATION_PLANS.command.features.hourlyAutoCheck).toBe(false);
+    expect(CITATION_PLANS.command.features.hourlyAutoCheck).toBe(true);
   });
 
-  it("Dominate: daily only (hourly not yet shipped)", () => {
+  it("Dominate: daily + hourly", () => {
     expect(CITATION_PLANS.dominate.features.dailyAutoCheck).toBe(true);
-    expect(CITATION_PLANS.dominate.features.hourlyAutoCheck).toBe(false);
+    expect(CITATION_PLANS.dominate.features.hourlyAutoCheck).toBe(true);
   });
 });

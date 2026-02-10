@@ -306,7 +306,7 @@ function BillingContent() {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-white">
-                  {plan.name} {currentPlan === "free" ? "Trial" : "Plan"}
+                  {plan.name} {currentPlan !== "free" ? "Plan" : ""}
                 </h3>
                 <p className="text-sm text-zinc-500">{plan.description}</p>
               </div>
@@ -353,10 +353,10 @@ function BillingContent() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-zinc-400">Competitors</span>
                 <span className="text-sm font-medium text-white">
-                  {usage.competitorsUsed}/{usage.competitorsLimit === 999999 ? "∞" : usage.competitorsLimit}
+                  {usage.competitorsLimit === 0 ? "Not included" : `${usage.competitorsUsed}/${usage.competitorsLimit === 999999 ? "∞" : usage.competitorsLimit}`}
                 </span>
               </div>
-              <Progress value={usage.competitorsLimit === 999999 ? 0 : (usage.competitorsUsed / usage.competitorsLimit) * 100} className="h-2 bg-zinc-700" />
+              <Progress value={usage.competitorsLimit <= 0 ? 0 : (usage.competitorsUsed / usage.competitorsLimit) * 100} className="h-2 bg-zinc-700" />
             </div>
           </div>
         </CardContent>

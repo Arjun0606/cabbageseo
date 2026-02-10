@@ -95,11 +95,11 @@ interface SiteContextType {
 
 const defaultUsage: Usage = {
   checksUsed: 0,
-  checksLimit: 100,
+  checksLimit: 3,
   sitesUsed: 0,
-  sitesLimit: 3,
+  sitesLimit: 1,
   competitorsUsed: 0,
-  competitorsLimit: 2,
+  competitorsLimit: 0,
 };
 
 const defaultTrial: TrialStatus = {
@@ -212,11 +212,11 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         const usageData = await usageRes.json();
         setUsage({
           checksUsed: usageData.data?.usage?.checksUsed || 0,
-          checksLimit: usageData.data?.limits?.checks || 100,
+          checksLimit: usageData.data?.limits?.checks || 3,
           sitesUsed: siteList.length,
-          sitesLimit: usageData.data?.limits?.sites || 3,
+          sitesLimit: usageData.data?.limits?.sites || 1,
           competitorsUsed: usageData.data?.usage?.competitorsUsed || 0,
-          competitorsLimit: usageData.data?.limits?.competitors || 2,
+          competitorsLimit: usageData.data?.limits?.competitors || 0,
         });
       }
     } catch (err) {

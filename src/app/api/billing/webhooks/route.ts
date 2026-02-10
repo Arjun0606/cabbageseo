@@ -176,7 +176,9 @@ export async function POST(request: NextRequest) {
             plan,
             billing_interval: interval,
             subscription_status: "active",
+            cancel_at_period_end: false,
             dodo_subscription_id: subscriptionData.subscription_id,
+            dodo_product_id: subscriptionData.product_id,
             current_period_start: subscriptionData.previous_billing_date,
             current_period_end: subscriptionData.next_billing_date,
             ...(customerId && { dodo_customer_id: customerId }),
@@ -219,30 +221,57 @@ export async function POST(request: NextRequest) {
         break;
       }
 
-      case "subscription.cancelled":
+      case "subscription.cancelled": {
+        if (data.payload_type !== "Subscription") break;
+
+        const cancelledData = data;
+        const cancelledOrgId = cancelledData.metadata?.organization_id;
+
+        if (!cancelledOrgId) break;
+
+        // Keep current plan until period ends — just mark as canceling
+        const { error: cancelError } = await supabase
+          .from("organizations")
+          .update({
+            cancel_at_period_end: true,
+            subscription_status: "canceled",
+          } as never)
+          .eq("id", cancelledOrgId);
+
+        if (cancelError) {
+          console.error("[Webhook] Failed to update org:", cancelError);
+          throw cancelError;
+        }
+
+        console.log(`[Webhook] Marked subscription as canceled for org ${cancelledOrgId} (access until period end)`);
+        break;
+      }
+
       case "subscription.expired": {
         if (data.payload_type !== "Subscription") break;
-        
-        const subscriptionData = data;
-        const organizationId = subscriptionData.metadata?.organization_id;
-        
-        if (!organizationId) break;
-        
-        const { error } = await supabase
+
+        const expiredData = data;
+        const expiredOrgId = expiredData.metadata?.organization_id;
+
+        if (!expiredOrgId) break;
+
+        // Subscription actually ended — downgrade to free
+        const { error: expireError } = await supabase
           .from("organizations")
           .update({
             plan: "free",
             subscription_status: "canceled",
+            cancel_at_period_end: false,
             current_period_end: new Date().toISOString(),
           } as never)
-          .eq("id", organizationId);
+          .eq("id", expiredOrgId);
 
-        if (error) {
-          console.error("[Webhook] Failed to update org:", error);
-          throw error;
+        if (expireError) {
+          console.error("[Webhook] Failed to expire org:", expireError);
+          throw expireError;
         }
 
-        console.log(`[Webhook] Cancelled subscription for org ${organizationId}`);
+        console.log(`[Webhook] Expired subscription for org ${expiredOrgId} — downgraded to free`);
         break;
       }
 
@@ -255,7 +284,21 @@ export async function POST(request: NextRequest) {
       case "payment.failed": {
         if (data.payload_type !== "Payment") break;
         console.log(`[Webhook] Payment failed:`, data.payment_id);
-        // Could send an email notification here
+
+        // Mark org as past_due via subscription_id lookup
+        const failedSubId = data.subscription_id;
+        if (failedSubId) {
+          const { error: failError } = await supabase
+            .from("organizations")
+            .update({ subscription_status: "past_due" } as never)
+            .eq("dodo_subscription_id", failedSubId);
+
+          if (failError) {
+            console.error("[Webhook] Failed to mark org past_due:", failError);
+          } else {
+            console.log(`[Webhook] Marked org as past_due for subscription ${failedSubId}`);
+          }
+        }
         break;
       }
 

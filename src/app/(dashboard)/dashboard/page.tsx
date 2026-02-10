@@ -587,7 +587,7 @@ function DashboardContent() {
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  Upgrade — $39/mo
+                  Upgrade — $39/mo (billed annually)
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

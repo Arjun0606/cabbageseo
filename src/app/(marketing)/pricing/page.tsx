@@ -157,7 +157,7 @@ const faqs: FAQItem[] = [
   {
     question: "How do automated checks work?",
     answer:
-      "CabbageSEO automatically scans your AI visibility across ChatGPT, Perplexity, and Google AI on a schedule based on your plan. Scout gets weekly checks (every Monday), Command gets checks every 3 days, and Dominate gets daily checks plus hourly monitoring. If your visibility score drops by 5 or more points, you\u2019ll get an instant alert via email and Slack (if configured). No manual action required \u2014 the system works while you sleep.",
+      "CabbageSEO automatically scans your AI visibility across ChatGPT, Perplexity, and Google AI on a schedule based on your plan. Scout gets weekly checks (every Monday), Command gets checks every 3 days, and Dominate gets daily checks plus hourly monitoring. If your visibility score drops by 2 or more points, you\u2019ll get an instant alert via email and Slack (if configured). No manual action required \u2014 the system works while you sleep.",
   },
   {
     question: "What are fix pages?",
@@ -360,7 +360,7 @@ function PricingCard({
 // ============================================
 
 export default function PricingPage() {
-  const [annual, setAnnual] = useState(false);
+  const [annual, setAnnual] = useState(true);
 
   return (
     <div className="bg-zinc-950 min-h-screen">

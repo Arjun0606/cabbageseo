@@ -391,6 +391,41 @@ export function isPaidPlan(planId: string): boolean {
   return planId !== "free";
 }
 
+export function formatLimit(limit: number): string {
+  return limit === -1 ? "Unlimited" : String(limit);
+}
+
+export function getIntelligenceFeatureSummary(planId: CitationPlanId | string): {
+  gapAnalysis: string;
+  contentIdeas: string;
+  actionPlan: string;
+  competitorDeepDive: string;
+} {
+  const plan = getCitationPlan(planId);
+  const intel = plan.intelligenceLimits;
+
+  return {
+    gapAnalysis:
+      intel.gapAnalysesPerMonth === 0
+        ? "Not available"
+        : intel.gapAnalysesPerMonth === -1
+          ? "Unlimited per-query analysis"
+          : `${intel.gapAnalysesPerMonth} analyses/month`,
+    contentIdeas:
+      intel.contentIdeasPerMonth === 0
+        ? "Not available"
+        : intel.contentIdeasPerMonth === -1
+          ? "Unlimited ideas"
+          : `${intel.contentIdeasPerMonth} ideas/month`,
+    actionPlan: !plan.features.weeklyActionPlan
+      ? "Command only"
+      : "Weekly Action Playbook",
+    competitorDeepDive: !plan.features.competitorDeepDive
+      ? "Command only"
+      : "Full competitor breakdown",
+  };
+}
+
 export function canRunManualCheck(
   planId: CitationPlanId | string,
   checksToday: number,
@@ -467,6 +502,95 @@ export function canUseCompetitorDeepDive(
   }
 
   return { allowed: true };
+}
+
+export function canUseGapAnalysis(
+  planId: CitationPlanId | string,
+  usedThisMonth: number
+): { allowed: boolean; reason?: string; remaining?: number } {
+  const plan = getCitationPlan(planId);
+  const limit = plan.intelligenceLimits.gapAnalysesPerMonth;
+
+  if (limit === 0) {
+    return {
+      allowed: false,
+      reason: "Gap analysis requires Scout plan or higher.",
+    };
+  }
+
+  if (limit === -1) {
+    return { allowed: true, remaining: -1 };
+  }
+
+  if (usedThisMonth >= limit) {
+    const next = getNextPlan(plan.id);
+    const upgradeTip = next ? ` Upgrade to ${getCitationPlan(next).name} for unlimited.` : "";
+    return {
+      allowed: false,
+      reason: `Monthly limit reached (${limit} analyses).${upgradeTip}`,
+      remaining: 0,
+    };
+  }
+
+  return { allowed: true, remaining: limit - usedThisMonth };
+}
+
+export function canUseContentRecommendations(
+  planId: CitationPlanId | string,
+  usedThisMonth: number
+): { allowed: boolean; reason?: string; remaining?: number } {
+  const plan = getCitationPlan(planId);
+  const limit = plan.intelligenceLimits.contentIdeasPerMonth;
+
+  if (limit === 0) {
+    return {
+      allowed: false,
+      reason: "Content recommendations require Scout plan or higher.",
+    };
+  }
+
+  if (limit === -1) {
+    return { allowed: true, remaining: -1 };
+  }
+
+  if (usedThisMonth >= limit) {
+    return {
+      allowed: false,
+      reason: `Monthly limit reached (${limit} recommendations). Upgrade for more.`,
+      remaining: 0,
+    };
+  }
+
+  return { allowed: true, remaining: limit - usedThisMonth };
+}
+
+export function canUseActionPlan(
+  planId: CitationPlanId | string,
+  usedThisMonth: number
+): { allowed: boolean; reason?: string; remaining?: number } {
+  const plan = getCitationPlan(planId);
+  const limit = plan.intelligenceLimits.actionPlansPerMonth;
+
+  if (limit === 0) {
+    return {
+      allowed: false,
+      reason: "Action plans require Command plan or higher.",
+    };
+  }
+
+  if (limit === -1) {
+    return { allowed: true, remaining: -1 };
+  }
+
+  if (usedThisMonth >= limit) {
+    return {
+      allowed: false,
+      reason: `Monthly limit reached (${limit} plans). Upgrade for more.`,
+      remaining: 0,
+    };
+  }
+
+  return { allowed: true, remaining: limit - usedThisMonth };
 }
 
 export function canGeneratePage(

@@ -101,7 +101,7 @@ export const PLANS: Record<PlanId, Plan> = {
     featureList: [
       "1 website",
       "3 competitor tracking",
-      "Daily AI monitoring",
+      "Weekly AI monitoring",
       "5 gap analyses/month",
       "30-day AI sprint",
       "Trust Map access",
@@ -147,7 +147,7 @@ export const PLANS: Record<PlanId, Plan> = {
     featureList: [
       "5 websites",
       "10 competitor tracking",
-      "Daily AI monitoring",
+      "Every 3 days + hourly monitoring",
       "Unlimited intelligence",
       "Weekly action playbooks",
       "Competitor deep dives",
@@ -192,7 +192,7 @@ export const PLANS: Record<PlanId, Plan> = {
     featureList: [
       "25 websites",
       "25 competitor tracking",
-      "Daily AI monitoring",
+      "Daily + hourly monitoring",
       "Unlimited intelligence + fix pages",
       "Weekly email digest",
       "Get Listed Playbook",
@@ -341,7 +341,7 @@ export function getPlan(planId: PlanId | string): Plan {
     pro_plus: "dominate",
   };
   const resolvedId = legacyMap[planId] || planId;
-  return PLANS[resolvedId as PlanId] || PLANS.scout;
+  return PLANS[resolvedId as PlanId] || PLANS.scout; // Note: plans.ts is for paid plans only — use getCitationPlan() from citation-plans.ts for free tier
 }
 
 export function getPlans(): Plan[] {

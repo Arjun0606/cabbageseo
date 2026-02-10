@@ -212,7 +212,7 @@ describe("Feature availability per tier", () => {
 
   it("Command: full intelligence + action plans + page generation, no white-label", () => {
     const f = CITATION_PLANS.command.features;
-    expect(f.hourlyAutoCheck).toBe(false); // Not yet shipped
+    expect(f.hourlyAutoCheck).toBe(true);
     expect(f.citationGapFull).toBe(true);
     expect(f.contentRecsUnlimited).toBe(true);
     expect(f.weeklyActionPlan).toBe(true);
@@ -229,7 +229,7 @@ describe("Feature availability per tier", () => {
     expect(f.realtimeAlerts).toBe(false); // Not yet shipped
     expect(f.whiteLabel).toBe(false); // Not yet shipped
     expect(f.apiAccess).toBe(false); // Not yet shipped
-    expect(f.hourlyAutoCheck).toBe(false); // Not yet shipped
+    expect(f.hourlyAutoCheck).toBe(true);
     expect(f.queryDiscovery).toBe(false); // Not yet shipped
     expect(f.prioritySupport).toBe(true);
     expect(f.dailyAutoCheck).toBe(true);
