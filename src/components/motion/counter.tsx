@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect } from "react";
 import { useInView, animate } from "framer-motion";
 
 interface CounterProps {
@@ -20,18 +20,20 @@ export function Counter({
   decimals = 0,
   className,
 }: CounterProps) {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-40px" });
-  const [display, setDisplay] = useState("0");
+  const containerRef = useRef<HTMLSpanElement>(null);
+  const numberRef = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(containerRef, { once: true, margin: "-40px" });
 
   useEffect(() => {
-    if (!isInView) return;
+    if (!isInView || !numberRef.current) return;
 
     const controls = animate(0, value, {
       duration,
       ease: [0.25, 0.4, 0.25, 1],
       onUpdate(v) {
-        setDisplay(v.toFixed(decimals));
+        if (numberRef.current) {
+          numberRef.current.textContent = v.toFixed(decimals);
+        }
       },
     });
 
@@ -39,9 +41,9 @@ export function Counter({
   }, [isInView, value, duration, decimals]);
 
   return (
-    <span ref={ref} className={className}>
+    <span ref={containerRef} className={className}>
       {prefix}
-      {display}
+      <span ref={numberRef}>0</span>
       {suffix}
     </span>
   );

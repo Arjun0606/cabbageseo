@@ -47,7 +47,7 @@ async function getAuthOrgId(supabase: any): Promise<{ orgId: string | null; erro
     .from("users")
     .select("organization_id")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   const orgId = (userData as { organization_id?: string } | null)?.organization_id;
   if (!orgId) {
@@ -109,7 +109,7 @@ export async function GET(
       query = query.eq("organization_id", auth.orgId);
     }
 
-    const { data, error } = await query.single();
+    const { data, error } = await query.maybeSingle();
 
     if (error) {
       if (error.code === "PGRST116") {
@@ -202,7 +202,7 @@ export async function PATCH(
         .from("sites")
         .select("settings")
         .eq("id", siteId)
-        .single();
+        .maybeSingle();
 
       const existingSettings = (existingSite as { settings: Record<string, unknown> } | null)?.settings || {};
       updates.settings = {
@@ -215,7 +215,7 @@ export async function PATCH(
         .from("sites")
         .select("settings")
         .eq("id", siteId)
-        .single();
+        .maybeSingle();
 
       const existingSettings = (existingSite as { settings: Record<string, unknown> } | null)?.settings || {};
       updates.settings = {
@@ -229,7 +229,7 @@ export async function PATCH(
       .update(updates as never)
       .eq("id", siteId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
 

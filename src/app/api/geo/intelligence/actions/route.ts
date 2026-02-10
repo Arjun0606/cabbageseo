@@ -271,7 +271,7 @@ async function incrementUsage(
     .select("id, " + field)
     .eq("organization_id", organizationId)
     .eq("period", period)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     const currentValue = (existing as Record<string, number>)[field] || 0;

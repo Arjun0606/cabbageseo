@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       .from("users")
       .select("organization_id, email, name")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
     let profile = userData as { organization_id?: string; email?: string; name?: string } | null;
     let organizationId = profile?.organization_id;
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
       .from("organizations")
       .select("id, name, dodo_customer_id, plan, subscription_status, dodo_subscription_id")
       .eq("id", organizationId)
-      .single();
+      .maybeSingle();
 
     const org = orgData as { 
       id: string; 

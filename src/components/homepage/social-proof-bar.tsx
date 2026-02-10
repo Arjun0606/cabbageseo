@@ -8,36 +8,36 @@ interface RecentScan {
   timeAgo: string;
 }
 
+interface SocialProofData {
+  scanCount: number;
+  recentScans: RecentScan[];
+}
+
 export function SocialProofBar() {
-  const [scanCount, setScanCount] = useState(0);
-  const [recentScans, setRecentScans] = useState<RecentScan[]>([]);
+  const [data, setData] = useState<SocialProofData | null>(null);
 
   useEffect(() => {
-    fetch("/api/stats/scans")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.count > 0) setScanCount(data.count);
-      })
-      .catch(() => {});
-
-    fetch("/api/stats/recent")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.scans?.length > 0) setRecentScans(data.scans);
-      })
-      .catch(() => {});
+    Promise.all([
+      fetch("/api/stats/scans").then((r) => r.json()).catch(() => ({ count: 0 })),
+      fetch("/api/stats/recent").then((r) => r.json()).catch(() => ({ scans: [] })),
+    ]).then(([scansData, recentData]) => {
+      setData({
+        scanCount: scansData.count || 0,
+        recentScans: recentData.scans || [],
+      });
+    });
   }, []);
 
-  if (scanCount === 0 && recentScans.length === 0) return null;
+  if (!data || (data.scanCount === 0 && data.recentScans.length === 0)) return null;
 
   return (
     <div className="mt-16 space-y-6">
       {/* Scan counter */}
-      {scanCount > 0 && (
+      {data.scanCount > 0 && (
         <div className="text-center">
           <p className="text-zinc-500 text-sm">
             <Counter
-              value={scanCount}
+              value={data.scanCount}
               className="text-white font-semibold"
               suffix=""
             />{" "}
@@ -47,7 +47,7 @@ export function SocialProofBar() {
       )}
 
       {/* Recently scanned ticker */}
-      {recentScans.length > 0 && (
+      {data.recentScans.length > 0 && (
         <div className="relative overflow-hidden">
           {/* Fade edges */}
           <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-zinc-950 to-transparent z-10" />
@@ -55,7 +55,7 @@ export function SocialProofBar() {
 
           <div className="flex animate-ticker gap-6">
             {/* Duplicate for seamless loop */}
-            {[...recentScans, ...recentScans].map((scan, i) => (
+            {[...data.recentScans, ...data.recentScans].map((scan, i) => (
               <div
                 key={i}
                 className="shrink-0 flex items-center gap-2 px-3 py-1.5 bg-zinc-900/50 border border-zinc-800/50 rounded-full"

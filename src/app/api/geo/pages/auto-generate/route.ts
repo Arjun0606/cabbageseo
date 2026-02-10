@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       .from("organizations")
       .select("plan")
       .eq("id", organizationId)
-      .single();
+      .maybeSingle();
     const planId = (org as { plan?: string } | null)?.plan || "free";
     const citationPlan = getCitationPlan(planId);
 

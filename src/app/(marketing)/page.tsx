@@ -6,7 +6,6 @@ import Link from "next/link";
 import { ArrowRight, AlertTriangle, Search, Loader2 } from "lucide-react";
 import { GridAnimation } from "@/components/backgrounds/grid-animation";
 import { AnimateIn } from "@/components/motion/animate-in";
-import { Counter } from "@/components/motion/counter";
 import { GlassCard } from "@/components/ui/glass-card";
 import { ScanProgress } from "@/components/homepage/scan-progress";
 import { ScanResults, type TeaserData } from "@/components/homepage/scan-results";
@@ -16,9 +15,10 @@ const SCAN_STEPS = [
   "Connecting to AI platforms...",
   "Asking Perplexity who they recommend...",
   "Asking Google AI about your market...",
+  "Asking ChatGPT for recommendations...",
   "Extracting competitor mentions...",
+  "Scoring across 6 visibility factors...",
   "Generating your custom content preview...",
-  "Calculating your visibility score...",
 ];
 
 type ScanState = "idle" | "scanning" | "results" | "error";
@@ -32,7 +32,6 @@ function HomeContent() {
   const [scanStep, setScanStep] = useState(0);
   const [scanData, setScanData] = useState<TeaserData | null>(null);
   const [scanError, setScanError] = useState("");
-  const [scanCount, setScanCount] = useState(0);
   const [emailCaptured, setEmailCaptured] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -43,16 +42,6 @@ function HomeContent() {
     if (typeof window !== "undefined" && sessionStorage.getItem("cseo_email_captured")) {
       setEmailCaptured(true);
     }
-  }, []);
-
-  // Fetch scan count
-  useEffect(() => {
-    fetch("/api/stats/scans")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.count > 0) setScanCount(data.count);
-      })
-      .catch(() => {});
   }, []);
 
   const runScan = useCallback(
@@ -243,19 +232,6 @@ function HomeContent() {
               <span>Real AI responses</span>
             </div>
           </AnimateIn>
-
-          {/* Scan count */}
-          {scanCount > 0 && scanState === "idle" && (
-            <AnimateIn delay={1.2} direction="up">
-              <p className="mt-6 text-zinc-600 text-sm">
-                <Counter
-                  value={scanCount}
-                  className="text-zinc-400 font-medium"
-                />{" "}
-                sites scanned
-              </p>
-            </AnimateIn>
-          )}
 
           {/* Scan progress (inline) */}
           {scanState === "scanning" && (

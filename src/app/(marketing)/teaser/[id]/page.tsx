@@ -24,7 +24,7 @@ import type { ContentPreviewData } from "@/lib/db/schema";
 
 interface TeaserResult {
   query: string;
-  platform: "perplexity" | "gemini";
+  platform: "perplexity" | "gemini" | "chatgpt";
   aiRecommends: string[];
   mentionedYou: boolean;
   snippet: string;
@@ -36,7 +36,17 @@ interface TeaserSummary {
   isInvisible: boolean;
   competitorsMentioned: string[];
   message: string;
+  visibilityScore?: number;
+  platformScores?: Record<string, number>;
+  scoreBreakdown?: Record<string, number>;
+  scoreExplanation?: string;
 }
+
+const PLATFORM_LABELS: Record<string, { name: string; color: string }> = {
+  perplexity: { name: "Perplexity AI", color: "text-blue-400" },
+  gemini: { name: "Google AI", color: "text-purple-400" },
+  chatgpt: { name: "ChatGPT", color: "text-emerald-400" },
+};
 
 // ============================================
 // DATA FETCHING
@@ -168,14 +178,32 @@ export default async function ShareableTeaserPage({
             </div>
 
             {/* Score */}
-            <div className="text-center mb-6">
+            <div className="text-center mb-4">
               <div
-                className={`text-8xl font-black ${report.isInvisible ? "text-red-500" : "text-emerald-500"}`}
+                className={`text-8xl font-black tabular-nums ${report.isInvisible ? "text-red-500" : "text-emerald-500"}`}
               >
                 {report.visibilityScore}
               </div>
               <p className="text-zinc-400 mt-2">AI Visibility Score</p>
             </div>
+
+            {/* Per-platform mini scores */}
+            {summary.platformScores && Object.keys(summary.platformScores).length > 0 && (
+              <div className="flex justify-center gap-4 mb-6">
+                {results.map((r) => {
+                  const pl = PLATFORM_LABELS[r.platform];
+                  const ps = summary.platformScores?.[r.platform] ?? 0;
+                  return (
+                    <div key={r.platform} className="text-center">
+                      <div className={`text-lg font-bold tabular-nums ${pl?.color || "text-zinc-400"}`}>
+                        {ps}
+                      </div>
+                      <p className="text-zinc-500 text-xs">{pl?.name || r.platform}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Verdict */}
             <div className="text-center mb-8">
@@ -271,17 +299,17 @@ export default async function ShareableTeaserPage({
           <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">
             Raw AI Responses
           </h3>
-          {results.map((result, i) => (
+          {results.map((result, i) => {
+            const pl = PLATFORM_LABELS[result.platform];
+            return (
             <div
               key={i}
               className="bg-zinc-900 border border-zinc-800 rounded-xl p-5"
             >
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <p className="text-zinc-500 text-xs uppercase tracking-wide mb-1">
-                    {result.platform === "perplexity"
-                      ? "Perplexity AI"
-                      : "Google AI"}
+                  <p className={`text-xs uppercase tracking-wide mb-1 ${pl?.color || "text-zinc-500"}`}>
+                    {pl?.name || result.platform}
                   </p>
                   <p className="text-white font-medium">
                     &ldquo;{result.query}&rdquo;
@@ -311,7 +339,8 @@ export default async function ShareableTeaserPage({
                 </div>
               )}
             </div>
-          ))}
+          );
+          })}
         </div>
 
         {/* AI Content Preview — the conversion driver */}

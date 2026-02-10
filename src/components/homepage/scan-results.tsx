@@ -7,6 +7,8 @@ import {
   TrendingDown,
   Loader2,
   Mail,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import ContentPreview from "@/app/(marketing)/teaser/[id]/content-preview";
@@ -17,10 +19,13 @@ import type { ContentPreviewData } from "@/lib/db/schema";
 
 export interface TeaserResult {
   query: string;
-  platform: "perplexity" | "gemini";
+  platform: "perplexity" | "gemini" | "chatgpt";
   aiRecommends: string[];
   mentionedYou: boolean;
   snippet: string;
+  inCitations?: boolean;
+  mentionPosition?: number;
+  mentionCount?: number;
 }
 
 export interface TeaserData {
@@ -32,15 +37,49 @@ export interface TeaserData {
     isInvisible: boolean;
     competitorsMentioned: string[];
     message: string;
+    visibilityScore?: number;
+    platformScores?: Record<string, number>;
+    scoreBreakdown?: {
+      domainMentioned: number;
+      inCitations: number;
+      positionBonus: number;
+      competitorDensity: number;
+      mentionDepth: number;
+      brandRecognition: number;
+    };
+    scoreExplanation?: string;
   };
   reportId?: string;
   contentPreview?: ContentPreviewData;
 }
 
+const PLATFORM_LABELS: Record<string, { name: string; color: string }> = {
+  perplexity: { name: "Perplexity", color: "text-blue-400" },
+  gemini: { name: "Google AI", color: "text-purple-400" },
+  chatgpt: { name: "ChatGPT", color: "text-emerald-400" },
+};
+
+const FACTOR_LABELS: Record<string, { label: string; max: number }> = {
+  domainMentioned: { label: "Mentioned by AI", max: 30 },
+  inCitations: { label: "In citations", max: 20 },
+  positionBonus: { label: "Mention prominence", max: 15 },
+  competitorDensity: { label: "Market crowding", max: 15 },
+  mentionDepth: { label: "Mention depth", max: 10 },
+  brandRecognition: { label: "Brand recognition", max: 10 },
+};
+
 function getCtaHeadline(score: number): string {
   if (score < 30) return "You're invisible to AI. Start your 30-day fix.";
   if (score <= 60) return "AI knows you exist. Now dominate your category.";
   return "You're ahead of most. Lock in your lead.";
+}
+
+function getScoreColor(score: number): string {
+  if (score < 20) return "text-red-500";
+  if (score < 40) return "text-red-400";
+  if (score < 60) return "text-amber-400";
+  if (score < 80) return "text-emerald-400";
+  return "text-emerald-500";
 }
 
 interface ScanResultsProps {
@@ -55,6 +94,7 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
   const [gateEmail, setGateEmail] = useState("");
   const [gateLoading, setGateLoading] = useState(false);
   const [gateError, setGateError] = useState("");
+  const [showBreakdown, setShowBreakdown] = useState(false);
 
   const handleEmailGate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,10 +123,10 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
   };
 
   const { domain, summary, reportId, contentPreview } = data;
-  const visibilityScore = summary.isInvisible
-    ? 0
-    : Math.min(100, summary.mentionedCount * 25);
+  const visibilityScore = summary.visibilityScore ?? (summary.isInvisible ? 0 : Math.min(100, summary.mentionedCount * 25));
   const competitorCount = summary.competitorsMentioned.length;
+  const platformScores = summary.platformScores || {};
+  const scoreBreakdown = summary.scoreBreakdown;
 
   const handleGoogleSignup = async () => {
     setAuthLoading(true);
@@ -151,14 +191,75 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
               <p className="text-2xl font-bold text-white">{domain}</p>
             </div>
 
-            <div className="text-center mb-6">
-              <div
-                className={`text-8xl font-black ${summary.isInvisible ? "text-red-500" : "text-emerald-500"}`}
-              >
+            {/* Score */}
+            <div className="text-center mb-4">
+              <div className={`text-8xl font-black tabular-nums ${getScoreColor(visibilityScore)}`}>
                 {visibilityScore}
               </div>
               <p className="text-zinc-400 mt-2">AI Visibility Score</p>
             </div>
+
+            {/* Per-platform mini scores */}
+            {Object.keys(platformScores).length > 0 && (
+              <div className="flex justify-center gap-4 mb-6">
+                {data.results.map((r) => {
+                  const pl = PLATFORM_LABELS[r.platform];
+                  const ps = platformScores[r.platform] ?? 0;
+                  return (
+                    <div key={r.platform} className="text-center">
+                      <div className={`text-lg font-bold tabular-nums ${pl?.color || "text-zinc-400"}`}>
+                        {ps}
+                      </div>
+                      <p className="text-zinc-500 text-xs">{pl?.name || r.platform}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Score breakdown toggle */}
+            {scoreBreakdown && (
+              <div className="mb-6">
+                <button
+                  onClick={() => setShowBreakdown(!showBreakdown)}
+                  className="mx-auto flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+                >
+                  Why this score?
+                  {showBreakdown ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </button>
+
+                {showBreakdown && (
+                  <div className="mt-3 bg-black/30 rounded-xl p-4 space-y-2">
+                    {Object.entries(scoreBreakdown).map(([key, value]) => {
+                      const factor = FACTOR_LABELS[key];
+                      if (!factor) return null;
+                      const pct = (value / factor.max) * 100;
+                      return (
+                        <div key={key} className="flex items-center gap-3">
+                          <span className="text-zinc-400 text-xs w-32 shrink-0">{factor.label}</span>
+                          <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                pct > 60 ? "bg-emerald-500" : pct > 30 ? "bg-amber-500" : "bg-red-500"
+                              }`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-zinc-500 text-xs tabular-nums w-12 text-right">
+                            {value}/{factor.max}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {summary.scoreExplanation && (
+                      <p className="text-zinc-500 text-xs pt-2 border-t border-zinc-800">
+                        {summary.scoreExplanation}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="text-center mb-8">
               {summary.isInvisible ? (
@@ -229,18 +330,25 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
                     </h3>
                   </div>
                   <div className="space-y-2">
-                    {(summary.competitorsMentioned.length > 0
-                      ? summary.competitorsMentioned
-                      : ["competitor-a.com", "competitor-b.com", "competitor-c.com"]
-                    ).map((c, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between px-4 py-3 bg-red-500/5 border border-red-500/10 rounded-lg"
-                      >
-                        <span className="text-white font-medium">{c}</span>
-                        <span className="text-red-400 text-sm">Recommended by AI</span>
-                      </div>
-                    ))}
+                    {summary.competitorsMentioned.length > 0
+                      ? summary.competitorsMentioned.map((c, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between px-4 py-3 bg-red-500/5 border border-red-500/10 rounded-lg"
+                        >
+                          <span className="text-white font-medium">{c}</span>
+                          <span className="text-red-400 text-sm">Recommended by AI</span>
+                        </div>
+                      ))
+                      : [1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between px-4 py-3 bg-red-500/5 border border-red-500/10 rounded-lg"
+                        >
+                          <div className="h-4 w-32 bg-zinc-800 rounded" />
+                          <div className="h-3 w-24 bg-zinc-800 rounded" />
+                        </div>
+                      ))}
                   </div>
                 </GlassCard>
                 <GlassCard hover={false} padding="md" className="mb-4">
@@ -348,6 +456,67 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
               </GlassCard>
             </AnimateIn>
           )}
+
+          {/* ========== RAW AI RESPONSES ========== */}
+          <AnimateIn delay={0.12}>
+            <div className="space-y-3 mb-8">
+              <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">
+                Raw AI Responses
+              </h3>
+              {data.results.map((result, i) => {
+                const pl = PLATFORM_LABELS[result.platform];
+                const ps = platformScores[result.platform];
+                return (
+                  <div
+                    key={i}
+                    className="bg-zinc-900 border border-zinc-800 rounded-xl p-5"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className={`text-xs font-medium uppercase tracking-wide ${pl?.color || "text-zinc-500"}`}>
+                            {pl?.name || result.platform}
+                          </p>
+                          {ps !== undefined && (
+                            <span className="text-xs text-zinc-600 tabular-nums">{ps}/100</span>
+                          )}
+                        </div>
+                        <p className="text-white font-medium">
+                          &ldquo;{result.query}&rdquo;
+                        </p>
+                      </div>
+                      <div
+                        className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium ${
+                          result.mentionedYou
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            : "bg-red-500/10 text-red-400 border border-red-500/20"
+                        }`}
+                      >
+                        {result.mentionedYou ? "Mentioned" : "Not mentioned"}
+                      </div>
+                    </div>
+
+                    {result.snippet && (
+                      <p className="text-zinc-500 text-sm mb-3 line-clamp-3">{result.snippet}</p>
+                    )}
+
+                    {result.aiRecommends.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {result.aiRecommends.slice(0, 6).map((competitor, j) => (
+                          <span
+                            key={j}
+                            className="px-2 py-1 bg-zinc-800 text-zinc-400 rounded text-xs"
+                          >
+                            {competitor}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </AnimateIn>
 
           {/* ========== AI CONTENT PREVIEW ========== */}
           {contentPreview && (
