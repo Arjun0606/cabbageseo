@@ -100,7 +100,7 @@ const groups: ChangelogGroup[] = [
         category: "new",
         title: "Plan-Tiered Auto-Checks",
         description:
-          "Automated checks run on a schedule based on your plan: weekly for Scout, every 3 days for Command, daily for Dominate.",
+          "Automated checks run daily for all paid plans. Command and Dominate also get hourly monitoring.",
         icon: <Zap className="w-5 h-5" />,
       },
       {

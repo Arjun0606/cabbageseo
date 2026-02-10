@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     // If user or organization doesn't exist, create them
     if (!profile || !organizationId) {
-      console.log("[Checkout] Creating user and org for:", user.email);
+      console.error("[Checkout] Creating user and org");
       
       // Create organization first (plan defaults to 'free' in DB)
       const { data: newOrg, error: orgError } = await serviceClient
@@ -229,8 +229,6 @@ export async function POST(request: NextRequest) {
         theme: "dark",
       },
     });
-
-    console.log("[Checkout] Created session:", session.session_id);
 
     // Return both formats for backward compatibility
     return NextResponse.json({

@@ -223,6 +223,18 @@ export async function POST(request: NextRequest) {
           }, { status: 403 });
         }
 
+        // Verify competitor belongs to this site
+        const { data: competitor } = await db
+          .from("competitors")
+          .select("id")
+          .eq("id", competitorId)
+          .eq("site_id", siteId)
+          .maybeSingle();
+
+        if (!competitor) {
+          return NextResponse.json({ error: "Competitor not found for this site" }, { status: 404 });
+        }
+
         const result = await analyzeCompetitorDeepDive(siteId, competitorId, organizationId);
 
         return NextResponse.json({

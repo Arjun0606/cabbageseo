@@ -108,22 +108,11 @@ export const dailyCitationCheck = inngest.createFunction(
       }>;
     });
 
-    // Plan-tiered filtering:
-    // - free: skip entirely
-    // - scout: Mondays only (day 1)
-    // - command: every 3 days (dayOfYear % 3 === 0)
-    // - dominate: daily
-    const now = new Date();
-    const utcDay = now.getUTCDay(); // 0=Sun, 1=Mon, ...
-    const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 0));
-    const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / 86400000);
-
+    // All paid plans get daily auto-checks.
+    // Command + Dominate also get hourly monitoring (separate cron).
     const sites = allSites.filter((site) => {
       const plan = resolvePlan(site.organizations?.plan || "free");
-      if (plan === "free") return false;
-      if (plan === "scout") return utcDay === 1; // Monday only
-      if (plan === "command") return dayOfYear % 3 === 0; // Every 3 days
-      return true; // dominate = daily
+      return plan !== "free"; // All paid plans run daily
     }).map((site) => ({
       id: site.id,
       domain: site.domain,
@@ -298,7 +287,7 @@ export const hourlyCitationCheck = inngest.createFunction(
           organizations!inner(plan)
         `)
         .eq("status", "active")
-        .in("organizations.plan", ["command", "dominate", "pro", "pro_plus"]);
+        .in("organizations.plan", ["command", "dominate"]);
       
       if (error) {
         console.error("Failed to fetch paid sites:", error);

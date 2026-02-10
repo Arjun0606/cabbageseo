@@ -131,7 +131,7 @@ const jsonLdApp = {
       price: "49",
       priceCurrency: "USD",
       billingIncrement: "P1M",
-      description: "1 site, 3 competitors, weekly AI monitoring",
+      description: "1 site, 3 competitors, daily AI monitoring",
     },
     {
       "@type": "Offer",
@@ -139,7 +139,7 @@ const jsonLdApp = {
       price: "149",
       priceCurrency: "USD",
       billingIncrement: "P1M",
-      description: "5 sites, 10 competitors, checks every 3 days + hourly monitoring",
+      description: "5 sites, 10 competitors, daily checks + hourly monitoring",
     },
     {
       "@type": "Offer",

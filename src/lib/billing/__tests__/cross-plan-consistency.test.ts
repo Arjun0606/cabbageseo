@@ -59,20 +59,6 @@ describe("Cross-file site limits consistency", () => {
 });
 
 // ============================================
-// TEAM MEMBER LIMITS MUST MATCH
-// ============================================
-
-describe("Cross-file team member limits consistency", () => {
-  const tiers = ["scout", "command", "dominate"] as const;
-
-  for (const tier of tiers) {
-    it(`${tier} team member limit matches across files`, () => {
-      expect(CITATION_PLANS[tier].limits.teamMembers).toBe(PLANS[tier].limits.teamMembers);
-    });
-  }
-});
-
-// ============================================
 // LEGACY MAPPING CONSISTENCY
 // ============================================
 

@@ -69,12 +69,13 @@ const tiers: PricingTier[] = [
     icon: <TrendingUp className="w-5 h-5 text-emerald-400" />,
     features: [
       "1 site, 3 competitors",
-      "Weekly automated checks",
+      "Daily automated checks",
       "30-day sprint program",
       "Gap analysis + 3 fix pages/mo",
+      "CSV export",
       "Score drop alerts (email + Slack)",
     ],
-    promise: "Weekly scans catch every shift. Your sprint gives you exactly what to fix, every month.",
+    promise: "Daily scans catch every shift. Your sprint gives you exactly what to fix, every month.",
   },
   {
     name: "Command",
@@ -89,13 +90,13 @@ const tiers: PricingTier[] = [
     icon: <Zap className="w-5 h-5 text-emerald-400" />,
     features: [
       "5 sites, 10 competitors",
-      "Checks every 3 days + hourly monitoring",
+      "Daily checks + hourly monitoring",
       "Weekly action plans + competitor deep dives",
       "15 fix pages/mo",
       "Everything in Scout",
     ],
     highlight: "MOST POPULAR",
-    promise: "Competitors move fast. Checks every 3 days + weekly action plans keep you ahead.",
+    promise: "Competitors move fast. Daily checks + weekly action plans keep you ahead.",
   },
   {
     name: "Dominate",
@@ -111,7 +112,7 @@ const tiers: PricingTier[] = [
       "25 sites, 25 competitors",
       "Daily + hourly auto-checks",
       "Unlimited fix pages",
-      "Priority support",
+      "CSV export",
       "Everything in Command",
     ],
     promise: "Daily scans, hourly monitoring, unlimited fixes. The moment AI shifts, you already know.",
@@ -137,7 +138,7 @@ const faqs: FAQItem[] = [
   {
     question: "How do automated checks work?",
     answer:
-      "CabbageSEO automatically scans your AI visibility across ChatGPT, Perplexity, and Google AI on a schedule based on your plan. Scout gets weekly checks (every Monday), Command gets checks every 3 days, and Dominate gets daily checks plus hourly monitoring. If your visibility score drops by 2 or more points, you\u2019ll get an instant alert via email and Slack (if configured). No manual action required \u2014 the system works while you sleep.",
+      "CabbageSEO automatically scans your AI visibility across ChatGPT, Perplexity, and Google AI on a schedule based on your plan. Scout gets daily checks, Command gets daily checks plus hourly monitoring, and Dominate gets daily checks plus hourly monitoring across all 25 sites. If your visibility score drops by 2 or more points, you\u2019ll get an instant alert via email and Slack (if configured). No manual action required \u2014 the system works while you sleep.",
   },
   {
     question: "What are fix pages?",

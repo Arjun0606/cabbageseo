@@ -319,15 +319,16 @@ async function checkPerplexity(domain: string, query: string): Promise<CheckResu
       body: JSON.stringify({
         model: "sonar",
         messages: [
-          { 
-            role: "system", 
-            content: "You are a helpful assistant. Always cite your sources when possible." 
+          {
+            role: "system",
+            content: "You are a helpful assistant. Always cite your sources when possible."
           },
           { role: "user", content: query }
         ],
         return_citations: true,
         return_related_questions: false,
       }),
+      signal: AbortSignal.timeout(30000),
     });
 
     if (!response.ok) {
@@ -436,6 +437,7 @@ async function checkGoogleAI(domain: string, query: string): Promise<CheckResult
             maxOutputTokens: 1024,
           }
         }),
+        signal: AbortSignal.timeout(30000),
       }
     );
 
@@ -537,6 +539,7 @@ async function checkChatGPT(domain: string, query: string): Promise<CheckResult>
         ],
         max_completion_tokens: 4000,
       }),
+      signal: AbortSignal.timeout(30000),
     });
 
     if (!response.ok) {
@@ -737,7 +740,8 @@ export async function POST(request: NextRequest) {
     // Generate queries based on plan, category, and custom queries
     const generatedQueries = generateQueries(cleanDomain, category, customQueries, plan);
 
-    console.log(`[Citation Check] Plan: ${plan}, Category: ${category}, Queries: ${generatedQueries.length}${singleQuery ? ' (single re-check)' : ''}`);
+    // Log check metadata (no PII)
+    console.error(`[Citation Check] queries=${generatedQueries.length}${singleQuery ? ' (re-check)' : ''}`);
 
     // Build check tasks — distribute queries across all 3 AI platforms.
     // Free (3 queries): 1 per platform. Scout (10): 3-4 each. Command (20): 6-7 each. Dominate (30): 10 each.

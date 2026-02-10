@@ -67,7 +67,6 @@ describe("plans.ts limit escalation", () => {
     "keywordsTracked",
     "auditsPerMonth",
     "aioAnalysesPerMonth",
-    "teamMembers",
     "aiCreditsPerMonth",
   ];
 
@@ -110,19 +109,16 @@ describe("plans.ts feature escalation", () => {
 // ============================================
 
 describe("plans.ts specific limits", () => {
-  it("Scout: 1 site, 1 team member", () => {
+  it("Scout: 1 site", () => {
     expect(PLANS.scout.limits.sites).toBe(1);
-    expect(PLANS.scout.limits.teamMembers).toBe(1);
   });
 
-  it("Command: 5 sites, 5 team members", () => {
+  it("Command: 5 sites", () => {
     expect(PLANS.command.limits.sites).toBe(5);
-    expect(PLANS.command.limits.teamMembers).toBe(5);
   });
 
-  it("Dominate: 25 sites, unlimited team members", () => {
+  it("Dominate: 25 sites", () => {
     expect(PLANS.dominate.limits.sites).toBe(25);
-    expect(PLANS.dominate.limits.teamMembers).toBe(-1);
   });
 });
 

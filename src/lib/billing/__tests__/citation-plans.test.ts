@@ -67,7 +67,6 @@ describe("Limit escalation (higher tier >= lower tier)", () => {
     "manualChecksPerDay",
     "competitors",
     "historyDays",
-    "teamMembers",
     "queriesPerCheck",
     "customQueriesPerSite",
   ];
@@ -219,7 +218,6 @@ describe("Feature availability per tier", () => {
     expect(f.competitorDeepDive).toBe(true);
     expect(f.pageGeneration).toBe(true);
     expect(f.queryDiscovery).toBe(false); // Not yet shipped
-    expect(f.prioritySupport).toBe(true);
     expect(f.whiteLabel).toBe(false);
     expect(f.apiAccess).toBe(false);
   });
@@ -231,7 +229,6 @@ describe("Feature availability per tier", () => {
     expect(f.apiAccess).toBe(false); // Not yet shipped
     expect(f.hourlyAutoCheck).toBe(true);
     expect(f.queryDiscovery).toBe(false); // Not yet shipped
-    expect(f.prioritySupport).toBe(true);
     expect(f.dailyAutoCheck).toBe(true);
     expect(f.emailAlerts).toBe(true);
     expect(f.weeklyReport).toBe(true);

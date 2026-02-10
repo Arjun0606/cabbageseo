@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/api/get-user";
+import { getCitationPlanLimits } from "@/lib/billing/citation-plans";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 function getDbClient(): SupabaseClient | null {
@@ -25,10 +26,12 @@ export async function GET(request: NextRequest) {
     }
 
     const siteId = request.nextUrl.searchParams.get("siteId");
-    const days = Math.min(
-      365,
-      Math.max(1, parseInt(request.nextUrl.searchParams.get("days") || "90", 10)),
-    );
+
+    // Enforce plan-based history retention limits
+    const planLimits = getCitationPlanLimits(currentUser.plan || "free");
+    const maxDays = planLimits.historyDays;
+    const requestedDays = parseInt(request.nextUrl.searchParams.get("days") || "90", 10);
+    const days = Math.min(maxDays, Math.max(1, requestedDays));
 
     if (!siteId) {
       return NextResponse.json({ error: "siteId required" }, { status: 400 });
@@ -54,13 +57,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Site not found" }, { status: 404 });
     }
 
-    // Fetch snapshots ordered by date ascending for charting
+    // Enforce history retention: only show data within plan's window
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
     const { data: snapshots } = await db
       .from("market_share_snapshots")
       .select(
         "queries_won, queries_lost, total_queries, snapshot_date",
       )
       .eq("site_id", siteId)
+      .gte("snapshot_date", cutoffDate.toISOString().split("T")[0])
       .order("snapshot_date", { ascending: true })
       .limit(days);
 

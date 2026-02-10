@@ -162,7 +162,7 @@ async function incrementUsage(client: any, organizationId: string, period: strin
     .select("id, pages_generated")
     .eq("organization_id", organizationId)
     .eq("period", period)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     const current = (existing as Record<string, number>).pages_generated || 0;

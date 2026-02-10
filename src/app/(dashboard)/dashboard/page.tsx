@@ -37,6 +37,7 @@ import {
   FileText,
   Zap,
   Search,
+  Download,
 } from "lucide-react";
 import Link from "next/link";
 import { useCheckout } from "@/hooks/use-checkout";
@@ -505,6 +506,18 @@ function DashboardContent() {
             Your AI visibility command center
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          {isPaid && currentSite?.id && (
+            <a
+              href={`/api/geo/citations/export?siteId=${currentSite.id}`}
+              download
+              className="flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm rounded-lg transition-colors border border-zinc-700"
+              title="Export citations as CSV"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">CSV</span>
+            </a>
+          )}
         <button
           onClick={handleCheck}
           disabled={checking}
@@ -522,6 +535,7 @@ function DashboardContent() {
             </>
           )}
         </button>
+        </div>
       </div>
 
       {/* ═══ GETTING STARTED GUIDE ═══ */}
@@ -545,7 +559,7 @@ function DashboardContent() {
               { icon: Bell, label: "Set up email + Slack alerts", href: "/settings/notifications" },
               { icon: FileText, label: "Review your fix pages", href: "/dashboard/pages" },
               { icon: Zap, label: "Start your 30-day sprint", href: "#", onClick: () => setShowProgress(true) },
-              { icon: Users, label: "Track competitors", href: "/dashboard/actions" },
+              { icon: Users, label: "Track competitors", href: "/dashboard/competitors" },
             ].map((item) => (
               <Link
                 key={item.label}

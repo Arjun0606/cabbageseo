@@ -264,7 +264,7 @@ export default function ForSaaSPage() {
                 icon: <Target className="w-6 h-6 text-emerald-400" />,
                 title: "Competitor Intelligence",
                 description:
-                  "Track up to 25 competitors. See their trust sources, content strategy, and authority signals.",
+                  "Track competitors (3-25 based on plan). See their trust sources, content strategy, and authority signals.",
               },
               {
                 icon: <Search className="w-6 h-6 text-emerald-400" />,

@@ -62,7 +62,7 @@ const capabilities: Feature[] = [
   {
     name: "Competitor Intelligence",
     description:
-      "Track up to 25 competitors. See who AI recommends, their trust sources, and where they\u2019re gaining ground.",
+      "Track competitors across plans (3 on Scout, 10 on Command, 25 on Dominate). See who AI recommends, their trust sources, and where they\u2019re gaining ground.",
     icon: <Users className="w-5 h-5" />,
     plan: "scout",
   },

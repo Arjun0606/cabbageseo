@@ -75,9 +75,9 @@ All numbers come from real AI responses. Citations in your dashboard represent a
       {
         title: "Check Limits by Plan",
         content: `• **Free**: 3 manual checks per day for 7 days (then access expires)
-• **Scout ($49/mo)**: Unlimited manual checks + weekly automated checks (Mondays)
-• **Command ($149/mo)**: Unlimited manual checks + auto-checks every 3 days
-• **Dominate ($349/mo)**: Unlimited manual checks + daily auto-checks + hourly monitoring
+• **Scout ($49/mo)**: Unlimited manual checks + daily automated checks
+• **Command ($149/mo)**: Unlimited manual checks + daily checks + hourly monitoring
+• **Dominate ($349/mo)**: Unlimited manual checks + daily checks + hourly monitoring across all 25 sites
 
 **Note**: Automated checks run in the background and don't count against manual check limits. If your AI visibility drops significantly, you'll get an instant alert via email and Slack (if configured).`,
       },
@@ -464,9 +464,9 @@ Each result includes a shareable report URL and the overall visibility score.`,
       {
         title: "How often are checks run?",
         content: `• **Free**: 3 manual checks per day for 7 days
-• **Scout**: Unlimited manual checks + weekly automated checks (Mondays)
-• **Command**: Unlimited manual checks + auto-checks every 3 days
-• **Dominate**: Unlimited manual checks + daily auto-checks + hourly monitoring
+• **Scout**: Unlimited manual checks + daily automated checks
+• **Command**: Unlimited manual checks + daily checks + hourly monitoring
+• **Dominate**: Unlimited manual checks + daily checks + hourly monitoring across all 25 sites
 
 Automated checks happen in the background. You'll receive email + Slack alerts when new citations are found or when your score drops.`,
       },

@@ -23,7 +23,6 @@ export interface CitationPlanLimits {
   manualChecksPerDay: number;
   competitors: number;
   historyDays: number;
-  teamMembers: number;
   queriesPerCheck: number;
   customQueriesPerSite: number; // -1 = unlimited
 }
@@ -61,7 +60,6 @@ export interface CitationPlanFeatures {
   // Scale — not yet shipped, hidden from marketing
   whiteLabel: boolean;
   apiAccess: boolean;
-  prioritySupport: boolean;
 }
 
 export interface CitationIntelligenceLimits {
@@ -98,7 +96,6 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       manualChecksPerDay: 3,
       competitors: 0,
       historyDays: 7,
-      teamMembers: 1,
       queriesPerCheck: 3,
       customQueriesPerSite: 0,
     },
@@ -132,7 +129,6 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       monthlyCheckpoints: false,
       whiteLabel: false,
       apiAccess: false,
-      prioritySupport: false,
     },
   },
   scout: {
@@ -148,7 +144,6 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       manualChecksPerDay: -1,
       competitors: 3,
       historyDays: 30,
-      teamMembers: 1,
       queriesPerCheck: 10,
       customQueriesPerSite: 5,
     },
@@ -182,7 +177,6 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       monthlyCheckpoints: true,
       whiteLabel: false,
       apiAccess: false,
-      prioritySupport: false,
     },
   },
   command: {
@@ -199,7 +193,6 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       manualChecksPerDay: -1,
       competitors: 10,
       historyDays: 365,
-      teamMembers: 5,
       queriesPerCheck: 20,
       customQueriesPerSite: -1,
     },
@@ -233,7 +226,6 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       monthlyCheckpoints: true,
       whiteLabel: false,
       apiAccess: false,
-      prioritySupport: true,
     },
   },
   dominate: {
@@ -249,7 +241,6 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       manualChecksPerDay: -1,
       competitors: 25,
       historyDays: 365,
-      teamMembers: -1,
       queriesPerCheck: 30,
       customQueriesPerSite: -1,
     },
@@ -283,7 +274,6 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       monthlyCheckpoints: true,
       whiteLabel: false,       // Not yet shipped
       apiAccess: false,        // Not yet shipped
-      prioritySupport: true,
     },
   },
 };

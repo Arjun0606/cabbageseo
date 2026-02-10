@@ -28,7 +28,6 @@ export interface PlanLimits {
   keywordsTracked: number;
   auditsPerMonth: number;
   aioAnalysesPerMonth: number;
-  teamMembers: number;
   aiCreditsPerMonth: number;  // ~1 credit = 1 Claude Haiku call
 }
 
@@ -77,7 +76,6 @@ export const PLANS: Record<PlanId, Plan> = {
       keywordsTracked: 100,
       auditsPerMonth: 5,
       aioAnalysesPerMonth: 50,
-      teamMembers: 1,
       aiCreditsPerMonth: 2000,
     },
     features: {
@@ -101,7 +99,7 @@ export const PLANS: Record<PlanId, Plan> = {
     featureList: [
       "1 website",
       "3 competitor tracking",
-      "Weekly AI monitoring",
+      "Daily AI monitoring",
       "5 gap analyses/month",
       "30-day AI sprint",
       "Trust Map access",
@@ -123,7 +121,6 @@ export const PLANS: Record<PlanId, Plan> = {
       keywordsTracked: 1000,
       auditsPerMonth: 25,
       aioAnalysesPerMonth: 200,
-      teamMembers: 5,
       aiCreditsPerMonth: 10000,
     },
     features: {
@@ -147,12 +144,12 @@ export const PLANS: Record<PlanId, Plan> = {
     featureList: [
       "5 websites",
       "10 competitor tracking",
-      "Every 3 days + hourly monitoring",
+      "Daily checks + hourly monitoring",
       "Unlimited gap analysis + content ideas",
       "Weekly action playbooks",
       "Competitor deep dives",
       "Weekly email digest",
-      "Priority support",
+      "CSV export",
     ],
   },
   dominate: {
@@ -168,7 +165,6 @@ export const PLANS: Record<PlanId, Plan> = {
       keywordsTracked: 5000,
       auditsPerMonth: 100,
       aioAnalysesPerMonth: 500,
-      teamMembers: -1,
       aiCreditsPerMonth: 30000,
     },
     features: {
@@ -197,7 +193,7 @@ export const PLANS: Record<PlanId, Plan> = {
       "Weekly email digest",
       "Get Listed Playbook",
       "Monthly checkpoint reports",
-      "Priority support",
+      "CSV export",
     ],
   },
 };

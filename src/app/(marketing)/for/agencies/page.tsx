@@ -295,7 +295,7 @@ export default function ForAgenciesPage() {
                   Competitor Tracking at Scale
                 </h3>
                 <p className="text-zinc-400">
-                  Track up to 25 competitors per client. See cross-client
+                  Track up to 25 competitors per client on Dominate. See cross-client
                   competitive trends and identify opportunities across your
                   portfolio.
                 </p>
@@ -364,7 +364,7 @@ export default function ForAgenciesPage() {
                   {[
                     "5 sites (1 per client)",
                     "10 competitors per site",
-                    "Auto-checks every 3 days",
+                    "Daily auto-checks + hourly monitoring",
                     "Score drop alerts (email + Slack)",
                     "Full gap analysis + trend charts",
                     "Fix pages (15/mo)",
@@ -412,7 +412,7 @@ export default function ForAgenciesPage() {
                     "365-day trend chart history",
                     "Slack integration",
                     "Monthly checkpoint reports",
-                    "Priority support",
+                    "CSV export",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-3 text-sm text-zinc-300">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />

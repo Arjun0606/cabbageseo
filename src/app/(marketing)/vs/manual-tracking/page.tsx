@@ -43,7 +43,7 @@ const comparisonRows = [
   {
     feature: "Competitor tracking",
     manual: "Manual guesswork",
-    cabbage: "Automated, up to 25 competitors",
+    cabbage: "Automated, 3-25 competitors by plan",
     icon: <Users className="w-4 h-4" />,
   },
   {

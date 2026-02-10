@@ -431,9 +431,9 @@ function BillingContent() {
                           {planData.id === "dominate"
                             ? "Daily + hourly auto-checks"
                             : planData.id === "command"
-                            ? "Every 3 days + hourly monitoring"
+                            ? "Daily + hourly monitoring"
                             : planData.id === "scout"
-                            ? "Weekly auto-checks"
+                            ? "Daily auto-checks"
                             : "Manual checks only"}
                         </li>
                         {planData.features.sprintFramework && (
