@@ -4,7 +4,7 @@
  * DASHBOARD — Score → Task → Progress
  *
  * Three zones:
- * 1. Score Hero (full-width momentum score with trial pill)
+ * 1. Score Hero (full-width momentum score)
  * 2. The Task (single action card — first citation goal, next action, or recheck)
  * 3. Progress (collapsible — improvement, lost queries, sprint)
  */
@@ -29,19 +29,13 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
-  Globe,
-  BarChart3,
-  Users,
-  X,
-  Bell,
-  FileText,
-  Zap,
-  Search,
   Download,
+  Sparkles,
+  Target,
+  Shield,
 } from "lucide-react";
 import Link from "next/link";
 import { useCheckout } from "@/hooks/use-checkout";
-import { getNextPlan } from "@/lib/billing/citation-plans";
 
 interface MomentumData {
   score: number;
@@ -119,17 +113,10 @@ function DashboardContent() {
     sites,
     loading: siteLoading,
     organization,
-    trial,
     usage,
     runCheck,
   } = useSite();
   const { checkout, loading: checkoutLoading } = useCheckout();
-
-  // Getting Started guide
-  const [showGuide, setShowGuide] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return !localStorage.getItem("cabbage_dismissed_guide");
-  });
 
   // State — Zone 1 + 2 (immediate)
   const [momentum, setMomentum] = useState<MomentumData | null>(null);
@@ -150,6 +137,22 @@ function DashboardContent() {
   >([]);
   const [progressLoaded, setProgressLoaded] = useState(false);
 
+  // Fix Pages state
+  const [contentEngineData, setContentEngineData] = useState<{
+    open: number; pagesGenerated: number; pagesPublished: number;
+    topOpportunity: { query: string; competitors: string[] } | null;
+  } | null>(null);
+
+  // Site Audit state
+  const [auditData, setAuditData] = useState<{
+    hasAudit: boolean;
+    score?: number;
+    grade?: string;
+    breakdown?: { contentClarity: number; authoritySignals: number; structuredData: number; citability: number; freshness: number; topicalDepth: number };
+    tipsCount?: number;
+    createdAt?: string;
+  } | null>(null);
+
   // Recheck delta state
   const [showRecheckResult, setShowRecheckResult] = useState(false);
   const [recheckDelta, setRecheckDelta] = useState<{
@@ -167,7 +170,7 @@ function DashboardContent() {
 
     setLoading(true);
     try {
-      const [momentumRes, nextActionRes, listingsRes, historyRes, pagesRes, improvementRes] =
+      const [momentumRes, nextActionRes, listingsRes, historyRes, pagesRes, improvementRes, oppsRes, auditRes] =
         await Promise.all([
           fetch(`/api/geo/momentum?siteId=${currentSite.id}`).catch(() => null),
           fetch(`/api/geo/next-action?siteId=${currentSite.id}`).catch(() => null),
@@ -175,10 +178,12 @@ function DashboardContent() {
           fetch(`/api/geo/history?siteId=${currentSite.id}`).catch(() => null),
           fetch(`/api/geo/pages?siteId=${currentSite.id}`).catch(() => null),
           fetch(`/api/geo/improvement?siteId=${currentSite.id}`).catch(() => null),
+          fetch(`/api/geo/opportunities?siteId=${currentSite.id}`).catch(() => null),
+          fetch(`/api/geo/audit?siteId=${currentSite.id}`).catch(() => null),
         ]);
 
       // Detect total connection failure
-      const allFailed = !momentumRes && !nextActionRes && !listingsRes && !historyRes && !pagesRes;
+      const allFailed = !momentumRes && !nextActionRes && !listingsRes && !historyRes && !pagesRes && !oppsRes;
       if (allFailed) {
         setDashError("Couldn't load dashboard data. Check your connection and try again.");
         setLoading(false);
@@ -225,6 +230,38 @@ function DashboardContent() {
       if (improvementRes?.ok) {
         const data = await improvementRes.json();
         setImprovement(data.data || null);
+      }
+
+      if (oppsRes?.ok) {
+        const data = await oppsRes.json();
+        const summary = data.data?.summary;
+        const opps = data.data?.opportunities || [];
+        const firstOpen = opps.find((o: { hasPage: boolean }) => !o.hasPage);
+        setContentEngineData({
+          open: summary?.open || 0,
+          pagesGenerated: summary?.pagesGenerated || 0,
+          pagesPublished: summary?.pagesPublished || 0,
+          topOpportunity: firstOpen
+            ? { query: firstOpen.query, competitors: firstOpen.competitors || [] }
+            : null,
+        });
+      }
+
+      if (auditRes?.ok) {
+        const data = await auditRes.json();
+        if (data.data?.hasAudit) {
+          const audit = data.data.audit;
+          setAuditData({
+            hasAudit: true,
+            score: audit.score?.overall,
+            grade: audit.score?.grade,
+            breakdown: audit.score?.breakdown,
+            tipsCount: Array.isArray(audit.tips) ? audit.tips.length : 0,
+            createdAt: audit.createdAt,
+          });
+        } else {
+          setAuditData({ hasAudit: false });
+        }
       }
 
     } catch {
@@ -317,12 +354,12 @@ function DashboardContent() {
       }
     }, 3000);
 
-    // Stop polling after 2 minutes
+    // Stop polling after 3 minutes
     const timeout = setTimeout(() => {
       setGeneratingPages(false);
       setGenerationTimedOut(true);
       clearInterval(interval);
-    }, 120000);
+    }, 180000);
 
     return () => { clearInterval(interval); clearTimeout(timeout); };
   }, [justScanned, currentSite?.id, generatingPages]);
@@ -480,7 +517,6 @@ function DashboardContent() {
     : [];
 
   // Draft pages for fix-pages-ready card
-  const draftPages = generatedPages.filter((p) => p.status === "draft");
   const recentPages = generatedPages.filter((p) => p.status === "draft" || p.status === "published");
 
   // Build pages map for fix pipeline
@@ -502,9 +538,15 @@ function DashboardContent() {
           <h1 className="text-2xl font-bold text-white">
             {currentSite?.domain || "Dashboard"}
           </h1>
-          <p className="text-zinc-500 text-sm">
-            Your AI visibility command center
-          </p>
+          {plan !== "dominate" && !loading && (
+            <p className="text-zinc-500 text-xs mt-0.5">
+              {usage.sitesUsed}/{usage.sitesLimit} sites
+              {" · "}
+              {usage.checksUsed}/{usage.checksLimit === 999999 ? "∞" : usage.checksLimit} checks
+              {" · "}
+              {usage.competitorsUsed}/{usage.competitorsLimit} competitors
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {isPaid && currentSite?.id && (
@@ -538,46 +580,12 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* ═══ GETTING STARTED GUIDE ═══ */}
-      {showGuide && (
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 relative">
-          <button
-            onClick={() => {
-              setShowGuide(false);
-              localStorage.setItem("cabbage_dismissed_guide", "1");
-            }}
-            className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-300 transition-colors"
-            aria-label="Dismiss guide"
-          >
-            <X className="w-4 h-4" />
-          </button>
-          <h3 className="text-white font-semibold mb-1">Getting started</h3>
-          <p className="text-zinc-400 text-sm mb-4">Here&apos;s how to get the most out of CabbageSEO.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {[
-              { icon: Search, label: "Run your first AI check", href: "#", onClick: handleCheck },
-              { icon: Bell, label: "Set up email + Slack alerts", href: "/settings/notifications" },
-              { icon: FileText, label: "Review your fix pages", href: "/dashboard/pages" },
-              { icon: Zap, label: "Start your 30-day sprint", href: "#", onClick: () => setShowProgress(true) },
-              { icon: Users, label: "Track competitors", href: "/dashboard/competitors" },
-            ].map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                onClick={(e) => {
-                  if (item.onClick) {
-                    e.preventDefault();
-                    item.onClick();
-                  }
-                }}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-zinc-900/60 hover:bg-zinc-800/80 border border-zinc-800 transition-colors group"
-              >
-                <item.icon className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="text-sm text-zinc-300 group-hover:text-white transition-colors">{item.label}</span>
-                <ArrowRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-zinc-400 ml-auto transition-colors" />
-              </Link>
-            ))}
-          </div>
+      {/* Welcome banner for new users */}
+      {searchParams.get("welcome") === "true" && (
+        <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3">
+          <p className="text-emerald-300 text-sm font-medium">
+            Your first AI visibility check is complete. Here&apos;s where you stand.
+          </p>
         </div>
       )}
 
@@ -606,64 +614,6 @@ function DashboardContent() {
         breakdown={momentum?.breakdown}
       />
 
-      {/* ═══ ROI SUMMARY ═══ */}
-      {improvement && improvement.checksCount >= 2 && improvement.firstCheck && improvement.latestCheck && (
-        <ROISummary
-          firstCheckDate={improvement.firstCheck.date}
-          latestCheckDate={improvement.latestCheck.date}
-          checksCount={improvement.checksCount}
-          firstQueriesWon={improvement.firstCheck.queriesWon}
-          firstQueriesTotal={improvement.firstCheck.totalQueries}
-          latestQueriesWon={improvement.latestCheck.queriesWon}
-          latestQueriesTotal={improvement.latestCheck.totalQueries}
-          momentumScore={momentum?.score ?? null}
-          loading={loading}
-        />
-      )}
-
-      {/* ═══ USAGE METERS ═══ */}
-      {plan !== "dominate" && !loading && (
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: "Sites", used: usage.sitesUsed, limit: usage.sitesLimit, icon: Globe },
-            { label: "Checks today", used: usage.checksUsed, limit: usage.checksLimit === 999999 ? -1 : usage.checksLimit, icon: BarChart3 },
-            { label: "Competitors", used: usage.competitorsUsed, limit: usage.competitorsLimit, icon: Users },
-          ].map((meter) => {
-            const isUnlimited = meter.limit === -1;
-            const pct = isUnlimited ? 0 : meter.limit > 0 ? (meter.used / meter.limit) * 100 : 0;
-            const atLimit = !isUnlimited && meter.used >= meter.limit;
-            const nearLimit = pct >= 80;
-            return (
-              <div key={meter.label} className="rounded-xl p-3 bg-zinc-900 border border-zinc-800">
-                <div className="flex items-center gap-2 mb-2">
-                  <meter.icon className="w-3.5 h-3.5 text-zinc-500" />
-                  <span className="text-xs text-zinc-500">{meter.label}</span>
-                </div>
-                <p className={`text-lg font-bold mb-1.5 ${atLimit ? "text-red-400" : "text-white"}`}>
-                  {meter.used}<span className="text-zinc-500 font-normal text-sm">/{meter.limit === -1 ? "∞" : meter.limit}</span>
-                </p>
-                <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${
-                      atLimit ? "bg-red-500" : nearLimit ? "bg-amber-500" : "bg-emerald-500"
-                    }`}
-                    style={{ width: `${Math.min(100, pct)}%` }}
-                  />
-                </div>
-                {atLimit && (
-                  <button
-                    onClick={() => checkout(getNextPlan(plan) || "scout", "yearly")}
-                    className="text-xs text-emerald-400 hover:text-emerald-300 mt-1.5 transition-colors"
-                  >
-                    Upgrade for more →
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
       {/* ═══ RECHECK RESULT BANNER ═══ */}
       {showRecheckResult && recheckDelta && (
         <RecheckResult
@@ -691,7 +641,7 @@ function DashboardContent() {
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
           <div className="flex items-center gap-3">
             <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
-            <div>
+            <div className="flex-1">
               <h3 className="text-white font-semibold">
                 Generating your fix pages...
               </h3>
@@ -699,6 +649,12 @@ function DashboardContent() {
                 Analyzing your lost queries and creating content to improve your AI visibility
               </p>
             </div>
+            <Link
+              href="/dashboard/pages"
+              className="text-xs text-emerald-400 hover:text-emerald-300 shrink-0"
+            >
+              View pages →
+            </Link>
           </div>
         </div>
       ) : recentPages.length > 0 ? (
@@ -754,8 +710,94 @@ function DashboardContent() {
 
         {showProgress && (
           <div className="mt-4 space-y-6">
+            {/* ROI Summary */}
+            {improvement && improvement.checksCount >= 2 && improvement.firstCheck && improvement.latestCheck && (
+              <ROISummary
+                firstCheckDate={improvement.firstCheck.date}
+                latestCheckDate={improvement.latestCheck.date}
+                checksCount={improvement.checksCount}
+                firstQueriesWon={improvement.firstCheck.queriesWon}
+                firstQueriesTotal={improvement.firstCheck.totalQueries}
+                latestQueriesWon={improvement.latestCheck.queriesWon}
+                latestQueriesTotal={improvement.latestCheck.totalQueries}
+                momentumScore={momentum?.score ?? null}
+                loading={loading}
+              />
+            )}
+
             {/* Trend Chart */}
             <TrendChart snapshots={snapshots} loading={loading} />
+
+            {/* Site Audit */}
+            {!loading && isPaid && auditData && (
+              <Link
+                href="/dashboard/audit"
+                className={`block border rounded-2xl p-5 hover:border-emerald-500/40 transition-colors group ${
+                  auditData.hasAudit
+                    ? "bg-gradient-to-r from-zinc-900 via-zinc-900 to-emerald-950/20 border-zinc-700/50"
+                    : "bg-zinc-900 border-zinc-800 border-dashed"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Shield className={`w-5 h-5 ${auditData.hasAudit ? "text-emerald-400" : "text-zinc-500"}`} />
+                    <div>
+                      <h3 className="text-white font-semibold text-sm">Site GEO Audit</h3>
+                      <p className="text-zinc-400 text-xs">
+                        {auditData.hasAudit
+                          ? `Score: ${auditData.score}/100 (${auditData.grade}) · ${auditData.tipsCount} tips`
+                          : "Analyze your pages for AI-citability"}
+                      </p>
+                    </div>
+                  </div>
+                  {auditData.hasAudit && auditData.score !== undefined && (
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                      auditData.score >= 70 ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                      auditData.score >= 40 ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
+                      "bg-red-500/10 text-red-400 border border-red-500/20"
+                    }`}>
+                      {auditData.score}
+                    </span>
+                  )}
+                  {!auditData.hasAudit && (
+                    <span className="text-xs text-emerald-400 font-medium">Run audit →</span>
+                  )}
+                </div>
+              </Link>
+            )}
+
+            {/* Fix Pages */}
+            {!loading && isPaid && contentEngineData && (contentEngineData.open > 0 || contentEngineData.pagesGenerated > 0) && (
+              <Link
+                href="/dashboard/pages"
+                className="block bg-zinc-900 border border-zinc-800 rounded-2xl p-4 hover:border-emerald-500/40 transition-colors group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="w-5 h-5 text-emerald-400" />
+                    <div>
+                      <h3 className="text-white font-semibold text-sm">Fix Pages</h3>
+                      <p className="text-zinc-400 text-xs">
+                        {contentEngineData.open > 0
+                          ? `${contentEngineData.open} citation gap${contentEngineData.open !== 1 ? "s" : ""} detected`
+                          : `${contentEngineData.pagesGenerated} page${contentEngineData.pagesGenerated !== 1 ? "s" : ""} generated`}
+                        {contentEngineData.pagesPublished > 0 &&
+                          ` · ${contentEngineData.pagesPublished} published`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {contentEngineData.open > 0 && (
+                      <span className="flex items-center gap-1 px-2 py-1 bg-red-500/10 border border-red-500/20 rounded-full text-red-400 text-xs font-medium">
+                        <Target className="w-3 h-3" />
+                        {contentEngineData.open} open
+                      </span>
+                    )}
+                    <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-emerald-400 transition-colors" />
+                  </div>
+                </div>
+              </Link>
+            )}
 
             {/* Lost Queries */}
             <RevenueAtRisk

@@ -324,11 +324,11 @@ export default function ForAgenciesPage() {
                   <FileText className="w-6 h-6 text-blue-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">
-                  AI Content Generation
+                  Fix Pages at Scale
                 </h3>
                 <p className="text-zinc-400">
-                  Generate comparison pages and authority content for each client.
-                  AI-written, data-driven content ready to publish.
+                  For every client, generate targeted pages that address the exact
+                  queries where AI isn&apos;t recommending them.
                 </p>
               </GlassCard>
             </StaggerItem>

@@ -4,8 +4,6 @@
 
 export { inngest } from "./inngest-client";
 export { citationFunctions } from "./citation-jobs";
-// Trial drip disabled — subscription required, no more free trial
-// export { trialDripFunctions } from "./trial-drip";
 export { teaserDripFunctions } from "./teaser-drip";
 
 // Helper to trigger jobs from API routes

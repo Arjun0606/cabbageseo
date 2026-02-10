@@ -59,9 +59,9 @@ const comparisonRows = [
     icon: <Gauge className="w-4 h-4" />,
   },
   {
-    feature: "Content generation",
-    manual: "Write everything from scratch",
-    cabbage: "Fix pages that reinforce your credibility",
+    feature: "Fixing visibility gaps",
+    manual: "Write pages from scratch, guess what to target",
+    cabbage: "Data-driven fix pages based on actual AI citation gaps",
     icon: <BarChart3 className="w-4 h-4" />,
   },
   {

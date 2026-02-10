@@ -121,3 +121,9 @@ export const authLimiter = createRateLimiter({
   windowMs: 60_000,
   max: 5,
 });
+
+/** Site creation: 5 per minute per user */
+export const siteCreationLimiter = createRateLimiter({
+  windowMs: 60_000,
+  max: 5,
+});

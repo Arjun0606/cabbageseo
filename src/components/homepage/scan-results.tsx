@@ -549,13 +549,33 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
         </>
       )}
 
-      {/* ========== CONVERSION CTA — full-width emerald banner ========== */}
+      {/* ========== CONVERSION CTA — sell the fix, not the dashboard ========== */}
       <AnimateIn delay={0.2}>
         <div className="bg-emerald-500 rounded-2xl p-8 mb-8">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-black mb-6">
+            <h2 className="text-2xl font-bold text-black mb-2">
               {getCtaHeadline(visibilityScore)}
             </h2>
+            <p className="text-black/70 text-sm mb-5 max-w-md mx-auto">
+              See every query where AI recommends competitors instead of you.
+              Get targeted fix pages to improve your visibility.
+            </p>
+
+            {/* What you get — 3 specific things */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-black/10 rounded-lg text-sm text-black font-medium">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Auto-detect citation gaps
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-black/10 rounded-lg text-sm text-black font-medium">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                One-click fix pages
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-black/10 rounded-lg text-sm text-black font-medium">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Track what&apos;s working
+              </div>
+            </div>
 
             {/* Google OAuth CTA */}
             <button
@@ -585,7 +605,7 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
                   />
                 </svg>
               )}
-              Sign up &amp; subscribe
+              Start fixing my AI visibility
             </button>
 
             {authError && (
@@ -602,7 +622,7 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
             </div>
 
             <p className="mt-3 text-black/60 text-sm">
-              14-day money-back guarantee &bull; Cancel anytime
+              From $39/mo &bull; 14-day money-back guarantee &bull; Cancel anytime
             </p>
           </div>
         </div>

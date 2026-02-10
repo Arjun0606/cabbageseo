@@ -16,7 +16,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Zap,
-  FileText,
+  Sparkles,
   Users,
   Settings,
   Menu,
@@ -27,6 +27,7 @@ import {
   Plus,
   Loader2,
   ArrowRight,
+  Shield,
 } from "lucide-react";
 import { SiteProvider, useSite } from "@/context/site-context";
 import { Button } from "@/components/ui/button";
@@ -40,8 +41,9 @@ import { CITATION_PLANS, getNextPlan } from "@/lib/billing/citation-plans";
 // Navigation items
 const navItems = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+  { href: "/dashboard/audit", label: "Site Audit", icon: Shield },
+  { href: "/dashboard/pages", label: "Fix Pages", icon: Sparkles },
   { href: "/dashboard/actions", label: "Actions", icon: Zap },
-  { href: "/dashboard/pages", label: "Pages", icon: FileText },
   { href: "/dashboard/competitors", label: "Competitors", icon: Users },
 ];
 
@@ -312,12 +314,12 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
 function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { trial, loading } = useSite();
+  const { subscription, loading } = useSite();
 
   // Show paywall for free (unpaid) users (allow billing/settings for upgrade)
   const exemptRoutes = ["/settings/billing", "/settings", "/onboarding"];
   const isExemptRoute = exemptRoutes.some((r) => pathname?.startsWith(r));
-  const showPaywall = !loading && trial.isTrialUser && !isExemptRoute;
+  const showPaywall = !loading && subscription.isFreeUser && !isExemptRoute;
 
   return (
     <div className="min-h-screen bg-zinc-950 flex">

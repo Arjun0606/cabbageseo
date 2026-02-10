@@ -286,9 +286,9 @@ export default function ForSaaSPage() {
               },
               {
                 icon: <Zap className="w-6 h-6 text-emerald-400" />,
-                title: "AI Content Generation",
+                title: "Targeted Fix Pages",
                 description:
-                  "We generate comparison pages and authority content for you. Get a preview during your free scan — full pages on paid plans.",
+                  "When you're losing a query, we generate pages that address the exact gap AI platforms identified. Preview during your free scan — full pages on paid plans.",
               },
             ].map((item) => (
               <StaggerItem key={item.title}>

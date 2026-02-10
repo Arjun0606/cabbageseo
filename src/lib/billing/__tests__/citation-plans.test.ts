@@ -57,7 +57,6 @@ describe("Pricing correctness", () => {
 // ============================================
 
 describe("Limit escalation (higher tier >= lower tier)", () => {
-  // Helper: treat -1 as infinity for comparison
   function effectiveLimit(val: number): number {
     return val === -1 ? Infinity : val;
   }
@@ -69,6 +68,7 @@ describe("Limit escalation (higher tier >= lower tier)", () => {
     "historyDays",
     "queriesPerCheck",
     "customQueriesPerSite",
+    "auditPagesPerSite",
   ];
 
   for (const key of limitKeys) {
@@ -85,6 +85,7 @@ describe("Limit escalation (higher tier >= lower tier)", () => {
     "contentIdeasPerMonth",
     "actionPlansPerMonth",
     "pagesPerMonth",
+    "siteAuditsPerMonth",
   ];
 
   for (const key of intelligenceKeys) {
@@ -131,7 +132,7 @@ describe("Specific limit values per tier", () => {
     expect(limits.competitors).toBe(0);
   });
 
-  it("Scout: 1 site, unlimited checks, 3 competitors, 5 gap analyses, 3 pages", () => {
+  it("Scout: 1 site, unlimited checks, 3 competitors, 5 gap analyses, 5 pages", () => {
     const limits = CITATION_PLANS.scout.limits;
     const intel = CITATION_PLANS.scout.intelligenceLimits;
     expect(limits.sites).toBe(1);
@@ -140,10 +141,11 @@ describe("Specific limit values per tier", () => {
     expect(intel.gapAnalysesPerMonth).toBe(5);
     expect(intel.contentIdeasPerMonth).toBe(5);
     expect(intel.actionPlansPerMonth).toBe(0);
-    expect(intel.pagesPerMonth).toBe(3);
+    expect(intel.pagesPerMonth).toBe(5);
+    expect(intel.siteAuditsPerMonth).toBe(2);
   });
 
-  it("Command: 5 sites, unlimited checks, 10 competitors, unlimited gap analysis, 15 pages", () => {
+  it("Command: 5 sites, unlimited checks, 10 competitors, unlimited gap analysis, 25 pages", () => {
     const limits = CITATION_PLANS.command.limits;
     const intel = CITATION_PLANS.command.intelligenceLimits;
     expect(limits.sites).toBe(5);
@@ -152,7 +154,8 @@ describe("Specific limit values per tier", () => {
     expect(intel.gapAnalysesPerMonth).toBe(-1);
     expect(intel.contentIdeasPerMonth).toBe(-1);
     expect(intel.actionPlansPerMonth).toBe(4);
-    expect(intel.pagesPerMonth).toBe(15);
+    expect(intel.pagesPerMonth).toBe(25);
+    expect(intel.siteAuditsPerMonth).toBe(-1);
   });
 
   it("Dominate: 25 sites, unlimited checks, 25 competitors, unlimited everything", () => {
@@ -165,6 +168,7 @@ describe("Specific limit values per tier", () => {
     expect(intel.contentIdeasPerMonth).toBe(-1);
     expect(intel.actionPlansPerMonth).toBe(-1);
     expect(intel.pagesPerMonth).toBe(-1);
+    expect(intel.siteAuditsPerMonth).toBe(-1);
   });
 });
 
@@ -184,15 +188,14 @@ describe("Feature availability per tier", () => {
     expect(f.weeklyActionPlan).toBe(false);
     expect(f.sprintFramework).toBe(false);
     expect(f.pageGeneration).toBe(false);
-    expect(f.whiteLabel).toBe(false);
-    expect(f.apiAccess).toBe(false);
+    expect(f.siteAudit).toBe(false);
   });
 
   it("Free: pagesPerMonth is 0", () => {
     expect(CITATION_PLANS.free.intelligenceLimits.pagesPerMonth).toBe(0);
   });
 
-  it("Scout: monitoring + basic intelligence + page generation, no action plans", () => {
+  it("Scout: monitoring + basic intelligence + page generation + site audit, no action plans", () => {
     const f = CITATION_PLANS.scout.features;
     expect(f.dailyAutoCheck).toBe(true);
     expect(f.emailAlerts).toBe(true);
@@ -202,14 +205,16 @@ describe("Feature availability per tier", () => {
     expect(f.citationGapFull).toBe(false);
     expect(f.contentRecommendations).toBe(true);
     expect(f.pageGeneration).toBe(true);
+    expect(f.schemaGeneration).toBe(true);
+    expect(f.entityOptimization).toBe(false);
+    expect(f.siteAudit).toBe(true);
+    expect(f.siteAuditFull).toBe(false);
     expect(f.weeklyActionPlan).toBe(false);
     expect(f.competitorDeepDive).toBe(false);
     expect(f.sprintFramework).toBe(true);
-    expect(f.whiteLabel).toBe(false);
-    expect(f.apiAccess).toBe(false);
   });
 
-  it("Command: full intelligence + action plans + page generation, no white-label", () => {
+  it("Command: full intelligence + entity optimization + full site audit", () => {
     const f = CITATION_PLANS.command.features;
     expect(f.hourlyAutoCheck).toBe(true);
     expect(f.citationGapFull).toBe(true);
@@ -217,24 +222,25 @@ describe("Feature availability per tier", () => {
     expect(f.weeklyActionPlan).toBe(true);
     expect(f.competitorDeepDive).toBe(true);
     expect(f.pageGeneration).toBe(true);
-    expect(f.queryDiscovery).toBe(false); // Not yet shipped
-    expect(f.whiteLabel).toBe(false);
-    expect(f.apiAccess).toBe(false);
+    expect(f.schemaGeneration).toBe(true);
+    expect(f.entityOptimization).toBe(true);
+    expect(f.siteAudit).toBe(true);
+    expect(f.siteAuditFull).toBe(true);
   });
 
-  it("Dominate: most features enabled, unshipped features disabled", () => {
+  it("Dominate: all GEO features enabled", () => {
     const f = CITATION_PLANS.dominate.features;
-    expect(f.realtimeAlerts).toBe(false); // Not yet shipped
-    expect(f.whiteLabel).toBe(false); // Not yet shipped
-    expect(f.apiAccess).toBe(false); // Not yet shipped
     expect(f.hourlyAutoCheck).toBe(true);
-    expect(f.queryDiscovery).toBe(false); // Not yet shipped
     expect(f.dailyAutoCheck).toBe(true);
     expect(f.emailAlerts).toBe(true);
     expect(f.weeklyReport).toBe(true);
     expect(f.competitorTracking).toBe(true);
     expect(f.sprintFramework).toBe(true);
     expect(f.pageGeneration).toBe(true);
+    expect(f.schemaGeneration).toBe(true);
+    expect(f.entityOptimization).toBe(true);
+    expect(f.siteAudit).toBe(true);
+    expect(f.siteAuditFull).toBe(true);
   });
 });
 
@@ -282,7 +288,7 @@ describe("Helper functions", () => {
   it("getCitationPlanFeatures returns features object", () => {
     const features = getCitationPlanFeatures("command");
     expect(features.weeklyActionPlan).toBe(true);
-    expect(features.whiteLabel).toBe(false);
+    expect(features.entityOptimization).toBe(true);
   });
 
   it("isPaidPlan returns false for free, true for others", () => {

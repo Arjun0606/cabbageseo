@@ -434,7 +434,7 @@ export default async function ShareableTeaserPage({
               href={`/signup?domain=${encodeURIComponent(report.domain)}`}
               className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
             >
-              or start tracking {report.domain} with daily automated checks →
+              or start fixing {report.domain}&apos;s AI visibility with targeted fix pages →
             </Link>
           </div>
         </div>

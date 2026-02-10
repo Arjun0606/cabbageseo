@@ -11,8 +11,6 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getTestSession } from "@/lib/testing/test-session";
-import { cookies } from "next/headers";
 
 // Safe service client
 function getDbClient(): SupabaseClient | null {
@@ -23,88 +21,21 @@ function getDbClient(): SupabaseClient | null {
   }
 }
 
-const TESTING_MODE = process.env.TESTING_MODE === "true" && process.env.NODE_ENV !== "production";
-
-// Check for test bypass session (only active in TESTING_MODE)
-async function getBypassSession() {
-  if (!TESTING_MODE) return null;
-
-  try {
-    const cookieStore = await cookies();
-    const bypassCookie = cookieStore.get("test_bypass_session");
-    if (bypassCookie) {
-      const session = JSON.parse(bypassCookie.value);
-      if (session.bypassMode) {
-        return session;
-      }
-    }
-  } catch {
-    // Ignore cookie parse errors
-  }
-  return null;
-}
-
 export async function GET() {
   try {
-    // Check for test bypass session FIRST (highest priority for testing)
-    const bypassSession = await getBypassSession();
-    if (bypassSession) {
-      return NextResponse.json({
-        authenticated: true,
-        user: {
-          id: `bypass-${bypassSession.plan}`,
-          email: bypassSession.email,
-          name: bypassSession.name,
-        },
-        organization: {
-          id: bypassSession.organizationId,
-          plan: bypassSession.plan,
-          status: "active",
-          createdAt: bypassSession.createdAt,
-        },
-        sites: [],
-        currentSite: null,
-        bypassMode: true,
-      });
-    }
-
-    // Check Supabase auth (real auth takes priority over test session cookie)
     const supabase = await createClient();
     if (!supabase) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         authenticated: false,
-        error: "Not configured" 
+        error: "Not configured"
       });
     }
 
-    // Get user from Supabase auth
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    // If no Supabase user, fall back to test session cookie (only in TESTING_MODE)
+
     if (authError || !user) {
-      const testSession = TESTING_MODE ? await getTestSession() : null;
-      if (testSession) {
-        // Return test session data - no Supabase needed
-        return NextResponse.json({
-          authenticated: true,
-          user: {
-            id: `test-${testSession.email}`,
-            email: testSession.email,
-            name: testSession.name,
-          },
-          organization: {
-            id: `test-org-${testSession.email}`,
-            plan: testSession.plan,
-            status: "active",
-            createdAt: new Date().toISOString(),
-          },
-          sites: [],
-          currentSite: null,
-        });
-      }
-      
-      return NextResponse.json({ 
-        authenticated: false 
+      return NextResponse.json({
+        authenticated: false
       });
     }
 

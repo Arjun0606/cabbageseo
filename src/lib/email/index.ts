@@ -30,7 +30,7 @@ interface EmailTemplate {
 
 function getWelcomeTemplate(name: string): EmailTemplate {
   return {
-    subject: "Welcome to CabbageSEO! 🥬",
+    subject: "Welcome to CabbageSEO — let's get you visible",
     html: `
 <!DOCTYPE html>
 <html>
@@ -41,6 +41,8 @@ function getWelcomeTemplate(name: string): EmailTemplate {
     .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
     .header { text-align: center; margin-bottom: 30px; }
     .logo { font-size: 32px; margin-bottom: 10px; }
+    .step { padding: 12px 16px; background: #f0fdf4; border-left: 3px solid #10b981; margin: 12px 0; border-radius: 0 8px 8px 0; }
+    .step-num { font-weight: 700; color: #10b981; }
     .cta { display: inline-block; background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
     .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }
   </style>
@@ -48,56 +50,58 @@ function getWelcomeTemplate(name: string): EmailTemplate {
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo">🥬</div>
-      <h1>Welcome to CabbageSEO!</h1>
+      <h1>You're in.</h1>
     </div>
-    
+
     <p>Hi ${name || "there"},</p>
-    
-    <p>Thanks for joining CabbageSEO — the first Search Optimization OS that handles both traditional SEO and AI visibility.</p>
-    
-    <p>Here's what you can do next:</p>
-    <ul>
-      <li><strong>Connect your site</strong> — We'll crawl it and give you SEO + AIO scores</li>
-      <li><strong>Research keywords</strong> — Find opportunities with real data</li>
-      <li><strong>Generate content</strong> — AI writes articles optimized for Google AND ChatGPT</li>
-      <li><strong>Enable Autopilot</strong> — Let us handle the boring stuff</li>
-    </ul>
-    
+
+    <p>CabbageSEO monitors whether AI platforms like ChatGPT, Perplexity, and Google AI recommend your product — and helps you fix it when they don't.</p>
+
+    <p>Here's what happens next:</p>
+
+    <div class="step">
+      <span class="step-num">1.</span> <strong>Your first AI check is running</strong> — we're scanning how AI platforms see your site right now.
+    </div>
+    <div class="step">
+      <span class="step-num">2.</span> <strong>We'll find the gaps</strong> — queries where competitors get recommended instead of you.
+    </div>
+    <div class="step">
+      <span class="step-num">3.</span> <strong>Fix pages close them</strong> — targeted pages built from your actual citation data, not generic AI content.
+    </div>
+
     <p style="text-align: center;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" class="cta">Go to Dashboard →</a>
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" class="cta">Go to your dashboard</a>
     </p>
-    
+
     <p>Questions? Just reply to this email.</p>
-    
-    <p>Happy optimizing!<br>The CabbageSEO Team</p>
-    
+
+    <p>— The CabbageSEO Team</p>
+
     <div class="footer">
-      <p>CabbageSEO • The SEO + AIO Operating System</p>
+      <p>CabbageSEO — Get recommended by AI search</p>
     </div>
   </div>
 </body>
 </html>
     `,
     text: `
-Welcome to CabbageSEO!
+You're in.
 
 Hi ${name || "there"},
 
-Thanks for joining CabbageSEO — the first Search Optimization OS that handles both traditional SEO and AI visibility.
+CabbageSEO monitors whether AI platforms like ChatGPT, Perplexity, and Google AI recommend your product — and helps you fix it when they don't.
 
-Here's what you can do next:
-- Connect your site — We'll crawl it and give you SEO + AIO scores
-- Research keywords — Find opportunities with real data
-- Generate content — AI writes articles optimized for Google AND ChatGPT
-- Enable Autopilot — Let us handle the boring stuff
+Here's what happens next:
+
+1. Your first AI check is running — we're scanning how AI platforms see your site right now.
+2. We'll find the gaps — queries where competitors get recommended instead of you.
+3. Fix pages close them — targeted pages built from your actual citation data, not generic AI content.
 
 Go to your dashboard: ${process.env.NEXT_PUBLIC_APP_URL}/dashboard
 
 Questions? Just reply to this email.
 
-Happy optimizing!
-The CabbageSEO Team
+— The CabbageSEO Team
     `.trim(),
   };
 }

@@ -30,7 +30,7 @@ import { CITATION_PLANS } from "@/lib/billing/citation-plans";
 function BillingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { organization, usage, trial, loading, refreshData } = useSite();
+  const { organization, usage, subscription, loading, refreshData } = useSite();
 
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
@@ -249,7 +249,7 @@ function BillingContent() {
       )}
 
       {/* No subscription */}
-      {trial.isTrialUser && (
+      {subscription.isFreeUser && (
         <Card className="border-2 bg-emerald-500/5 border-emerald-500/30">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">

@@ -5,7 +5,7 @@
  * SITE CONTEXT - Single Source of Truth
  * ============================================
  * 
- * Provides site data, user data, and trial status
+ * Provides site data, user data, and subscription status
  * to ALL dashboard pages. No more prop drilling
  * or localStorage nonsense.
  */
@@ -54,11 +54,8 @@ interface Usage {
   competitorsLimit: number;
 }
 
-interface TrialStatus {
-  isTrialUser: boolean;
-  expired: boolean;
-  daysRemaining: number;
-  daysUsed: number;
+interface SubscriptionGate {
+  isFreeUser: boolean;
 }
 
 export interface LostQuery {
@@ -79,7 +76,7 @@ interface SiteContextType {
   sites: Site[];
   currentSite: Site | null;
   usage: Usage;
-  trial: TrialStatus;
+  subscription: SubscriptionGate;
 
   // State
   loading: boolean;
@@ -102,11 +99,8 @@ const defaultUsage: Usage = {
   competitorsLimit: 0,
 };
 
-const defaultTrial: TrialStatus = {
-  isTrialUser: false,
-  expired: false,
-  daysRemaining: 0,
-  daysUsed: 0,
+const defaultSubscription: SubscriptionGate = {
+  isFreeUser: false,
 };
 
 // ============================================
@@ -124,7 +118,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   const [sites, setSites] = useState<Site[]>([]);
   const [currentSite, setCurrentSiteState] = useState<Site | null>(null);
   const [usage, setUsage] = useState<Usage>(defaultUsage);
-  const [trial, setTrial] = useState<TrialStatus>(defaultTrial);
+  const [subscription, setSubscription] = useState<SubscriptionGate>(defaultSubscription);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -158,12 +152,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       // Free plan = no dashboard access (subscription required)
       if (meData.organization) {
         const isFreeUser = meData.organization.plan === "free";
-        setTrial({
-          isTrialUser: isFreeUser,
-          expired: isFreeUser, // Free = always blocked
-          daysRemaining: 0,
-          daysUsed: 0,
-        });
+        setSubscription({ isFreeUser });
       }
       
       // Fetch sites
@@ -354,7 +343,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     sites,
     currentSite,
     usage,
-    trial,
+    subscription,
     loading,
     error,
     setCurrentSite,

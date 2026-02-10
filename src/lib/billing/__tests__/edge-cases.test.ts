@@ -8,6 +8,7 @@ import {
   canUseActionPlan,
   canUseCompetitorDeepDive,
   canGeneratePage,
+  canRunSiteAudit,
   getCitationPlan,
   getCitationPlanLimits,
   getCitationPlanFeatures,
@@ -89,14 +90,14 @@ describe("Legacy plan names in gating functions", () => {
     expect(canUseActionPlan("starter", 0).allowed).toBe(false);
   });
 
-  it("canGeneratePage('starter', 2) uses scout limits (3)", () => {
-    expect(canGeneratePage("starter", 2).allowed).toBe(true);
-    expect(canGeneratePage("starter", 3).allowed).toBe(false);
+  it("canGeneratePage('starter', 4) uses scout limits (5)", () => {
+    expect(canGeneratePage("starter", 4).allowed).toBe(true);
+    expect(canGeneratePage("starter", 5).allowed).toBe(false);
   });
 
-  it("canGeneratePage('pro', 14) uses command limits (15)", () => {
-    expect(canGeneratePage("pro", 14).allowed).toBe(true);
-    expect(canGeneratePage("pro", 15).allowed).toBe(false);
+  it("canGeneratePage('pro', 24) uses command limits (25)", () => {
+    expect(canGeneratePage("pro", 24).allowed).toBe(true);
+    expect(canGeneratePage("pro", 25).allowed).toBe(false);
   });
 
   it("canGeneratePage('pro_plus', 999) uses dominate (unlimited)", () => {
@@ -142,6 +143,10 @@ describe("Unknown plan names fall back to free", () => {
 
   it("canGeneratePage with unknown plan: denied (free limits)", () => {
     expect(canGeneratePage("nonexistent", 0).allowed).toBe(false);
+  });
+
+  it("canRunSiteAudit with unknown plan: denied (free limits)", () => {
+    expect(canRunSiteAudit("nonexistent", 0).allowed).toBe(false);
   });
 });
 
@@ -198,25 +203,25 @@ describe("Boundary values", () => {
   });
 
   it("canGeneratePage at exactly scout limit - 1: allowed", () => {
-    const result = canGeneratePage("scout", 2);
+    const result = canGeneratePage("scout", 4);
     expect(result.allowed).toBe(true);
     expect(result.remaining).toBe(1);
   });
 
   it("canGeneratePage at exactly scout limit: denied", () => {
-    const result = canGeneratePage("scout", 3);
+    const result = canGeneratePage("scout", 5);
     expect(result.allowed).toBe(false);
     expect(result.remaining).toBe(0);
   });
 
   it("canGeneratePage at exactly command limit - 1: allowed", () => {
-    const result = canGeneratePage("command", 14);
+    const result = canGeneratePage("command", 24);
     expect(result.allowed).toBe(true);
     expect(result.remaining).toBe(1);
   });
 
   it("canGeneratePage at exactly command limit: denied", () => {
-    const result = canGeneratePage("command", 15);
+    const result = canGeneratePage("command", 25);
     expect(result.allowed).toBe(false);
     expect(result.remaining).toBe(0);
   });
@@ -375,13 +380,23 @@ describe("Denial messages are user-friendly", () => {
   });
 
   it("canGeneratePage denial at limit mentions monthly limit", () => {
-    const result = canGeneratePage("scout", 3);
+    const result = canGeneratePage("scout", 5);
     expect(result.reason).toContain("Monthly limit");
   });
 
   it("canGeneratePage denial at limit mentions page count", () => {
-    const result = canGeneratePage("command", 15);
-    expect(result.reason).toContain("15");
+    const result = canGeneratePage("command", 25);
+    expect(result.reason).toContain("25");
+  });
+
+  it("canRunSiteAudit denial for free mentions Scout", () => {
+    const result = canRunSiteAudit("free", 0);
+    expect(result.reason).toContain("Scout");
+  });
+
+  it("canRunSiteAudit denial at limit mentions monthly limit", () => {
+    const result = canRunSiteAudit("scout", 2);
+    expect(result.reason).toContain("Monthly limit");
   });
 
   it("free plan denied message mentions subscription", () => {
@@ -400,19 +415,51 @@ describe("Page generation features per tier", () => {
     expect(CITATION_PLANS.free.intelligenceLimits.pagesPerMonth).toBe(0);
   });
 
-  it("Scout: page generation with 3/month limit", () => {
+  it("Scout: page generation with 5/month limit", () => {
     expect(CITATION_PLANS.scout.features.pageGeneration).toBe(true);
-    expect(CITATION_PLANS.scout.intelligenceLimits.pagesPerMonth).toBe(3);
+    expect(CITATION_PLANS.scout.intelligenceLimits.pagesPerMonth).toBe(5);
   });
 
-  it("Command: page generation with 15/month limit", () => {
+  it("Command: page generation with 25/month limit", () => {
     expect(CITATION_PLANS.command.features.pageGeneration).toBe(true);
-    expect(CITATION_PLANS.command.intelligenceLimits.pagesPerMonth).toBe(15);
+    expect(CITATION_PLANS.command.intelligenceLimits.pagesPerMonth).toBe(25);
   });
 
   it("Dominate: unlimited page generation", () => {
     expect(CITATION_PLANS.dominate.features.pageGeneration).toBe(true);
     expect(CITATION_PLANS.dominate.intelligenceLimits.pagesPerMonth).toBe(-1);
+  });
+});
+
+// ============================================
+// SITE GEO AUDIT FEATURES PER TIER
+// ============================================
+
+describe("Site GEO audit features per tier", () => {
+  it("Free: no site audit", () => {
+    expect(CITATION_PLANS.free.features.siteAudit).toBe(false);
+    expect(CITATION_PLANS.free.intelligenceLimits.siteAuditsPerMonth).toBe(0);
+  });
+
+  it("Scout: basic site audit (top 10 pages), 2/month", () => {
+    expect(CITATION_PLANS.scout.features.siteAudit).toBe(true);
+    expect(CITATION_PLANS.scout.features.siteAuditFull).toBe(false);
+    expect(CITATION_PLANS.scout.limits.auditPagesPerSite).toBe(10);
+    expect(CITATION_PLANS.scout.intelligenceLimits.siteAuditsPerMonth).toBe(2);
+  });
+
+  it("Command: full site audit (100 pages), unlimited", () => {
+    expect(CITATION_PLANS.command.features.siteAudit).toBe(true);
+    expect(CITATION_PLANS.command.features.siteAuditFull).toBe(true);
+    expect(CITATION_PLANS.command.limits.auditPagesPerSite).toBe(100);
+    expect(CITATION_PLANS.command.intelligenceLimits.siteAuditsPerMonth).toBe(-1);
+  });
+
+  it("Dominate: full site audit (500 pages), unlimited", () => {
+    expect(CITATION_PLANS.dominate.features.siteAudit).toBe(true);
+    expect(CITATION_PLANS.dominate.features.siteAuditFull).toBe(true);
+    expect(CITATION_PLANS.dominate.limits.auditPagesPerSite).toBe(500);
+    expect(CITATION_PLANS.dominate.intelligenceLimits.siteAuditsPerMonth).toBe(-1);
   });
 });
 
@@ -447,24 +494,20 @@ describe("Sprint and checkpoint features per tier", () => {
 // ============================================
 
 describe("Alert features per tier", () => {
-  it("Free: no email alerts, no realtime alerts", () => {
+  it("Free: no email alerts", () => {
     expect(CITATION_PLANS.free.features.emailAlerts).toBe(false);
-    expect(CITATION_PLANS.free.features.realtimeAlerts).toBe(false);
   });
 
-  it("Scout: email alerts, no realtime", () => {
+  it("Scout: email alerts", () => {
     expect(CITATION_PLANS.scout.features.emailAlerts).toBe(true);
-    expect(CITATION_PLANS.scout.features.realtimeAlerts).toBe(false);
   });
 
-  it("Command: email alerts, no realtime", () => {
+  it("Command: email alerts", () => {
     expect(CITATION_PLANS.command.features.emailAlerts).toBe(true);
-    expect(CITATION_PLANS.command.features.realtimeAlerts).toBe(false);
   });
 
-  it("Dominate: email alerts, no realtime (not yet shipped)", () => {
+  it("Dominate: email alerts", () => {
     expect(CITATION_PLANS.dominate.features.emailAlerts).toBe(true);
-    expect(CITATION_PLANS.dominate.features.realtimeAlerts).toBe(false);
   });
 });
 
@@ -491,5 +534,35 @@ describe("Auto-check frequency per tier", () => {
   it("Dominate: daily + hourly", () => {
     expect(CITATION_PLANS.dominate.features.dailyAutoCheck).toBe(true);
     expect(CITATION_PLANS.dominate.features.hourlyAutoCheck).toBe(true);
+  });
+});
+
+// ============================================
+// canRunSiteAudit GATING
+// ============================================
+
+describe("canRunSiteAudit gating", () => {
+  it("Free: denied", () => {
+    expect(canRunSiteAudit("free", 0).allowed).toBe(false);
+  });
+
+  it("Scout: allowed if under limit (2/month)", () => {
+    expect(canRunSiteAudit("scout", 0).allowed).toBe(true);
+    expect(canRunSiteAudit("scout", 1).allowed).toBe(true);
+    expect(canRunSiteAudit("scout", 1).remaining).toBe(1);
+  });
+
+  it("Scout: denied at limit", () => {
+    expect(canRunSiteAudit("scout", 2).allowed).toBe(false);
+    expect(canRunSiteAudit("scout", 2).remaining).toBe(0);
+  });
+
+  it("Command: always allowed (unlimited)", () => {
+    expect(canRunSiteAudit("command", 999).allowed).toBe(true);
+    expect(canRunSiteAudit("command", 999).remaining).toBe(-1);
+  });
+
+  it("Dominate: always allowed (unlimited)", () => {
+    expect(canRunSiteAudit("dominate", 999).allowed).toBe(true);
   });
 });

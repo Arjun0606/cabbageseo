@@ -5,7 +5,7 @@
  * Uses existing citation data, gap analysis, and competitor intelligence
  * to create deeply contextual pages that support trust signals AI looks for.
  *
- * Cost: ~$0.003-0.006 per generation (gpt-5-mini)
+ * Cost: ~$0.02-0.04 per generation (gpt-5.2)
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -40,7 +40,8 @@ async function askLLMForPage(systemPrompt: string, userPrompt: string): Promise<
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gpt-5-mini",
+      model: "gpt-5.2",
+      reasoning: { effort: "medium" },
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },

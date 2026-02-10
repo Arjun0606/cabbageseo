@@ -10,6 +10,7 @@
  */
 
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { emailService } from "@/lib/email";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -97,7 +98,14 @@ export async function GET(request: NextRequest) {
               if (userError) {
                 console.error("[Auth Callback] User creation error:", userError);
               }
-              
+
+              // Send welcome email (fire-and-forget)
+              if (user.email) {
+                emailService.sendWelcome(user.email, user.user_metadata?.full_name || "").catch((err) =>
+                  console.error("[Auth Callback] Welcome email failed:", err)
+                );
+              }
+
               // Redirect to onboarding for new users
               // Check if there's a domain param to pass along
               const domainParam = searchParams.get("domain");

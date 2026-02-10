@@ -59,63 +59,73 @@ interface FAQItem {
 const tiers: PricingTier[] = [
   {
     name: "Scout",
-    tagline: "Know your blind spots",
+    tagline: "See your blind spots and start fixing them",
     monthlyPrice: 49,
     annualPrice: 39,
     period: "/mo",
-    description: "For solo founders tracking one product.",
+    description: "Monitor + start fixing your AI visibility",
     cta: "Get Scout",
     href: "/signup?plan=scout",
     icon: <TrendingUp className="w-5 h-5 text-emerald-400" />,
     features: [
-      "1 site, 3 competitors",
-      "Daily automated checks",
-      "30-day sprint program",
-      "Gap analysis + 3 fix pages/mo",
-      "CSV export",
-      "Score drop alerts (email + Slack)",
+      "1 website",
+      "3 competitor tracking",
+      "Daily AI citation monitoring",
+      "5 AI fix pages/month",
+      "Site GEO Audit (top 10 pages)",
+      "Schema markup generation",
+      "5 gap analyses/month",
+      "30-day AI sprint",
+      "Email alerts",
     ],
-    promise: "Daily scans catch every shift. Your sprint gives you exactly what to fix, every month.",
+    promise: "Daily citation monitoring catches every AI shift. Your sprint tells you exactly what to fix.",
   },
   {
     name: "Command",
-    tagline: "Win the AI conversation",
+    tagline: "The complete toolkit to win AI recommendations",
     monthlyPrice: 149,
     annualPrice: 119,
     period: "/mo",
-    description: "For growing SaaS ready to compete.",
+    description: "Full GEO intelligence + competitive edge",
     cta: "Get Command",
     href: "/signup?plan=command",
     popular: true,
     icon: <Zap className="w-5 h-5 text-emerald-400" />,
     features: [
-      "5 sites, 10 competitors",
-      "Daily checks + hourly monitoring",
-      "Weekly action plans + competitor deep dives",
-      "15 fix pages/mo",
-      "Everything in Scout",
+      "5 websites",
+      "10 competitor tracking",
+      "Hourly AI citation monitoring",
+      "25 AI fix pages/month",
+      "Full Site GEO Audit (100 pages)",
+      "Entity optimization + schema markup",
+      "Unlimited gap analysis + content ideas",
+      "Weekly action playbooks",
+      "Competitor deep dives",
     ],
     highlight: "MOST POPULAR",
-    promise: "Competitors move fast. Daily checks + weekly action plans keep you ahead.",
+    promise: "Hourly monitoring + weekly playbooks keep you ahead of every competitor move.",
   },
   {
     name: "Dominate",
-    tagline: "Own your category",
+    tagline: "Scale GEO across all your brands",
     monthlyPrice: 349,
     annualPrice: 279,
     period: "/mo",
-    description: "For agencies and multi-brand companies.",
+    description: "Own your category across every AI platform",
     cta: "Get Dominate",
     href: "/signup?plan=dominate",
     icon: <Crown className="w-5 h-5 text-amber-400" />,
     features: [
-      "25 sites, 25 competitors",
-      "Daily + hourly auto-checks",
-      "Unlimited fix pages",
-      "CSV export",
-      "Everything in Command",
+      "25 websites",
+      "25 competitor tracking",
+      "Hourly AI citation monitoring",
+      "Unlimited AI fix pages",
+      "Full Site GEO Audit (500 pages)",
+      "Entity optimization + schema markup",
+      "Unlimited action playbooks",
+      "Monthly checkpoint reports",
     ],
-    promise: "Daily scans, hourly monitoring, unlimited fixes. The moment AI shifts, you already know.",
+    promise: "Hourly monitoring, unlimited fix pages, full GEO audits. The moment AI shifts, you already know.",
   },
 ];
 
@@ -123,27 +133,32 @@ const faqs: FAQItem[] = [
   {
     question: "Is the data real?",
     answer:
-      "Yes. Every data point comes from real API calls to ChatGPT, Perplexity, and Google AI Overviews. We query the actual AI platforms with real user prompts and record exactly what they recommend. No synthetic data, no estimations \u2014 just what AI actually says when someone asks about your market.",
+      "Yes. Every data point comes from real API calls to ChatGPT, Perplexity, and Google AI Overviews. We query the actual AI platforms with real user prompts and record exactly what they cite and recommend. No synthetic data, no estimations \u2014 just what AI actually says when someone asks about your market.",
   },
   {
-    question: "What\u2019s the 30-day sprint?",
+    question: "What\u2019s the 30-day AI sprint?",
     answer:
-      "The 30-day sprint is a structured program included with Scout and above. Each week you get specific, prioritized actions based on your current visibility data: content to create, pages to optimize, entities to reference, and comparisons to add. By day 30, most customers see measurable improvement in their AI recommendation rate. Think of it as a personal trainer for your AI visibility.",
+      "The 30-day AI sprint is a structured GEO program included with Scout and above. Each week you get specific, prioritized actions based on your current citation data: content to create, pages to optimize, entities to reference, and schema to implement. By day 30, most customers see measurable improvement in their AI citation rate. Think of it as a personal trainer for your GEO strategy.",
+  },
+  {
+    question: "What are fix pages?",
+    answer:
+      "When CabbageSEO finds queries where AI doesn\u2019t recommend you, it can generate targeted fix pages \u2014 comparison pages, explainers, and FAQs \u2014 designed to improve your chances. Unlike generic AI writing tools, these pages are driven by your actual citation data and gap analysis. Scout gets 5 pages/month, Command gets 25, and Dominate gets unlimited.",
+  },
+  {
+    question: "What is a Site GEO Audit?",
+    answer:
+      "A Site GEO Audit crawls your pages and evaluates them for AI-readability: schema markup, entity clarity, content structure, and citation-worthiness. Scout audits your top 10 pages, Command audits up to 100, and Dominate covers up to 500. You get actionable recommendations for every page to improve how AI platforms understand and cite your content.",
+  },
+  {
+    question: "How does AI citation monitoring work?",
+    answer:
+      "CabbageSEO monitors your AI citations across ChatGPT, Perplexity, and Google AI Overviews on a schedule based on your plan. Scout gets daily monitoring, while Command and Dominate get hourly monitoring. If your citation score drops, you\u2019ll get an instant email alert. No manual action required \u2014 the system works while you sleep.",
   },
   {
     question: "Can I cancel anytime?",
     answer:
       "Yes. No contracts, no cancellation fees, no hoops. Cancel from your billing settings in two clicks. Your access continues until the end of your current billing period. If you\u2019re on an annual plan, you can cancel renewal and keep access for the remainder of your term.",
-  },
-  {
-    question: "How do automated checks work?",
-    answer:
-      "CabbageSEO automatically scans your AI visibility across ChatGPT, Perplexity, and Google AI on a schedule based on your plan. Scout gets daily checks, Command gets daily checks plus hourly monitoring, and Dominate gets daily checks plus hourly monitoring across all 25 sites. If your visibility score drops by 2 or more points, you\u2019ll get an instant alert via email and Slack (if configured). No manual action required \u2014 the system works while you sleep.",
-  },
-  {
-    question: "What are fix pages?",
-    answer:
-      "Fix pages are comparison pages, category explainers, and FAQs designed to reinforce your credibility with AI systems. Unlike generic AI writing tools, CabbageSEO uses your citation data, competitor intelligence, and gap analysis to create pages that reinforce the trust signals AI already looks for. Fix pages support third-party trust signals (reviews, listings, mentions) so AI can confidently cite you \u2014 they don\u2019t cause recommendations on their own. Scout gets 3 fix pages/month, Command gets 15, and Dominate gets unlimited.",
   },
   {
     question: "Do you offer refunds?",
@@ -367,8 +382,8 @@ export default function PricingPage() {
 
           <AnimateIn delay={0.2}>
             <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto mb-10">
-              Every plan scans real AI responses. Upgrade for more sites, faster
-              checks, and automated actions.
+              Every plan monitors real AI citations. Upgrade for more sites,
+              faster monitoring, and full GEO intelligence.
             </p>
           </AnimateIn>
 

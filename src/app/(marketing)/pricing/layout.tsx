@@ -3,7 +3,7 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Pricing – AI Visibility Plans Starting at $49/mo",
   description:
-    "Scout ($49/mo), Command ($149/mo), and Dominate ($349/mo) plans. Track AI citations from ChatGPT & Perplexity, monitor competitors, and get AI-generated content. Free scan available.",
+    "Scout ($49/mo), Command ($149/mo), and Dominate ($349/mo) plans. Track AI citations from ChatGPT & Perplexity, monitor competitors, identify gaps, and improve your AI visibility. Free scan available.",
   keywords: [
     "CabbageSEO pricing",
     "AI SEO tool pricing",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "CabbageSEO Pricing – Plans from $49/mo",
     description:
-      "Scout → Command → Dominate. AI monitoring, competitor tracking, and auto-generated comparison pages. Free scan available.",
+      "Scout → Command → Dominate. AI monitoring, competitor tracking, gap analysis, and targeted fix pages. Free scan available.",
   },
 };
 

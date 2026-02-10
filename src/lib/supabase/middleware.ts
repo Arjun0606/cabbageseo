@@ -5,25 +5,11 @@
 
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { getTestSession } from "@/lib/testing/test-session";
-
-// ============================================
-// 🔓 TESTING MODE - AUTH BYPASS
-// Set TESTING_MODE=true in .env for local testing
-// Set ENABLE_TEST_ACCOUNTS=true to allow test account sessions
-// ============================================
-const TESTING_MODE = process.env.TESTING_MODE === "true" && process.env.NODE_ENV !== "production";
-const TEST_ACCOUNTS_ENABLED = TESTING_MODE;
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
-
-  // TESTING: Skip all auth checks for dashboard testing (only when TESTING_MODE=true)
-  if (TESTING_MODE) {
-    return supabaseResponse;
-  }
 
   // Skip auth if Supabase not configured
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -61,10 +47,6 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // ⚠️ CHECK TEST SESSION - Only in development or when explicitly enabled
-  const testSession = TEST_ACCOUNTS_ENABLED ? await getTestSession() : null;
-  const isAuthenticated = !!user || !!testSession;
-
   // Define public routes that don't require auth
   const publicRoutes = [
     "/",
@@ -90,7 +72,6 @@ export async function updateSession(request: NextRequest) {
   ];
 
   // Define public API route prefixes (these handle their own auth)
-  // ALL /api routes should handle their own auth and return JSON responses
   const publicApiPrefixes = [
     "/api/",  // All API routes handle their own auth - return JSON, not redirects
   ];
@@ -107,21 +88,21 @@ export async function updateSession(request: NextRequest) {
   ) || publicRoutePrefixes.some(
     (prefix) => request.nextUrl.pathname.startsWith(prefix)
   );
-  
+
   const isPublicApi = publicApiPrefixes.some(
     (prefix) => request.nextUrl.pathname.startsWith(prefix)
   );
 
-  // If no user/test session and trying to access protected route, redirect to login
-  if (!isAuthenticated && !isPublicRoute && !isPublicApi) {
+  // If no user and trying to access protected route, redirect to login
+  if (!user && !isPublicRoute && !isPublicApi) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirectTo", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
 
-  // If authenticated (user or test session) and trying to access login/signup, redirect to dashboard
-  if (isAuthenticated && (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup")) {
+  // If authenticated and trying to access login/signup, redirect to dashboard
+  if (user && (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
@@ -129,4 +110,3 @@ export async function updateSession(request: NextRequest) {
 
   return supabaseResponse;
 }
-

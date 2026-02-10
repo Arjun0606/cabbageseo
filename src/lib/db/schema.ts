@@ -398,7 +398,7 @@ export const generatedPages = pgTable(
     wordCount: integer("word_count"),
 
     // Generation metadata
-    aiModel: text("ai_model").default("gpt-5-mini"),
+    aiModel: text("ai_model").default("gpt-5.2"),
 
     // Status
     status: generatedPageStatusEnum("status").default("draft"),

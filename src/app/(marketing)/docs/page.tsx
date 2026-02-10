@@ -74,8 +74,7 @@ All numbers come from real AI responses. Citations in your dashboard represent a
       },
       {
         title: "Check Limits by Plan",
-        content: `• **Free**: 3 manual checks per day for 7 days (then access expires)
-• **Scout ($49/mo)**: Unlimited manual checks + daily automated checks
+        content: `• **Scout ($49/mo)**: Unlimited manual checks + daily automated checks
 • **Command ($149/mo)**: Unlimited manual checks + daily checks + hourly monitoring
 • **Dominate ($349/mo)**: Unlimited manual checks + daily checks + hourly monitoring across all 25 sites
 
@@ -161,8 +160,7 @@ Each page is tailored to your specific gaps and designed to reinforce the trust 
       },
       {
         title: "Fix page limits",
-        content: `• **Free**: Not available
-• **Scout**: 3 pages per month
+        content: `• **Scout**: 3 pages per month
 • **Command**: 15 pages per month
 • **Dominate**: Unlimited pages
 
@@ -310,7 +308,6 @@ All email notifications can be toggled on/off individually.`,
 • Queries lost (AI recommends competitors)
 
 **History limits by plan:**
-• Free: 7 days
 • Scout: 30 days
 • Command: 365 days
 • Dominate: 365 days
@@ -327,7 +324,6 @@ Hover over any data point to see the full breakdown for that check.`,
 3. Your custom queries will be included in future checks
 
 **Limits by plan:**
-• Free: Not available
 • Scout: 5 custom queries
 • Command: Unlimited
 • Dominate: Unlimited`,
@@ -463,8 +459,7 @@ Each result includes a shareable report URL and the overall visibility score.`,
     items: [
       {
         title: "How often are checks run?",
-        content: `• **Free**: 3 manual checks per day for 7 days
-• **Scout**: Unlimited manual checks + daily automated checks
+        content: `• **Scout**: Unlimited manual checks + daily automated checks
 • **Command**: Unlimited manual checks + daily checks + hourly monitoring
 • **Dominate**: Unlimited manual checks + daily checks + hourly monitoring across all 25 sites
 
@@ -479,7 +474,7 @@ After signing up, you can:
 • Track competitors (Scout: 3, Command: 10, Dominate: 25)
 • Set up automated monitoring
 
-The free tier allows 1 site for 7 days with 3 manual checks per day.`,
+Run a free scan on the homepage to see where you stand. Subscribe to unlock the full dashboard, automated monitoring, and competitor tracking.`,
       },
       {
         title: "What makes AI recommend a product?",

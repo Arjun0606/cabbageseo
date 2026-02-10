@@ -14,7 +14,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { DodoPayments } from "dodopayments";
-import { PLANS, type PlanId } from "@/lib/billing/plans";
+import { type CitationPlanId } from "@/lib/billing/citation-plans";
 import { authLimiter } from "@/lib/api/rate-limit";
 
 // Dodo Product IDs (configured in Dodo Dashboard)
@@ -101,11 +101,10 @@ export async function POST(request: NextRequest) {
     const { planId, interval = "monthly" } = body as { planId: string; interval?: string };
 
     // Validate plan
-    const validPlanIds: PlanId[] = ["scout", "command", "dominate"];
-    if (!validPlanIds.includes(planId as PlanId) || !PLANS[planId as PlanId]) {
+    const validPlanIds: CitationPlanId[] = ["scout", "command", "dominate"];
+    if (!validPlanIds.includes(planId as CitationPlanId)) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
-    const typedPlanId = planId as PlanId;
 
     if (interval !== "monthly" && interval !== "yearly") {
       return NextResponse.json({ error: "Invalid interval" }, { status: 400 });

@@ -11,14 +11,14 @@ interface UpgradeGateProps {
 
 const actionPreviews = [
   {
+    icon: <FileText className="w-4 h-4 text-emerald-400" />,
+    title: "Targeted fix pages generated for each gap",
+    blurred: "Our AI detects queries where competitors are cited and you're not, then generates optimized comparison pages, FAQs, and explainers to win those citations back...",
+  },
+  {
     icon: <Search className="w-4 h-4 text-emerald-400" />,
     title: "Get listed on the trust sources AI checks first",
     blurred: "Create your profile on G2, Capterra, and Product Hunt. AI pulls recommendations from these directories. Here's the step-by-step for each platform...",
-  },
-  {
-    icon: <FileText className="w-4 h-4 text-emerald-400" />,
-    title: "Publish comparison content that AI can cite",
-    blurred: "Create a 'vs competitor' page and a category explainer that matches the queries where you're losing. Target the exact phrasing AI uses when...",
   },
   {
     icon: <TrendingUp className="w-4 h-4 text-emerald-400" />,
@@ -27,8 +27,8 @@ const actionPreviews = [
   },
   {
     icon: <Bell className="w-4 h-4 text-emerald-400" />,
-    title: "Set up automated monitoring so you never fall behind",
-    blurred: "Configure daily auto-checks and score drop alerts. Get notified in Slack the moment a competitor gains a citation you lost...",
+    title: "Track progress and detect new opportunities weekly",
+    blurred: "Daily auto-checks detect new queries to target. Score drop alerts notify you in Slack. New content opportunities appear automatically so you never fall behind...",
   },
 ];
 
@@ -89,11 +89,11 @@ export default function UpgradeGate({ domain, isInvisible, competitorCount }: Up
         href={`/signup?domain=${encodeURIComponent(domain)}`}
         className="flex items-center justify-center gap-2 w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors"
       >
-        Unlock your full action plan
+        Start fixing my AI visibility
         <ArrowRight className="w-4 h-4" />
       </Link>
       <p className="text-xs text-zinc-500 text-center mt-2">
-        14-day money-back guarantee &bull; Cancel anytime
+        From $39/mo &bull; 14-day money-back guarantee &bull; Cancel anytime
       </p>
     </div>
   );

@@ -367,24 +367,24 @@ describe("canGeneratePage", () => {
     });
   });
 
-  describe("Scout (limit: 3/month)", () => {
+  describe("Scout (limit: 5/month)", () => {
     it("allows at 0 usage", () => {
       const result = canGeneratePage("scout", 0);
       expect(result.allowed).toBe(true);
-      expect(result.remaining).toBe(3);
-    });
-    it("allows at 1 usage", () => {
-      const result = canGeneratePage("scout", 1);
-      expect(result.allowed).toBe(true);
-      expect(result.remaining).toBe(2);
+      expect(result.remaining).toBe(5);
     });
     it("allows at 2 usage", () => {
       const result = canGeneratePage("scout", 2);
       expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(3);
+    });
+    it("allows at 4 usage", () => {
+      const result = canGeneratePage("scout", 4);
+      expect(result.allowed).toBe(true);
       expect(result.remaining).toBe(1);
     });
-    it("denies at 3 usage (limit reached)", () => {
-      const result = canGeneratePage("scout", 3);
+    it("denies at 5 usage (limit reached)", () => {
+      const result = canGeneratePage("scout", 5);
       expect(result.allowed).toBe(false);
       expect(result.remaining).toBe(0);
       expect(result.reason).toContain("Monthly limit");
@@ -394,24 +394,24 @@ describe("canGeneratePage", () => {
     });
   });
 
-  describe("Command (limit: 15/month)", () => {
+  describe("Command (limit: 25/month)", () => {
     it("allows at 0 usage", () => {
       const result = canGeneratePage("command", 0);
       expect(result.allowed).toBe(true);
-      expect(result.remaining).toBe(15);
+      expect(result.remaining).toBe(25);
     });
-    it("allows at 7 usage", () => {
-      const result = canGeneratePage("command", 7);
+    it("allows at 12 usage", () => {
+      const result = canGeneratePage("command", 12);
       expect(result.allowed).toBe(true);
-      expect(result.remaining).toBe(8);
+      expect(result.remaining).toBe(13);
     });
-    it("allows at 14 usage", () => {
-      const result = canGeneratePage("command", 14);
+    it("allows at 24 usage", () => {
+      const result = canGeneratePage("command", 24);
       expect(result.allowed).toBe(true);
       expect(result.remaining).toBe(1);
     });
-    it("denies at 15 usage (limit reached)", () => {
-      const result = canGeneratePage("command", 15);
+    it("denies at 25 usage (limit reached)", () => {
+      const result = canGeneratePage("command", 25);
       expect(result.allowed).toBe(false);
       expect(result.remaining).toBe(0);
       expect(result.reason).toContain("Monthly limit");

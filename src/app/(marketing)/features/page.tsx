@@ -41,7 +41,7 @@ const capabilities: Feature[] = [
   {
     name: "Fix Pages",
     description:
-      "AI-generated comparison pages, explainers, and FAQs tailored to your gap data. Built to reinforce the trust signals AI looks for.",
+      "When AI recommends competitors instead of you, fix pages address the gap. Targeted comparison pages, explainers, and FAQs built from your actual citation data.",
     icon: <FileText className="w-5 h-5" />,
     plan: "scout",
   },

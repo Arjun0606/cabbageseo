@@ -6,9 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
-
-const TESTING_MODE = process.env.TESTING_MODE === "true" && process.env.NODE_ENV !== "production";
+import { createClient } from "@/lib/supabase/server";
 
 // Type for site with audits
 interface SiteWithAudits {
@@ -33,10 +31,8 @@ interface SiteWithAudits {
 
 /**
  * Get the authenticated user's organization ID.
- * In TESTING_MODE, returns null (skips org check).
  */
 async function getAuthOrgId(supabase: any): Promise<{ orgId: string | null; error?: NextResponse }> {
-  if (TESTING_MODE) return { orgId: null };
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -65,7 +61,7 @@ export async function GET(
 
   let supabase;
   try {
-    supabase = TESTING_MODE ? createServiceClient() : await createClient();
+    supabase = await createClient();
   } catch (e) {
     console.error("[Sites API] Error creating client:", e);
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
@@ -161,7 +157,7 @@ export async function PATCH(
 
   let supabase;
   try {
-    supabase = TESTING_MODE ? createServiceClient() : await createClient();
+    supabase = await createClient();
   } catch (e) {
     console.error("[Sites API] Error creating client:", e);
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
@@ -251,7 +247,7 @@ export async function DELETE(
 
   let supabase;
   try {
-    supabase = TESTING_MODE ? createServiceClient() : await createClient();
+    supabase = await createClient();
   } catch (e) {
     console.error("[Sites API] Error creating client:", e);
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });

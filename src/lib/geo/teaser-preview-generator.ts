@@ -41,7 +41,7 @@ export async function generateTeaserPreview(
   }
 
   const competitor = competitors[0];
-  const competitorBrand = competitor.replace(/\.(com|io|co|ai|app|dev|org|net)$/, "");
+  const competitorBrand = competitor.replace(/\.(com|io|co|ai|app|dev|org|net|me|sh|cc|so|biz|xyz|tech|tools|software|cloud|pro|gg|fm|tv|to|ly|co\.uk|com\.au)$/, "");
 
   const systemPrompt = `You are an AI Search Optimization content strategist. You create comparison pages that AI platforms (ChatGPT, Perplexity, Google AI) will cite when answering questions. You respond ONLY with valid JSON. No markdown code fences, no extra text.`;
 

@@ -11,6 +11,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCitationPlanLimits, canAddSite, canAccessProduct } from "@/lib/billing/citation-plans";
 import { getUser } from "@/lib/api/get-user";
+import { siteCreationLimiter } from "@/lib/api/rate-limit";
 
 function getDbClient(): SupabaseClient | null {
   try {
@@ -66,6 +67,15 @@ export async function POST(request: NextRequest) {
     const currentUser = await getUser();
     if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit
+    const rateLimit = siteCreationLimiter.check(currentUser.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a moment.", remaining: 0 },
+        { status: 429 },
+      );
     }
 
     const body = await request.json();

@@ -34,15 +34,28 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-// Generate queries based on domain/category
+// Comprehensive TLD pattern for brand extraction
+const TLD_PATTERN = /\.(com|io|co|ai|app|dev|org|net|so|sh|me|cc|biz|info|xyz|tech|tools|software|cloud|studio|design|agency|pro|team|run|build|gg|fm|tv|to|ly|it|is|in|us|uk|de|fr|eu|co\.uk|com\.au|co\.in)$/;
+
+// Extract clean brand name from domain
+function extractBrandName(domain: string): string {
+  const cleaned = domain.replace(TLD_PATTERN, "");
+  const parts = cleaned.split(".");
+  return parts[parts.length - 1];
+}
+
+// Generate diverse queries optimized for each platform's strengths
 function generateQueries(domain: string): string[] {
-  const domainParts = domain.replace(/\.(com|io|co|ai|app|dev|org|net)$/, "").split(".");
-  const brandName = domainParts[domainParts.length - 1];
+  const brand = extractBrandName(domain);
+  const year = new Date().getFullYear();
 
   return [
-    `best ${brandName} alternatives`,
-    `what is the best tool like ${brandName}`,
-    `top software similar to ${brandName}`,
+    // Perplexity (web search + citations) — buyer comparison intent
+    `best alternatives to ${brand} ${year}`,
+    // Gemini (search grounding) — direct brand knowledge
+    `what is ${domain} and who are its main competitors`,
+    // ChatGPT (knowledge base) — recommendation/evaluation intent
+    `should I use ${brand} or is there a better option`,
   ];
 }
 
@@ -112,7 +125,7 @@ async function queryGemini(query: string): Promise<{
   const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
   const mentions: string[] = [];
-  const domainRegex = /\b([a-z0-9-]+\.(com|io|co|ai|app|dev|org|net))\b/gi;
+  const domainRegex = /\b([a-z0-9-]+\.(com|io|co|ai|app|dev|org|net|me|sh|cc|so|biz|xyz|tech|tools|software|cloud|pro|gg|fm|tv|to|ly))\b/gi;
   let match;
   while ((match = domainRegex.exec(content)) !== null) {
     mentions.push(match[1].toLowerCase());
@@ -135,9 +148,9 @@ async function queryChatGPT(query: string): Promise<{
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [{ role: "user", content: query }],
-      max_tokens: 500,
+      max_completion_tokens: 4000,
     }),
     signal: AbortSignal.timeout(30000),
   });
@@ -167,7 +180,7 @@ function extractMentionedDomains(text: string, citations: string[] = []): string
     }
   }
 
-  const domainRegex = /\b([a-z0-9-]+\.(com|io|co|ai|app|dev|org|net))\b/gi;
+  const domainRegex = /\b([a-z0-9-]+\.(com|io|co|ai|app|dev|org|net|me|sh|cc|so|biz|xyz|tech|tools|software|cloud|pro|gg|fm|tv|to|ly))\b/gi;
   let match;
   while ((match = domainRegex.exec(text)) !== null) {
     domains.add(match[1].toLowerCase());
@@ -344,7 +357,7 @@ export async function POST(request: NextRequest) {
     cleanDomain = cleanDomain.split("/")[0];
 
     const queries = generateQueries(cleanDomain);
-    const brandName = cleanDomain.replace(/\.(com|io|co|ai|app|dev|org|net)$/, "");
+    const brandName = extractBrandName(cleanDomain);
 
     const results: PlatformResult[] = [];
     const platformErrors: string[] = [];
@@ -362,7 +375,10 @@ export async function POST(request: NextRequest) {
       const mentioned = extractMentionedDomains(r.response, r.citations);
       const domainInResponse = mentioned.includes(cleanDomain);
       const inCitations = r.citations.some(c => {
-        try { return new URL(c).hostname.replace(/^www\./, "").includes(cleanDomain); } catch { return false; }
+        try {
+          const h = new URL(c).hostname.replace(/^www\./, "");
+          return h === cleanDomain || h.endsWith("." + cleanDomain);
+        } catch { return false; }
       });
       results.push({
         query: queries[0],
@@ -385,7 +401,7 @@ export async function POST(request: NextRequest) {
       const r = geminiSettled.value;
       const mentioned = extractMentionedDomains(r.response, r.mentions);
       const domainInResponse = mentioned.includes(cleanDomain);
-      const domainInMentions = r.mentions.some(m => m.includes(cleanDomain));
+      const domainInMentions = r.mentions.some(m => m === cleanDomain || m.endsWith("." + cleanDomain));
       results.push({
         query: queries[1],
         platform: "gemini",

@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
         target_entities: result.targetEntities,
         competitors_analyzed: result.competitorsAnalyzed,
         word_count: result.wordCount,
-        ai_model: "gpt-5-mini",
+        ai_model: "gpt-5.2",
         status: "draft",
       })
       .select("*")

@@ -1,20 +1,17 @@
 /**
  * AI Visibility Intelligence Pricing Plans
  *
- * PRICING (Feb 2026) — Optimized for $100k MRR
+ * PRICING (Feb 2026) — GEO-First Product
  *
- * Free: Unpaid (blocked from dashboard — free teaser scan only)
- * Scout ($49/mo): Monitor + know your status
- * Command ($149/mo): Full intelligence + action plans
- * Dominate ($349/mo): Scale across brands, white-label
+ * No Plan: Unpaid (blocked from dashboard — free teaser scan only)
+ * Scout ($49/mo): Monitor + start fixing your AI visibility
+ * Command ($149/mo): Full GEO intelligence + competitive edge
+ * Dominate ($349/mo): Own your category across every AI platform
  *
  * Path to $100k MRR:
  * 50% Scout ($49) + 35% Command ($149) + 15% Dominate ($349)
  * = blended ARPU ~$127 → ~785 customers
  */
-
-/** @deprecated Trial removed — kept for backward compat with test imports */
-export const TRIAL_DAYS = 7;
 
 export type CitationPlanId = "free" | "scout" | "command" | "dominate";
 
@@ -25,6 +22,7 @@ export interface CitationPlanLimits {
   historyDays: number;
   queriesPerCheck: number;
   customQueriesPerSite: number; // -1 = unlimited
+  auditPagesPerSite: number;   // How many pages per site audit
 }
 
 export interface CitationPlanFeatures {
@@ -32,7 +30,6 @@ export interface CitationPlanFeatures {
   manualChecks: boolean;
   dailyAutoCheck: boolean;
   hourlyAutoCheck: boolean;
-  realtimeAlerts: boolean;    // Not yet shipped — hidden from marketing
   emailAlerts: boolean;
   weeklyReport: boolean;
   csvExport: boolean;
@@ -48,25 +45,28 @@ export interface CitationPlanFeatures {
   weeklyActionPlan: boolean;
   competitorDeepDive: boolean;
   customQueries: boolean;
-  queryDiscovery: boolean;     // Not yet shipped — hidden from marketing
 
-  // Content Generation
+  // Fix Pages (GEO-focused generation)
   pageGeneration: boolean;
+  schemaGeneration: boolean;     // JSON-LD schema markup in generated pages
+  entityOptimization: boolean;   // Entity analysis + optimization in content
+
+  // Site GEO Audit
+  siteAudit: boolean;            // Page-level GEO readiness audit
+  siteAuditFull: boolean;        // Full site crawl (vs top-10 pages only)
 
   // Sprint
   sprintFramework: boolean;
   monthlyCheckpoints: boolean;
 
-  // Scale — not yet shipped, hidden from marketing
-  whiteLabel: boolean;
-  apiAccess: boolean;
 }
 
 export interface CitationIntelligenceLimits {
-  gapAnalysesPerMonth: number;  // -1 = unlimited
-  contentIdeasPerMonth: number; // -1 = unlimited
-  actionPlansPerMonth: number;  // 0 = not available
-  pagesPerMonth: number;        // -1 = unlimited, 0 = not available
+  gapAnalysesPerMonth: number;   // -1 = unlimited
+  contentIdeasPerMonth: number;  // -1 = unlimited
+  actionPlansPerMonth: number;   // 0 = not available
+  pagesPerMonth: number;         // -1 = unlimited, 0 = not available
+  siteAuditsPerMonth: number;    // -1 = unlimited, 0 = not available
 }
 
 export interface CitationPlan {
@@ -80,15 +80,14 @@ export interface CitationPlan {
   limits: CitationPlanLimits;
   intelligenceLimits: CitationIntelligenceLimits;
   features: CitationPlanFeatures;
-  isTrial?: boolean;
   popular?: boolean;
 }
 
 export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
   free: {
     id: "free",
-    name: "Free",
-    description: "Sign up to get started",
+    name: "No Plan",
+    description: "Subscribe to get started",
     monthlyPrice: 0,
     yearlyPrice: 0,
     limits: {
@@ -98,18 +97,19 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       historyDays: 7,
       queriesPerCheck: 3,
       customQueriesPerSite: 0,
+      auditPagesPerSite: 0,
     },
     intelligenceLimits: {
       gapAnalysesPerMonth: 0,
       contentIdeasPerMonth: 0,
       actionPlansPerMonth: 0,
       pagesPerMonth: 0,
+      siteAuditsPerMonth: 0,
     },
     features: {
       manualChecks: true,
       dailyAutoCheck: false,
       hourlyAutoCheck: false,
-      realtimeAlerts: false,
       emailAlerts: false,
       weeklyReport: false,
       csvExport: false,
@@ -123,20 +123,21 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       weeklyActionPlan: false,
       competitorDeepDive: false,
       customQueries: false,
-      queryDiscovery: false,
       pageGeneration: false,
+      schemaGeneration: false,
+      entityOptimization: false,
+      siteAudit: false,
+      siteAuditFull: false,
       sprintFramework: false,
       monthlyCheckpoints: false,
-      whiteLabel: false,
-      apiAccess: false,
     },
   },
   scout: {
     id: "scout",
     name: "Scout",
-    description: "Know your blind spots",
-    tagline: "See exactly where AI ignores you",
-    whoIsThisFor: "Solo founder with one product. You want to know where you stand.",
+    description: "Monitor + start fixing your AI visibility",
+    tagline: "See your blind spots and start fixing them",
+    whoIsThisFor: "Solo founder with one product. You want to know where you stand and start getting cited.",
     monthlyPrice: 49,
     yearlyPrice: 39,
     limits: {
@@ -146,18 +147,19 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       historyDays: 30,
       queriesPerCheck: 10,
       customQueriesPerSite: 5,
+      auditPagesPerSite: 10,
     },
     intelligenceLimits: {
       gapAnalysesPerMonth: 5,
       contentIdeasPerMonth: 5,
       actionPlansPerMonth: 0,
-      pagesPerMonth: 3,
+      pagesPerMonth: 5,
+      siteAuditsPerMonth: 2,
     },
     features: {
       manualChecks: true,
       dailyAutoCheck: true,
       hourlyAutoCheck: false,
-      realtimeAlerts: false,
       emailAlerts: true,
       weeklyReport: true,
       csvExport: true,
@@ -171,20 +173,21 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       weeklyActionPlan: false,
       competitorDeepDive: false,
       customQueries: true,
-      queryDiscovery: false,
       pageGeneration: true,
+      schemaGeneration: true,
+      entityOptimization: false,
+      siteAudit: true,
+      siteAuditFull: false,
       sprintFramework: true,
       monthlyCheckpoints: true,
-      whiteLabel: false,
-      apiAccess: false,
     },
   },
   command: {
     id: "command",
     name: "Command",
-    description: "Win the AI conversation",
-    tagline: "Get the playbook to become AI's #1 recommendation",
-    whoIsThisFor: "Growing SaaS doing $5k-$50k MRR. Ready to actively compete for AI recommendations.",
+    description: "Full GEO intelligence + competitive edge",
+    tagline: "The complete toolkit to win AI recommendations",
+    whoIsThisFor: "Growing SaaS doing $5k-$50k MRR. Ready to actively compete for AI citations.",
     monthlyPrice: 149,
     yearlyPrice: 119,
     popular: true,
@@ -195,18 +198,19 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       historyDays: 365,
       queriesPerCheck: 20,
       customQueriesPerSite: -1,
+      auditPagesPerSite: 100,
     },
     intelligenceLimits: {
       gapAnalysesPerMonth: -1,
       contentIdeasPerMonth: -1,
-      actionPlansPerMonth: 4, // Weekly
-      pagesPerMonth: 15,
+      actionPlansPerMonth: 4,
+      pagesPerMonth: 25,
+      siteAuditsPerMonth: -1,
     },
     features: {
       manualChecks: true,
       dailyAutoCheck: true,
       hourlyAutoCheck: true,
-      realtimeAlerts: false,
       emailAlerts: true,
       weeklyReport: true,
       csvExport: true,
@@ -220,20 +224,21 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       weeklyActionPlan: true,
       competitorDeepDive: true,
       customQueries: true,
-      queryDiscovery: false,
       pageGeneration: true,
+      schemaGeneration: true,
+      entityOptimization: true,
+      siteAudit: true,
+      siteAuditFull: true,
       sprintFramework: true,
       monthlyCheckpoints: true,
-      whiteLabel: false,
-      apiAccess: false,
     },
   },
   dominate: {
     id: "dominate",
     name: "Dominate",
-    description: "Own your category",
-    tagline: "Track and win across every query in your space",
-    whoIsThisFor: "Agency or multi-product company. Track and win across multiple brands.",
+    description: "Own your category across every AI platform",
+    tagline: "Scale GEO across all your brands",
+    whoIsThisFor: "Agency or multi-product company. Win every AI conversation in your space.",
     monthlyPrice: 349,
     yearlyPrice: 279,
     limits: {
@@ -243,18 +248,19 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       historyDays: 365,
       queriesPerCheck: 30,
       customQueriesPerSite: -1,
+      auditPagesPerSite: 500,
     },
     intelligenceLimits: {
       gapAnalysesPerMonth: -1,
       contentIdeasPerMonth: -1,
-      actionPlansPerMonth: -1, // Unlimited
-      pagesPerMonth: -1, // Unlimited
+      actionPlansPerMonth: -1,
+      pagesPerMonth: -1,
+      siteAuditsPerMonth: -1,
     },
     features: {
       manualChecks: true,
       dailyAutoCheck: true,
       hourlyAutoCheck: true,
-      realtimeAlerts: false,
       emailAlerts: true,
       weeklyReport: true,
       csvExport: true,
@@ -268,66 +274,25 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       weeklyActionPlan: true,
       competitorDeepDive: true,
       customQueries: true,
-      queryDiscovery: false,   // Not yet shipped
       pageGeneration: true,
+      schemaGeneration: true,
+      entityOptimization: true,
+      siteAudit: true,
+      siteAuditFull: true,
       sprintFramework: true,
       monthlyCheckpoints: true,
-      whiteLabel: false,       // Not yet shipped
-      apiAccess: false,        // Not yet shipped
     },
   },
 };
 
 // ============================================
-// TRIAL HELPERS
+// ACCESS HELPERS
 // ============================================
-
-/**
- * Check trial status using trial_ends_at (the source of truth).
- * Falls back to created_at + TRIAL_DAYS if trial_ends_at is not available.
- */
-export function checkTrialStatus(
-  trialEndsAtOrCreatedAt: string | Date | null,
-  isTrialEndsAt: boolean = false
-): {
-  expired: boolean;
-  daysRemaining: number;
-  daysUsed: number;
-} {
-  if (!trialEndsAtOrCreatedAt) {
-    return { expired: false, daysRemaining: TRIAL_DAYS, daysUsed: 0 };
-  }
-
-  const now = new Date();
-
-  if (isTrialEndsAt) {
-    // Direct trial_ends_at: check against the actual end date
-    const endsAt = new Date(trialEndsAtOrCreatedAt);
-    const remainingMs = endsAt.getTime() - now.getTime();
-    const daysRemaining = Math.max(0, Math.ceil(remainingMs / (1000 * 60 * 60 * 24)));
-    const expired = now >= endsAt;
-    const daysUsed = Math.max(0, TRIAL_DAYS - daysRemaining);
-    return { expired, daysRemaining, daysUsed };
-  }
-
-  // Legacy fallback: calculate from created_at + TRIAL_DAYS
-  const created = new Date(trialEndsAtOrCreatedAt);
-  const diffMs = now.getTime() - created.getTime();
-  const daysUsed = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const daysRemaining = Math.max(0, TRIAL_DAYS - daysUsed);
-
-  return {
-    expired: daysUsed >= TRIAL_DAYS,
-    daysRemaining,
-    daysUsed,
-  };
-}
 
 export function canAccessProduct(
   planId: CitationPlanId | string,
-  _trialEndsAtOrCreatedAt?: string | Date | null,
+  _unused?: string | Date | null,
   userEmail?: string | null,
-  _isTrialEndsAt: boolean = false
 ): { allowed: boolean; reason?: string; upgradeRequired?: boolean } {
   if (userEmail) {
     const { shouldBypassPaywall } = require("@/lib/testing/test-accounts");
@@ -336,12 +301,10 @@ export function canAccessProduct(
     }
   }
 
-  // Paid plans always have access
   if (planId !== "free") {
     return { allowed: true };
   }
 
-  // Free = no dashboard access — subscription required
   return {
     allowed: false,
     reason: "A subscription is required to access the dashboard. Choose a plan to get started.",
@@ -354,7 +317,6 @@ export function canAccessProduct(
 // ============================================
 
 export function getCitationPlan(planId: CitationPlanId | string): CitationPlan {
-  // Handle legacy plan names
   const legacyMap: Record<string, CitationPlanId> = {
     starter: "scout",
     pro: "command",
@@ -414,16 +376,7 @@ export function getIntelligenceFeatureSummary(planId: CitationPlanId | string): 
 export function canRunManualCheck(
   planId: CitationPlanId | string,
   checksToday: number,
-  trialEndsAt?: string | Date,
-  isTrialEndsAt: boolean = false
 ): { allowed: boolean; reason?: string } {
-  if (planId === "free" && trialEndsAt) {
-    const access = canAccessProduct(planId, trialEndsAt, null, isTrialEndsAt);
-    if (!access.allowed) {
-      return { allowed: false, reason: access.reason };
-    }
-  }
-
   const plan = getCitationPlan(planId);
 
   if (plan.limits.manualChecksPerDay === -1) {
@@ -608,6 +561,36 @@ export function canGeneratePage(
   return { allowed: true, remaining: limit - usedThisMonth };
 }
 
+export function canRunSiteAudit(
+  planId: CitationPlanId | string,
+  usedThisMonth: number
+): { allowed: boolean; reason?: string; remaining?: number } {
+  const plan = getCitationPlan(planId);
+
+  if (!plan.features.siteAudit) {
+    return {
+      allowed: false,
+      reason: "Site GEO Audit requires Scout plan or higher.",
+    };
+  }
+
+  const limit = plan.intelligenceLimits.siteAuditsPerMonth;
+
+  if (limit === -1) {
+    return { allowed: true, remaining: -1 };
+  }
+
+  if (usedThisMonth >= limit) {
+    return {
+      allowed: false,
+      reason: `Monthly limit reached (${limit} audits). Upgrade for more.`,
+      remaining: 0,
+    };
+  }
+
+  return { allowed: true, remaining: limit - usedThisMonth };
+}
+
 // ============================================
 // UPGRADE HELPERS (used by checkout hooks, sidebar, modals)
 // ============================================
@@ -619,4 +602,3 @@ export function getNextPlan(currentPlan: string): CitationPlanId | null {
   const idx = PLAN_ORDER.indexOf(currentPlan as CitationPlanId);
   return idx >= 0 && idx < PLAN_ORDER.length - 1 ? PLAN_ORDER[idx + 1] : null;
 }
-

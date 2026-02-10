@@ -120,7 +120,7 @@ function generateQueries(
   customQueries: string[],
   plan: string
 ): string[] {
-  const name = domain.split(".")[0];
+  const name = domain.replace(/\.(com|io|co|ai|app|dev|org|net|me|sh|cc|so|biz|xyz|tech|tools|software|cloud|pro|gg|fm|tv|to|ly|co\.uk|com\.au)$/, "").split(".").pop() || domain.split(".")[0];
   const cleanName = name.charAt(0).toUpperCase() + name.slice(1);
 
   // Base queries (always included — simulate real buyer questions)
@@ -352,9 +352,14 @@ async function checkPerplexity(domain: string, query: string): Promise<CheckResu
     // Check if domain appears in citations or content
     const domainLower = domain.toLowerCase();
     const contentLower = content.toLowerCase();
-    const citedInCitations = citations.some((c: string) =>
-      c.toLowerCase().includes(domainLower)
-    );
+    const citedInCitations = citations.some((c: string) => {
+      try {
+        const h = new URL(c).hostname.replace(/^www\./, "").toLowerCase();
+        return h === domainLower || h.endsWith("." + domainLower);
+      } catch {
+        return c.toLowerCase().includes(domainLower);
+      }
+    });
     const citedInContent = contentLower.includes(domainLower);
     const cited = citedInCitations || citedInContent;
 
@@ -464,9 +469,14 @@ async function checkGoogleAI(domain: string, query: string): Promise<CheckResult
     // Check grounding chunks for domain
     const domainLower = domain.toLowerCase();
     const contentLower = content.toLowerCase();
-    const citedInGrounding = groundingChunks.some((chunk: { web?: { uri?: string } }) =>
-      chunk.web?.uri?.toLowerCase().includes(domainLower)
-    );
+    const citedInGrounding = groundingChunks.some((chunk: { web?: { uri?: string } }) => {
+      try {
+        const h = new URL(chunk.web?.uri || "").hostname.replace(/^www\./, "").toLowerCase();
+        return h === domainLower || h.endsWith("." + domainLower);
+      } catch {
+        return (chunk.web?.uri || "").toLowerCase().includes(domainLower);
+      }
+    });
     const citedInContent = contentLower.includes(domainLower);
     const cited = citedInGrounding || citedInContent;
 
@@ -474,7 +484,12 @@ async function checkGoogleAI(domain: string, query: string): Promise<CheckResult
     let confidence = 0;
     if (citedInGrounding) {
       const groundingCount = groundingChunks.filter(
-        (chunk: { web?: { uri?: string } }) => chunk.web?.uri?.toLowerCase().includes(domainLower)
+        (chunk: { web?: { uri?: string } }) => {
+          try {
+            const h = new URL(chunk.web?.uri || "").hostname.replace(/^www\./, "").toLowerCase();
+            return h === domainLower || h.endsWith("." + domainLower);
+          } catch { return false; }
+        }
       ).length;
       confidence = 0.82 + Math.min(0.13, groundingCount * 0.04); // 0.82-0.95
       if (citedInContent) confidence = Math.min(0.97, confidence + 0.02);
@@ -827,13 +842,17 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // Update site stats
+          // Update site stats + GEO score
+          const validResults = results.filter(r => r.apiCalled && !r.error);
+          const citedResults = results.filter(r => r.cited);
+          const geoScoreAvg = validResults.length > 0 ? Math.round((citedResults.length / validResults.length) * 100) : null;
           await db
             .from("sites")
             .update({
               last_checked_at: new Date().toISOString(),
               total_citations: (site.total_citations || 0) + newCitationsCount,
               citations_this_week: (site.citations_this_week || 0) + newCitationsCount,
+              ...(geoScoreAvg !== null && { geo_score_avg: geoScoreAvg }),
             })
             .eq("id", siteId);
           
@@ -967,7 +986,7 @@ export async function POST(request: NextRequest) {
             site_id: siteId,
             organization_id: orgId,
             score: {
-              overall: 0,
+              overall: totalMentions > 0 ? Math.round((yourMentions / totalMentions) * 100) : 0,
               queriesWon: yourMentions,
               queriesLost: totalMentions - yourMentions,
               totalQueries: totalMentions,
