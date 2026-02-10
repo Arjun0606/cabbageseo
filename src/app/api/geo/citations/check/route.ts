@@ -585,14 +585,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Database not configured" }, { status: 500 });
     }
 
-    // If siteId provided but no domain, look up domain from site
+    // If siteId provided but no domain, look up domain from site (with org ownership check)
+    const orgId = currentUser.organizationId;
     if (siteId && !domain) {
-      const { data: siteData } = await db
+      let siteQuery = db
         .from("sites")
         .select("domain")
-        .eq("id", siteId)
-        .maybeSingle();
-      
+        .eq("id", siteId);
+      if (orgId) {
+        siteQuery = siteQuery.eq("organization_id", orgId);
+      }
+      const { data: siteData } = await siteQuery.maybeSingle();
+
       if (siteData?.domain) {
         domain = siteData.domain;
       }
@@ -610,8 +614,6 @@ export async function POST(request: NextRequest) {
     let plan = "free";
     let category: string | null = null;
     let customQueries: string[] = [];
-    const orgId = currentUser.organizationId;
-
     let orgTrialEndsAt: string | undefined;
 
     if (orgId) {

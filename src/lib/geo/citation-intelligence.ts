@@ -22,7 +22,7 @@ interface Citation {
   platform: string;
   query: string;
   snippet: string;
-  page_url?: string;
+  source_domain?: string;
   confidence: string;
   cited_at: string;
 }
@@ -164,7 +164,7 @@ export async function analyzeCitationGap(
     .select("domain")
     .eq("site_id", siteId);
 
-  const citedDomains = citations?.map(c => c.page_url?.replace(/https?:\/\//, "").split("/")[0]) || [];
+  const citedDomains = (citations?.map(c => c.source_domain || c.snippet?.match(/https?:\/\/([^/\s]+)/)?.[1])?.filter(Boolean) as string[]) || [];
   const wasYouCited = citedDomains.some(d => d?.includes(site.domain));
 
   // Build the prompt

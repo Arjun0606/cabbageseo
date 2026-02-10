@@ -14,7 +14,6 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AnimateIn } from "@/components/motion/animate-in";
 import { StaggerGroup, StaggerItem } from "@/components/motion/stagger-group";
@@ -273,9 +272,9 @@ export default function FeedbackPage() {
                 </Button>
               </a>
 
-              <Link href="/dashboard">
+              <Link href="/">
                 <Button size="lg" className="bg-white/[0.06] hover:bg-white/[0.1] text-white border border-white/[0.06] w-full sm:w-auto">
-                  Back to Dashboard
+                  Back to Home
                 </Button>
               </Link>
             </div>

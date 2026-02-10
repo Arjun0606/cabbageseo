@@ -30,7 +30,7 @@ const navLinks = [
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
   { href: "/what-is-geo", label: "What is GEO?" },
-  { href: "/for/saas", label: "For Teams" },
+  { href: "/for/saas", label: "For SaaS" },
 ];
 
 function Header() {

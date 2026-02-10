@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, FileText, Bell } from "lucide-react";
+import { ArrowRight, FileText } from "lucide-react";
 import { AnimateIn } from "@/components/motion/animate-in";
 import { GlassCard } from "@/components/ui/glass-card";
 import { GradientOrbs } from "@/components/backgrounds/gradient-orbs";

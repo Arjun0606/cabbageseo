@@ -34,7 +34,7 @@ const pricingJsonLd = {
       availability: "https://schema.org/InStock",
       priceValidUntil: "2027-12-31",
       url: "https://cabbageseo.com/pricing",
-      description: "1 site, 3 competitors, daily AI monitoring",
+      description: "1 site, 3 competitors, weekly AI monitoring",
     },
     {
       "@type": "Offer",
@@ -44,7 +44,7 @@ const pricingJsonLd = {
       availability: "https://schema.org/InStock",
       priceValidUntil: "2027-12-31",
       url: "https://cabbageseo.com/pricing",
-      description: "5 sites, 10 competitors, hourly AI monitoring",
+      description: "5 sites, 10 competitors, checks every 3 days + hourly monitoring",
     },
     {
       "@type": "Offer",

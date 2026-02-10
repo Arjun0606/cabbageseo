@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, CreditCard, Bell } from "lucide-react";
+import { User, CreditCard, Bell, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const settingsNav = [
   { href: "/settings", label: "Account", icon: User, exact: true },
   { href: "/settings/billing", label: "Billing & Usage", icon: CreditCard },
   { href: "/settings/notifications", label: "Notifications", icon: Bell },
+  { href: "/settings/referrals", label: "Referrals", icon: Gift },
 ];
 
 export default function SettingsLayout({

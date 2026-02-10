@@ -23,7 +23,7 @@ export default function TermsPage() {
         <div className="space-y-6 text-zinc-400">
           <AnimateIn direction="up" delay={0} once>
             <p className="text-zinc-300">
-              Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+              Last updated: February 8, 2026
             </p>
           </AnimateIn>
 

@@ -360,7 +360,7 @@ export const monthlyCheckpoint = inngest.createFunction(
       }
 
       // Rate-limit between sites
-      await step.sleep("site-delay", "1s");
+      await step.sleep(`site-delay-${site.id}`, "1s");
     }
 
     return {

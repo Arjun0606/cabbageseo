@@ -338,7 +338,7 @@ export const hourlyCitationCheck = inngest.createFunction(
       });
 
       results.push(result);
-      await step.sleep("rate-limit", "1s");
+      await step.sleep(`rate-limit-${site.id}`, "1s");
     }
 
     return {

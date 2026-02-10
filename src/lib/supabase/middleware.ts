@@ -75,7 +75,6 @@ export async function updateSession(request: NextRequest) {
     "/terms",
     "/privacy",
     "/pricing",
-    "/analyze",
     "/docs",
     "/feedback",
     "/features",
@@ -86,6 +85,7 @@ export async function updateSession(request: NextRequest) {
     "/teaser",         // Teaser results page (no signup required)
     "/blog",           // Blog index
     "/leaderboard",    // Public leaderboard
+    "/what-is-geo",    // GEO landing page
     "/auth/callback",  // OAuth callback must be public
   ];
 

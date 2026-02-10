@@ -315,7 +315,11 @@ export async function DELETE() {
       }
 
       // Delete organization-level data
-      await serviceClient.from("notifications").delete().eq("organization_id", orgId);
+      // notifications table uses user_id — delete for all users in this org
+      const { data: orgUsers } = await serviceClient.from("users").select("id").eq("organization_id", orgId);
+      if (orgUsers?.length) {
+        await serviceClient.from("notifications").delete().in("user_id", (orgUsers as { id: string }[]).map(u => u.id));
+      }
       await serviceClient.from("monthly_checkpoints").delete().eq("organization_id", orgId);
       await serviceClient.from("referrals").delete().eq("referrer_organization_id", orgId);
       await serviceClient.from("integrations").delete().eq("organization_id", orgId);
