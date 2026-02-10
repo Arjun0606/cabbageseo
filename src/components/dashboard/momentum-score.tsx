@@ -1,6 +1,8 @@
 "use client";
 
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { useState } from "react";
+import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, Lightbulb } from "lucide-react";
+import type { MomentumBreakdown } from "@/lib/geo/momentum";
 
 interface MomentumScoreProps {
   score: number | null;
@@ -9,6 +11,7 @@ interface MomentumScoreProps {
   queriesWon: number;
   queriesTotal: number;
   loading?: boolean;
+  breakdown?: MomentumBreakdown | null;
 }
 
 export function MomentumScore({
@@ -18,7 +21,10 @@ export function MomentumScore({
   queriesWon,
   queriesTotal,
   loading,
+  breakdown,
 }: MomentumScoreProps) {
+  const [showBreakdown, setShowBreakdown] = useState(false);
+
   if (loading) {
     return (
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 animate-pulse">
@@ -37,7 +43,7 @@ export function MomentumScore({
           AI Momentum
         </h3>
         <div className="flex items-end gap-4 mb-3">
-          <span className="text-6xl font-bold text-zinc-600">—</span>
+          <span className="text-6xl font-bold text-zinc-600">&mdash;</span>
           <span className="text-2xl text-zinc-600 mb-2">/100</span>
         </div>
         <p className="text-sm text-zinc-500">
@@ -107,6 +113,84 @@ export function MomentumScore({
       <p className="text-sm text-zinc-500">
         AI mentions you in {queriesWon} of {queriesTotal} queries checked
       </p>
+
+      {/* Score breakdown toggle */}
+      {breakdown && (
+        <div className="mt-4 pt-4 border-t border-white/10">
+          <button
+            onClick={() => setShowBreakdown(!showBreakdown)}
+            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-300 transition-colors"
+          >
+            {showBreakdown ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+            Why this score?
+          </button>
+
+          {showBreakdown && (
+            <div className="mt-3 space-y-2">
+              <BreakdownRow
+                label="AI Citations"
+                points={breakdown.baseScore}
+                max={50}
+              />
+              <BreakdownRow
+                label="Trust Sources"
+                points={breakdown.sourceBonus}
+                max={30}
+                prefix="+"
+              />
+              <BreakdownRow
+                label="Week-over-week"
+                points={breakdown.momentumBonus}
+                max={20}
+                prefix={breakdown.momentumBonus >= 0 ? "+" : ""}
+              />
+
+              {breakdown.tip && (
+                <div className="mt-3 flex items-start gap-2 text-xs text-amber-400/80 bg-amber-500/5 rounded-lg px-3 py-2">
+                  <Lightbulb className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  <span>{breakdown.tip}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BreakdownRow({
+  label,
+  points,
+  max,
+  prefix = "",
+}: {
+  label: string;
+  points: number;
+  max: number;
+  prefix?: string;
+}) {
+  const pct = max > 0 ? Math.max(0, Math.min(100, (Math.abs(points) / max) * 100)) : 0;
+  const isNegative = points < 0;
+
+  return (
+    <div className="flex items-center gap-3 text-xs">
+      <span className="text-zinc-500 w-28 shrink-0">{label}</span>
+      <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${
+            isNegative ? "bg-red-500/60" : "bg-emerald-500/60"
+          }`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className={`w-10 text-right font-mono ${isNegative ? "text-red-400" : "text-zinc-300"}`}>
+        {prefix}{points}
+      </span>
     </div>
   );
 }

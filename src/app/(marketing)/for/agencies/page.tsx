@@ -407,7 +407,7 @@ export default function ForAgenciesPage() {
                     "25 competitors per site",
                     "Daily + hourly auto-checks",
                     "Score drop alerts (email + Slack)",
-                    "Unlimited intelligence + fix pages",
+                    "Unlimited analysis + fix pages",
                     "Bulk scanning API",
                     "365-day trend chart history",
                     "Slack integration",

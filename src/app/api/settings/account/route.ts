@@ -92,8 +92,8 @@ export async function GET() {
       }
       
       if (orgId) {
-        // Create user
-        const { data: newUser, error: createError } = await supabase
+        // Create user (use serviceClient to bypass RLS, consistent with org creation above)
+        const { data: newUser, error: createError } = await serviceClient
           .from("users")
           .upsert({
             id: user.id,

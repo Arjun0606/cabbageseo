@@ -3,23 +3,36 @@
  *
  * Calculates a dynamic momentum score (0-100) for a site based on:
  * - Citation changes week-over-week
- * - Source listing coverage (how many of 6 key trust sources)
+ * - Source listing coverage (weighted by platform importance)
  * - Competitor relative position (gaining or losing ground)
+ *
+ * Uses continuous curves (logarithmic, sigmoid) instead of linear jumps
+ * to produce granular scores like 27, 48, 63 rather than multiples of 5.
  *
  * The score tells users at a glance: "Are you winning or losing in AI search?"
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-// The 6 key trust sources AI platforms rely on most
-const KEY_TRUST_SOURCES = [
-  "g2.com",
-  "capterra.com",
-  "producthunt.com",
-  "reddit.com",
-  "trustpilot.com",
-  "trustradius.com",
-];
+// The 6 key trust sources AI platforms rely on most, weighted by importance
+const SOURCE_WEIGHTS: Record<string, number> = {
+  "g2.com": 7,
+  "capterra.com": 6,
+  "producthunt.com": 5,
+  "trustpilot.com": 5,
+  "trustradius.com": 4,
+  "reddit.com": 3,
+};
+
+const KEY_TRUST_SOURCES = Object.keys(SOURCE_WEIGHTS);
+
+export interface MomentumBreakdown {
+  baseScore: number;
+  sourceBonus: number;
+  momentumBonus: number;
+  explanation: string;
+  tip: string | null;
+}
 
 export interface MomentumResult {
   score: number;           // 0-100
@@ -31,15 +44,34 @@ export interface MomentumResult {
   queriesTotal: number;    // total queries checked
   sourceCoverage: number;  // 0-6 (how many key trust sources listed)
   topCompetitor: { domain: string; citations: number } | null;
+  breakdown: MomentumBreakdown;
+}
+
+/**
+ * Logarithmic curve with diminishing returns.
+ * Maps 0..infinity to 0..maxOutput, with halfPoint determining the curve shape.
+ * Example: logCurve(8, 8, 50) = 25 (half of max at halfPoint)
+ */
+function logCurve(value: number, halfPoint: number, maxOutput: number): number {
+  if (value <= 0) return 0;
+  return maxOutput * (1 - Math.exp(-value / halfPoint));
+}
+
+/**
+ * Sigmoid function for smoothing change rates.
+ * Maps -infinity..+infinity to -1..+1 with smooth S-curve.
+ */
+function sigmoid(x: number): number {
+  return (2 / (1 + Math.exp(-3 * x))) - 1;
 }
 
 /**
  * Calculate momentum score for a site.
  *
  * Score breakdown:
- * - Base (0-50): market share relative to competitors
- * - Source bonus (0-30): trust source coverage (5 pts per key source)
- * - Momentum bonus/penalty (-20 to +20): week-over-week citation change
+ * - Base (0-50): market share relative to competitors, logarithmic curve
+ * - Source bonus (0-30): weighted trust source coverage
+ * - Momentum bonus/penalty (-20 to +20): sigmoid-smoothed week-over-week change
  *
  * Final score is clamped to 0-100.
  */
@@ -58,7 +90,7 @@ export async function calculateMomentum(
   const citationsThisWeek = site?.citations_this_week ?? 0;
   const citationsLastWeek = site?.citations_last_week ?? 0;
 
-  // 2. Get source listings count (only the 6 key sources)
+  // 2. Get source listings (only the 6 key sources)
   const { data: listings } = await db
     .from("source_listings")
     .select("source_domain, status")
@@ -69,6 +101,9 @@ export async function calculateMomentum(
     (l: { source_domain: string; status: string }) => l.status === "verified",
   );
   const sourceCoverage = verifiedListings.length;
+  const verifiedDomains = verifiedListings.map(
+    (l: { source_domain: string }) => l.source_domain,
+  );
 
   // 3. Get competitor data
   const { data: competitors } = await db
@@ -111,36 +146,48 @@ export async function calculateMomentum(
   const citationsLost = Math.max(0, citationsLastWeek - citationsThisWeek);
   const weekOverWeekChange = citationsThisWeek - citationsLastWeek;
 
-  // 6. Calculate score components
+  // 6. Calculate score components with continuous curves
 
-  // Base score (0-50): market share relative to top competitor
+  // Base score (0-50): logarithmic curve based on citations
+  // 1→6, 2→12, 3→17, 5→23, 8→32, 10→36, 15→42, 20→46
   let baseScore: number;
   if (!topCompetitor || topCompetitor.citations === 0) {
-    // No competitor data - score purely on own citations
-    baseScore = Math.min(50, totalCitations * 5);
+    // No competitor data — score purely on own citations with log curve
+    baseScore = Math.round(logCurve(totalCitations, 8, 50));
   } else {
     // Market share: your citations / (yours + top competitor's)
     const totalPool = totalCitations + topCompetitor.citations;
     const marketShare = totalPool > 0 ? totalCitations / totalPool : 0;
-    baseScore = Math.round(marketShare * 50);
+    const marketShareScore = Math.round(marketShare * 50);
+    // Floor: at least 60% of what the log-curve-only score would be
+    const citationFloor = Math.round(logCurve(totalCitations, 8, 50) * 0.6);
+    baseScore = Math.max(marketShareScore, citationFloor);
   }
 
-  // Source coverage bonus (0-30): 5 points per key source listed
-  const sourceBonus = sourceCoverage * 5;
+  // Source coverage bonus (0-30): weighted by platform importance
+  // G2(7) + Capterra(6) + ProductHunt(5) + Trustpilot(5) + TrustRadius(4) + Reddit(3) = 30
+  const sourceBonus = Math.min(
+    30,
+    verifiedDomains.reduce(
+      (sum: number, domain: string) => sum + (SOURCE_WEIGHTS[domain] ?? 0),
+      0,
+    ),
+  );
 
-  // Momentum bonus/penalty (-20 to +20): based on week-over-week change
+  // Momentum bonus/penalty (-20 to +20): sigmoid-smoothed week-over-week change
   let momentumBonus: number;
   if (citationsLastWeek === 0) {
-    // No baseline - give a small bonus for any citations this week
-    momentumBonus = citationsThisWeek > 0 ? 10 : 0;
+    // No baseline — logarithmic bonus for any new citations
+    momentumBonus = citationsThisWeek > 0
+      ? Math.round(logCurve(citationsThisWeek, 3, 12))
+      : 0;
   } else {
     const changeRate = weekOverWeekChange / citationsLastWeek;
-    // Clamp change rate to -1..1, then scale to -20..+20
-    const clampedRate = Math.max(-1, Math.min(1, changeRate));
-    momentumBonus = Math.round(clampedRate * 20);
+    // Sigmoid smoothing: gradual response to changes, not linear
+    momentumBonus = Math.round(sigmoid(changeRate) * 20);
   }
 
-  // Final score clamped to 0-100
+  // Final score clamped to 0-100 (round only once at the end)
   const rawScore = baseScore + sourceBonus + momentumBonus;
   const score = Math.max(0, Math.min(100, rawScore));
 
@@ -154,6 +201,18 @@ export async function calculateMomentum(
     trend = "stable";
   }
 
+  // Build explanation
+  const breakdown = buildBreakdown(
+    baseScore,
+    sourceBonus,
+    momentumBonus,
+    totalCitations,
+    verifiedDomains,
+    weekOverWeekChange,
+    citationsLastWeek,
+    score,
+  );
+
   return {
     score,
     change: weekOverWeekChange,
@@ -164,5 +223,91 @@ export async function calculateMomentum(
     queriesTotal,
     sourceCoverage,
     topCompetitor,
+    breakdown,
   };
+}
+
+function buildBreakdown(
+  baseScore: number,
+  sourceBonus: number,
+  momentumBonus: number,
+  totalCitations: number,
+  verifiedDomains: string[],
+  weekOverWeekChange: number,
+  citationsLastWeek: number,
+  finalScore: number,
+): MomentumBreakdown {
+  // Build human-readable explanation parts
+  const parts: string[] = [];
+
+  // Base score explanation
+  if (totalCitations === 0) {
+    parts.push(`${baseScore} pts from AI citations (none found yet)`);
+  } else {
+    parts.push(`${baseScore} pts from ${totalCitations} AI citation${totalCitations !== 1 ? "s" : ""}`);
+  }
+
+  // Source bonus explanation
+  if (verifiedDomains.length > 0) {
+    const sourceNames = verifiedDomains
+      .map((d) => d.replace(".com", "").replace(".", ""))
+      .map((n) => n.charAt(0).toUpperCase() + n.slice(1));
+    parts.push(
+      `+${sourceBonus} pts from ${sourceNames.join(", ")} (${verifiedDomains.length}/6 trust sources)`,
+    );
+  } else {
+    parts.push(`+0 pts from trust sources (none verified yet)`);
+  }
+
+  // Momentum explanation
+  if (momentumBonus > 0) {
+    if (citationsLastWeek === 0) {
+      parts.push(`+${momentumBonus} pts from new citations this week`);
+    } else {
+      const pctChange = Math.round((weekOverWeekChange / citationsLastWeek) * 100);
+      parts.push(`+${momentumBonus} pts from ${pctChange}% week-over-week growth`);
+    }
+  } else if (momentumBonus < 0) {
+    const pctChange = Math.abs(
+      Math.round((weekOverWeekChange / (citationsLastWeek || 1)) * 100),
+    );
+    parts.push(`${momentumBonus} pts from ${pctChange}% week-over-week decline`);
+  } else {
+    parts.push(`+0 pts momentum (stable week-over-week)`);
+  }
+
+  const explanation = `Score ${finalScore}: ${parts.join(", ")}`;
+
+  // Generate actionable tip
+  const tip = generateTip(verifiedDomains, totalCitations, sourceBonus);
+
+  return { baseScore, sourceBonus, momentumBonus, explanation, tip };
+}
+
+function generateTip(
+  verifiedDomains: string[],
+  totalCitations: number,
+  currentSourceBonus: number,
+): string | null {
+  // Suggest the highest-weight missing source
+  const missingSources = Object.entries(SOURCE_WEIGHTS)
+    .filter(([domain]) => !verifiedDomains.includes(domain))
+    .sort(([, a], [, b]) => b - a);
+
+  if (totalCitations === 0) {
+    return "Run an AI visibility check to discover your current citation count";
+  }
+
+  if (missingSources.length > 0) {
+    const [domain, weight] = missingSources[0];
+    const name = domain.replace(".com", "").replace(".", "");
+    const displayName = name.charAt(0).toUpperCase() + name.slice(1);
+    return `Get listed on ${displayName} to gain up to ${weight} more points`;
+  }
+
+  if (currentSourceBonus >= 30) {
+    return "All trust sources verified — focus on creating content that gets cited";
+  }
+
+  return null;
 }

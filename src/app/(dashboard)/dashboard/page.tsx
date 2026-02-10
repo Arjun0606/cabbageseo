@@ -18,6 +18,7 @@ import { SprintProgress } from "@/components/dashboard/sprint-progress";
 import { DoThisNext } from "@/components/dashboard/do-this-next";
 import { FirstCitationGoal } from "@/components/dashboard/first-citation-goal";
 import { RevenueAtRisk, type LostQuery } from "@/components/dashboard/revenue-at-risk";
+import { ROISummary } from "@/components/dashboard/roi-summary";
 import { TrendChart, type Snapshot } from "@/components/dashboard/trend-chart";
 import { FixPagesReady } from "@/components/dashboard/fix-pages-ready";
 import { RecheckResult } from "@/components/dashboard/recheck-result";
@@ -27,8 +28,6 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
-  TrendingUp,
-  TrendingDown,
   Clock,
   Globe,
   BarChart3,
@@ -53,6 +52,13 @@ interface MomentumData {
   queriesTotal: number;
   sourceCoverage: number;
   topCompetitor: { domain: string; citations: number } | null;
+  breakdown?: {
+    baseScore: number;
+    sourceBonus: number;
+    momentumBonus: number;
+    explanation: string;
+    tip: string | null;
+  };
 }
 
 interface SprintData {
@@ -160,13 +166,14 @@ function DashboardContent() {
 
     setLoading(true);
     try {
-      const [momentumRes, nextActionRes, listingsRes, historyRes, pagesRes] =
+      const [momentumRes, nextActionRes, listingsRes, historyRes, pagesRes, improvementRes] =
         await Promise.all([
           fetch(`/api/geo/momentum?siteId=${currentSite.id}`).catch(() => null),
           fetch(`/api/geo/next-action?siteId=${currentSite.id}`).catch(() => null),
           fetch(`/api/sites/listings?siteId=${currentSite.id}`).catch(() => null),
           fetch(`/api/geo/history?siteId=${currentSite.id}`).catch(() => null),
           fetch(`/api/geo/pages?siteId=${currentSite.id}`).catch(() => null),
+          fetch(`/api/geo/improvement?siteId=${currentSite.id}`).catch(() => null),
         ]);
 
       // Detect total connection failure
@@ -214,6 +221,11 @@ function DashboardContent() {
         }
       }
 
+      if (improvementRes?.ok) {
+        const data = await improvementRes.json();
+        setImprovement(data.data || null);
+      }
+
     } catch {
       // Individual section fallbacks handle display
     } finally {
@@ -226,21 +238,15 @@ function DashboardContent() {
     if (!currentSite?.id || progressLoaded) return;
 
     try {
-      const [sprintRes, improvementRes, lostQueriesRes, pagesRes] = await Promise.all([
+      const [sprintRes, lostQueriesRes, pagesRes] = await Promise.all([
         fetch(`/api/geo/sprint?siteId=${currentSite.id}`).catch(() => null),
-        fetch(`/api/geo/improvement?siteId=${currentSite.id}`).catch(() => null),
         fetch(`/api/geo/lost-queries?siteId=${currentSite.id}`).catch(() => null),
         fetch(`/api/geo/pages?siteId=${currentSite.id}`).catch(() => null),
       ]);
 
       if (sprintRes?.ok) {
         const data = await sprintRes.json();
-        setSprint(data.data);
-      }
-
-      if (improvementRes?.ok) {
-        const data = await improvementRes.json();
-        setImprovement(data.data || null);
+        setSprint(data.data || null);
       }
 
       if (lostQueriesRes?.ok) {
@@ -583,7 +589,23 @@ function DashboardContent() {
         queriesWon={momentum?.queriesWon || 0}
         queriesTotal={momentum?.queriesTotal || 0}
         loading={loading}
+        breakdown={momentum?.breakdown}
       />
+
+      {/* ═══ ROI SUMMARY ═══ */}
+      {improvement && improvement.checksCount >= 2 && improvement.firstCheck && improvement.latestCheck && (
+        <ROISummary
+          firstCheckDate={improvement.firstCheck.date}
+          latestCheckDate={improvement.latestCheck.date}
+          checksCount={improvement.checksCount}
+          firstQueriesWon={improvement.firstCheck.queriesWon}
+          firstQueriesTotal={improvement.firstCheck.totalQueries}
+          latestQueriesWon={improvement.latestCheck.queriesWon}
+          latestQueriesTotal={improvement.latestCheck.totalQueries}
+          momentumScore={momentum?.score ?? null}
+          loading={loading}
+        />
+      )}
 
       {/* ═══ USAGE METERS ═══ */}
       {plan !== "dominate" && !loading && (
@@ -718,79 +740,6 @@ function DashboardContent() {
 
         {showProgress && (
           <div className="mt-4 space-y-6">
-            {/* Improvement card */}
-            {improvement && improvement.checksCount >= 2 && improvement.firstCheck && improvement.latestCheck ? (
-              (() => {
-                const wonDelta = improvement.latestCheck.queriesWon - improvement.firstCheck.queriesWon;
-                const lostDelta = improvement.latestCheck.queriesLost - improvement.firstCheck.queriesLost;
-                const isImproving = wonDelta > 0 || lostDelta < 0;
-                const formatDate = (d: string) =>
-                  new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-
-                return (
-                  <div className={`rounded-2xl p-6 border ${isImproving ? "border-emerald-500/20 bg-emerald-500/5" : "border-zinc-800 bg-zinc-900"}`}>
-                    <div className="flex items-center gap-2 mb-4">
-                      {isImproving ? (
-                        <TrendingUp className="w-5 h-5 text-emerald-400" />
-                      ) : (
-                        <TrendingDown className="w-5 h-5 text-zinc-400" />
-                      )}
-                      <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">
-                        Your Improvement
-                      </h3>
-                      <span className="text-xs text-zinc-600 ml-auto">
-                        Based on {improvement.checksCount} checks
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6 mb-4">
-                      <div>
-                        <p className="text-xs text-zinc-500 mb-1">
-                          First Check ({formatDate(improvement.firstCheck.date)})
-                        </p>
-                        <p className="text-lg font-semibold text-zinc-400">
-                          {improvement.firstCheck.queriesWon} of {improvement.firstCheck.totalQueries} queries won
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-zinc-500 mb-1">
-                          Latest ({formatDate(improvement.latestCheck.date)})
-                        </p>
-                        <p className="text-lg font-semibold text-white">
-                          {improvement.latestCheck.queriesWon} of {improvement.latestCheck.totalQueries} queries won
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 pt-3 border-t border-zinc-800">
-                      {wonDelta !== 0 && (
-                        <span className={`text-sm font-medium ${wonDelta > 0 ? "text-emerald-400" : "text-red-400"}`}>
-                          {wonDelta > 0 ? "+" : ""}{wonDelta} queries won
-                        </span>
-                      )}
-                      {lostDelta !== 0 && (
-                        <span className={`text-sm font-medium ${lostDelta < 0 ? "text-emerald-400" : "text-red-400"}`}>
-                          {lostDelta < 0 ? "" : "+"}{lostDelta} queries lost
-                        </span>
-                      )}
-                      {wonDelta === 0 && lostDelta === 0 && (
-                        <span className="text-sm text-zinc-500">No change yet — keep publishing fix pages</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()
-            ) : improvement && improvement.checksCount < 2 ? (
-              <div className="rounded-2xl p-4 border border-zinc-800 bg-zinc-900">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-zinc-500" />
-                  <span className="text-sm text-zinc-500">
-                    Run another check to start tracking your improvement
-                  </span>
-                </div>
-              </div>
-            ) : null}
-
             {/* Trend Chart */}
             <TrendChart snapshots={snapshots} loading={loading} />
 

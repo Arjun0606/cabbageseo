@@ -148,7 +148,7 @@ export const PLANS: Record<PlanId, Plan> = {
       "5 websites",
       "10 competitor tracking",
       "Every 3 days + hourly monitoring",
-      "Unlimited intelligence",
+      "Unlimited gap analysis + content ideas",
       "Weekly action playbooks",
       "Competitor deep dives",
       "Weekly email digest",
@@ -193,7 +193,7 @@ export const PLANS: Record<PlanId, Plan> = {
       "25 websites",
       "25 competitor tracking",
       "Daily + hourly monitoring",
-      "Unlimited intelligence + fix pages",
+      "Unlimited analysis + fix pages",
       "Weekly email digest",
       "Get Listed Playbook",
       "Monthly checkpoint reports",
@@ -341,7 +341,7 @@ export function getPlan(planId: PlanId | string): Plan {
     pro_plus: "dominate",
   };
   const resolvedId = legacyMap[planId] || planId;
-  return PLANS[resolvedId as PlanId] || PLANS.scout; // Note: plans.ts is for paid plans only — use getCitationPlan() from citation-plans.ts for free tier
+  return PLANS[resolvedId as PlanId] || PLANS.scout; // Fallback to scout for unknown plans — use getCitationPlan() for free tier gating
 }
 
 export function getPlans(): Plan[] {

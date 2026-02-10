@@ -144,7 +144,7 @@ describe("Specific limit values per tier", () => {
     expect(intel.pagesPerMonth).toBe(3);
   });
 
-  it("Command: 5 sites, unlimited checks, 10 competitors, unlimited intelligence, 15 pages", () => {
+  it("Command: 5 sites, unlimited checks, 10 competitors, unlimited gap analysis, 15 pages", () => {
     const limits = CITATION_PLANS.command.limits;
     const intel = CITATION_PLANS.command.intelligenceLimits;
     expect(limits.sites).toBe(5);

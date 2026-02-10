@@ -11,6 +11,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/api/get-user";
 import { getCitationPlan, canGeneratePage, canAccessProduct } from "@/lib/billing/citation-plans";
 import { generatePage } from "@/lib/geo/page-generator";
+import { pageGenerationLimiter } from "@/lib/api/rate-limit";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 function getDbClient(): SupabaseClient | null {
@@ -27,6 +28,15 @@ export async function POST(request: NextRequest) {
     const currentUser = await getUser();
     if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit: 5 page generations per minute per user
+    const rateLimit = pageGenerationLimiter.check(currentUser.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a moment." },
+        { status: 429 },
+      );
     }
 
     const organizationId = currentUser.organizationId;

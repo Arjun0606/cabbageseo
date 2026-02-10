@@ -29,6 +29,7 @@ import {
 } from "@/lib/billing/citation-plans";
 import { getUser } from "@/lib/api/get-user";
 import { logRecommendations, extractCitationRecommendations } from "@/lib/geo/recommendation-logger";
+import { citationCheckLimiter } from "@/lib/api/rate-limit";
 
 function getDbClient(): SupabaseClient | null {
   try {
@@ -348,18 +349,35 @@ async function checkPerplexity(domain: string, query: string): Promise<CheckResu
     
     // Check if domain appears in citations or content
     const domainLower = domain.toLowerCase();
-    const citedInCitations = citations.some((c: string) => 
+    const contentLower = content.toLowerCase();
+    const citedInCitations = citations.some((c: string) =>
       c.toLowerCase().includes(domainLower)
     );
-    const citedInContent = content.toLowerCase().includes(domainLower);
+    const citedInContent = contentLower.includes(domainLower);
     const cited = citedInCitations || citedInContent;
-    
+
+    // Granular confidence based on signal strength
+    let confidence = 0;
+    if (citedInCitations) {
+      // Direct citation link — high base confidence
+      const citationCount = citations.filter((c: string) => c.toLowerCase().includes(domainLower)).length;
+      confidence = 0.88 + Math.min(0.09, citationCount * 0.03); // 0.88-0.97
+      // Bonus if also mentioned in text body
+      if (citedInContent) confidence = Math.min(0.98, confidence + 0.02);
+    } else if (citedInContent) {
+      // Mentioned in text but not in citation links
+      const mentionCount = contentLower.split(domainLower).length - 1;
+      const earlyMention = contentLower.indexOf(domainLower) < 500;
+      confidence = 0.62 + Math.min(0.14, mentionCount * 0.04); // 0.62-0.76
+      if (earlyMention) confidence += 0.03; // mentioned early = more prominent
+    }
+
     return {
       platform: "perplexity",
       cited,
       query,
       snippet: cited ? content.slice(0, 300) : undefined,
-      confidence: citedInCitations ? 0.95 : citedInContent ? 0.75 : 0,
+      confidence: Math.round(confidence * 100) / 100,
       apiCalled: true,
     };
 
@@ -442,18 +460,32 @@ async function checkGoogleAI(domain: string, query: string): Promise<CheckResult
     
     // Check grounding chunks for domain
     const domainLower = domain.toLowerCase();
-    const citedInGrounding = groundingChunks.some((chunk: { web?: { uri?: string } }) => 
+    const contentLower = content.toLowerCase();
+    const citedInGrounding = groundingChunks.some((chunk: { web?: { uri?: string } }) =>
       chunk.web?.uri?.toLowerCase().includes(domainLower)
     );
-    const citedInContent = content.toLowerCase().includes(domainLower);
+    const citedInContent = contentLower.includes(domainLower);
     const cited = citedInGrounding || citedInContent;
+
+    // Granular confidence based on grounding evidence
+    let confidence = 0;
+    if (citedInGrounding) {
+      const groundingCount = groundingChunks.filter(
+        (chunk: { web?: { uri?: string } }) => chunk.web?.uri?.toLowerCase().includes(domainLower)
+      ).length;
+      confidence = 0.82 + Math.min(0.13, groundingCount * 0.04); // 0.82-0.95
+      if (citedInContent) confidence = Math.min(0.97, confidence + 0.02);
+    } else if (citedInContent) {
+      const mentionCount = contentLower.split(domainLower).length - 1;
+      confidence = 0.58 + Math.min(0.17, mentionCount * 0.05); // 0.58-0.75
+    }
 
     return {
       platform: "google_aio",
       cited,
       query,
       snippet: cited ? content.slice(0, 300) : undefined,
-      confidence: citedInGrounding ? 0.9 : citedInContent ? 0.7 : 0,
+      confidence: Math.round(confidence * 100) / 100,
       apiCalled: true,
     };
 
@@ -540,13 +572,23 @@ async function checkChatGPT(domain: string, query: string): Promise<CheckResult>
     
     const cited = domainMentioned && !isUnknown;
 
+    // Granular confidence — lower base for ChatGPT (training data, not live web)
+    let confidence = 0;
+    if (cited) {
+      const contentLower = content.toLowerCase();
+      const mentionCount = contentLower.split(domainLower).length - 1;
+      const earlyMention = contentLower.indexOf(domainLower) < 300;
+      confidence = 0.42 + Math.min(0.22, mentionCount * 0.06); // 0.42-0.64
+      if (earlyMention) confidence += 0.04; // mentioned early = more prominent
+      if (mentionCount >= 3) confidence += 0.03; // heavily referenced
+    }
+
     return {
       platform: "chatgpt",
       cited,
       query,
       snippet: cited ? content.slice(0, 300) : undefined,
-      // Lower confidence for ChatGPT since it's from training data, not live web
-      confidence: cited ? 0.6 : 0,
+      confidence: Math.round(confidence * 100) / 100,
       apiCalled: true,
     };
 
@@ -572,6 +614,15 @@ export async function POST(request: NextRequest) {
     const currentUser = await getUser();
     if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit: 10 checks per minute per user
+    const rateLimit = citationCheckLimiter.check(currentUser.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a moment.", remaining: 0 },
+        { status: 429 },
+      );
     }
 
     const userEmail = currentUser.email || null;

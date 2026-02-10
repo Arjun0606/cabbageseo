@@ -44,8 +44,6 @@ function incrementUsage(key: string, count: number) {
 // Valid API keys — in production, store these in the database
 function isValidApiKey(key: string): boolean {
   const validKeys = (process.env.BULK_API_KEYS || "").split(",").filter(Boolean);
-  // Also accept the admin secret as a master key
-  if (process.env.ADMIN_SECRET && key === process.env.ADMIN_SECRET) return true;
   return validKeys.includes(key);
 }
 

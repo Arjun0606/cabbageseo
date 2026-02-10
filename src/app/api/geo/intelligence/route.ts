@@ -18,6 +18,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { analyzeSite } from "@/lib/geo/site-analyzer";
 import { getUser } from "@/lib/api/get-user";
+import { intelligenceLimiter } from "@/lib/api/rate-limit";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 function getDbClient(): SupabaseClient | null {
@@ -127,6 +128,15 @@ export async function POST(request: NextRequest) {
     const currentUser = await getUser();
     if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit: 10 intelligence requests per minute per user
+    const rateLimit = intelligenceLimiter.check(currentUser.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a moment." },
+        { status: 429 },
+      );
     }
 
     // Plan gating — free users cannot run GEO analysis

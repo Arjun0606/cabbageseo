@@ -208,18 +208,52 @@ function parseHTML(html: string, url: string): PageContent {
 }
 
 // ============================================
+// SCORING HELPERS — Continuous curves for granular scores
+// ============================================
+
+/**
+ * Smooth diminishing-returns curve: value/(value+halfPoint) * max
+ * Produces granular outputs like 13, 22, 27 instead of 10, 20, 30
+ */
+function smoothScale(value: number, halfPoint: number, maxOutput: number): number {
+  if (value <= 0) return 0;
+  return maxOutput * (value / (value + halfPoint));
+}
+
+/**
+ * Word count scoring curve — peaks in the 1000-2500 sweet spot.
+ * Too short = penalized, too long = slight diminishing returns.
+ */
+function wordCountScore(wc: number, maxPoints: number): number {
+  if (wc < 100) return maxPoints * (wc / 100) * 0.15;
+  if (wc < 500) return maxPoints * 0.15 + maxPoints * 0.35 * ((wc - 100) / 400);
+  if (wc <= 2500) return maxPoints * 0.5 + maxPoints * 0.5 * ((wc - 500) / 2000);
+  if (wc <= 5000) return maxPoints; // sweet spot
+  return maxPoints * Math.max(0.7, 1 - (wc - 5000) / 20000);
+}
+
+/**
+ * Freshness decay curve — recent content scores higher, with smooth decay.
+ * 0 days → max, 30 days → 80%, 90 days → 50%, 365 days → 20%
+ */
+function freshnessDecay(daysSince: number, maxPoints: number): number {
+  if (daysSince <= 0) return maxPoints;
+  return maxPoints * Math.exp(-daysSince / 180);
+}
+
+// ============================================
 // CALCULATE REAL SCORES
 // ============================================
 
 function calculateScores(pages: PageContent[]): SiteAnalysis["score"]["breakdown"] {
   if (pages.length === 0) {
     return {
-      contentClarity: 30,
-      authoritySignals: 30,
-      structuredData: 20,
-      citability: 30,
-      freshness: 30,
-      topicalDepth: 30,
+      contentClarity: 28,
+      authoritySignals: 25,
+      structuredData: 15,
+      citability: 22,
+      freshness: 20,
+      topicalDepth: 18,
     };
   }
 
@@ -232,103 +266,128 @@ function calculateScores(pages: PageContent[]): SiteAnalysis["score"]["breakdown
   const avgExternalLinks = pages.reduce((sum, p) => sum + p.externalLinks.length, 0) / pages.length;
 
   // Content Clarity (0-100)
-  // Based on: headings structure, list usage, paragraph length
-  let contentClarity = 40;
-  if (avgHeadings >= 5) contentClarity += 20;
-  else if (avgHeadings >= 3) contentClarity += 10;
-  if (avgLists >= 3) contentClarity += 15;
-  else if (avgLists >= 1) contentClarity += 8;
-  if (avgWordCount >= 1000 && avgWordCount <= 3000) contentClarity += 15;
-  else if (avgWordCount >= 500) contentClarity += 8;
-  // Check for H1 followed by H2s (good structure)
+  // Continuous curves for headings, lists, word count + binary for structure
+  let contentClarity = 18; // baseline for having a website
+  contentClarity += smoothScale(avgHeadings, 4, 28);  // 1→7, 3→16, 5→16, 8→19, 12→22
+  contentClarity += smoothScale(avgLists, 2.5, 18);    // 1→5, 2→10, 4→11, 8→14
+  contentClarity += wordCountScore(avgWordCount, 22);  // continuous curve, peaks 1000-2500
   const hasGoodStructure = pages.some(p => {
     const h1Index = p.headings.findIndex(h => h.level === 1);
     const h2Index = p.headings.findIndex(h => h.level === 2);
     return h1Index !== -1 && h2Index > h1Index;
   });
-  if (hasGoodStructure) contentClarity += 10;
-  contentClarity = Math.min(100, contentClarity);
+  if (hasGoodStructure) contentClarity += 14;
+  contentClarity = Math.min(100, Math.round(contentClarity));
 
   // Authority Signals (0-100)
-  // Based on: author info, external citations, credentials
-  let authoritySignals = 35;
-  if (hasAuthorInfo) authoritySignals += 25;
-  if (avgExternalLinks >= 5) authoritySignals += 20;
-  else if (avgExternalLinks >= 2) authoritySignals += 10;
-  // Check for .gov, .edu, or major sources in external links
-  const hasAuthorityLinks = pages.some(p => 
-    p.externalLinks.some(link => 
-      link.endsWith(".gov") || 
-      link.endsWith(".edu") || 
+  // Continuous curve for external links + booleans for author/authority
+  let authoritySignals = 20; // baseline
+  if (hasAuthorInfo) authoritySignals += 22;
+  authoritySignals += smoothScale(avgExternalLinks, 3, 23); // 1→6, 2→9, 5→14, 10→18
+  const authorityLinkCount = pages.reduce((sum, p) =>
+    sum + p.externalLinks.filter(link =>
+      link.endsWith(".gov") ||
+      link.endsWith(".edu") ||
       link.includes("wikipedia") ||
       link.includes("reuters") ||
-      link.includes("nytimes")
-    )
-  );
-  if (hasAuthorityLinks) authoritySignals += 15;
-  authoritySignals = Math.min(100, authoritySignals);
+      link.includes("nytimes") ||
+      link.includes("harvard") ||
+      link.includes("stanford") ||
+      link.includes("nature.com") ||
+      link.includes("sciencedirect")
+    ).length, 0);
+  authoritySignals += smoothScale(authorityLinkCount, 2, 18); // 1→6, 2→9, 4→12
+  // Fraction of pages with authors
+  const authorFraction = pages.filter(p => p.hasAuthor).length / pages.length;
+  authoritySignals += Math.round(authorFraction * 17);
+  authoritySignals = Math.min(100, Math.round(authoritySignals));
 
   // Structured Data (0-100)
-  // Based on: presence and quality of JSON-LD
-  let structuredDataScore = 20;
+  // Points for presence, then per-type bonuses with diminishing returns
+  let structuredDataScore = 12; // baseline
   if (hasStructuredData) {
-    structuredDataScore += 40;
-    // Check for specific schema types
-    const schemaTypes = pages.flatMap(p => 
+    structuredDataScore += 30; // significant boost for having any schema
+    const schemaTypes = pages.flatMap(p =>
       p.structuredData.map((d: any) => d["@type"])
     ).filter(Boolean);
-    
-    if (schemaTypes.includes("Article") || schemaTypes.includes("BlogPosting")) structuredDataScore += 15;
-    if (schemaTypes.includes("FAQPage")) structuredDataScore += 15;
-    if (schemaTypes.includes("HowTo")) structuredDataScore += 10;
-    if (schemaTypes.includes("Organization") || schemaTypes.includes("Person")) structuredDataScore += 10;
+    const uniqueTypes = new Set(schemaTypes);
+
+    // Per-type bonuses (higher value types first)
+    const typeScores: Record<string, number> = {
+      Article: 10, BlogPosting: 10, FAQPage: 12, HowTo: 9,
+      Organization: 8, Person: 7, Product: 8, Review: 6,
+      WebPage: 4, BreadcrumbList: 5, LocalBusiness: 9,
+    };
+    let typeBonus = 0;
+    for (const t of uniqueTypes) {
+      typeBonus += typeScores[t as string] ?? 3;
+    }
+    // Diminishing returns for many types
+    structuredDataScore += Math.round(smoothScale(typeBonus, 15, 48));
   }
-  structuredDataScore = Math.min(100, structuredDataScore);
+  structuredDataScore = Math.min(100, Math.round(structuredDataScore));
 
   // Citability (0-100)
-  // Based on: quotable content, statistics, unique insights
-  let citability = 35;
-  // Check for numbers/statistics in content
-  const hasStats = pages.some(p => 
-    p.paragraphs.some(para => /\d+%|\$[\d,]+|\d+\s*(million|billion|thousand)/i.test(para))
-  );
-  if (hasStats) citability += 20;
-  // Check for quotable formats (blockquotes, key takeaways)
-  const hasQuotableContent = pages.some(p => p.lists.length >= 5);
-  if (hasQuotableContent) citability += 15;
-  // Good title and description
-  const hasGoodMeta = pages.some(p => p.title.length >= 30 && p.description.length >= 100);
-  if (hasGoodMeta) citability += 15;
-  // Comprehensive content
-  if (avgWordCount >= 1500) citability += 15;
-  citability = Math.min(100, citability);
+  // How quotable/citable is the content for AI systems?
+  let citability = 15; // baseline
+  // Statistics density — count paragraphs with data points
+  const statsCount = pages.reduce((sum, p) =>
+    sum + p.paragraphs.filter(para =>
+      /\d+%|\$[\d,]+|\d+\s*(million|billion|thousand|percent)/i.test(para)
+    ).length, 0);
+  citability += smoothScale(statsCount, 4, 22); // 1→4, 3→11, 6→13, 10→16
+  // List density — more lists = more quotable
+  const totalLists = pages.reduce((sum, p) => sum + p.lists.length, 0);
+  citability += smoothScale(totalLists, 6, 16);
+  // Meta quality — continuous based on title + description length
+  const bestTitle = Math.max(...pages.map(p => p.title.length));
+  const bestDesc = Math.max(...pages.map(p => p.description.length));
+  citability += smoothScale(bestTitle, 40, 10) + smoothScale(bestDesc, 120, 10);
+  // Content comprehensiveness
+  citability += wordCountScore(avgWordCount, 17);
+  // Unique insights signal: has both stats AND lists
+  if (statsCount > 0 && totalLists > 3) citability += 10;
+  citability = Math.min(100, Math.round(citability));
 
   // Freshness (0-100)
-  // Based on: date presence, last modified
-  let freshness = 30;
-  if (hasDates) freshness += 30;
-  const hasRecentModified = pages.some(p => {
-    if (!p.lastModified) return false;
-    const modified = new Date(p.lastModified);
-    const daysSince = (Date.now() - modified.getTime()) / (1000 * 60 * 60 * 24);
-    return daysSince < 90;
-  });
-  if (hasRecentModified) freshness += 30;
-  else if (hasDates) freshness += 10;
-  freshness = Math.min(100, freshness);
+  // Decay curve based on how recently content was modified
+  let freshness = 15; // baseline
+  if (hasDates) freshness += 18; // having dates at all is a signal
+
+  // Find most recent modification
+  const modifiedDates = pages
+    .filter(p => p.lastModified)
+    .map(p => {
+      const modified = new Date(p.lastModified!);
+      return (Date.now() - modified.getTime()) / (1000 * 60 * 60 * 24);
+    });
+
+  if (modifiedDates.length > 0) {
+    const mostRecentDays = Math.min(...modifiedDates);
+    freshness += freshnessDecay(mostRecentDays, 42); // smooth decay
+    // Bonus for multiple recently-updated pages
+    const recentPages = modifiedDates.filter(d => d < 120).length;
+    freshness += smoothScale(recentPages, 2, 12);
+  } else if (hasDates) {
+    freshness += 13; // dates present but no parseable modified dates
+  }
+  freshness = Math.min(100, Math.round(freshness));
 
   // Topical Depth (0-100)
-  // Based on: content length, heading diversity, internal linking
-  let topicalDepth = 35;
-  if (avgWordCount >= 2000) topicalDepth += 25;
-  else if (avgWordCount >= 1000) topicalDepth += 15;
-  // Multiple pages with related content
-  if (pages.length >= 3) topicalDepth += 20;
-  // Diverse heading structure
-  const uniqueH2s = new Set(pages.flatMap(p => p.headings.filter(h => h.level === 2).map(h => h.text.toLowerCase())));
-  if (uniqueH2s.size >= 10) topicalDepth += 20;
-  else if (uniqueH2s.size >= 5) topicalDepth += 10;
-  topicalDepth = Math.min(100, topicalDepth);
+  // Content breadth + heading diversity + page coverage
+  let topicalDepth = 12; // baseline
+  topicalDepth += wordCountScore(avgWordCount, 25); // longer = deeper
+  // Page coverage — continuous curve
+  topicalDepth += smoothScale(pages.length, 2, 22); // 1→7, 2→11, 3→13, 5→16
+  // Heading diversity — unique H2s across all pages
+  const uniqueH2s = new Set(
+    pages.flatMap(p => p.headings.filter(h => h.level === 2).map(h => h.text.toLowerCase()))
+  );
+  topicalDepth += smoothScale(uniqueH2s.size, 6, 24); // 2→6, 5→11, 10→15, 20→18
+  // Paragraph density — more paragraphs = more depth
+  const avgParagraphs = pages.reduce((sum, p) => sum + p.paragraphs.length, 0) / pages.length;
+  topicalDepth += smoothScale(avgParagraphs, 10, 17);
+  topicalDepth = Math.min(100, Math.round(topicalDepth));
 
   return {
     contentClarity,
@@ -631,19 +690,27 @@ export async function analyzeSite(domain: string): Promise<SiteAnalysis> {
     breakdown.topicalDepth * weights.topicalDepth
   );
 
-  // Determine grade
-  const grade = overall >= 80 ? "A" : overall >= 65 ? "B" : overall >= 50 ? "C" : "D";
+  // Determine grade (sub-grades for more granularity)
+  let grade: string;
+  if (overall >= 90) grade = "A+";
+  else if (overall >= 80) grade = "A";
+  else if (overall >= 72) grade = "B+";
+  else if (overall >= 65) grade = "B";
+  else if (overall >= 57) grade = "C+";
+  else if (overall >= 50) grade = "C";
+  else if (overall >= 40) grade = "D+";
+  else grade = "D";
 
-  // Generate summary
+  // Generate contextual summary based on score
   let summary = "";
   if (overall >= 80) {
-    summary = "Excellent! Your site is well-optimized for AI citations. Keep up the great work.";
+    summary = `Your site scores ${overall}/100 for AI visibility. Strong across most dimensions — focus on maintaining freshness and expanding citability.`;
   } else if (overall >= 65) {
-    summary = "Good foundation. A few improvements could significantly boost your AI visibility.";
+    summary = `Your site scores ${overall}/100. Good foundation with clear opportunities — the tips below could push you above 80.`;
   } else if (overall >= 50) {
-    summary = "Room for improvement. Focus on the high-priority tips below to increase citations.";
+    summary = `Your site scores ${overall}/100. AI systems have limited signals to cite you — prioritize the high-impact tips below.`;
   } else {
-    summary = "Needs attention. Your site has significant opportunities to improve AI visibility.";
+    summary = `Your site scores ${overall}/100. Significant room for improvement — start with structured data and content depth.`;
   }
 
   // Generate tips based on actual analysis

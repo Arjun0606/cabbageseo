@@ -7,12 +7,13 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 
 export async function POST(request: NextRequest) {
   try {
     const { email, adminSecret } = await request.json();
 
-    // Check admin secret
+    // Check admin secret with timing-safe comparison
     const expectedSecret = process.env.ADMIN_SECRET;
     if (!expectedSecret) {
       return NextResponse.json(
@@ -20,7 +21,11 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-    if (adminSecret !== expectedSecret) {
+    if (
+      !adminSecret ||
+      adminSecret.length !== expectedSecret.length ||
+      !timingSafeEqual(Buffer.from(adminSecret), Buffer.from(expectedSecret))
+    ) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

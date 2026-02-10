@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { DodoPayments } from "dodopayments";
 import { PLANS, type PlanId } from "@/lib/billing/plans";
+import { authLimiter } from "@/lib/api/rate-limit";
 
 // Dodo Product IDs (configured in Dodo Dashboard)
 const PRODUCT_IDS: Record<string, Record<string, string | undefined>> = {
@@ -75,6 +76,15 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit: 5 checkout attempts per minute per user
+  const rateLimit = authLimiter.check(user.id);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment." },
+      { status: 429 },
+    );
   }
 
   // Use service client for database operations (bypasses RLS)

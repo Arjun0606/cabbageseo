@@ -11,13 +11,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getCitationPlan, canGeneratePage } from "@/lib/billing/citation-plans";
 import { generatePage } from "@/lib/geo/page-generator";
+import { timingSafeEqual } from "crypto";
+
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify internal auth (service role key)
+    // Verify internal auth (service role key) with timing-safe comparison
     const authHeader = request.headers.get("Authorization");
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!authHeader || !serviceKey || authHeader !== `Bearer ${serviceKey}`) {
+    if (!authHeader || !serviceKey || !safeCompare(authHeader, `Bearer ${serviceKey}`)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

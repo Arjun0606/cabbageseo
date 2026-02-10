@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   Zap,
   FileText,
+  Users,
   Settings,
   Menu,
   X,
@@ -36,11 +37,12 @@ import { SubscriptionRequired } from "@/components/paywall/subscription-required
 import { useCheckout } from "@/hooks/use-checkout";
 import { CITATION_PLANS, getNextPlan } from "@/lib/billing/citation-plans";
 
-// Navigation items — simplified 3-item nav
+// Navigation items
 const navItems = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
   { href: "/dashboard/actions", label: "Actions", icon: Zap },
   { href: "/dashboard/pages", label: "Pages", icon: FileText },
+  { href: "/dashboard/competitors", label: "Competitors", icon: Users },
 ];
 
 // Sidebar component
