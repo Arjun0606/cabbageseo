@@ -298,7 +298,7 @@ export const hourlyCitationCheck = inngest.createFunction(
           organizations!inner(plan)
         `)
         .eq("status", "active")
-        .in("organizations.plan", ["command", "dominate", "pro", "pro_plus"]);
+        .in("organizations.plan", ["command", "dominate"]);
       
       if (error) {
         console.error("Failed to fetch paid sites:", error);

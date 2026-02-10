@@ -20,14 +20,14 @@ const TEST_ACCOUNTS = [
     plan: "free",
   },
   {
-    email: "test-starter@cabbageseo.test",
-    password: "TestStarter123!",
-    plan: "starter",
+    email: "test-scout@cabbageseo.test",
+    password: "TestScout123!",
+    plan: "scout",
   },
   {
-    email: "test-pro@cabbageseo.test",
-    password: "TestPro123!",
-    plan: "pro",
+    email: "test-command@cabbageseo.test",
+    password: "TestCommand123!",
+    plan: "command",
   },
 ];
 

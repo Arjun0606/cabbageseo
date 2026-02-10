@@ -16,12 +16,26 @@ import { getUser } from "@/lib/api/get-user";
 import {
   getCitationPlan,
   canAccessProduct,
-  canUseGapAnalysis,
-  canUseContentRecommendations,
-  canUseActionPlan,
   canUseCompetitorDeepDive,
   canGeneratePage,
 } from "@/lib/billing/citation-plans";
+
+function checkFeatureLimit(
+  available: boolean,
+  used: number,
+  limit: number,
+  featureName: string,
+  requiredPlan: string
+): { allowed: boolean; reason?: string; remaining?: number } {
+  if (!available) {
+    return { allowed: false, reason: `${featureName} requires ${requiredPlan} plan or higher.` };
+  }
+  if (limit === -1) return { allowed: true, remaining: -1 };
+  if (used >= limit) {
+    return { allowed: false, reason: `Monthly limit reached (${limit}). Upgrade for more.`, remaining: 0 };
+  }
+  return { allowed: true, remaining: limit - used };
+}
 import {
   analyzeCitationGap,
   generateContentRecommendations,
@@ -121,7 +135,10 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "query is required for gap-analysis" }, { status: 400 });
         }
 
-        const canUse = canUseGapAnalysis(citationPlan.id, gapAnalysesUsed);
+        const canUse = checkFeatureLimit(
+          citationPlan.features.citationGapAnalysis, gapAnalysesUsed,
+          citationPlan.intelligenceLimits.gapAnalysesPerMonth, "Citation Gap Analysis", "Scout"
+        );
         if (!canUse.allowed) {
           return NextResponse.json({
             error: canUse.reason,
@@ -143,7 +160,10 @@ export async function POST(request: NextRequest) {
       }
 
       case "content-recommendations": {
-        const canUse = canUseContentRecommendations(citationPlan.id, contentIdeasUsed);
+        const canUse = checkFeatureLimit(
+          citationPlan.features.contentRecommendations, contentIdeasUsed,
+          citationPlan.intelligenceLimits.contentIdeasPerMonth, "Content Recommendations", "Scout"
+        );
         if (!canUse.allowed) {
           return NextResponse.json({
             error: canUse.reason,
@@ -165,7 +185,10 @@ export async function POST(request: NextRequest) {
       }
 
       case "action-plan": {
-        const canUse = canUseActionPlan(citationPlan.id, actionPlansUsed);
+        const canUse = checkFeatureLimit(
+          citationPlan.features.weeklyActionPlan, actionPlansUsed,
+          citationPlan.intelligenceLimits.actionPlansPerMonth, "Weekly Action Plans", "Command"
+        );
         if (!canUse.allowed) {
           return NextResponse.json({
             error: canUse.reason,
