@@ -136,7 +136,6 @@ export const dailyPageRefresh = inngest.createFunction(
                 body: result.body,
                 schema_markup: result.schemaMarkup,
                 target_entities: result.targetEntities,
-                competitors_analyzed: [],
                 word_count: result.wordCount,
                 updated_at: now,
                 last_refreshed_at: now,

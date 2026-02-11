@@ -29,8 +29,6 @@ const navLinks = [
   { href: "/pricing", label: "Pricing" },
   { href: "/what-is-geo", label: "What is GEO?" },
   { href: "/blog", label: "Blog" },
-  { href: "/for/saas", label: "For SaaS" },
-  { href: "/for/agencies", label: "For Agencies" },
 ];
 
 function Header() {
@@ -182,8 +180,8 @@ function Footer() {
       { href: "/leaderboard", label: "AI Leaderboard" },
     ],
     solutions: [
-      { href: "/for/saas", label: "For SaaS" },
-      { href: "/for/agencies", label: "For Agencies" },
+      { href: "/about", label: "What is CabbageSEO?" },
+      { href: "/what-is-geo", label: "What is GEO?" },
     ],
     legal: [
       { href: "/privacy", label: "Privacy Policy" },

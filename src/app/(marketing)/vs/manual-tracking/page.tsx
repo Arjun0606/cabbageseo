@@ -41,9 +41,9 @@ const comparisonRows = [
     icon: <History className="w-4 h-4" />,
   },
   {
-    feature: "Competitor tracking",
+    feature: "Brand visibility tracking",
     manual: "Manual guesswork",
-    cabbage: "Automated, 3-25 competitors by plan",
+    cabbage: "Automated — see which brands AI recommends",
     icon: <Users className="w-4 h-4" />,
   },
   {
@@ -177,7 +177,7 @@ export default function VsManualTrackingPage() {
                   Data you can actually use
                 </h3>
                 <p className="text-zinc-400">
-                  Manual checks give you a snapshot. CabbageSEO gives you trends, gaps, competitor intel, and a step-by-step action plan.
+                  Manual checks give you a snapshot. CabbageSEO gives you trends, gaps, brand visibility intel, and a step-by-step action plan.
                 </p>
               </GlassCard>
             </StaggerItem>

@@ -48,6 +48,45 @@ function extractBrandName(domain: string): string {
   return name;
 }
 
+// Use AI to classify a website's category from its title + description
+async function classifyWithAI(title: string, description: string, domain: string): Promise<string | null> {
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  if (!apiKey) return null;
+  if (!title && !description) return null;
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `What product/service category does this website belong to? Respond with ONLY the category name in 1-4 words (e.g. "project management", "CRM", "restaurant", "law firm", "real estate", "fitness app", "cloud storage"). If unclear, respond "unknown".
+
+Domain: ${domain}
+Title: ${title}
+Description: ${description}`
+            }]
+          }],
+          generationConfig: { maxOutputTokens: 20 },
+        }),
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toLowerCase();
+    if (!answer || answer === "unknown" || answer.length > 50) return null;
+    return answer;
+  } catch {
+    return null;
+  }
+}
+
 // Fetch site homepage to extract category context for smarter queries
 async function fetchSiteContext(domain: string): Promise<{
   title: string;
@@ -81,38 +120,10 @@ async function fetchSiteContext(domain: string): Promise<{
                       html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i);
     const description = descMatch ? descMatch[1].trim() : "";
 
-    // Try to extract a product category from title + description
-    const combined = `${title} ${description}`.toLowerCase();
-    const categoryPatterns = [
-      { pattern: /\b(crm|customer relationship)\b/i, category: "CRM" },
-      { pattern: /\b(project management|task management|pm tool)\b/i, category: "project management" },
-      { pattern: /\b(email marketing|newsletter|email automation)\b/i, category: "email marketing" },
-      { pattern: /\b(accounting|bookkeeping|invoicing)\b/i, category: "accounting" },
-      { pattern: /\b(design|graphic design|ui design|ux design)\b/i, category: "design" },
-      { pattern: /\b(analytics|data analytics|business intelligence)\b/i, category: "analytics" },
-      { pattern: /\b(hr |human resources|recruitment|hiring)\b/i, category: "HR" },
-      { pattern: /\b(ecommerce|e-commerce|online store|shopify)\b/i, category: "ecommerce" },
-      { pattern: /\b(cms|content management|website builder)\b/i, category: "website builder" },
-      { pattern: /\b(helpdesk|help desk|customer support|ticketing)\b/i, category: "customer support" },
-      { pattern: /\b(marketing automation|marketing platform)\b/i, category: "marketing automation" },
-      { pattern: /\b(seo|search engine optimization)\b/i, category: "SEO" },
-      { pattern: /\b(cybersecurity|security platform|endpoint protection)\b/i, category: "cybersecurity" },
-      { pattern: /\b(ai |artificial intelligence|machine learning|llm)\b/i, category: "AI" },
-      { pattern: /\b(collaboration|team communication|messaging)\b/i, category: "team collaboration" },
-      { pattern: /\b(video conferencing|video call|meetings)\b/i, category: "video conferencing" },
-      { pattern: /\b(cloud storage|file sharing|file management)\b/i, category: "cloud storage" },
-      { pattern: /\b(payment|billing|subscription management)\b/i, category: "payments" },
-      { pattern: /\b(devops|ci\/cd|deployment|infrastructure)\b/i, category: "DevOps" },
-      { pattern: /\b(api |api management|developer platform)\b/i, category: "API platform" },
-    ];
+    // Use AI to classify the site category (fast, ~1s with Gemini)
+    const category = await classifyWithAI(title, description, domain);
 
-    for (const { pattern, category } of categoryPatterns) {
-      if (pattern.test(combined)) {
-        return { title, description, category };
-      }
-    }
-
-    return { title, description, category: null };
+    return { title, description, category };
   } catch {
     return { title: "", description: "", category: null };
   }
@@ -125,12 +136,12 @@ function generateQueries(domain: string, category: string | null): string[] {
 
   if (category) {
     return [
-      // Perplexity — category-specific buyer query
-      `best ${category} tools ${year}`,
-      // Gemini — brand in category context
-      `${brand} vs alternatives for ${category}`,
-      // ChatGPT — recommendation with category context
-      `what ${category} software should I use instead of ${brand}`,
+      // Perplexity — broad buyer intent in category
+      `best ${category} ${year}`,
+      // Gemini — brand in category context with comparison intent
+      `is ${brand} a good ${category} option or are there better alternatives`,
+      // ChatGPT — direct recommendation ask
+      `what ${category} should I use in ${year}`,
     ];
   }
 
@@ -578,6 +589,7 @@ export async function POST(request: NextRequest) {
       mentionedCount,
       isInvisible,
       competitorsMentioned,
+      brandsDetected: competitorsMentioned,
       visibilityScore,
       platformScores,
       scoreBreakdown: scoring.factors,

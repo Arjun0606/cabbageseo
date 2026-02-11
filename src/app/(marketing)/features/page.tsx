@@ -138,7 +138,7 @@ export default function FeaturesPage() {
               Everything that powers the loop
             </h2>
             <p className="text-zinc-400 max-w-2xl">
-              Six GEO capabilities that work together: scan AI engines, find your
+              Five GEO capabilities that work together: scan AI engines, find your
               gaps, fix them, and track the results.
             </p>
           </AnimateIn>

@@ -61,9 +61,8 @@ export async function updateSession(request: NextRequest) {
     "/feedback",
     "/features",
     "/changelog",
-    "/for/saas",
-    "/for/agencies",
     "/vs/manual-tracking",
+    "/about",
     "/teaser",         // Teaser results page (no signup required)
     "/blog",           // Blog index
     "/leaderboard",    // Public leaderboard

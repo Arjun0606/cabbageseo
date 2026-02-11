@@ -31,7 +31,7 @@ import {
 
 const PREVIEW_DATA: Record<string, string> = {
   "gap-analysis":
-    "Your site is missing citations for 12 high-intent queries including 'best project management tool' and 'top CRM for startups'. Competitors dominate these with comparison pages and FAQ schema...",
+    "Your site is missing citations for 12 high-intent queries including 'best project management tool' and 'top CRM for startups'. Other brands rank here with comparison pages and FAQ schema...",
   "content-recommendations":
     "Create a comparison page: 'YourBrand vs Competitor' — AI platforms cite comparison content 3.2x more often. Add JSON-LD FAQ schema targeting 'how to choose...' queries...",
   "action-plan":
@@ -661,7 +661,7 @@ export default function ActionsPage() {
         <div className="space-y-2">
           <AIToolRow
             title="Citation Gap Analysis"
-            description="Find out why AI cites your competitors instead of you"
+            description="Find gaps where AI recommends others instead of you"
             icon={Search}
             isLocked={!features?.gapAnalysis?.available}
             requiredPlan="scout"

@@ -42,13 +42,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Solution pages
     {
-      url: `${baseUrl}/for/saas`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/for/agencies`,
+      url: `${baseUrl}/about`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.8,

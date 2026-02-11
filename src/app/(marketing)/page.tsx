@@ -331,7 +331,7 @@ function HomeContent() {
                       <p className="text-zinc-400 text-sm">
                         We found{" "}
                         <span className="text-red-400 font-semibold">
-                          {scanData.summary.brandsDetected.length} brands
+                          {scanData.summary.brandsDetected?.length || 0} brands
                         </span>{" "}
                         AI recommends instead of{" "}
                         <span className="text-white font-medium">{scanData.domain}</span>.

@@ -99,7 +99,6 @@ export async function POST(request: NextRequest) {
           body: result.body,
           schema_markup: result.schemaMarkup,
           target_entities: result.targetEntities,
-          competitors_analyzed: [],
           word_count: result.wordCount,
           ai_model: "gpt-5.2",
           status: "draft",

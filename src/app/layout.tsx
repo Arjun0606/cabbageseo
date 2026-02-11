@@ -123,7 +123,7 @@ const jsonLdApp = {
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
   description:
-    "Track whether ChatGPT, Perplexity & Google AI recommend your brand or your competitors. Daily monitoring, competitor alerts, and AI-generated comparison pages.",
+    "Track whether ChatGPT, Perplexity & Google AI recommend your brand. Daily monitoring, visibility alerts, and AI-generated fix pages to close gaps.",
   offers: [
     {
       "@type": "Offer",
@@ -131,7 +131,7 @@ const jsonLdApp = {
       price: "49",
       priceCurrency: "USD",
       billingIncrement: "P1M",
-      description: "1 site, 3 competitors, daily AI monitoring",
+      description: "1 site, daily AI monitoring, 5 fix pages/month",
     },
     {
       "@type": "Offer",
@@ -139,7 +139,7 @@ const jsonLdApp = {
       price: "149",
       priceCurrency: "USD",
       billingIncrement: "P1M",
-      description: "5 sites, 10 competitors, daily checks + hourly monitoring",
+      description: "5 sites, hourly monitoring, 25 fix pages/month",
     },
     {
       "@type": "Offer",
@@ -147,7 +147,7 @@ const jsonLdApp = {
       price: "349",
       priceCurrency: "USD",
       billingIncrement: "P1M",
-      description: "25 sites, 25 competitors, real-time AI monitoring",
+      description: "25 sites, hourly monitoring, unlimited fix pages",
     },
   ],
 };
