@@ -24,7 +24,6 @@ import {
   Search,
   FileText,
   Target,
-  Users,
   Lock,
   AlertCircle,
   ArrowRight,
@@ -37,8 +36,6 @@ const PREVIEW_DATA: Record<string, string> = {
     "Create a comparison page: 'YourBrand vs Competitor' — AI platforms cite comparison content 3.2x more often. Add JSON-LD FAQ schema targeting 'how to choose...' queries...",
   "action-plan":
     "Week 1: Publish FAQ page targeting 'how to choose...' queries. Week 2: Get listed on G2 and Capterra. Week 3: Create comparison content vs top 3 competitors...",
-  "competitor-deep-dive":
-    "competitor.com has 47 citations across ChatGPT and Perplexity, primarily winning queries about 'best tool for...' and 'top alternatives to...'. Their strategy relies heavily on...",
 };
 
 // ============================================
@@ -70,7 +67,6 @@ interface FeaturesData {
   gapAnalysis: FeatureInfo;
   contentRecommendations: FeatureInfo;
   actionPlan: FeatureInfo;
-  competitorDeepDive: FeatureInfo;
 }
 
 interface CardState {
@@ -251,7 +247,6 @@ function AIToolRow({
     try {
       const body: Record<string, string> = { action: actionKey, siteId };
       if (hasInput && input.trim()) body.query = input.trim();
-      if (actionKey === "competitor-deep-dive" && input.trim()) body.competitorId = input.trim();
 
       const res = await fetch("/api/geo/intelligence/actions", {
         method: "POST",
@@ -699,18 +694,6 @@ export default function ActionsPage() {
             buttonLabel="Generate"
           />
 
-          <AIToolRow
-            title="Competitor Deep Dive"
-            description="Full analysis of a competitor's AI citation strategy"
-            icon={Users}
-            isLocked={!features?.competitorDeepDive?.available || plan === "free" || plan === "scout"}
-            requiredPlan="command"
-            siteId={currentSite?.id || ""}
-            actionKey="competitor-deep-dive"
-            hasInput
-            inputPlaceholder="e.g., competitor.com"
-            buttonLabel="Analyze"
-          />
         </div>
       </section>
     </div>

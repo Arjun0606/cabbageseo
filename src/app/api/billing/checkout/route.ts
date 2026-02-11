@@ -100,8 +100,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { planId, interval = "monthly" } = body as { planId: string; interval?: string };
 
-    // Validate plan
-    const validPlanIds: CitationPlanId[] = ["scout", "command", "dominate"];
+    // Validate plan — derive valid paid plans from configured product IDs
+    const validPlanIds = Object.keys(PRODUCT_IDS) as CitationPlanId[];
     if (!validPlanIds.includes(planId as CitationPlanId)) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }

@@ -1080,15 +1080,22 @@ CREATE TABLE generated_pages (
   competitors_analyzed JSONB DEFAULT '[]',
   word_count INTEGER,
 
+  ai_model TEXT DEFAULT 'gpt-5-mini',
   status generated_page_status DEFAULT 'draft',
   published_url TEXT,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  -- Refresh tracking (auto-refresh cron)
+  last_refreshed_at TIMESTAMPTZ DEFAULT NULL,
+  refresh_count INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX generated_pages_site_idx ON generated_pages(site_id);
 CREATE INDEX generated_pages_query_idx ON generated_pages(query);
+CREATE INDEX generated_pages_refresh_idx ON generated_pages(status, last_refreshed_at)
+  WHERE status = 'published';
 
 -- ============================================
 -- TEASER REPORTS (Shareable free scan results)

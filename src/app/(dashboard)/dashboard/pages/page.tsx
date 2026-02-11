@@ -4,7 +4,7 @@
  * FIX PAGES — The core product experience
  *
  * Three sections:
- * 1. Opportunities — auto-detected queries where competitors are cited, you aren't
+ * 1. Opportunities — auto-detected queries where you're not getting cited by AI
  * 2. Generate — manual query input for custom pages
  * 3. Your Pages — library of generated fix pages with status
  *
@@ -17,6 +17,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSite } from "@/context/site-context";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { getCitationPlan, getRefreshFrequencyDays, getRefreshFrequencyLabel } from "@/lib/billing/citation-plans";
 import {
   Sparkles,
   Loader2,
@@ -42,7 +43,6 @@ import {
 interface Opportunity {
   id: string;
   query: string;
-  competitors: string[];
   platform: string;
   snippet: string;
   impact: "high" | "medium" | "low";
@@ -70,6 +70,8 @@ interface PageSummary {
   status: string;
   createdAt: string;
   updatedAt: string;
+  lastRefreshedAt: string | null;
+  refreshCount: number;
 }
 
 const IMPACT_STYLES = {
@@ -111,6 +113,10 @@ function ContentEngineContent() {
 
   const plan = organization?.plan || "free";
   const canGenerate = plan !== "free";
+  const citationPlan = getCitationPlan(plan);
+  const pagesLimit = citationPlan.intelligenceLimits.pagesPerMonth;
+  const pagesUsed = summary?.pagesGenerated || 0;
+  const pagesRemaining = pagesLimit === -1 ? Infinity : Math.max(0, pagesLimit - pagesUsed);
 
   // Auto-generate from URL param
   const autoQuery = searchParams.get("generate");
@@ -258,7 +264,7 @@ function ContentEngineContent() {
             Fix Your AI Visibility
           </h2>
           <p className="text-zinc-400 max-w-md mx-auto mb-3">
-            We detect queries where competitors get cited instead of you,
+            We detect queries where you&apos;re not getting cited by AI,
             then generate targeted pages to address those gaps.
           </p>
           <div className="flex flex-col items-center gap-2 mb-6">
@@ -284,7 +290,7 @@ function ContentEngineContent() {
             <ArrowRight className="w-5 h-5" />
           </Link>
           <p className="text-zinc-600 text-xs mt-3">
-            Scout: 3 pages/mo &bull; Command: 15 pages/mo &bull; Dominate: Unlimited
+            Scout: 5 pages/mo &bull; Command: 25 pages/mo &bull; Dominate: Unlimited
           </p>
         </div>
       </div>
@@ -309,11 +315,25 @@ function ContentEngineContent() {
             Targeted pages for every query you&apos;re losing
           </p>
         </div>
-        {analyzedAt && (
-          <p className="text-zinc-600 text-xs">
-            Last scan: {new Date(analyzedAt).toLocaleDateString()}
-          </p>
-        )}
+        <div className="text-right">
+          {canGenerate && (
+            <p className="text-zinc-400 text-xs">
+              {pagesLimit === -1
+                ? `${pagesUsed} generated this month`
+                : `${pagesRemaining} of ${pagesLimit} remaining this month`}
+            </p>
+          )}
+          {analyzedAt && (
+            <p className="text-zinc-600 text-xs mt-0.5">
+              Last scan: {new Date(analyzedAt).toLocaleDateString()}
+            </p>
+          )}
+          {getRefreshFrequencyDays(plan) > 0 && (
+            <p className="text-zinc-600 text-xs mt-0.5">
+              Published pages auto-refresh {getRefreshFrequencyLabel(plan).toLowerCase()}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Stats bar */}
@@ -377,23 +397,6 @@ function ContentEngineContent() {
                       <p className="text-white font-medium text-sm mb-1.5">
                         &ldquo;{opp.query}&rdquo;
                       </p>
-                      {opp.competitors.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {opp.competitors.slice(0, 4).map((c, j) => (
-                            <span
-                              key={j}
-                              className="px-1.5 py-0.5 bg-red-500/5 border border-red-500/10 text-red-400 rounded text-[11px]"
-                            >
-                              {c}
-                            </span>
-                          ))}
-                          {opp.competitors.length > 4 && (
-                            <span className="text-zinc-600 text-[11px] self-center">
-                              +{opp.competitors.length - 4} more
-                            </span>
-                          )}
-                        </div>
-                      )}
                     </div>
 
                     <button
@@ -442,8 +445,8 @@ function ContentEngineContent() {
             No opportunities detected yet
           </h3>
           <p className="text-zinc-400 text-sm max-w-md mx-auto mb-4">
-            Run a citation check from your dashboard to detect queries where competitors
-            are getting cited instead of you. Each gap becomes a content opportunity.
+            Run a citation check from your dashboard to detect queries where you&apos;re
+            not getting cited by AI. Each gap becomes a content opportunity.
           </p>
           <Link
             href="/dashboard"
@@ -462,7 +465,7 @@ function ContentEngineContent() {
           <h2 className="text-white font-semibold text-sm">Generate a custom page</h2>
         </div>
         <p className="text-zinc-500 text-xs mb-3">
-          Target any query &mdash; we use your citation data, competitor intel, and gap analysis.
+          Target any query &mdash; we use your citation data, gap analysis, and GEO intelligence.
         </p>
         <div className="flex gap-2">
           <input
@@ -560,7 +563,7 @@ function ContentEngineContent() {
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                <div className="flex items-center gap-2 text-[11px] text-zinc-500 flex-wrap">
                   {page.wordCount && (
                     <span className="flex items-center gap-1">
                       <Hash className="w-3 h-3" />
@@ -578,6 +581,36 @@ function ContentEngineContent() {
                   }`}>
                     {page.status}
                   </span>
+                  {page.status === "published" && (() => {
+                    const refreshDays = getRefreshFrequencyDays(plan);
+                    const lastUpdate = page.lastRefreshedAt || page.updatedAt;
+                    const daysSince = Math.floor(
+                      (Date.now() - new Date(lastUpdate).getTime()) / (1000 * 60 * 60 * 24)
+                    );
+                    if (daysSince < 1) {
+                      return (
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
+                          Just refreshed
+                        </span>
+                      );
+                    }
+                    if (refreshDays > 0 && daysSince >= refreshDays) {
+                      return (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400">
+                          Needs refresh
+                        </span>
+                      );
+                    }
+                    if (page.lastRefreshedAt) {
+                      return (
+                        <span className="flex items-center gap-1">
+                          <RefreshCw className="w-3 h-3" />
+                          {daysSince}d ago
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </div>
             ))}

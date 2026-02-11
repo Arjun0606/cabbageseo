@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Features – AI Visibility Tracking, Competitor Intelligence & GEO Tools",
+  title: "Features – AI Visibility Tracking, GEO Intelligence & Fix Pages",
   description:
-    "Track who AI recommends in your market. Monitor ChatGPT, Perplexity & Google AI citations daily. Get competitor alerts, 30-day sprints, and targeted recommendations to improve your AI visibility.",
+    "Track who AI recommends in your market. Monitor ChatGPT, Perplexity & Google AI citations daily. Get visibility alerts, 30-day sprints, and targeted fix pages to improve your AI visibility.",
   keywords: [
     "AI citation scanning",
     "GEO tool",
     "generative engine optimization tool",
     "AI visibility features",
-    "competitor intelligence AI",
     "AI search monitoring",
+    "AI visibility monitoring",
   ],
   openGraph: {
     title: "CabbageSEO Features – AI Visibility Intelligence",
     description:
-      "Daily AI citation monitoring. Competitor tracking. Gap analysis and fix pages. 30-day action sprints. Everything you need to win in AI search.",
+      "Daily AI citation monitoring. Gap analysis and fix pages. 30-day action sprints. Everything you need to win in AI search.",
   },
 };
 

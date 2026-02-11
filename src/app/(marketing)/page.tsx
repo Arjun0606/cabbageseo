@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, AlertTriangle, Search, Loader2 } from "lucide-react";
+import { ArrowRight, AlertTriangle, Search, Loader2, Mail, TrendingDown, Rocket, BarChart3, ShieldCheck } from "lucide-react";
 import { GridAnimation } from "@/components/backgrounds/grid-animation";
 import { AnimateIn } from "@/components/motion/animate-in";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -16,12 +16,12 @@ const SCAN_STEPS = [
   "Asking Perplexity who they recommend...",
   "Asking Google AI about your market...",
   "Asking ChatGPT for recommendations...",
-  "Extracting competitor mentions...",
+  "Extracting brand mentions...",
   "Scoring across 6 visibility factors...",
   "Generating your custom content preview...",
 ];
 
-type ScanState = "idle" | "scanning" | "results" | "error";
+type ScanState = "idle" | "scanning" | "email_gate" | "results" | "error";
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -90,9 +90,12 @@ function HomeContent() {
         await new Promise((resolve) => setTimeout(resolve, 400));
 
         setScanData({ ...result, domain: scanDomain });
-        setScanState("results");
 
-        // Scroll to results
+        // If email already captured (e.g. returning visitor), go straight to results
+        const alreadyCaptured = typeof window !== "undefined" && sessionStorage.getItem("cseo_email_captured");
+        setScanState(alreadyCaptured || emailCaptured ? "results" : "email_gate");
+
+        // Scroll to results/gate
         setTimeout(() => {
           resultsRef.current?.scrollIntoView({ behavior: "smooth" });
         }, 100);
@@ -140,10 +143,44 @@ function HomeContent() {
     setScanError("");
   };
 
+  const [gateEmail, setGateEmail] = useState("");
+  const [gateLoading, setGateLoading] = useState(false);
+  const [gateError, setGateError] = useState("");
+
   const handleEmailCaptured = () => {
     setEmailCaptured(true);
     if (typeof window !== "undefined") {
       sessionStorage.setItem("cseo_email_captured", "1");
+    }
+    // Transition from gate to results
+    if (scanState === "email_gate" && scanData) {
+      setScanState("results");
+    }
+  };
+
+  const handleEmailGate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!gateEmail.trim()) return;
+    setGateLoading(true);
+    setGateError("");
+
+    try {
+      const res = await fetch("/api/teaser/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: gateEmail.trim(),
+          domain: scanData?.domain || domain,
+          reportId: scanData?.reportId || null,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to subscribe");
+      handleEmailCaptured();
+    } catch (err) {
+      setGateError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setGateLoading(false);
     }
   };
 
@@ -175,18 +212,19 @@ function HomeContent() {
 
           <AnimateIn delay={0.4} direction="up">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              Is AI recommending you{" "}
-              <span className="text-red-400">or your competitor?</span>
+              When buyers ask AI who to use
+              <br className="hidden sm:block" />
+              <span className="text-emerald-400"> &mdash; are you the answer?</span>
             </h1>
           </AnimateIn>
 
           <AnimateIn delay={0.6} direction="up">
             <p className="text-lg text-zinc-400 mb-3 max-w-xl mx-auto">
-              Enter your domain. We&rsquo;ll check ChatGPT, Perplexity, and
-              Google AI in 10 seconds.
+              Find out in 10 seconds. Most businesses are invisible to AI
+              and don&rsquo;t know it.
             </p>
-            <p className="text-sm text-emerald-400/70 font-medium mb-8 max-w-xl mx-auto">
-              AI recommendations change weekly. We scan, find gaps, and tell you exactly what to fix.
+            <p className="text-sm text-red-400/80 font-medium mb-8 max-w-xl mx-auto">
+              AI recommendations shift weekly. Check before your competitors do.
             </p>
           </AnimateIn>
 
@@ -261,21 +299,102 @@ function HomeContent() {
         </div>
       </section>
 
-      {/* ========== RESULTS ========== */}
-      {scanState === "results" && scanData && (
-        <section ref={resultsRef} id="scan-results">
-          <ScanResults data={scanData} gated={!emailCaptured} onEmailSubmit={handleEmailCaptured} />
-        </section>
-      )}
+      {/* ========== EMAIL GATE (shown after scan, before results) ========== */}
+      {scanState === "email_gate" && scanData && (
+        <section ref={resultsRef} id="scan-results" className="py-12">
+          <div className="max-w-lg mx-auto px-6">
+            <AnimateIn>
+              <div className="relative">
+                {/* Blurred teaser behind the gate */}
+                <div className="select-none pointer-events-none blur-md opacity-40" aria-hidden="true">
+                  <div className="bg-gradient-to-br from-red-950/80 via-zinc-900 to-zinc-900 border-2 border-red-500/30 rounded-2xl p-8 text-center">
+                    <div className="text-8xl font-black text-red-400 mb-2">{scanData.summary.visibilityScore ?? 0}</div>
+                    <p className="text-zinc-400">AI Visibility Score</p>
+                    <div className="mt-4 space-y-2">
+                      <div className="h-10 bg-white/[0.04] rounded-lg" />
+                      <div className="h-10 bg-white/[0.04] rounded-lg" />
+                      <div className="h-10 bg-white/[0.04] rounded-lg" />
+                    </div>
+                  </div>
+                </div>
 
-      {/* ========== SOCIAL PROOF (idle only) ========== */}
-      {scanState === "idle" && (
-        <section className="pb-16">
-          <div className="max-w-3xl mx-auto px-6">
-            <SocialProofBar />
+                {/* Email gate overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-full max-w-md mx-auto bg-zinc-900/95 backdrop-blur-sm border border-zinc-700/50 rounded-2xl p-8 shadow-2xl">
+                    <div className="text-center mb-6">
+                      <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+                        <TrendingDown className="w-7 h-7 text-red-400" />
+                      </div>
+                      <h3 className="text-xl font-bold text-white mb-2">
+                        Your AI Visibility Report is ready
+                      </h3>
+                      <p className="text-zinc-400 text-sm">
+                        We found{" "}
+                        <span className="text-red-400 font-semibold">
+                          {scanData.summary.brandsDetected.length} brands
+                        </span>{" "}
+                        AI recommends instead of{" "}
+                        <span className="text-white font-medium">{scanData.domain}</span>.
+                        Enter your email to see your full report.
+                      </p>
+                    </div>
+
+                    <form onSubmit={handleEmailGate} className="space-y-3">
+                      <div className="relative">
+                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                        <input
+                          type="email"
+                          value={gateEmail}
+                          onChange={(e) => setGateEmail(e.target.value)}
+                          placeholder="you@company.com"
+                          required
+                          autoFocus
+                          className="w-full pl-10 pr-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 transition-all"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={gateLoading}
+                        className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                      >
+                        {gateLoading ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <>
+                            See My Report
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+                      {gateError && (
+                        <p className="text-red-400 text-sm text-center">{gateError}</p>
+                      )}
+                    </form>
+
+                    <p className="text-center text-zinc-500 text-xs mt-4">
+                      Plus free weekly rescans &bull; Unsubscribe anytime
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </AnimateIn>
           </div>
         </section>
       )}
+
+      {/* ========== RESULTS ========== */}
+      {scanState === "results" && scanData && (
+        <section ref={resultsRef} id="scan-results">
+          <ScanResults data={scanData} />
+        </section>
+      )}
+
+      {/* ========== SOCIAL PROOF (always visible) ========== */}
+      <section className="pb-16">
+        <div className="max-w-3xl mx-auto px-6">
+          <SocialProofBar />
+        </div>
+      </section>
 
       {/* ========== HOW IT WORKS — CORE LOOP ========== */}
       <section className="py-20 border-t border-zinc-900">
@@ -337,6 +456,65 @@ function HomeContent() {
               >
                 See what&rsquo;s included in each plan <ArrowRight className="w-3.5 h-3.5" />
               </Link>
+            </div>
+          </AnimateIn>
+        </div>
+      </section>
+
+      {/* ========== WHAT HAPPENS WHEN YOU SUBSCRIBE ========== */}
+      <section className="py-20 border-t border-zinc-900">
+        <div className="max-w-4xl mx-auto px-6">
+          <AnimateIn>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">
+              What happens when you subscribe
+            </h2>
+            <p className="text-zinc-500 text-center mb-12 max-w-xl mx-auto">
+              From day one, CabbageSEO works to get AI recommending you.
+            </p>
+          </AnimateIn>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {[
+              {
+                icon: <Rocket className="w-6 h-6 text-emerald-400" />,
+                title: "Your 30-day sprint starts",
+                desc: "Week-by-week actions tailored to your gaps. Not a dashboard to stare at \u2014 specific tasks with clear instructions.",
+              },
+              {
+                icon: <ShieldCheck className="w-6 h-6 text-blue-400" />,
+                title: "Monitoring activates",
+                desc: "Daily or hourly scans across ChatGPT, Perplexity & Google AI. Instant alerts if your visibility drops.",
+              },
+              {
+                icon: <BarChart3 className="w-6 h-6 text-amber-400" />,
+                title: "Your score improves",
+                desc: "As you execute, your AI visibility score climbs. Track momentum, see which actions moved the needle.",
+              },
+            ].map((card, i) => (
+              <AnimateIn key={i} delay={0.1 * i}>
+                <GlassCard padding="md" className="h-full text-center">
+                  <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
+                    {card.icon}
+                  </div>
+                  <h3 className="text-white font-semibold mb-2">{card.title}</h3>
+                  <p className="text-zinc-500 text-sm leading-relaxed">{card.desc}</p>
+                </GlassCard>
+              </AnimateIn>
+            ))}
+          </div>
+
+          <AnimateIn delay={0.4}>
+            <div className="mt-12 text-center">
+              <Link
+                href="/signup"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
+              >
+                Start fixing my AI visibility
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+              <p className="mt-3 text-zinc-600 text-sm">
+                From $49/mo &bull; 14-day money-back guarantee &bull; Cancel anytime
+              </p>
             </div>
           </AnimateIn>
         </div>

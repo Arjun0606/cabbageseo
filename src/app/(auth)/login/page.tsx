@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-import { isTestAccount } from "@/lib/testing/test-accounts";
 
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") || "/dashboard";
+  const rawRedirect = searchParams.get("redirectTo") || "/dashboard";
+  // Prevent open redirect — only allow relative paths
+  const redirectTo = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/dashboard";
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,38 +26,7 @@ function LoginPageContent() {
     setLoading(true);
     setError(null);
 
-    // Check if this is a test account - use simple test login
-    // Only enabled in development or when NEXT_PUBLIC_ENABLE_TEST_ACCOUNTS=true
-    const testAccountsEnabled = process.env.NEXT_PUBLIC_ENABLE_TEST_ACCOUNTS === "true";
-    
-    if (testAccountsEnabled && isTestAccount(email)) {
-      try {
-        const response = await fetch("/api/test/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          setError(data.error || "Invalid credentials");
-          setLoading(false);
-          return;
-        }
-
-        // Test login successful - redirect
-        router.push(redirectTo);
-        router.refresh();
-        return;
-      } catch (err: any) {
-        setError(err.message || "Login failed");
-        setLoading(false);
-        return;
-      }
-    }
-
-    // Regular Supabase auth for all accounts
+    // Supabase auth
     const supabase = createClient();
     if (!supabase) {
       setError("Authentication is not configured");

@@ -1,7 +1,7 @@
 /**
  * GET /api/geo/opportunities?siteId=X
  *
- * Returns content opportunities: queries where competitors are cited but user isn't.
+ * Returns content opportunities from geo_analyses.
  * Combines lost queries from geo_analyses with existing generated pages
  * to show which opportunities have been addressed and which are still open.
  */
@@ -21,7 +21,6 @@ function getDbClient(): SupabaseClient | null {
 
 interface LostQuery {
   query: string;
-  competitors?: string[];
   platform?: string;
   snippet?: string;
 }
@@ -37,7 +36,6 @@ interface PageRow {
 export interface Opportunity {
   id: string;
   query: string;
-  competitors: string[];
   platform: string;
   snippet: string;
   impact: "high" | "medium" | "low";
@@ -108,16 +106,14 @@ export async function GET(request: NextRequest) {
     const opportunities: Opportunity[] = lostQueries.map((lq, i) => {
       const normalizedQuery = (lq.query || "").toLowerCase().trim();
       const existingPage = pagesByQuery.get(normalizedQuery);
-      const competitors = lq.competitors || [];
 
-      // Impact: high if 3+ competitors, medium if 1-2, low if none listed
+      // Impact: high if snippet is long (detailed opportunity), medium if has platform, low otherwise
       const impact: "high" | "medium" | "low" =
-        competitors.length >= 3 ? "high" : competitors.length >= 1 ? "medium" : "low";
+        (lq.snippet && lq.snippet.length > 100) ? "high" : lq.platform ? "medium" : "low";
 
       return {
         id: `opp-${i}-${normalizedQuery.slice(0, 20).replace(/\s+/g, "-")}`,
         query: lq.query || "",
-        competitors,
         platform: lq.platform || "unknown",
         snippet: lq.snippet || "",
         impact,

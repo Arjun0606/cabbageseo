@@ -3,7 +3,7 @@
  *
  * Server-rendered public report card for a site.
  * Fetches data via Supabase service client (no auth required).
- * Shows momentum score, citations, anonymized competitors.
+ * Shows momentum score and citations.
  *
  * OG meta tags for social sharing via generateMetadata.
  */
@@ -28,10 +28,6 @@ interface ReportData {
     thisWeek: number;
     topPlatforms: string[];
   };
-  competitors: Array<{
-    domain: string;
-    citations: number;
-  }>;
   generatedAt: string;
 }
 
@@ -98,21 +94,6 @@ async function getReportData(siteId: string): Promise<ReportData | null> {
     .slice(0, 5)
     .map(([platform]) => PLATFORM_NAMES[platform] || platform);
 
-  // Get competitors — anonymized
-  const { data: competitors } = await db
-    .from("competitors")
-    .select("total_citations")
-    .eq("site_id", siteId)
-    .order("total_citations", { ascending: false })
-    .limit(10);
-
-  const competitorList = (competitors || []).map(
-    (c: { total_citations: number }, i: number) => ({
-      domain: `Competitor ${i + 1}`,
-      citations: c.total_citations || 0,
-    })
-  );
-
   return {
     site: {
       domain: site.domain,
@@ -124,7 +105,6 @@ async function getReportData(siteId: string): Promise<ReportData | null> {
       thisWeek: site.citations_this_week || 0,
       topPlatforms,
     },
-    competitors: competitorList,
     generatedAt: new Date().toISOString(),
   };
 }
@@ -227,7 +207,7 @@ export default async function PublicReportPage({
     );
   }
 
-  const { site, citations, competitors } = data;
+  const { site, citations } = data;
   const scoreColor = ScoreColor(site.momentumScore);
 
   return (
@@ -307,36 +287,6 @@ export default async function PublicReportPage({
                 )}
               </div>
             </div>
-
-            {/* Competitor Comparison — anonymized */}
-            {competitors.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wide mb-3">
-                  Competitor Comparison
-                </h3>
-                <div className="space-y-2">
-                  {/* Site itself */}
-                  <div className="flex items-center justify-between px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                    <span className="text-white font-medium">{site.domain}</span>
-                    <span className="text-emerald-400 text-sm font-semibold">
-                      {citations.total} citations
-                    </span>
-                  </div>
-                  {/* Competitors */}
-                  {competitors.map((comp, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between px-4 py-3 bg-zinc-800/50 border border-zinc-700/30 rounded-lg"
-                    >
-                      <span className="text-zinc-400">{comp.domain}</span>
-                      <span className="text-zinc-500 text-sm">
-                        {comp.citations} citations
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Watermark */}
             <p className="text-center text-zinc-600 text-xs mt-6">

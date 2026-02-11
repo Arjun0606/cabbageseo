@@ -134,8 +134,6 @@ export async function getNextAction(
   const queriesLost = snapshotResult.data?.queries_lost ?? 0;
   const pagesCount = pagesCountResult.count ?? 0;
 
-  const topCompetitorDomain = await getTopCompetitorDomain(siteId, db);
-
   // --- Priority 1: Lost queries without fix pages ---
   if (queriesLost > 0 && pagesCount < queriesLost) {
     const remaining = queriesLost - pagesCount;
@@ -143,10 +141,10 @@ export async function getNextAction(
       id: "generate_fix_pages",
       title: `Generate fix pages for ${remaining} lost quer${remaining === 1 ? "y" : "ies"}`,
       description:
-        `You're losing ${queriesLost} quer${queriesLost === 1 ? "y" : "ies"} to competitors. ` +
+        `You're missing from ${queriesLost} quer${queriesLost === 1 ? "y" : "ies"} where AI isn't citing you. ` +
         "Generate fix pages — AI-optimized content specifically " +
-        "crafted to make AI recommend you instead. Each page targets " +
-        "a query you're currently losing.",
+        "crafted to earn citations. Each page targets " +
+        "a query where you're not yet visible.",
       priority: "critical",
       estimatedMinutes: 5,
       actionUrl: "/dashboard/pages",
@@ -219,14 +217,13 @@ export async function getNextAction(
 
   // --- Priority 6: No comparison content ---
   if (comparisonCitations === 0) {
-    const competitorLabel = topCompetitorDomain || "Top Competitor";
     return {
       id: "publish_comparison_page",
-      title: `Publish a comparison page: You vs ${competitorLabel}`,
+      title: "Publish a comparison page for your category",
       description:
         "AI models love structured comparison content. When someone asks " +
-        '"What is the best alternative to X?" AI looks for head-to-head ' +
-        "comparisons. Publishing a comparison page puts you in the conversation.",
+        '"What is the best tool for X?" AI looks for detailed comparisons. ' +
+        "Publishing a comparison page puts you in the conversation.",
       priority: "high",
       estimatedMinutes: 60,
       category: "content",
@@ -272,27 +269,10 @@ export async function getNextAction(
     description:
       "You're in good shape! Keep monitoring your AI visibility " +
       "to catch any changes. Regular checks help you spot trends " +
-      "and react before competitors pull ahead.",
+      "and stay ahead of the curve.",
     priority: "low",
     estimatedMinutes: 1,
     category: "monitoring",
   };
 }
 
-/**
- * Get the top competitor's domain for comparison page suggestion.
- */
-async function getTopCompetitorDomain(
-  siteId: string,
-  db: SupabaseClient,
-): Promise<string | null> {
-  const { data } = await db
-    .from("competitors")
-    .select("domain")
-    .eq("site_id", siteId)
-    .order("total_citations", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  return (data?.domain as string) ?? null;
-}

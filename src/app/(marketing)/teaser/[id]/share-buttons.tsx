@@ -8,7 +8,7 @@ interface ShareButtonsProps {
   reportId: string;
   isInvisible: boolean;
   visibilityScore: number;
-  competitorCount: number;
+  brandCount: number;
   mentionedCount: number;
 }
 
@@ -17,7 +17,7 @@ export default function ShareButtons({
   reportId,
   isInvisible,
   visibilityScore,
-  competitorCount,
+  brandCount,
   mentionedCount,
 }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
@@ -30,8 +30,8 @@ export default function ShareButtons({
     (isInvisible
       ? "Result: INVISIBLE to ChatGPT & Perplexity\n"
       : `Result: Mentioned ${mentionedCount} time(s)\n`) +
-    (competitorCount > 0
-      ? `AI recommends ${competitorCount} competitors instead.\n`
+    (brandCount > 0
+      ? `AI recommends ${brandCount} other brands instead.\n`
       : "") +
     `\nCheck yours free: ${reportUrl}`;
 

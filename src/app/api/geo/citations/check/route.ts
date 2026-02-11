@@ -15,8 +15,6 @@ import { createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   calculateBuyerIntent,
-  extractCompetitors,
-  analyzeCompetitiveLoss,
 } from "@/lib/ai-revenue";
 import {
   extractSources,
@@ -30,6 +28,12 @@ import {
 import { getUser } from "@/lib/api/get-user";
 import { logRecommendations, extractCitationRecommendations } from "@/lib/geo/recommendation-logger";
 import { citationCheckLimiter } from "@/lib/api/rate-limit";
+import { timingSafeEqual } from "crypto";
+
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 function getDbClient(): SupabaseClient | null {
   try {
@@ -629,22 +633,34 @@ async function checkChatGPT(domain: string, query: string): Promise<CheckResult>
 // ============================================
 export async function POST(request: NextRequest) {
   try {
-    // Auth check
-    const currentUser = await getUser();
-    if (!currentUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // ============================================
+    // AUTH: User session OR service role (Inngest)
+    // ============================================
+    const authHeader = request.headers.get("Authorization");
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const isServiceRole =
+      !!serviceKey &&
+      serviceKey.length >= 32 &&
+      !!authHeader &&
+      safeCompare(authHeader, `Bearer ${serviceKey}`);
+
+    let currentUser: Awaited<ReturnType<typeof getUser>> = null;
+    if (!isServiceRole) {
+      currentUser = await getUser();
+      if (!currentUser) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      // Rate limit: 10 checks per minute per user (skip for automated jobs)
+      const rateLimit = citationCheckLimiter.check(currentUser.id);
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          { error: "Too many requests. Please wait a moment.", remaining: 0 },
+          { status: 429 },
+        );
+      }
     }
 
-    // Rate limit: 10 checks per minute per user
-    const rateLimit = citationCheckLimiter.check(currentUser.id);
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        { error: "Too many requests. Please wait a moment.", remaining: 0 },
-        { status: 429 },
-      );
-    }
-
-    const userEmail = currentUser.email || null;
+    const userEmail = currentUser?.email || null;
 
     const body = await request.json();
     let { siteId, domain } = body;
@@ -655,18 +671,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Database not configured" }, { status: 500 });
     }
 
-    // If siteId provided but no domain, look up domain from site (with org ownership check)
-    const orgId = currentUser.organizationId;
-    if (siteId && !domain) {
-      let siteQuery = db
+    // Resolve orgId: from user session, or from site record for service role calls
+    let orgId = currentUser?.organizationId ?? null;
+
+    if (isServiceRole && siteId) {
+      // Service role call (Inngest) — resolve org from site record directly
+      const { data: siteRow } = await db
+        .from("sites")
+        .select("domain, organization_id")
+        .eq("id", siteId)
+        .maybeSingle();
+      if (!siteRow) {
+        return NextResponse.json({ error: "Site not found" }, { status: 404 });
+      }
+      orgId = siteRow.organization_id;
+      if (!domain) domain = siteRow.domain;
+    } else if (siteId && !domain) {
+      // User session — look up domain with org ownership check
+      if (!orgId) {
+        return NextResponse.json({ error: "No organization found" }, { status: 400 });
+      }
+      const { data: siteData } = await db
         .from("sites")
         .select("domain")
-        .eq("id", siteId);
-      if (orgId) {
-        siteQuery = siteQuery.eq("organization_id", orgId);
-      }
-      const { data: siteData } = await siteQuery.maybeSingle();
-
+        .eq("id", siteId)
+        .eq("organization_id", orgId)
+        .maybeSingle();
       if (siteData?.domain) {
         domain = siteData.domain;
       }
@@ -679,7 +709,7 @@ export async function POST(request: NextRequest) {
     // Clean domain
     let cleanDomain = domain.trim().toLowerCase();
     cleanDomain = cleanDomain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
-    
+
     // Get user's plan and site data for smart query generation
     let plan = "free";
     let category: string | null = null;
@@ -697,45 +727,44 @@ export async function POST(request: NextRequest) {
       }
 
       // ============================================
-      // PLAN ENFORCEMENT - CRITICAL
+      // PLAN ENFORCEMENT - CRITICAL (skip for service role)
       // ============================================
+      if (!isServiceRole) {
+        // Check if free user needs to subscribe (bypass for test accounts)
+        if (plan === "free") {
+          const access = canAccessProduct(plan, userEmail);
+          if (!access.allowed) {
+            return NextResponse.json({
+              error: access.reason || "A subscription is required.",
+              code: "SUBSCRIPTION_REQUIRED",
+              upgradeRequired: true,
+            }, { status: 403 });
+          }
+        }
 
-      // Check if free user needs to subscribe (bypass for test accounts)
-      if (plan === "free") {
-        const access = canAccessProduct(plan, null, userEmail);
-        if (!access.allowed) {
-          return NextResponse.json({
-            error: access.reason || "A subscription is required.",
-            code: "SUBSCRIPTION_REQUIRED",
-            upgradeRequired: true,
-          }, { status: 403 });
+        // Check daily manual check limit for free users
+        if (plan === "free" && orgId) {
+          const today = new Date().toISOString().split('T')[0];
+          const { data: todayUsage } = await db
+            .from("usage")
+            .select("checks_used")
+            .eq("organization_id", orgId)
+            .eq("period", today)
+            .maybeSingle();
+
+          const checksToday = todayUsage?.checks_used || 0;
+
+          const canCheck = canRunManualCheck(plan, checksToday);
+          if (!canCheck.allowed) {
+            return NextResponse.json({
+              error: canCheck.reason || "Daily limit reached. Upgrade for unlimited checks.",
+              code: "PLAN_LIMIT_EXCEEDED",
+              upgradeRequired: true,
+            }, { status: 403 });
+          }
         }
       }
-      
-      // Check daily manual check limit for free users
-      if (plan === "free" && orgId) {
-        // Get checks used today (count checks in current day)
-        const today = new Date().toISOString().split('T')[0];
-        const { data: todayUsage } = await db
-          .from("usage")
-          .select("checks_used")
-          .eq("organization_id", orgId)
-          .eq("period", today)
-          .maybeSingle();
-        
-        const checksToday = todayUsage?.checks_used || 0;
-        
-        // Verify can run check
-        const canCheck = canRunManualCheck(plan, checksToday);
-        if (!canCheck.allowed) {
-          return NextResponse.json({
-            error: canCheck.reason || "Daily limit reached. Upgrade for unlimited checks.",
-            code: "PLAN_LIMIT_EXCEEDED",
-            upgradeRequired: true,
-          }, { status: 403 });
-        }
-      }
-      
+
       // If we have a siteId, get the site's category and custom queries
       if (siteId) {
         const { data: siteInfo } = await db
@@ -743,11 +772,11 @@ export async function POST(request: NextRequest) {
           .select("category, custom_queries")
           .eq("id", siteId)
           .maybeSingle();
-        
+
         if (siteInfo) {
           category = siteInfo.category || null;
-          customQueries = Array.isArray(siteInfo.custom_queries) 
-            ? siteInfo.custom_queries 
+          customQueries = Array.isArray(siteInfo.custom_queries)
+            ? siteInfo.custom_queries
             : [];
         }
       }
@@ -842,10 +871,25 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // Update site stats + GEO score
+          // Update site stats + GEO score (exponential moving average)
           const validResults = results.filter(r => r.apiCalled && !r.error);
           const citedResults = results.filter(r => r.cited);
-          const geoScoreAvg = validResults.length > 0 ? Math.round((citedResults.length / validResults.length) * 100) : null;
+          const newScore = validResults.length > 0 ? Math.round((citedResults.length / validResults.length) * 100) : null;
+
+          // EMA: blend new check with previous score (70% old, 30% new) for stability
+          let geoScoreAvg: number | null = null;
+          if (newScore !== null) {
+            const { data: currentSiteScore } = await db
+              .from("sites")
+              .select("geo_score_avg")
+              .eq("id", siteId)
+              .maybeSingle();
+            const oldScore = (currentSiteScore as { geo_score_avg?: number } | null)?.geo_score_avg;
+            geoScoreAvg = oldScore != null
+              ? Math.round(0.7 * oldScore + 0.3 * newScore)
+              : newScore; // First check — use raw score
+          }
+
           await db
             .from("sites")
             .update({
@@ -893,9 +937,12 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // Update usage count (only for manual checks, not auto-checks)
-          // Use daily period for free tier to track daily limits, monthly for paid
+          // Update usage count (only for manual checks, not auto-checks from Inngest)
           const isFreePlan = plan === "free";
+          if (isServiceRole) {
+            // Skip usage increment for automated Inngest checks
+          } else {
+          // Use daily period for free tier to track daily limits, monthly for paid
           const period = isFreePlan 
             ? new Date().toISOString().split('T')[0] // Daily for free tier
             : new Date().toISOString().slice(0, 7);  // Monthly for paid tiers
@@ -920,15 +967,12 @@ export async function POST(request: NextRequest) {
               checks_used: 1,
             });
           }
+          }
         }
       }
 
-    // Analyze competitive landscape for each result
+    // Analyze results for visibility gaps
     const competitiveResults = results.map(r => {
-      const competitiveAnalysis = r.snippet 
-        ? analyzeCompetitiveLoss(r.snippet, cleanDomain)
-        : { userMentioned: r.cited, competitorsMentioned: [], isLoss: !r.cited, lossMessage: undefined };
-      
       const buyerIntent = calculateBuyerIntent(r.query);
 
       // Extract sources from AI response
@@ -936,7 +980,7 @@ export async function POST(request: NextRequest) {
       const trustedSources = sources
         .map(s => getTrustSourceInfo(s))
         .filter((s): s is NonNullable<typeof s> => s !== null);
-      
+
       return {
         platform: r.platform,
         cited: r.cited,
@@ -944,10 +988,7 @@ export async function POST(request: NextRequest) {
         snippet: r.snippet,
         confidence: r.confidence,
         error: r.error,
-        // Competitive intelligence
-        competitors: competitiveAnalysis.competitorsMentioned.map(c => c.name),
-        isLoss: competitiveAnalysis.isLoss,
-        lossMessage: competitiveAnalysis.lossMessage,
+        isLoss: !r.cited,
         buyerIntent,
         // Trust sources
         sources: trustedSources.map(s => ({
@@ -957,9 +998,6 @@ export async function POST(request: NextRequest) {
         })),
       };
     });
-    
-    // Get all unique competitors mentioned
-    const allCompetitors = [...new Set(competitiveResults.flatMap(r => r.competitors))];
     
     // Count real query results
     const totalMentions = competitiveResults.filter(r => !r.error).length;
@@ -995,7 +1033,6 @@ export async function POST(request: NextRequest) {
               .filter((r) => r.isLoss && !r.error)
               .map((r) => ({
                 query: r.query,
-                competitors: r.competitors,
                 platform: r.platform,
                 snippet: r.snippet,
               })),
@@ -1010,12 +1047,11 @@ export async function POST(request: NextRequest) {
     // Collect all sources mentioned across results
     const allSources = [...new Set(competitiveResults.flatMap(r => r.sources.map(s => s.domain)))];
     
-    // Find distribution gaps (sources competitors are on but you're not)
-    // This is a simplified version - full Trust Map is built client-side
-    const sourcesMentioningCompetitors = competitiveResults
-      .filter(r => !r.cited && r.competitors.length > 0)
+    // Find distribution gaps (sources mentioned in queries you're losing)
+    const sourcesMentioningLosses = competitiveResults
+      .filter(r => r.isLoss && !r.error)
       .flatMap(r => r.sources.map(s => s.name));
-    const uniqueCompetitorSources = [...new Set(sourcesMentioningCompetitors)];
+    const uniqueLossSources = [...new Set(sourcesMentioningLosses)];
 
     // Log AI recommendations to data moat (non-blocking, fire-and-forget)
     const recEntries = extractCitationRecommendations(cleanDomain, siteId, results);
@@ -1026,7 +1062,7 @@ export async function POST(request: NextRequest) {
       const lostForPages = competitiveResults
         .filter(r => r.isLoss && !r.error)
         .slice(0, 3)
-        .map(r => ({ query: r.query, competitors: r.competitors, platform: r.platform }));
+        .map(r => ({ query: r.query, platform: r.platform }));
 
       if (lostForPages.length > 0) {
         const autoGenUrl = process.env.NEXT_PUBLIC_APP_URL
@@ -1055,18 +1091,17 @@ export async function POST(request: NextRequest) {
         citedCount,
         checkedAt: new Date().toISOString(),
       },
-      // Market intelligence
+      // Visibility intelligence
       revenueIntelligence: {
         totalQueriesChecked: totalMentions,
         queriesWon: yourMentions,
         queriesLost: totalMentions - yourMentions,
-        topCompetitors: allCompetitors.slice(0, 5),
         category: category,
       },
       // Distribution intelligence (based on actual check results)
       distributionIntelligence: {
         sourcesFound: allSources.length,
-        sourcesMentioningCompetitors: uniqueCompetitorSources,
+        sourcesInLostQueries: uniqueLossSources,
         trustSourcePresence: trustSources.map(t => ({
           source: t.source,
           isListed: t.isListed,

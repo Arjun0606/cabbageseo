@@ -18,7 +18,6 @@ export type CitationPlanId = "free" | "scout" | "command" | "dominate";
 export interface CitationPlanLimits {
   sites: number;
   manualChecksPerDay: number;
-  competitors: number;
   historyDays: number;
   queriesPerCheck: number;
   customQueriesPerSite: number; // -1 = unlimited
@@ -33,7 +32,6 @@ export interface CitationPlanFeatures {
   emailAlerts: boolean;
   weeklyReport: boolean;
   csvExport: boolean;
-  competitorTracking: boolean;
   geoScore: boolean;
   geoTips: boolean;
 
@@ -43,7 +41,6 @@ export interface CitationPlanFeatures {
   contentRecommendations: boolean;
   contentRecsUnlimited: boolean;
   weeklyActionPlan: boolean;
-  competitorDeepDive: boolean;
   customQueries: boolean;
 
   // Fix Pages (GEO-focused generation)
@@ -67,6 +64,7 @@ export interface CitationIntelligenceLimits {
   actionPlansPerMonth: number;   // 0 = not available
   pagesPerMonth: number;         // -1 = unlimited, 0 = not available
   siteAuditsPerMonth: number;    // -1 = unlimited, 0 = not available
+  pageRefreshDays: number;       // 0 = no auto-refresh, N = refresh every N days
 }
 
 export interface CitationPlan {
@@ -93,7 +91,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     limits: {
       sites: 1,
       manualChecksPerDay: 3,
-      competitors: 0,
+
       historyDays: 7,
       queriesPerCheck: 3,
       customQueriesPerSite: 0,
@@ -105,6 +103,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       actionPlansPerMonth: 0,
       pagesPerMonth: 0,
       siteAuditsPerMonth: 0,
+      pageRefreshDays: 0,
     },
     features: {
       manualChecks: true,
@@ -113,7 +112,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       emailAlerts: false,
       weeklyReport: false,
       csvExport: false,
-      competitorTracking: false,
+
       geoScore: true,
       geoTips: false,
       citationGapAnalysis: false,
@@ -121,7 +120,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       contentRecommendations: false,
       contentRecsUnlimited: false,
       weeklyActionPlan: false,
-      competitorDeepDive: false,
+
       customQueries: false,
       pageGeneration: false,
       schemaGeneration: false,
@@ -143,7 +142,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     limits: {
       sites: 1,
       manualChecksPerDay: -1,
-      competitors: 3,
+
       historyDays: 30,
       queriesPerCheck: 10,
       customQueriesPerSite: 5,
@@ -155,6 +154,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       actionPlansPerMonth: 0,
       pagesPerMonth: 5,
       siteAuditsPerMonth: 2,
+      pageRefreshDays: 30,
     },
     features: {
       manualChecks: true,
@@ -163,7 +163,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       emailAlerts: true,
       weeklyReport: true,
       csvExport: true,
-      competitorTracking: true,
+
       geoScore: true,
       geoTips: true,
       citationGapAnalysis: true,
@@ -171,7 +171,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       contentRecommendations: true,
       contentRecsUnlimited: false,
       weeklyActionPlan: false,
-      competitorDeepDive: false,
+
       customQueries: true,
       pageGeneration: true,
       schemaGeneration: true,
@@ -185,16 +185,16 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
   command: {
     id: "command",
     name: "Command",
-    description: "Full GEO intelligence + competitive edge",
+    description: "Full GEO intelligence + maximum visibility",
     tagline: "The complete toolkit to win AI recommendations",
-    whoIsThisFor: "Growing SaaS doing $5k-$50k MRR. Ready to actively compete for AI citations.",
+    whoIsThisFor: "Growing SaaS doing $5k-$50k MRR. Ready to maximize your AI citations.",
     monthlyPrice: 149,
     yearlyPrice: 119,
     popular: true,
     limits: {
       sites: 5,
       manualChecksPerDay: -1,
-      competitors: 10,
+
       historyDays: 365,
       queriesPerCheck: 20,
       customQueriesPerSite: -1,
@@ -206,6 +206,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       actionPlansPerMonth: 4,
       pagesPerMonth: 25,
       siteAuditsPerMonth: -1,
+      pageRefreshDays: 14,
     },
     features: {
       manualChecks: true,
@@ -214,7 +215,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       emailAlerts: true,
       weeklyReport: true,
       csvExport: true,
-      competitorTracking: true,
+
       geoScore: true,
       geoTips: true,
       citationGapAnalysis: true,
@@ -222,7 +223,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       contentRecommendations: true,
       contentRecsUnlimited: true,
       weeklyActionPlan: true,
-      competitorDeepDive: true,
+
       customQueries: true,
       pageGeneration: true,
       schemaGeneration: true,
@@ -244,7 +245,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     limits: {
       sites: 25,
       manualChecksPerDay: -1,
-      competitors: 25,
+
       historyDays: 365,
       queriesPerCheck: 30,
       customQueriesPerSite: -1,
@@ -256,6 +257,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       actionPlansPerMonth: -1,
       pagesPerMonth: -1,
       siteAuditsPerMonth: -1,
+      pageRefreshDays: 7,
     },
     features: {
       manualChecks: true,
@@ -264,7 +266,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       emailAlerts: true,
       weeklyReport: true,
       csvExport: true,
-      competitorTracking: true,
+
       geoScore: true,
       geoTips: true,
       citationGapAnalysis: true,
@@ -272,7 +274,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       contentRecommendations: true,
       contentRecsUnlimited: true,
       weeklyActionPlan: true,
-      competitorDeepDive: true,
+
       customQueries: true,
       pageGeneration: true,
       schemaGeneration: true,
@@ -291,7 +293,6 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
 
 export function canAccessProduct(
   planId: CitationPlanId | string,
-  _unused?: string | Date | null,
   userEmail?: string | null,
 ): { allowed: boolean; reason?: string; upgradeRequired?: boolean } {
   if (userEmail) {
@@ -346,7 +347,6 @@ export function getIntelligenceFeatureSummary(planId: CitationPlanId | string): 
   gapAnalysis: string;
   contentIdeas: string;
   actionPlan: string;
-  competitorDeepDive: string;
 } {
   const plan = getCitationPlan(planId);
   const intel = plan.intelligenceLimits;
@@ -367,9 +367,6 @@ export function getIntelligenceFeatureSummary(planId: CitationPlanId | string): 
     actionPlan: !plan.features.weeklyActionPlan
       ? "Command only"
       : "Weekly Action Playbook",
-    competitorDeepDive: !plan.features.competitorDeepDive
-      ? "Command only"
-      : "Full competitor breakdown",
   };
 }
 
@@ -393,24 +390,6 @@ export function canRunManualCheck(
   return { allowed: true };
 }
 
-export function canAddCompetitor(
-  planId: CitationPlanId | string,
-  currentCompetitors: number
-): { allowed: boolean; reason?: string } {
-  const plan = getCitationPlan(planId);
-
-  if (currentCompetitors >= plan.limits.competitors) {
-    return {
-      allowed: false,
-      reason: planId === "free"
-        ? "Competitor tracking requires Scout plan."
-        : `Limit reached (${plan.limits.competitors}). Upgrade for more.`,
-    };
-  }
-
-  return { allowed: true };
-}
-
 export function canAddSite(
   planId: CitationPlanId | string,
   currentSites: number
@@ -421,21 +400,6 @@ export function canAddSite(
     return {
       allowed: false,
       reason: `Site limit reached (${plan.limits.sites}). Upgrade for more.`,
-    };
-  }
-
-  return { allowed: true };
-}
-
-export function canUseCompetitorDeepDive(
-  planId: CitationPlanId | string
-): { allowed: boolean; reason?: string } {
-  const plan = getCitationPlan(planId);
-
-  if (!plan.features.competitorDeepDive) {
-    return {
-      allowed: false,
-      reason: "Competitor Deep Dive is a Command feature. Upgrade to unlock.",
     };
   }
 
@@ -601,4 +565,23 @@ const PLAN_ORDER: CitationPlanId[] = ["free", "scout", "command", "dominate"];
 export function getNextPlan(currentPlan: string): CitationPlanId | null {
   const idx = PLAN_ORDER.indexOf(currentPlan as CitationPlanId);
   return idx >= 0 && idx < PLAN_ORDER.length - 1 ? PLAN_ORDER[idx + 1] : null;
+}
+
+// ============================================
+// PAGE REFRESH HELPERS
+// ============================================
+
+/** Get auto-refresh frequency in days for a plan (0 = no auto-refresh) */
+export function getRefreshFrequencyDays(planId: CitationPlanId | string): number {
+  return getCitationPlan(planId).intelligenceLimits.pageRefreshDays;
+}
+
+/** Human-readable refresh frequency label */
+export function getRefreshFrequencyLabel(planId: CitationPlanId | string): string {
+  const days = getRefreshFrequencyDays(planId);
+  if (days === 0) return "No auto-refresh";
+  if (days === 7) return "Weekly";
+  if (days === 14) return "Every 2 weeks";
+  if (days === 30) return "Monthly";
+  return `Every ${days} days`;
 }

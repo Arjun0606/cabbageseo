@@ -1,38 +1,20 @@
 /**
  * AI Visibility Intelligence Service
- * 
- * The $100k features - turning monitoring into actionable intelligence:
- * 
- * 1. Citation Gap Analysis - "Why did AI cite competitor, not me?"
+ *
+ * Turns monitoring into actionable intelligence:
+ *
+ * 1. Citation Gap Analysis - "Why isn't AI citing me for this query?"
  * 2. Content Recommendations - "What to publish next to get cited"
  * 3. Weekly Action Plan - "Your AI Search To-Do List"
- * 4. Competitor Deep Dive - Full competitor comparison
- * 
- * Uses existing citation data + LLM to generate insights.
- * No new infrastructure needed - just smart prompts.
+ *
+ * Uses existing citation data + LLM to generate self-focused insights.
+ * All analysis is about improving YOUR visibility, not tracking competitors.
  */
 
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-interface Citation {
-  id: string;
-  platform: string;
-  query: string;
-  snippet: string;
-  source_domain?: string;
-  confidence: string;
-  cited_at: string;
-}
-
-interface Competitor {
-  id: string;
-  domain: string;
-  total_citations: number;
-  citations_this_week: number;
-}
 
 interface GapAnalysisResult {
   query: string;
@@ -42,8 +24,8 @@ interface GapAnalysisResult {
   wasYouCited: boolean;
   whyNotYou: string[];          // Bullet points explaining why
   missingElements: string[];     // What you're missing
-  authorityGaps: string[];       // Authority signals competitors have
-  contentGaps: string[];         // Content they have, you don't
+  authorityGaps: string[];       // Authority signals you need
+  contentGaps: string[];         // Content you should create
   actionItems: string[];         // What to do
   confidence: "high" | "medium" | "low";
 }
@@ -69,21 +51,9 @@ interface WeeklyActionPlan {
     effort: "low" | "medium" | "high";
   }[];
   queriesWon: { query: string; platform: string }[];
-  queriesLost: { query: string; competitor: string }[];
+  queriesMissing: { query: string; platform: string }[];
   contentToDo: ContentRecommendation[];
-  competitorInsights: string[];
-}
-
-interface CompetitorDeepDive {
-  competitor: string;
-  totalCitations: number;
-  citationsThisWeek: number;
-  queriesWinning: string[];
-  queriesLosingTo: string[];
-  strengthsOverYou: string[];
-  weaknessesVsYou: string[];
-  contentTheyHave: string[];
-  opportunitiesForYou: string[];
+  insights: string[];
 }
 
 // ============================================
@@ -110,15 +80,16 @@ async function askLLM(prompt: string): Promise<string> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gpt-5-mini",
+      model: "gpt-5.2",
       messages: [
         {
           role: "system",
-          content: `You are an AI Search Optimization expert. You analyze why AI platforms (ChatGPT, Perplexity, Google AI) cite certain websites and not others. You provide specific, actionable recommendations. Always respond in valid JSON format when asked.`,
+          content: `You are an AI Search Optimization expert. You analyze why AI platforms (ChatGPT, Perplexity, Google AI) cite certain websites and help sites become more citable. You provide specific, actionable recommendations focused on what the site can do to improve. Always respond in valid JSON format when asked.`,
         },
         { role: "user", content: prompt },
       ],
       max_completion_tokens: 16000,
+      reasoning: { effort: "medium" },
     }),
   });
 
@@ -158,17 +129,10 @@ export async function analyzeCitationGap(
     .eq("site_id", siteId)
     .eq("query", query);
 
-  // Get competitor citations for this query
-  const { data: competitors } = await supabase
-    .from("competitors")
-    .select("domain")
-    .eq("site_id", siteId);
-
   const citedDomains = (citations?.map(c => c.source_domain || c.snippet?.match(/https?:\/\/([^/\s]+)/)?.[1])?.filter(Boolean) as string[]) || [];
   const wasYouCited = citedDomains.some(d => d?.includes(site.domain));
 
-  // Build the prompt
-  const prompt = `Analyze this AI search scenario and explain why certain sites were cited.
+  const prompt = `Analyze this AI search query and explain what ${site.domain} needs to do to get cited.
 
 QUERY: "${query}"
 
@@ -181,20 +145,20 @@ WAS USER CITED: ${wasYouCited ? "Yes" : "No"}
 
 ${citations?.length ? `CITATION SNIPPETS:\n${citations.map(c => `- ${c.platform}: "${c.snippet}"`).join("\n")}` : "No citation data available yet."}
 
-Analyze why the AI ${wasYouCited ? "did" : "did NOT"} cite ${site.domain} for this query.
+Analyze what ${site.domain} needs to improve to ${wasYouCited ? "maintain and strengthen their" : "earn"} citations for this query. Focus on what THEY can do — content to create, authority signals to build, structural improvements to make.
 
 Respond in this exact JSON format:
 {
-  "whyNotYou": ["Reason 1", "Reason 2", "Reason 3"],
-  "missingElements": ["Missing element 1", "Missing element 2"],
-  "authorityGaps": ["Authority signal competitors have"],
-  "contentGaps": ["Content competitors have that you don't"],
+  "whyNotYou": ["Reason 1 why you're not being cited", "Reason 2", "Reason 3"],
+  "missingElements": ["Content element you're missing", "Another missing element"],
+  "authorityGaps": ["Authority signal you need to build"],
+  "contentGaps": ["Content you should create to get cited"],
   "actionItems": ["Specific action 1", "Specific action 2", "Specific action 3"],
   "confidence": "high" | "medium" | "low"
 }`;
 
   const response = await askLLM(prompt);
-  
+
   try {
     const parsed = JSON.parse(response);
     return {
@@ -211,7 +175,6 @@ Respond in this exact JSON format:
       confidence: parsed.confidence || "medium",
     };
   } catch {
-    // Fallback if JSON parsing fails
     return {
       query,
       aiAnswer: citations?.[0]?.snippet || "",
@@ -256,24 +219,32 @@ export async function generateContentRecommendations(
     .order("cited_at", { ascending: false })
     .limit(50);
 
-  // Get competitor info
-  const { data: competitors } = await supabase
-    .from("competitors")
-    .select("domain, total_citations")
+  // Get source listings for context
+  const { data: listings } = await supabase
+    .from("source_listings")
+    .select("source_domain, status")
     .eq("site_id", siteId);
+
+  const verifiedSources = (listings || []).filter(l => l.status === "verified").map(l => l.source_domain);
 
   const prompt = `Based on AI citation data, recommend content this site should create to get more AI citations.
 
 SITE: ${site.domain}
 TOPICS: ${(site.main_topics || []).join(", ") || "General"}
 
+TRUST SOURCES VERIFIED: ${verifiedSources.length > 0 ? verifiedSources.join(", ") : "None yet"}
+
 RECENT QUERIES WHERE THIS SITE WAS MENTIONED:
 ${citations?.slice(0, 20).map(c => `- "${c.query}" (${c.platform}, ${c.confidence} confidence)`).join("\n") || "No citations yet"}
 
-COMPETITORS BEING CITED:
-${competitors?.map(c => `- ${c.domain} (${c.total_citations} citations)`).join("\n") || "No competitor data"}
+QUERIES WHERE THIS SITE WAS NOT CITED (from recent checks):
+${citations?.filter(c => c.confidence === "low").slice(0, 10).map(c => `- "${c.query}"`).join("\n") || "No low-confidence citations"}
 
-Generate ${limit} content recommendations that would help this site get cited more by AI platforms.
+Generate ${limit} content recommendations that would help this site become more citable by AI platforms. Focus on:
+- Content that directly answers queries AI gets asked
+- Structured, authoritative pages with clear expertise signals
+- FAQ content, comparison pages, and "best of" guides
+- Content that builds topical authority in their niche
 
 Respond in this exact JSON format:
 {
@@ -331,12 +302,6 @@ export async function generateWeeklyActionPlan(
     .gte("cited_at", weekAgo.toISOString())
     .order("cited_at", { ascending: false });
 
-  // Get competitors
-  const { data: competitors } = await supabase
-    .from("competitors")
-    .select("*")
-    .eq("site_id", siteId);
-
   // Get GEO analysis
   const { data: geoAnalysis } = await supabase
     .from("geo_analyses")
@@ -346,6 +311,14 @@ export async function generateWeeklyActionPlan(
     .limit(1)
     .single();
 
+  // Get source listings
+  const { data: listings } = await supabase
+    .from("source_listings")
+    .select("source_domain, status")
+    .eq("site_id", siteId);
+
+  const verifiedSources = (listings || []).filter(l => l.status === "verified").map(l => l.source_domain);
+
   const prompt = `Create a weekly AI search action plan for this site.
 
 SITE: ${site.domain}
@@ -353,21 +326,23 @@ GEO SCORE: ${geoAnalysis?.score || "Not analyzed yet"}
 CITATIONS THIS WEEK: ${site.citations_this_week || 0}
 CITATIONS LAST WEEK: ${site.citations_last_week || 0}
 TOTAL CITATIONS: ${site.total_citations || 0}
+TRUST SOURCES VERIFIED: ${verifiedSources.length > 0 ? verifiedSources.join(", ") : "None yet"}
 
 THIS WEEK'S CITATIONS:
 ${recentCitations?.map(c => `- "${c.query}" on ${c.platform}`).join("\n") || "No new citations"}
 
-COMPETITORS:
-${competitors?.map(c => `- ${c.domain}: ${c.total_citations} total, ${c.citations_this_week} this week`).join("\n") || "No competitors tracked"}
-
 GEO TIPS:
 ${JSON.stringify(geoAnalysis?.tips || [])}
 
-Create a prioritized action plan for next week.
+Create a prioritized action plan for next week focused entirely on improving this site's AI visibility. Focus on:
+- Content they should create or improve
+- Authority signals they should build
+- Technical improvements for AI readability
+- Trust source listings they should pursue
 
 Respond in this exact JSON format:
 {
-  "summary": "One sentence summary of the week and what to focus on",
+  "summary": "One sentence summary of what to focus on this week",
   "priorities": [
     {
       "title": "Priority title",
@@ -377,26 +352,26 @@ Respond in this exact JSON format:
     }
   ],
   "queriesWon": [{"query": "query text", "platform": "perplexity"}],
-  "queriesLost": [{"query": "query text", "competitor": "competitor.com"}],
-  "competitorInsights": ["Insight about competitors"]
+  "queriesMissing": [{"query": "query text", "platform": "chatgpt"}],
+  "insights": ["Insight about your AI visibility trends"]
 }`;
 
   const response = await askLLM(prompt);
-  
+
   try {
     const parsed = JSON.parse(response);
-    
+
     // Generate content recommendations too
     const contentRecs = await generateContentRecommendations(siteId, organizationId, 3);
-    
+
     return {
       weekOf: new Date().toISOString().split("T")[0],
-      summary: parsed.summary || "Analyze your citations and competitors to find opportunities.",
+      summary: parsed.summary || "Focus on creating content that makes your site more citable by AI.",
       priorities: parsed.priorities || [],
       queriesWon: parsed.queriesWon || [],
-      queriesLost: parsed.queriesLost || [],
+      queriesMissing: parsed.queriesMissing || [],
       contentToDo: contentRecs,
-      competitorInsights: parsed.competitorInsights || [],
+      insights: parsed.insights || [],
     };
   } catch {
     return {
@@ -404,97 +379,9 @@ Respond in this exact JSON format:
       summary: "Run more citation checks to generate your action plan.",
       priorities: [],
       queriesWon: [],
-      queriesLost: [],
+      queriesMissing: [],
       contentToDo: [],
-      competitorInsights: [],
-    };
-  }
-}
-
-// ============================================
-// 4. COMPETITOR DEEP DIVE
-// ============================================
-
-export async function analyzeCompetitorDeepDive(
-  siteId: string,
-  competitorId: string,
-  organizationId: string
-): Promise<CompetitorDeepDive> {
-  const supabase = createClient(supabaseUrl, serviceKey);
-
-  // Get site info
-  const { data: site } = await supabase
-    .from("sites")
-    .select("*")
-    .eq("id", siteId)
-    .single();
-
-  if (!site) throw new Error("Site not found");
-
-  // Get competitor info
-  const { data: competitor } = await supabase
-    .from("competitors")
-    .select("*")
-    .eq("id", competitorId)
-    .single();
-
-  if (!competitor) throw new Error("Competitor not found");
-
-  // Get your citations
-  const { data: yourCitations } = await supabase
-    .from("citations")
-    .select("query, platform, confidence")
-    .eq("site_id", siteId);
-
-  const prompt = `Analyze this competitor vs the user's site for AI search visibility.
-
-USER'S SITE: ${site.domain}
-USER'S TOTAL CITATIONS: ${site.total_citations || 0}
-USER'S QUERIES CITED FOR:
-${yourCitations?.map(c => `- "${c.query}"`).join("\n") || "No citations yet"}
-
-COMPETITOR: ${competitor.domain}
-COMPETITOR TOTAL CITATIONS: ${competitor.total_citations || 0}
-COMPETITOR CITATIONS THIS WEEK: ${competitor.citations_this_week || 0}
-
-Analyze why this competitor might be getting more/less AI citations and what the user can learn.
-
-Respond in this exact JSON format:
-{
-  "queriesWinning": ["Queries competitor is likely winning"],
-  "queriesLosingTo": ["Queries user is winning"],
-  "strengthsOverYou": ["What competitor does better"],
-  "weaknessesVsYou": ["What user does better"],
-  "contentTheyHave": ["Types of content competitor has"],
-  "opportunitiesForYou": ["Specific opportunities to beat them"]
-}`;
-
-  const response = await askLLM(prompt);
-  
-  try {
-    const parsed = JSON.parse(response);
-    return {
-      competitor: competitor.domain,
-      totalCitations: competitor.total_citations || 0,
-      citationsThisWeek: competitor.citations_this_week || 0,
-      queriesWinning: parsed.queriesWinning || [],
-      queriesLosingTo: parsed.queriesLosingTo || [],
-      strengthsOverYou: parsed.strengthsOverYou || [],
-      weaknessesVsYou: parsed.weaknessesVsYou || [],
-      contentTheyHave: parsed.contentTheyHave || [],
-      opportunitiesForYou: parsed.opportunitiesForYou || [],
-    };
-  } catch {
-    return {
-      competitor: competitor.domain,
-      totalCitations: competitor.total_citations || 0,
-      citationsThisWeek: competitor.citations_this_week || 0,
-      queriesWinning: [],
-      queriesLosingTo: [],
-      strengthsOverYou: [],
-      weaknessesVsYou: [],
-      contentTheyHave: [],
-      opportunitiesForYou: ["Track more data to generate insights"],
+      insights: [],
     };
   }
 }
@@ -503,12 +390,12 @@ Respond in this exact JSON format:
 // EXPORTS
 // ============================================
 
+export type { GapAnalysisResult, ContentRecommendation, WeeklyActionPlan };
+
 export const citationIntelligence = {
   analyzeCitationGap,
   generateContentRecommendations,
   generateWeeklyActionPlan,
-  analyzeCompetitorDeepDive,
 };
 
 export default citationIntelligence;
-

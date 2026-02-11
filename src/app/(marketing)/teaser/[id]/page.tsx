@@ -15,7 +15,6 @@ import CopyBadgeCode from "./copy-badge";
 import UpgradeGate from "./upgrade-gate";
 import ScoreAlertSignup from "./score-alert-signup";
 import ContentPreview from "./content-preview";
-import CompetitorScan from "./competitor-scan";
 import type { ContentPreviewData } from "@/lib/db/schema";
 
 // ============================================
@@ -36,7 +35,7 @@ interface TeaserSummary {
   totalQueries: number;
   mentionedCount: number;
   isInvisible: boolean;
-  competitorsMentioned: string[];
+  brandsDetected: string[];
   message: string;
   visibilityScore?: number;
   platformScores?: Record<string, number>;
@@ -92,9 +91,9 @@ export async function generateMetadata({
     ? `${report.domain} is invisible to AI search. ChatGPT and Perplexity don't recommend them.`
     : `${report.domain} has an AI visibility score of ${report.visibilityScore}/100. See the full report.`;
 
-  const competitorCount = (report.competitorsMentioned || []).length;
-  const competitorNames = (report.competitorsMentioned || []).slice(0, 3).join(",");
-  const ogImageUrl = `/api/og/score?domain=${encodeURIComponent(report.domain)}&score=${report.visibilityScore}&invisible=${report.isInvisible}&competitors=${competitorCount}&names=${encodeURIComponent(competitorNames)}`;
+  const brandCount = (report.competitorsMentioned || []).length;
+  const brandNames = (report.competitorsMentioned || []).slice(0, 3).join(",");
+  const ogImageUrl = `/api/og/score?domain=${encodeURIComponent(report.domain)}&score=${report.visibilityScore}&invisible=${report.isInvisible}&brands=${brandCount}&names=${encodeURIComponent(brandNames)}`;
 
   return {
     title,
@@ -131,9 +130,9 @@ export default async function ShareableTeaserPage({
     notFound();
   }
 
-  const summary = (report.summary as TeaserSummary) || { totalQueries: 0, mentionedCount: 0, isInvisible: true, competitorsMentioned: [], message: "" };
+  const summary = (report.summary as TeaserSummary) || { totalQueries: 0, mentionedCount: 0, isInvisible: true, brandsDetected: [], message: "" };
   const results = (report.results as TeaserResult[]) || [];
-  const competitorCount = (report.competitorsMentioned || []).length;
+  const brandCount = (report.competitorsMentioned || []).length;
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -264,15 +263,15 @@ export default async function ShareableTeaserPage({
               )}
             </div>
 
-            {/* Competitor vs You comparison */}
-            {competitorCount > 0 && (
+            {/* Brands vs You comparison */}
+            {brandCount > 0 && (
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-zinc-800/50 rounded-xl p-4 text-center">
                   <div className="text-3xl font-bold text-red-400 mb-1">
-                    {competitorCount}
+                    {brandCount}
                   </div>
                   <p className="text-zinc-400 text-sm">
-                    Competitors AI recommends
+                    Other brands AI recommends
                   </p>
                 </div>
                 <div className="bg-zinc-800/50 rounded-xl p-4 text-center">
@@ -287,7 +286,7 @@ export default async function ShareableTeaserPage({
             )}
 
             {/* Share buttons */}
-            <ShareButtons domain={report.domain} reportId={id} isInvisible={report.isInvisible} visibilityScore={report.visibilityScore} competitorCount={competitorCount} mentionedCount={summary.mentionedCount} />
+            <ShareButtons domain={report.domain} reportId={id} isInvisible={report.isInvisible} visibilityScore={report.visibilityScore} brandCount={brandCount} mentionedCount={summary.mentionedCount} />
 
             {/* Watermark */}
             <p className="text-center text-zinc-600 text-xs">
@@ -296,25 +295,20 @@ export default async function ShareableTeaserPage({
           </div>
         </div>
 
-        {/* Scan a Competitor — viral loop */}
-        <CompetitorScan
-          domain={report.domain}
-          competitors={(report.competitorsMentioned || []) as string[]}
-        />
 
-        {/* Competitors Block */}
+        {/* Brands AI Recommends Block */}
         {report.competitorsMentioned && report.competitorsMentioned.length > 0 && (
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-8">
             <h3 className="text-lg font-semibold text-white mb-4">
-              AI is sending buyers to these instead
+              Other brands AI recommends in your space
             </h3>
             <div className="space-y-2">
-              {report.competitorsMentioned.map((competitor, i) => (
+              {report.competitorsMentioned.map((brand, i) => (
                 <div
                   key={i}
                   className="flex items-center justify-between px-4 py-3 bg-red-500/5 border border-red-500/10 rounded-lg"
                 >
-                  <span className="text-white font-medium">{competitor}</span>
+                  <span className="text-white font-medium">{brand}</span>
                   <span className="text-red-400 text-sm">
                     Recommended by AI
                   </span>
@@ -360,12 +354,12 @@ export default async function ShareableTeaserPage({
 
               {result.aiRecommends.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
-                  {result.aiRecommends.slice(0, 6).map((competitor, j) => (
+                  {result.aiRecommends.slice(0, 6).map((brand, j) => (
                     <span
                       key={j}
                       className="px-2 py-1 bg-zinc-800 text-zinc-400 rounded text-xs"
                     >
-                      {competitor}
+                      {brand}
                     </span>
                   ))}
                 </div>
@@ -387,7 +381,7 @@ export default async function ShareableTeaserPage({
         <UpgradeGate
           domain={report.domain}
           isInvisible={report.isInvisible}
-          competitorCount={competitorCount}
+          brandCount={brandCount}
         />
 
         {/* Email Capture — score change notifications */}

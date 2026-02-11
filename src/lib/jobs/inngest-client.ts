@@ -125,18 +125,6 @@ export interface GEOSiteAddedEvent {
   };
 }
 
-export interface CompetitorChangeDetectedEvent {
-  name: "competitor/change.detected";
-  data: {
-    siteId: string;
-    domain: string;
-    organizationId: string;
-    competitorDomain: string;
-    newCitations: number;
-    change: number;
-  };
-}
-
 export interface VisibilityDropDetectedEvent {
   name: "visibility/drop.detected";
   data: {
@@ -146,6 +134,38 @@ export interface VisibilityDropDetectedEvent {
     previousScore: number;
     newScore: number;
     drop: number;
+  };
+}
+
+export interface PagePublishedEvent {
+  name: "page/published";
+  data: {
+    pageId: string;
+    siteId: string;
+    domain: string;
+    query: string;
+  };
+}
+
+export interface CitationNewDetectedEvent {
+  name: "citation/new.detected";
+  data: {
+    siteId: string;
+    domain: string;
+    organizationId: string;
+    newCitations: number;
+    platforms: string[];
+  };
+}
+
+export interface PageRefreshedEvent {
+  name: "page/refreshed";
+  data: {
+    pageId: string;
+    siteId: string;
+    domain: string;
+    query: string;
+    organizationId: string;
   };
 }
 
@@ -159,6 +179,8 @@ export type CabbageSEOEvents =
   | AutopilotRunEvent
   | ScheduledJobEvent
   | GEOSiteAddedEvent
-  | CompetitorChangeDetectedEvent
-  | VisibilityDropDetectedEvent;
+  | VisibilityDropDetectedEvent
+  | PagePublishedEvent
+  | CitationNewDetectedEvent
+  | PageRefreshedEvent;
 

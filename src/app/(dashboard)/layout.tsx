@@ -17,7 +17,6 @@ import {
   LayoutDashboard,
   Zap,
   Sparkles,
-  Users,
   Settings,
   Menu,
   X,
@@ -44,7 +43,6 @@ const navItems = [
   { href: "/dashboard/audit", label: "Site Audit", icon: Shield },
   { href: "/dashboard/pages", label: "Fix Pages", icon: Sparkles },
   { href: "/dashboard/actions", label: "Actions", icon: Zap },
-  { href: "/dashboard/competitors", label: "Competitors", icon: Users },
 ];
 
 // Sidebar component
@@ -211,7 +209,7 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
             </p>
             <p className="text-[11px] text-zinc-400">
               {plan === "scout"
-                ? "Weekly playbooks & competitor deep dives"
+                ? "Weekly playbooks & full intelligence"
                 : "25 sites, unlimited everything"}
             </p>
             <button

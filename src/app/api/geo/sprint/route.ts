@@ -95,16 +95,6 @@ export async function GET(request: NextRequest) {
         (l: { source_domain: string }) => l.source_domain
       );
 
-      // Get top competitor
-      const { data: competitors } = await db
-        .from("competitors")
-        .select("domain, total_citations")
-        .eq("site_id", siteId)
-        .order("total_citations", { ascending: false })
-        .limit(1);
-
-      const topCompetitor = competitors?.[0]?.domain || null;
-
       // Generate actions
       const actionDefs = generateSprintActions(
         {
@@ -114,7 +104,6 @@ export async function GET(request: NextRequest) {
           category: site.category,
         },
         sourcesListed,
-        topCompetitor
       );
 
       // Save sprint actions to DB

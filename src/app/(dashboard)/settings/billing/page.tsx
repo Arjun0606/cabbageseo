@@ -58,7 +58,7 @@ function BillingContent() {
 
     setPollingPayment(true);
     let attempts = 0;
-    const maxAttempts = 15; // 15 x 2s = 30 seconds max
+    const maxAttempts = 30; // 30 x 2s = 60 seconds max
 
     const pollInterval = setInterval(async () => {
       attempts++;
@@ -198,18 +198,58 @@ function BillingContent() {
       {pollingTimedOut && !checkoutSuccess && (
         <Card className="bg-amber-500/10 border-amber-500/30">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-400" />
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5" />
               <div>
                 <p className="text-amber-400 font-medium">
-                  Your payment was received. Your plan may take a few minutes to update.
+                  Your payment was received. Your plan is being activated.
                 </p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="text-sm text-amber-300 hover:text-amber-200 underline mt-1"
-                >
-                  Refresh the page to check
-                </button>
+                <p className="text-amber-300/70 text-sm mt-1">
+                  This usually takes under a minute. If it doesn&apos;t update, contact us at arjun@cabbageseo.com with your email.
+                </p>
+                <div className="flex gap-3 mt-3">
+                  <button
+                    onClick={async () => {
+                      setPollingTimedOut(false);
+                      setPollingPayment(true);
+                      // Try checking status directly
+                      if (sessionId) {
+                        try {
+                          const res = await fetch(`/api/billing/checkout-status?session_id=${sessionId}`);
+                          if (res.ok) {
+                            const data = await res.json();
+                            if (data.activated) {
+                              await refreshData();
+                              setPollingPayment(false);
+                              setCheckoutSuccess(true);
+                              router.replace("/settings/billing", { scroll: false });
+                              return;
+                            }
+                          }
+                        } catch {}
+                      }
+                      // Fallback: poll again
+                      await refreshData();
+                      if (currentPlan !== "free") {
+                        setPollingPayment(false);
+                        setCheckoutSuccess(true);
+                        router.replace("/settings/billing", { scroll: false });
+                      } else {
+                        setPollingPayment(false);
+                        setPollingTimedOut(true);
+                      }
+                    }}
+                    className="text-sm text-amber-300 hover:text-amber-200 font-medium underline underline-offset-2"
+                  >
+                    Check status
+                  </button>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="text-sm text-amber-300/70 hover:text-amber-200 underline underline-offset-2"
+                  >
+                    Refresh page
+                  </button>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -313,7 +353,7 @@ function BillingContent() {
           </div>
 
           {/* Usage Stats */}
-          <div className="grid sm:grid-cols-3 gap-4 mt-6">
+          <div className="grid sm:grid-cols-2 gap-4 mt-6">
             <div className="p-4 rounded-xl bg-zinc-800/50">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-zinc-400">Sites</span>
@@ -323,7 +363,7 @@ function BillingContent() {
               </div>
               <Progress value={(usage.sitesUsed / usage.sitesLimit) * 100} className="h-2 bg-zinc-700" />
             </div>
-            
+
             <div className="p-4 rounded-xl bg-zinc-800/50">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-zinc-400">Checks</span>
@@ -332,16 +372,6 @@ function BillingContent() {
                 </span>
               </div>
               <Progress value={usage.checksLimit === 999999 ? 0 : (usage.checksUsed / usage.checksLimit) * 100} className="h-2 bg-zinc-700" />
-            </div>
-            
-            <div className="p-4 rounded-xl bg-zinc-800/50">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-zinc-400">Competitors</span>
-                <span className="text-sm font-medium text-white">
-                  {usage.competitorsLimit === 0 ? "Not included" : `${usage.competitorsUsed}/${usage.competitorsLimit === 999999 ? "∞" : usage.competitorsLimit}`}
-                </span>
-              </div>
-              <Progress value={usage.competitorsLimit <= 0 ? 0 : (usage.competitorsUsed / usage.competitorsLimit) * 100} className="h-2 bg-zinc-700" />
             </div>
           </div>
         </CardContent>
@@ -421,10 +451,6 @@ function BillingContent() {
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400" />
                           {planData.limits.sites} site{planData.limits.sites > 1 ? "s" : ""}
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-emerald-400" />
-                          {planData.limits.competitors} competitors
                         </li>
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400" />

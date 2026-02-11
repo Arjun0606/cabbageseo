@@ -6,7 +6,6 @@ import {
   ArrowRight,
   TrendingDown,
   Loader2,
-  Mail,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -36,7 +35,7 @@ export interface TeaserData {
     totalQueries: number;
     mentionedCount: number;
     isInvisible: boolean;
-    competitorsMentioned: string[];
+    brandsDetected: string[];
     message: string;
     visibilityScore?: number;
     platformScores?: Record<string, number>;
@@ -85,47 +84,16 @@ function getScoreColor(score: number): string {
 
 interface ScanResultsProps {
   data: TeaserData;
-  gated?: boolean;
-  onEmailSubmit?: () => void;
 }
 
-export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsProps) {
+export function ScanResults({ data }: ScanResultsProps) {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
-  const [gateEmail, setGateEmail] = useState("");
-  const [gateLoading, setGateLoading] = useState(false);
-  const [gateError, setGateError] = useState("");
   const [showBreakdown, setShowBreakdown] = useState(false);
-
-  const handleEmailGate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!gateEmail.trim()) return;
-    setGateLoading(true);
-    setGateError("");
-
-    try {
-      const res = await fetch("/api/teaser/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: gateEmail.trim(),
-          domain: data.domain,
-          reportId: data.reportId || null,
-        }),
-      });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Failed to subscribe");
-      onEmailSubmit?.();
-    } catch (err) {
-      setGateError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setGateLoading(false);
-    }
-  };
 
   const { domain, summary, reportId, contentPreview } = data;
   const visibilityScore = summary.visibilityScore ?? (summary.isInvisible ? 0 : Math.min(100, summary.mentionedCount * 25));
-  const competitorCount = summary.competitorsMentioned.length;
+  const brandCount = summary.brandsDetected.length;
   const platformScores = summary.platformScores || {};
   const scoreBreakdown = summary.scoreBreakdown;
 
@@ -307,14 +275,14 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
               )}
             </div>
 
-            {competitorCount > 0 && (
+            {brandCount > 0 && (
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-white/[0.04] rounded-xl p-4 text-center border border-white/[0.06]">
                   <div className="text-3xl font-bold text-red-400 mb-1">
-                    {competitorCount}
+                    {brandCount}
                   </div>
                   <p className="text-zinc-400 text-sm">
-                    Competitors AI recommends
+                    Other brands AI recommends
                   </p>
                 </div>
                 <div className="bg-white/[0.04] rounded-xl p-4 text-center border border-white/[0.06]">
@@ -335,119 +303,8 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
         </div>
       </AnimateIn>
 
-      {/* ========== GATED CONTENT OR EMAIL GATE ========== */}
-      {gated ? (
-        <AnimateIn delay={0.1}>
-          <div className="relative mb-8 min-h-[480px]">
-            {/* Blurred preview of competitor list + raw responses */}
-            <div className="select-none pointer-events-none" aria-hidden="true">
-              <div className="blur-md opacity-60">
-                <GlassCard hover={false} glow="red" padding="md" className="mb-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <TrendingDown className="w-5 h-5 text-red-400" />
-                    <h3 className="text-lg font-semibold text-white">
-                      AI is sending buyers to these instead
-                    </h3>
-                  </div>
-                  <div className="space-y-2">
-                    {summary.competitorsMentioned.length > 0
-                      ? summary.competitorsMentioned.map((c, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between px-4 py-3 bg-red-500/5 border border-red-500/10 rounded-lg"
-                        >
-                          <span className="text-white font-medium">{c}</span>
-                          <span className="text-red-400 text-sm">Recommended by AI</span>
-                        </div>
-                      ))
-                      : [1, 2, 3].map((i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between px-4 py-3 bg-red-500/5 border border-red-500/10 rounded-lg"
-                        >
-                          <div className="h-4 w-32 bg-zinc-800 rounded" />
-                          <div className="h-3 w-24 bg-zinc-800 rounded" />
-                        </div>
-                      ))}
-                  </div>
-                </GlassCard>
-                <GlassCard hover={false} padding="md" className="mb-4">
-                  <p className="text-zinc-400 text-sm">Raw AI Responses</p>
-                  <div className="mt-2 space-y-2">
-                    <div className="h-14 bg-white/[0.04] rounded-lg" />
-                    <div className="h-14 bg-white/[0.04] rounded-lg" />
-                    <div className="h-14 bg-white/[0.04] rounded-lg" />
-                  </div>
-                </GlassCard>
-                <GlassCard hover={false} padding="md">
-                  <p className="text-zinc-400 text-sm">Your 30-day action plan</p>
-                  <div className="mt-2 space-y-2">
-                    <div className="h-10 bg-white/[0.04] rounded-lg" />
-                    <div className="h-10 bg-white/[0.04] rounded-lg" />
-                  </div>
-                </GlassCard>
-              </div>
-            </div>
-
-            {/* Email gate overlay */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-full max-w-md mx-auto bg-zinc-900/95 backdrop-blur-sm border border-zinc-700/50 rounded-2xl p-8 shadow-2xl">
-                <div className="text-center mb-6">
-                  <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
-                    <TrendingDown className="w-7 h-7 text-red-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2">
-                    See who AI recommends instead of you
-                  </h3>
-                  <p className="text-zinc-400 text-sm">
-                    Get your full report with competitor names, raw AI quotes, and a custom action plan.
-                  </p>
-                </div>
-
-                <form onSubmit={handleEmailGate} className="space-y-3">
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                      <input
-                        type="email"
-                        value={gateEmail}
-                        onChange={(e) => setGateEmail(e.target.value)}
-                        placeholder="you@company.com"
-                        required
-                        className="w-full pl-10 pr-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 transition-all"
-                      />
-                    </div>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={gateLoading}
-                    className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-                  >
-                    {gateLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        Send My Full Report
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-                  {gateError && (
-                    <p className="text-red-400 text-sm text-center">{gateError}</p>
-                  )}
-                </form>
-
-                <p className="text-center text-zinc-500 text-xs mt-4">
-                  Plus free weekly rescans &bull; Unsubscribe anytime
-                </p>
-              </div>
-            </div>
-          </div>
-        </AnimateIn>
-      ) : (
-        <>
-          {/* ========== COMPETITORS BLOCK ========== */}
-          {summary.competitorsMentioned.length > 0 && (
+      {/* ========== BRANDS AI RECOMMENDS BLOCK ========== */}
+          {summary.brandsDetected.length > 0 && (
             <AnimateIn delay={0.1}>
               <GlassCard hover={false} glow="red" padding="md" className="mb-8">
                 <div className="flex items-center gap-2 mb-4">
@@ -457,12 +314,12 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
                   </h3>
                 </div>
                 <div className="space-y-2">
-                  {summary.competitorsMentioned.map((competitor, i) => (
+                  {summary.brandsDetected.map((brand, i) => (
                     <div
                       key={i}
                       className="flex items-center justify-between px-4 py-3 bg-red-500/5 border border-red-500/10 rounded-lg"
                     >
-                      <span className="text-white font-medium">{competitor}</span>
+                      <span className="text-white font-medium">{brand}</span>
                       <span className="text-red-400 text-sm">
                         Recommended by AI
                       </span>
@@ -524,12 +381,12 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
 
                     {result.aiRecommends.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
-                        {result.aiRecommends.slice(0, 6).map((competitor, j) => (
+                        {result.aiRecommends.slice(0, 6).map((brand, j) => (
                           <span
                             key={j}
                             className="px-2 py-1 bg-zinc-800 text-zinc-400 rounded text-xs"
                           >
-                            {competitor}
+                            {brand}
                           </span>
                         ))}
                       </div>
@@ -546,8 +403,6 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
               <ContentPreview domain={domain} preview={contentPreview} />
             </AnimateIn>
           )}
-        </>
-      )}
 
       {/* ========== CONVERSION CTA — sell the fix, not the dashboard ========== */}
       <AnimateIn delay={0.2}>
@@ -557,7 +412,7 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
               {getCtaHeadline(visibilityScore)}
             </h2>
             <p className="text-black/70 text-sm mb-5 max-w-md mx-auto">
-              See every query where AI recommends competitors instead of you.
+              See every query where AI recommends other brands instead of you.
               Get targeted fix pages to improve your visibility.
             </p>
 
@@ -640,7 +495,7 @@ export function ScanResults({ data, gated = false, onEmailSubmit }: ScanResultsP
               reportId={reportId}
               isInvisible={summary.isInvisible}
               visibilityScore={visibilityScore}
-              competitorCount={competitorCount}
+              brandCount={brandCount}
               mentionedCount={summary.mentionedCount}
             />
           </div>

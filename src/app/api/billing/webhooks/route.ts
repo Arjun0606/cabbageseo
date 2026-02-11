@@ -165,6 +165,23 @@ export async function POST(request: NextRequest) {
           console.warn("[Webhook] No customer_id in subscription data");
         }
         
+        // Idempotency check: skip if org already has this subscription + plan
+        const { data: existingOrgRaw } = await supabase
+          .from("organizations")
+          .select("dodo_subscription_id, plan, subscription_status")
+          .eq("id", organizationId)
+          .single();
+
+        const existingOrg = existingOrgRaw as { dodo_subscription_id?: string; plan?: string; subscription_status?: string } | null;
+        if (
+          existingOrg?.dodo_subscription_id === subscriptionData.subscription_id &&
+          existingOrg?.plan === plan &&
+          existingOrg?.subscription_status === "active"
+        ) {
+          console.log(`[Webhook] Idempotent: org ${organizationId} already on ${plan} plan with subscription ${subscriptionData.subscription_id}`);
+          break;
+        }
+
         const { error } = await supabase
           .from("organizations")
           .update({

@@ -565,7 +565,7 @@ async function discoverQueries(domain: string): Promise<SiteAnalysis["queries"]>
     `best ${cleanName} alternatives`,
     `how to use ${cleanName}`,
     `is ${cleanName} worth it`,
-    `${cleanName} vs competitors`,
+    `best ${cleanName} alternatives`,
   ];
 
   if (!apiKey) {

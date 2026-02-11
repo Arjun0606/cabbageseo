@@ -7,16 +7,16 @@
  * - Hourly checks for Command/Dominate users
  * - Weekly reports on Mondays
  * - Monthly checkpoint reports on the 1st
- * - Competitor change alerts (event-driven)
+ * - Visibility drop alerts (event-driven)
  */
 
 import { serve } from "inngest/next";
 import { inngest } from "@/lib/jobs/inngest-client";
 import { citationFunctions } from "@/lib/jobs/citation-jobs";
 import { monthlyCheckpointFunctions } from "@/lib/jobs/monthly-checkpoint";
-import { competitorAlertFunctions } from "@/lib/jobs/competitor-alert";
 import { teaserDripFunctions } from "@/lib/jobs/teaser-drip";
 import { benchmarkFunctions } from "@/lib/jobs/benchmark-aggregation";
+import { pageRefreshFunctions } from "@/lib/jobs/page-refresh-jobs";
 
 // Export handlers for Inngest
 export const { GET, POST, PUT } = serve({
@@ -24,8 +24,8 @@ export const { GET, POST, PUT } = serve({
   functions: [
     ...citationFunctions,
     ...monthlyCheckpointFunctions,
-    ...competitorAlertFunctions,
     ...teaserDripFunctions,
     ...benchmarkFunctions,
+    ...pageRefreshFunctions,
   ],
 });

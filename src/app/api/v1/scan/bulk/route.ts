@@ -133,7 +133,6 @@ export async function POST(request: NextRequest) {
     domain: string;
     visibilityScore: number;
     isInvisible: boolean;
-    competitorsMentioned: string[];
     mentionedCount: number;
     reportId: string | null;
     reportUrl: string | null;
@@ -159,7 +158,6 @@ export async function POST(request: NextRequest) {
               domain,
               visibilityScore: 0,
               isInvisible: true,
-              competitorsMentioned: [] as string[],
               mentionedCount: 0,
               reportId: null,
               reportUrl: null,
@@ -174,7 +172,6 @@ export async function POST(request: NextRequest) {
             domain,
             visibilityScore: data.summary?.isInvisible ? 0 : Math.min(100, (data.summary?.mentionedCount || 0) * 25),
             isInvisible: data.summary?.isInvisible ?? true,
-            competitorsMentioned: data.summary?.competitorsMentioned || [],
             mentionedCount: data.summary?.mentionedCount || 0,
             reportId,
             reportUrl: reportId ? `${APP_URL}/teaser/${reportId}` : null,
@@ -184,7 +181,6 @@ export async function POST(request: NextRequest) {
             domain,
             visibilityScore: 0,
             isInvisible: true,
-            competitorsMentioned: [] as string[],
             mentionedCount: 0,
             reportId: null,
             reportUrl: null,

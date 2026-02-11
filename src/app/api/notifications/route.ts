@@ -5,7 +5,7 @@
  * PATCH: Update notification preferences
  *
  * Uses the `notifications` table which has email preference booleans:
- * email_new_citation, email_lost_citation, email_weekly_digest, email_competitor_cited
+ * email_new_citation, email_lost_citation, email_weekly_digest
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -24,7 +24,6 @@ function getDbClient(): SupabaseClient | null {
 const defaultSettings = {
   citationAlerts: true,
   weeklyReport: true,
-  competitorAlerts: false,
   productUpdates: false,
 };
 
@@ -46,7 +45,7 @@ export async function GET() {
     // Read from notifications table (correct schema)
     const { data: notifData } = await db
       .from("notifications")
-      .select("email_new_citation, email_lost_citation, email_weekly_digest, email_competitor_cited")
+      .select("email_new_citation, email_lost_citation, email_weekly_digest")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -54,14 +53,12 @@ export async function GET() {
       email_new_citation?: boolean;
       email_lost_citation?: boolean;
       email_weekly_digest?: boolean;
-      email_competitor_cited?: boolean;
     } | null;
 
     // Map DB columns to frontend-friendly names
     const settings = row ? {
       citationAlerts: row.email_new_citation ?? true,
       weeklyReport: row.email_weekly_digest ?? true,
-      competitorAlerts: row.email_competitor_cited ?? false,
       productUpdates: false,
     } : defaultSettings;
 
@@ -99,7 +96,6 @@ async function updateNotificationSettings(request: NextRequest) {
     email_new_citation: updates.email_new_citation ?? updates.citationAlerts ?? true,
     email_lost_citation: updates.email_lost_citation ?? true,
     email_weekly_digest: updates.email_weekly_digest ?? updates.weeklyReport ?? true,
-    email_competitor_cited: updates.email_competitor_cited ?? updates.competitorAlerts ?? false,
     updated_at: new Date().toISOString(),
   };
 
@@ -121,7 +117,6 @@ async function updateNotificationSettings(request: NextRequest) {
   const newSettings = {
     citationAlerts: dbValues.email_new_citation,
     weeklyReport: dbValues.email_weekly_digest,
-    competitorAlerts: dbValues.email_competitor_cited,
     productUpdates: updates.productUpdates ?? false,
   };
 

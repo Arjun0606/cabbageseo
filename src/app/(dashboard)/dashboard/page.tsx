@@ -46,7 +46,6 @@ interface MomentumData {
   queriesWon: number;
   queriesTotal: number;
   sourceCoverage: number;
-  topCompetitor: { domain: string; citations: number } | null;
   breakdown?: {
     baseScore: number;
     sourceBonus: number;
@@ -140,7 +139,7 @@ function DashboardContent() {
   // Fix Pages state
   const [contentEngineData, setContentEngineData] = useState<{
     open: number; pagesGenerated: number; pagesPublished: number;
-    topOpportunity: { query: string; competitors: string[] } | null;
+    topOpportunity: { query: string } | null;
   } | null>(null);
 
   // Site Audit state
@@ -242,7 +241,7 @@ function DashboardContent() {
           pagesGenerated: summary?.pagesGenerated || 0,
           pagesPublished: summary?.pagesPublished || 0,
           topOpportunity: firstOpen
-            ? { query: firstOpen.query, competitors: firstOpen.competitors || [] }
+            ? { query: firstOpen.query }
             : null,
         });
       }
@@ -543,8 +542,6 @@ function DashboardContent() {
               {usage.sitesUsed}/{usage.sitesLimit} sites
               {" · "}
               {usage.checksUsed}/{usage.checksLimit === 999999 ? "∞" : usage.checksLimit} checks
-              {" · "}
-              {usage.competitorsUsed}/{usage.competitorsLimit} competitors
             </p>
           )}
         </div>
@@ -803,7 +800,6 @@ function DashboardContent() {
             <RevenueAtRisk
               queriesLost={(momentum?.queriesTotal || 0) - (momentum?.queriesWon || 0)}
               queriesTotal={momentum?.queriesTotal || 0}
-              topCompetitor={momentum?.topCompetitor}
               lostQueries={checkResult?.lostQueries}
               existingPages={pagesMap}
               checking={checking}

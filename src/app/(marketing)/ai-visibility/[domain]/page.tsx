@@ -70,10 +70,10 @@ export async function generateMetadata({
       : `${cleanDomain} has an AI visibility score of ${report.visibilityScore}/100. See who AI recommends instead and how ${titleBrand} compares.`
     : `Check if ChatGPT, Perplexity & Google AI recommend ${cleanDomain}. Get a free AI visibility score in 10 seconds.`;
 
-  const competitorCount = report ? (report.competitorsMentioned as string[] || []).length : 0;
-  const competitorNames = report ? (report.competitorsMentioned as string[] || []).slice(0, 3).join(",") : "";
+  const brandCount = report ? (report.competitorsMentioned as string[] || []).length : 0;
+  const brandNames = report ? (report.competitorsMentioned as string[] || []).slice(0, 3).join(",") : "";
   const ogImageUrl = report
-    ? `/api/og/score?domain=${encodeURIComponent(cleanDomain)}&score=${report.visibilityScore}&invisible=${report.isInvisible}&competitors=${competitorCount}&names=${encodeURIComponent(competitorNames)}`
+    ? `/api/og/score?domain=${encodeURIComponent(cleanDomain)}&score=${report.visibilityScore}&invisible=${report.isInvisible}&brands=${brandCount}&names=${encodeURIComponent(brandNames)}`
     : `/og-image.png`;
 
   return {
@@ -83,7 +83,7 @@ export async function generateMetadata({
       `${cleanDomain} AI visibility`,
       `is ${cleanDomain} on ChatGPT`,
       `${titleBrand} AI recommendation`,
-      `${titleBrand} vs competitors AI`,
+      `${titleBrand} AI recommendations`,
       `${cleanDomain} Perplexity recommendation`,
     ],
     openGraph: {
@@ -120,7 +120,7 @@ export default async function AiVisibilityPage({
     getLatestReport(cleanDomain),
     getRecentlyScannedDomains(cleanDomain),
   ]);
-  const competitors = (report?.competitorsMentioned as string[] || []);
+  const brands = (report?.competitorsMentioned as string[] || []);
 
   // JSON-LD for the page
   const jsonLd = {
@@ -189,21 +189,21 @@ export default async function AiVisibilityPage({
                     AI <span className="text-emerald-400">knows about</span> {titleBrand}
                   </h2>
                   <p className="text-zinc-400">
-                    {cleanDomain} appears in some AI recommendations, but competitors
+                    {cleanDomain} appears in some AI recommendations, but other brands
                     may still be winning more citations.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Competitors */}
-            {competitors.length > 0 && (
+            {/* Brands AI Recommends */}
+            {brands.length > 0 && (
               <div className="bg-white/[0.03] backdrop-blur-md border border-white/[0.06] rounded-xl p-6 mb-8">
                 <h3 className="text-lg font-semibold text-white mb-4">
-                  AI recommends these instead of {titleBrand}
+                  Other brands AI recommends in this space
                 </h3>
                 <div className="space-y-2">
-                  {competitors.map((comp, i) => (
+                  {brands.map((comp, i) => (
                     <Link
                       key={i}
                       href={`/ai-visibility/${encodeURIComponent(comp)}`}
@@ -226,20 +226,20 @@ export default async function AiVisibilityPage({
                 When users ask AI assistants like ChatGPT, Perplexity, and Google AI for
                 product recommendations in {titleBrand}&apos;s category, the AI{" "}
                 {report.isInvisible
-                  ? `does not mention ${cleanDomain}. This means potential customers who use AI-powered search are being directed to competitors instead.`
+                  ? `does not mention ${cleanDomain}. This means potential customers who use AI-powered search are being directed to other brands instead.`
                   : `mentions ${cleanDomain} in some queries, scoring ${report.visibilityScore} out of 100 on AI visibility.`}
               </p>
-              {competitors.length > 0 && (
+              {brands.length > 0 && (
                 <p className="text-zinc-400 leading-relaxed mb-4">
-                  AI currently recommends {competitors.length} competitor{competitors.length !== 1 ? "s" : ""} in
-                  {" "}{titleBrand}&apos;s space, including {competitors.slice(0, 3).join(", ")}
-                  {competitors.length > 3 ? `, and ${competitors.length - 3} more` : ""}.
+                  AI currently recommends {brands.length} other brand{brands.length !== 1 ? "s" : ""} in
+                  {" "}{titleBrand}&apos;s space, including {brands.slice(0, 3).join(", ")}
+                  {brands.length > 3 ? `, and ${brands.length - 3} more` : ""}.
                 </p>
               )}
               <p className="text-zinc-400 leading-relaxed">
                 AI visibility is becoming increasingly important as more buyers use ChatGPT
                 and Perplexity instead of Google to research products. Brands that optimize
-                for AI recommendations now gain a significant competitive advantage.
+                for AI recommendations now gain a significant advantage.
               </p>
             </div>
 
@@ -286,12 +286,12 @@ export default async function AiVisibilityPage({
                 increasingly replacing traditional search for product recommendations.
                 When a buyer asks &quot;best {brandName} alternatives&quot; or &quot;top tools like {brandName}&quot;,
                 AI gives a direct answer — and if {cleanDomain} isn&apos;t mentioned,
-                that&apos;s a customer going to a competitor.
+                that&apos;s a customer going to another brand.
               </p>
               <p className="text-zinc-400 leading-relaxed mb-4">
                 CabbageSEO&apos;s free AI visibility scanner checks {cleanDomain} across
                 multiple AI platforms in real-time and shows you exactly who AI recommends,
-                your visibility score, and which competitors are winning.
+                your visibility score, and which brands are winning.
               </p>
               <p className="text-zinc-400 leading-relaxed">
                 The scan takes 10 seconds, requires no signup, and uses real API responses

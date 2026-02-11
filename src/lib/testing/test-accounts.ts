@@ -26,19 +26,19 @@ export const TEST_ACCOUNTS: TestAccount[] = [
     email: "test-free@cabbageseo.test",
     password: "TestFree123!",
     plan: "free",
-    description: "Free tier test account - 3 checks/day, 1 site, 0 competitors",
+    description: "Free tier test account - 3 checks/day, 1 site",
   },
   {
     email: "test-starter@cabbageseo.test",
     password: "TestStarter123!",
     plan: "scout",
-    description: "Scout tier test account - Unlimited checks, 3 sites, 2 competitors",
+    description: "Scout tier test account - Unlimited checks, 3 sites",
   },
   {
     email: "test-pro@cabbageseo.test",
     password: "TestPro123!",
     plan: "command",
-    description: "Command tier test account - Unlimited checks, 10 sites, 10 competitors",
+    description: "Command tier test account - Unlimited checks, 10 sites",
   },
 ];
 

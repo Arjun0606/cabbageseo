@@ -100,10 +100,8 @@ export async function GET(
       `)
       .eq("id", siteId);
 
-    // Add org ownership filter when not in testing mode
-    if (auth.orgId) {
-      query = query.eq("organization_id", auth.orgId);
-    }
+    // Always filter by org ownership
+    query = query.eq("organization_id", auth.orgId!);
 
     const { data, error } = await query.maybeSingle();
 
@@ -173,16 +171,14 @@ export async function PATCH(
 
   try {
     // Verify site belongs to user's org
-    if (auth.orgId) {
-      const { data: siteCheck } = await supabase
-        .from("sites")
-        .select("id")
-        .eq("id", siteId)
-        .eq("organization_id", auth.orgId)
-        .maybeSingle();
-      if (!siteCheck) {
-        return NextResponse.json({ error: "Site not found" }, { status: 404 });
-      }
+    const { data: siteCheck } = await supabase
+      .from("sites")
+      .select("id")
+      .eq("id", siteId)
+      .eq("organization_id", auth.orgId!)
+      .maybeSingle();
+    if (!siteCheck) {
+      return NextResponse.json({ error: "Site not found" }, { status: 404 });
     }
 
     const body = await request.json();
@@ -262,17 +258,11 @@ export async function DELETE(
   if (auth.error) return auth.error;
 
   try {
-    let query = supabase
+    const { error } = await supabase
       .from("sites")
       .delete()
-      .eq("id", siteId);
-
-    // Add org ownership filter when not in testing mode
-    if (auth.orgId) {
-      query = query.eq("organization_id", auth.orgId);
-    }
-
-    const { error } = await query;
+      .eq("id", siteId)
+      .eq("organization_id", auth.orgId!);
 
     if (error) throw error;
 

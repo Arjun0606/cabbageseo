@@ -12,7 +12,7 @@ interface ContentPreviewProps {
     blurredBody: string;
     faqItems: Array<{ question: string; answer: string }>;
     wordCount: number;
-    competitorUsed: string;
+    brandUsed: string;
   };
 }
 

@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/api/get-user";
+import { inngest } from "@/lib/jobs/inngest-client";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 function getDbClient(): SupabaseClient | null {
@@ -74,12 +75,13 @@ export async function GET(
           body: page.body,
           schemaMarkup: page.schema_markup,
           targetEntities: page.target_entities || [],
-          competitorsAnalyzed: page.competitors_analyzed || [],
           wordCount: page.word_count,
           aiModel: page.ai_model,
           status: page.status,
           createdAt: page.created_at,
           updatedAt: page.updated_at,
+          lastRefreshedAt: page.last_refreshed_at,
+          refreshCount: page.refresh_count,
         },
       },
     });
@@ -149,6 +151,32 @@ export async function PATCH(
     if (updateError) {
       console.error("[/api/geo/pages/[id] PATCH] Error:", updateError);
       return NextResponse.json({ error: "Failed to update page" }, { status: 500 });
+    }
+
+    // Schedule a 48h recheck when a page is published
+    if (status === "published") {
+      const { data: fullPage } = await db
+        .from("generated_pages")
+        .select("query, site_id")
+        .eq("id", id)
+        .single();
+      const { data: siteInfo } = await db
+        .from("sites")
+        .select("domain")
+        .eq("id", page.site_id)
+        .single();
+
+      if (fullPage?.query && siteInfo?.domain) {
+        inngest.send({
+          name: "page/published",
+          data: {
+            pageId: id,
+            siteId: page.site_id,
+            domain: siteInfo.domain,
+            query: fullPage.query,
+          },
+        }).catch(err => console.error("[page publish] Failed to schedule recheck:", err));
+      }
     }
 
     return NextResponse.json({ success: true, data: { status } });

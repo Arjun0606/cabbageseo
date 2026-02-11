@@ -5,7 +5,6 @@ import { Target, ArrowRight, AlertTriangle, Check, FileText, MessageSquareQuote 
 
 interface LostQuery {
   query: string;
-  competitors: string[];
   platform: string;
   snippet?: string;
 }
@@ -18,7 +17,6 @@ interface PageInfo {
 interface RevenueAtRiskProps {
   queriesLost: number;
   queriesTotal: number;
-  topCompetitor?: { domain: string; citations: number } | null;
   lostQueries?: LostQuery[];
   existingPages?: Map<string, PageInfo>;
   checking?: boolean;
@@ -31,7 +29,6 @@ export type { LostQuery };
 export function RevenueAtRisk({
   queriesLost,
   queriesTotal,
-  topCompetitor,
   lostQueries,
   existingPages,
   checking,
@@ -54,11 +51,14 @@ export function RevenueAtRisk({
         <div className="flex items-center gap-2 mb-2">
           <Target className="w-4 h-4 text-zinc-500" />
           <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">
-            Queries You&apos;re Losing
+            Lost Queries
           </h3>
         </div>
-        <p className="text-zinc-500 text-sm">
-          Run a check to see which buyer queries competitors are winning.
+        <p className="text-zinc-500 text-sm mb-1">
+          When someone asks AI &ldquo;what&apos;s the best tool for X?&rdquo; and you&apos;re not mentioned &mdash; that&apos;s a lost query.
+        </p>
+        <p className="text-zinc-600 text-xs">
+          Run a check to discover which buyer questions you&apos;re missing from.
         </p>
       </div>
     );
@@ -117,16 +117,11 @@ export function RevenueAtRisk({
         </div>
         <p className={`text-sm mt-1 ${isCritical ? "text-red-400/80" : "text-zinc-500"}`}>
           {isCritical
-            ? "Competitors are being recommended instead of you for most buyer queries"
+            ? "You're missing from most buyer queries where AI could recommend you"
             : isWarning
-              ? "AI is sending potential customers to competitors for these queries"
-              : "Won by competitors in AI recommendations"}
+              ? "AI isn't mentioning you for a significant portion of buyer queries"
+              : "Queries where AI isn't citing you yet"}
         </p>
-        {topCompetitor && (
-          <p className="text-red-400/80 text-sm mt-1">
-            {topCompetitor.domain} is getting recommended {topCompetitor.citations} times where you&apos;re not
-          </p>
-        )}
       </div>
 
       {/* Per-query breakdown (if available from latest check) */}
@@ -139,7 +134,7 @@ export function RevenueAtRisk({
         <div className="space-y-2 mt-4 pt-4 border-t border-zinc-800">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-zinc-500 uppercase tracking-wide">
-              Queries competitors are winning
+              Queries you&apos;re missing from
             </p>
             {unfixedCount > 0 && (
               <span className="text-xs text-amber-400">
@@ -169,9 +164,7 @@ export function RevenueAtRisk({
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-white truncate">&ldquo;{lq.query}&rdquo;</p>
                     <p className="text-xs text-zinc-500">
-                      {lq.competitors.slice(0, 2).join(", ")}{" "}
-                      {lq.competitors.length > 2 && `+${lq.competitors.length - 2} more `}
-                      recommended instead
+                      Not cited on {lq.platform === "google_aio" ? "Google AI" : lq.platform === "perplexity" ? "Perplexity" : "ChatGPT"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 ml-3 flex-shrink-0">

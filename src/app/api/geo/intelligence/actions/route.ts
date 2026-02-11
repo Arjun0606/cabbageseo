@@ -4,10 +4,9 @@
  * POST /api/geo/intelligence/actions
  *
  * The $100k features:
- * - gap-analysis: "Why did AI cite competitor, not me?"
+ * - gap-analysis: "Why isn't AI citing me for this query?"
  * - content-recommendations: "What to publish next"
  * - action-plan: Weekly GEO playbook
- * - competitor-deep-dive: Full competitor analysis
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -16,7 +15,6 @@ import { getUser } from "@/lib/api/get-user";
 import {
   getCitationPlan,
   canAccessProduct,
-  canUseCompetitorDeepDive,
   canGeneratePage,
 } from "@/lib/billing/citation-plans";
 
@@ -40,17 +38,15 @@ import {
   analyzeCitationGap,
   generateContentRecommendations,
   generateWeeklyActionPlan,
-  analyzeCompetitorDeepDive,
 } from "@/lib/geo/citation-intelligence";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-type ActionType = "gap-analysis" | "content-recommendations" | "action-plan" | "competitor-deep-dive";
+type ActionType = "gap-analysis" | "content-recommendations" | "action-plan";
 
 interface RequestBody {
   action: ActionType;
   siteId: string;
   query?: string;          // Required for gap-analysis
-  competitorId?: string;   // Required for competitor-deep-dive
 }
 
 function getDbClient(): SupabaseClient | null {
@@ -89,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     // Subscription check for free users
     if (planId === "free") {
-      const access = canAccessProduct("free", null, currentUser.email);
+      const access = canAccessProduct("free", currentUser.email);
       if (!access.allowed) {
         return NextResponse.json({ error: access.reason, code: "SUBSCRIPTION_REQUIRED", upgradeRequired: true }, { status: 403 });
       }
@@ -97,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     const citationPlan = getCitationPlan(planId);
     const body: RequestBody = await request.json();
-    const { action, siteId, query, competitorId } = body;
+    const { action, siteId, query } = body;
 
     if (!action || !siteId) {
       return NextResponse.json({ error: "action and siteId are required" }, { status: 400 });
@@ -209,43 +205,9 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      case "competitor-deep-dive": {
-        if (!competitorId) {
-          return NextResponse.json({ error: "competitorId is required" }, { status: 400 });
-        }
-
-        const canUse = canUseCompetitorDeepDive(citationPlan.id);
-        if (!canUse.allowed) {
-          return NextResponse.json({
-            error: canUse.reason,
-            upgradeRequired: true,
-            feature: "competitorDeepDive",
-          }, { status: 403 });
-        }
-
-        // Verify competitor belongs to this site
-        const { data: competitor } = await db
-          .from("competitors")
-          .select("id")
-          .eq("id", competitorId)
-          .eq("site_id", siteId)
-          .maybeSingle();
-
-        if (!competitor) {
-          return NextResponse.json({ error: "Competitor not found for this site" }, { status: 404 });
-        }
-
-        const result = await analyzeCompetitorDeepDive(siteId, competitorId, organizationId);
-
-        return NextResponse.json({
-          success: true,
-          data: result,
-        });
-      }
-
       default:
         return NextResponse.json({
-          error: "Invalid action. Use: gap-analysis, content-recommendations, action-plan, competitor-deep-dive",
+          error: "Invalid action. Use: gap-analysis, content-recommendations, action-plan",
         }, { status: 400 });
     }
   } catch (error) {
@@ -289,7 +251,6 @@ async function incrementUsage(
         [field]: 1,
         checks_used: 0,
         sites_used: 0,
-        competitors_used: 0,
       });
   }
 }
@@ -367,9 +328,6 @@ export async function GET() {
           remaining: citationPlan.intelligenceLimits.actionPlansPerMonth === -1
             ? "unlimited"
             : Math.max(0, citationPlan.intelligenceLimits.actionPlansPerMonth - actionPlansUsedCount),
-        },
-        competitorDeepDive: {
-          available: citationPlan.features.competitorDeepDive,
         },
         pageGeneration: {
           available: citationPlan.features.pageGeneration,

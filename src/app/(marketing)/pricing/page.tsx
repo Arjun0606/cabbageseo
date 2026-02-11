@@ -69,7 +69,7 @@ const tiers: PricingTier[] = [
     icon: <TrendingUp className="w-5 h-5 text-emerald-400" />,
     features: [
       "1 website",
-      "3 competitor tracking",
+      "3 brand visibility sources",
       "Daily AI citation monitoring",
       "5 AI fix pages/month",
       "Site GEO Audit (top 10 pages)",
@@ -93,17 +93,17 @@ const tiers: PricingTier[] = [
     icon: <Zap className="w-5 h-5 text-emerald-400" />,
     features: [
       "5 websites",
-      "10 competitor tracking",
+      "10 brand visibility sources",
       "Hourly AI citation monitoring",
       "25 AI fix pages/month",
       "Full Site GEO Audit (100 pages)",
       "Entity optimization + schema markup",
       "Unlimited gap analysis + content ideas",
       "Weekly action playbooks",
-      "Competitor deep dives",
+      "Brand visibility deep dives",
     ],
     highlight: "MOST POPULAR",
-    promise: "Hourly monitoring + weekly playbooks keep you ahead of every competitor move.",
+    promise: "Hourly monitoring + weekly playbooks keep you ahead of every AI shift.",
   },
   {
     name: "Dominate",
@@ -117,7 +117,7 @@ const tiers: PricingTier[] = [
     icon: <Crown className="w-5 h-5 text-amber-400" />,
     features: [
       "25 websites",
-      "25 competitor tracking",
+      "25 brand visibility sources",
       "Hourly AI citation monitoring",
       "Unlimited AI fix pages",
       "Full Site GEO Audit (500 pages)",
@@ -432,12 +432,44 @@ export default function PricingPage() {
             ))}
           </StaggerGroup>
 
-          {/* Trust line */}
+          {/* Trust line + guarantee */}
           <AnimateIn delay={0.2}>
-            <p className="text-center text-sm text-zinc-600 mt-10">
-              All plans include SSL encryption. Data stored on Supabase
-              (US-based servers).
-            </p>
+            <div className="mt-10 text-center space-y-3">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span className="text-emerald-400 text-sm font-medium">
+                  14-day money-back guarantee on all plans
+                </span>
+              </div>
+              <p className="text-sm text-zinc-600">
+                All plans include SSL encryption. Data stored on Supabase
+                (US-based servers).
+              </p>
+            </div>
+          </AnimateIn>
+
+          {/* Your first week */}
+          <AnimateIn delay={0.3}>
+            <div className="mt-16 max-w-2xl mx-auto">
+              <h3 className="text-lg font-semibold text-white text-center mb-6">
+                Your first week
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { day: "Day 1", action: "Full AI scan across ChatGPT, Perplexity & Google AI. See your score and every gap." },
+                  { day: "Day 2", action: "Your 30-day sprint generates. Week 1 actions are ready to go." },
+                  { day: "Day 3-6", action: "Fix pages auto-generate for your biggest gaps. Publish with one click." },
+                  { day: "Day 7", action: "First progress check. See which actions moved your score." },
+                ].map((item) => (
+                  <div key={item.day} className="flex gap-4 items-start">
+                    <span className="shrink-0 w-16 text-right text-emerald-400 text-sm font-bold pt-0.5">
+                      {item.day}
+                    </span>
+                    <p className="text-zinc-400 text-sm">{item.action}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </AnimateIn>
         </div>
       </section>

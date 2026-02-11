@@ -2,7 +2,7 @@
  * Teaser Content Preview Generator
  *
  * Generates a mini comparison page preview for teaser reports.
- * Uses domain + competitor data from the teaser scan (no auth/site required).
+ * Uses domain + brand data from the teaser scan (no auth/site required).
  *
  * Cost: ~$0.003 per generation (gpt-5-mini)
  * Time: ~2-4 seconds
@@ -15,7 +15,7 @@ export interface ContentPreviewData {
   blurredBody: string;
   faqItems: Array<{ question: string; answer: string }>;
   wordCount: number;
-  competitorUsed: string;
+  brandUsed: string;
   generatedAt: string;
 }
 
@@ -27,7 +27,7 @@ function extractJSON(text: string): string {
 
 export async function generateTeaserPreview(
   domain: string,
-  competitors: string[],
+  otherBrands: string[],
   brandName: string,
 ): Promise<ContentPreviewData | null> {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -36,26 +36,26 @@ export async function generateTeaserPreview(
     return null;
   }
 
-  if (competitors.length === 0) {
+  if (otherBrands.length === 0) {
     return null;
   }
 
-  const competitor = competitors[0];
-  const competitorBrand = competitor.replace(/\.(com|io|co|ai|app|dev|org|net|me|sh|cc|so|biz|xyz|tech|tools|software|cloud|pro|gg|fm|tv|to|ly|co\.uk|com\.au)$/, "");
+  const topBrand = otherBrands[0];
+  const topBrandName = topBrand.replace(/\.(com|io|co|ai|app|dev|org|net|me|sh|cc|so|biz|xyz|tech|tools|software|cloud|pro|gg|fm|tv|to|ly|co\.uk|com\.au)$/, "");
 
   const systemPrompt = `You are an AI Search Optimization content strategist. You create comparison pages that AI platforms (ChatGPT, Perplexity, Google AI) will cite when answering questions. You respond ONLY with valid JSON. No markdown code fences, no extra text.`;
 
-  const userPrompt = `Generate a comparison page preview for: "${brandName} vs ${competitorBrand}"
+  const userPrompt = `Generate a comparison page preview for: "${brandName} vs ${topBrandName}"
 
 CONTEXT:
 - Domain: ${domain}
-- Top competitor: ${competitor}
+- Top alternative: ${topBrand}
 - This is a PREVIEW to show what AI-optimized content looks like
 
 INSTRUCTIONS:
 1. Write a compelling SEO title (60-70 chars)
 2. Write a meta description (150-160 chars)
-3. Write an opening paragraph (80-120 words) that directly answers "How does ${brandName} compare to ${competitorBrand}?" — make it authoritative and specific
+3. Write an opening paragraph (80-120 words) that directly answers "How does ${brandName} compare to ${topBrandName}?" — make it authoritative and specific
 4. Write a body section (200-300 words) covering key comparison points with ## headings and bullet points
 5. Write 4 FAQ questions with concise answers (2-3 sentences each)
 6. Make it genuinely useful and authoritative
@@ -117,13 +117,13 @@ Respond in this exact JSON format:
     const wordCount = fullBody.split(/\s+/).filter(Boolean).length;
 
     return {
-      title: parsed.title || `${brandName} vs ${competitorBrand}: Complete Comparison`,
-      metaDescription: parsed.metaDescription || `Compare ${brandName} and ${competitorBrand} side by side.`,
+      title: parsed.title || `${brandName} vs ${topBrandName}: Complete Comparison`,
+      metaDescription: parsed.metaDescription || `Compare ${brandName} and ${topBrandName} side by side.`,
       firstParagraph: parsed.firstParagraph || "",
       blurredBody: parsed.body || "",
       faqItems: (parsed.faqItems || []).slice(0, 4),
       wordCount,
-      competitorUsed: competitor,
+      brandUsed: topBrand,
       generatedAt: new Date().toISOString(),
     };
   } catch (error) {

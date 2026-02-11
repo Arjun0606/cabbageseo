@@ -28,6 +28,7 @@ const navLinks = [
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
   { href: "/what-is-geo", label: "What is GEO?" },
+  { href: "/blog", label: "Blog" },
   { href: "/for/saas", label: "For SaaS" },
   { href: "/for/agencies", label: "For Agencies" },
 ];
@@ -176,9 +177,9 @@ function Footer() {
     ],
     resources: [
       { href: "/what-is-geo", label: "What is GEO?" },
+      { href: "/blog", label: "Blog" },
       { href: "/docs", label: "Documentation" },
       { href: "/leaderboard", label: "AI Leaderboard" },
-      { href: "/blog", label: "Blog" },
     ],
     solutions: [
       { href: "/for/saas", label: "For SaaS" },

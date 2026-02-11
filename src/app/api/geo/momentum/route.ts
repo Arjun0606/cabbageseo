@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
     // Subscription check for free users
     if (currentUser.plan === "free") {
-      const access = canAccessProduct("free", null, currentUser.email);
+      const access = canAccessProduct("free", currentUser.email);
       if (!access.allowed) {
         return NextResponse.json({ error: access.reason, code: "SUBSCRIPTION_REQUIRED" }, { status: 403 });
       }

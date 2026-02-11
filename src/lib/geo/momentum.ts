@@ -2,14 +2,14 @@
  * MOMENTUM SCORE ENGINE
  *
  * Calculates a dynamic momentum score (0-100) for a site based on:
- * - Citation changes week-over-week
- * - Source listing coverage (weighted by platform importance)
- * - Competitor relative position (gaining or losing ground)
+ * - Total AI citations (logarithmic curve, 0-50 pts)
+ * - Source listing coverage weighted by platform importance (0-30 pts)
+ * - Week-over-week citation change, sigmoid-smoothed (-20 to +20 pts)
  *
  * Uses continuous curves (logarithmic, sigmoid) instead of linear jumps
  * to produce granular scores like 27, 48, 63 rather than multiples of 5.
  *
- * The score tells users at a glance: "Are you winning or losing in AI search?"
+ * The score tells users at a glance: "How visible are you in AI search?"
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -43,7 +43,6 @@ export interface MomentumResult {
   queriesWon: number;      // queries where user is mentioned
   queriesTotal: number;    // total queries checked
   sourceCoverage: number;  // 0-6 (how many key trust sources listed)
-  topCompetitor: { domain: string; citations: number } | null;
   breakdown: MomentumBreakdown;
 }
 
@@ -69,7 +68,7 @@ function sigmoid(x: number): number {
  * Calculate momentum score for a site.
  *
  * Score breakdown:
- * - Base (0-50): market share relative to competitors, logarithmic curve
+ * - Base (0-50): total AI citations, logarithmic curve with diminishing returns
  * - Source bonus (0-30): weighted trust source coverage
  * - Momentum bonus/penalty (-20 to +20): sigmoid-smoothed week-over-week change
  *
@@ -105,22 +104,7 @@ export async function calculateMomentum(
     (l: { source_domain: string }) => l.source_domain,
   );
 
-  // 3. Get competitor data
-  const { data: competitors } = await db
-    .from("competitors")
-    .select("domain, total_citations, citations_change")
-    .eq("site_id", siteId)
-    .order("total_citations", { ascending: false });
-
-  const topCompetitor =
-    competitors && competitors.length > 0
-      ? {
-          domain: competitors[0].domain as string,
-          citations: (competitors[0].total_citations as number) ?? 0,
-        }
-      : null;
-
-  // 4. Get queries where user is mentioned (citations = mentions)
+  // 3. Get queries where user is mentioned (citations = mentions)
   const { count: queriesWonCount } = await db
     .from("citations")
     .select("query", { count: "exact", head: true })
@@ -141,28 +125,16 @@ export async function calculateMomentum(
   const queriesWon = queriesWonCount ?? 0;
   const queriesTotal = Math.max(queriesFromAnalysis, queriesWon);
 
-  // 5. Calculate citation deltas
+  // 4. Calculate citation deltas
   const citationsWon = Math.max(0, citationsThisWeek - citationsLastWeek);
   const citationsLost = Math.max(0, citationsLastWeek - citationsThisWeek);
   const weekOverWeekChange = citationsThisWeek - citationsLastWeek;
 
-  // 6. Calculate score components with continuous curves
+  // 5. Calculate score components with continuous curves
 
-  // Base score (0-50): logarithmic curve based on citations
+  // Base score (0-50): logarithmic curve based on total citations
   // 1→6, 2→12, 3→17, 5→23, 8→32, 10→36, 15→42, 20→46
-  let baseScore: number;
-  if (!topCompetitor || topCompetitor.citations === 0) {
-    // No competitor data — score purely on own citations with log curve
-    baseScore = Math.round(logCurve(totalCitations, 8, 50));
-  } else {
-    // Market share: your citations / (yours + top competitor's)
-    const totalPool = totalCitations + topCompetitor.citations;
-    const marketShare = totalPool > 0 ? totalCitations / totalPool : 0;
-    const marketShareScore = Math.round(marketShare * 50);
-    // Floor: at least 60% of what the log-curve-only score would be
-    const citationFloor = Math.round(logCurve(totalCitations, 8, 50) * 0.6);
-    baseScore = Math.max(marketShareScore, citationFloor);
-  }
+  const baseScore = Math.round(logCurve(totalCitations, 8, 50));
 
   // Source coverage bonus (0-30): weighted by platform importance
   // G2(7) + Capterra(6) + ProductHunt(5) + Trustpilot(5) + TrustRadius(4) + Reddit(3) = 30
@@ -222,7 +194,6 @@ export async function calculateMomentum(
     queriesWon,
     queriesTotal,
     sourceCoverage,
-    topCompetitor,
     breakdown,
   };
 }

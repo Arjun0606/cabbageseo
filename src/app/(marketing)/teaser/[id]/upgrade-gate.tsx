@@ -6,14 +6,14 @@ import { ArrowRight, Lock, ListChecks, TrendingUp, Search, FileText, Bell } from
 interface UpgradeGateProps {
   domain: string;
   isInvisible: boolean;
-  competitorCount: number;
+  brandCount: number;
 }
 
 const actionPreviews = [
   {
     icon: <FileText className="w-4 h-4 text-emerald-400" />,
     title: "Targeted fix pages generated for each gap",
-    blurred: "Our AI detects queries where competitors are cited and you're not, then generates optimized comparison pages, FAQs, and explainers to win those citations back...",
+    blurred: "Our AI detects queries where other brands are cited and you're not, then generates optimized comparison pages, FAQs, and explainers to win those citations back...",
   },
   {
     icon: <Search className="w-4 h-4 text-emerald-400" />,
@@ -22,8 +22,8 @@ const actionPreviews = [
   },
   {
     icon: <TrendingUp className="w-4 h-4 text-emerald-400" />,
-    title: "Fix the authority gaps competitors exploit",
-    blurred: "Your competitors have 3 authority signals you're missing. Build backlinks from industry directories, get mentioned in roundup posts, and...",
+    title: "Close the gaps in your AI visibility",
+    blurred: "Other brands have 3 authority signals you're missing. Build backlinks from industry directories, get mentioned in roundup posts, and...",
   },
   {
     icon: <Bell className="w-4 h-4 text-emerald-400" />,
@@ -32,7 +32,7 @@ const actionPreviews = [
   },
 ];
 
-export default function UpgradeGate({ domain, isInvisible, competitorCount }: UpgradeGateProps) {
+export default function UpgradeGate({ domain, isInvisible, brandCount }: UpgradeGateProps) {
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-8 relative overflow-hidden">
       {/* Header */}
@@ -45,8 +45,8 @@ export default function UpgradeGate({ domain, isInvisible, competitorCount }: Up
       <p className="text-sm text-zinc-400 mb-5">
         {isInvisible
           ? `4 steps to get ${domain} recommended by AI`
-          : competitorCount > 0
-            ? `4 steps to outrank ${competitorCount} competitor${competitorCount !== 1 ? "s" : ""} in AI recommendations`
+          : brandCount > 0
+            ? `4 steps to outrank ${brandCount} other brand${brandCount !== 1 ? "s" : ""} in AI recommendations`
             : `4 steps to strengthen ${domain}'s AI visibility`
         }
       </p>

@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
           body: result.body,
           schema_markup: result.schemaMarkup,
           target_entities: result.targetEntities,
-          competitors_analyzed: result.competitorsAnalyzed,
+          competitors_analyzed: [],
           word_count: result.wordCount,
           ai_model: "gpt-5.2",
           status: "draft",
@@ -152,7 +152,6 @@ async function incrementUsage(client: any, organizationId: string, period: strin
         pages_generated: 1,
         checks_used: 0,
         sites_used: 0,
-        competitors_used: 0,
       });
   }
 }

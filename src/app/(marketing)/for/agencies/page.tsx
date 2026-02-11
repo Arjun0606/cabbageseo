@@ -348,7 +348,43 @@ export default function ForAgenciesPage() {
             </p>
           </AnimateIn>
 
-          <StaggerGroup className="grid md:grid-cols-2 gap-6">
+          <StaggerGroup className="grid md:grid-cols-3 gap-6">
+            {/* Scout */}
+            <StaggerItem>
+              <GlassCard className="rounded-2xl p-8 h-full">
+                <h3 className="text-lg font-semibold text-white mb-1">Scout</h3>
+                <p className="text-3xl font-bold text-white mb-1">
+                  $49<span className="text-lg text-zinc-500">/mo</span>
+                </p>
+                <p className="text-sm text-zinc-500 mb-4">$39/mo billed annually</p>
+                <p className="text-emerald-400 text-sm font-medium mb-6">
+                  Prove the value to your first client
+                </p>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    "1 site",
+                    "3 competitors",
+                    "Daily auto-checks",
+                    "Score drop alerts (email)",
+                    "Gap analysis + trend chart",
+                    "Fix pages (5/mo)",
+                    "CSV export",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-3 text-sm text-zinc-300">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/signup"
+                  className="block w-full py-3 text-center border border-zinc-700 text-zinc-300 rounded-xl hover:bg-zinc-800 transition-colors"
+                >
+                  Start with Scout
+                </Link>
+              </GlassCard>
+            </StaggerItem>
+
             {/* Command */}
             <StaggerItem>
               <GlassCard className="rounded-2xl p-8 h-full">

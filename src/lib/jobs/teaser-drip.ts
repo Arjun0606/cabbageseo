@@ -6,7 +6,7 @@
  *
  * Schedule:
  *   Day 0: Score recap + what it means
- *   Day 2: Competitor fear — "they're gaining ground"
+ *   Day 2: Urgency — "your visibility window is closing"
  *   Day 5: Action preview — what we'd do for you
  *
  * Weekly rescan emails are handled separately by weeklyTeaserRescan.
@@ -87,7 +87,7 @@ function day0Email(report: SubscriberReport, email: string): { subject: string; 
         </div>
       ` : `
         <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
-          AI mentions ${report.domain} in some queries — but there's room to grow. ${competitorList.length > 0 ? `AI is also recommending ${competitorList.join(", ")} in your space.` : ""}
+          AI mentions ${report.domain} in some queries — but there's room to grow. ${competitorList.length > 0 ? `AI is also recommending other brands like ${competitorList.join(", ")} in your space.` : ""}
         </p>
       `}
 
@@ -119,16 +119,16 @@ function day2Email(report: SubscriberReport, email: string): { subject: string; 
   const competitorList = (report.competitorsMentioned || []).slice(0, 3);
 
   return {
-    subject: `While you wait, ${report.domain}'s competitors are gaining ground`,
+    subject: `While you wait, ${report.domain}'s visibility window is closing`,
     html: emailLayout(`
       <div style="text-align: center; margin-bottom: 20px;">
-        <h1 style="font-size: 22px; margin: 0; color: #fff;">Your competitors aren't waiting</h1>
+        <h1 style="font-size: 22px; margin: 0; color: #fff;">The AI landscape is shifting</h1>
         <p style="color: #71717a; margin-top: 4px;">${report.domain}</p>
       </div>
 
       <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
         <p style="margin: 0; color: #fca5a5; font-size: 14px; line-height: 1.6;">
-          Since your scan 2 days ago, buyers have been asking AI for product recommendations in your category. Every time AI answers — and mentions a competitor instead of ${report.domain} — that's a customer you'll never know you lost.
+          Since your scan 2 days ago, buyers have been asking AI for product recommendations in your category. Every time AI answers — and doesn't mention ${report.domain} — that's a customer you'll never know you lost.
         </p>
       </div>
 
@@ -182,7 +182,7 @@ function day5Email(report: SubscriberReport, email: string): { subject: string; 
             <span style="color: #10b981; font-size: 18px; font-weight: 700;">1</span>
             <div>
               <p style="margin: 0; color: #fff; font-size: 14px; font-weight: 600;">Generate AI-optimized comparison pages</p>
-              <p style="margin: 2px 0 0; color: #71717a; font-size: 12px;">"${report.domain} vs [competitor]" pages that AI can cite</p>
+              <p style="margin: 2px 0 0; color: #71717a; font-size: 12px;">"${report.domain} vs [alternative]" pages that AI can cite</p>
             </div>
           </div>
         </div>
@@ -201,8 +201,8 @@ function day5Email(report: SubscriberReport, email: string): { subject: string; 
           <div style="display: flex; align-items: center; gap: 10px;">
             <span style="color: #10b981; font-size: 18px; font-weight: 700;">3</span>
             <div>
-              <p style="margin: 0; color: #fff; font-size: 14px; font-weight: 600;">Monitor daily + send competitor alerts</p>
-              <p style="margin: 2px 0 0; color: #71717a; font-size: 12px;">Track score changes and get notified when competitors gain citations</p>
+              <p style="margin: 0; color: #fff; font-size: 14px; font-weight: 600;">Monitor daily + send visibility alerts</p>
+              <p style="margin: 2px 0 0; color: #71717a; font-size: 12px;">Track score changes and get notified when your AI visibility shifts</p>
             </div>
           </div>
         </div>
@@ -211,7 +211,7 @@ function day5Email(report: SubscriberReport, email: string): { subject: string; 
           <div style="display: flex; align-items: center; gap: 10px;">
             <span style="color: #10b981; font-size: 18px; font-weight: 700;">4</span>
             <div>
-              <p style="margin: 0; color: #fff; font-size: 14px; font-weight: 600;">Build authority gaps competitors exploit</p>
+              <p style="margin: 0; color: #fff; font-size: 14px; font-weight: 600;">Close authority gaps in your AI presence</p>
               <p style="margin: 2px 0 0; color: #71717a; font-size: 12px;">Backlinks, roundup posts, expert mentions — targeted to your niche</p>
             </div>
           </div>

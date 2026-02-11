@@ -41,19 +41,104 @@ const TLD_PATTERN = /\.(com|io|co|ai|app|dev|org|net|so|sh|me|cc|biz|info|xyz|te
 function extractBrandName(domain: string): string {
   const cleaned = domain.replace(TLD_PATTERN, "");
   const parts = cleaned.split(".");
-  return parts[parts.length - 1];
+  const name = parts[parts.length - 1];
+  // If brand name is hyphenated and long, it's probably not a real brand name
+  // e.g. "best-project-management-tool" → use domain instead
+  if (name.includes("-") && name.length > 20) return domain;
+  return name;
+}
+
+// Fetch site homepage to extract category context for smarter queries
+async function fetchSiteContext(domain: string): Promise<{
+  title: string;
+  description: string;
+  category: string | null;
+}> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const res = await fetch(`https://${domain}`, {
+      headers: {
+        "User-Agent": "CabbageSEO-Bot/1.0 (GEO Analysis)",
+        "Accept": "text/html",
+      },
+      signal: controller.signal,
+      redirect: "follow",
+    });
+
+    clearTimeout(timeout);
+    if (!res.ok) return { title: "", description: "", category: null };
+
+    const html = await res.text();
+
+    // Extract title
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    const title = titleMatch ? titleMatch[1].trim() : "";
+
+    // Extract meta description
+    const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i) ||
+                      html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i);
+    const description = descMatch ? descMatch[1].trim() : "";
+
+    // Try to extract a product category from title + description
+    const combined = `${title} ${description}`.toLowerCase();
+    const categoryPatterns = [
+      { pattern: /\b(crm|customer relationship)\b/i, category: "CRM" },
+      { pattern: /\b(project management|task management|pm tool)\b/i, category: "project management" },
+      { pattern: /\b(email marketing|newsletter|email automation)\b/i, category: "email marketing" },
+      { pattern: /\b(accounting|bookkeeping|invoicing)\b/i, category: "accounting" },
+      { pattern: /\b(design|graphic design|ui design|ux design)\b/i, category: "design" },
+      { pattern: /\b(analytics|data analytics|business intelligence)\b/i, category: "analytics" },
+      { pattern: /\b(hr |human resources|recruitment|hiring)\b/i, category: "HR" },
+      { pattern: /\b(ecommerce|e-commerce|online store|shopify)\b/i, category: "ecommerce" },
+      { pattern: /\b(cms|content management|website builder)\b/i, category: "website builder" },
+      { pattern: /\b(helpdesk|help desk|customer support|ticketing)\b/i, category: "customer support" },
+      { pattern: /\b(marketing automation|marketing platform)\b/i, category: "marketing automation" },
+      { pattern: /\b(seo|search engine optimization)\b/i, category: "SEO" },
+      { pattern: /\b(cybersecurity|security platform|endpoint protection)\b/i, category: "cybersecurity" },
+      { pattern: /\b(ai |artificial intelligence|machine learning|llm)\b/i, category: "AI" },
+      { pattern: /\b(collaboration|team communication|messaging)\b/i, category: "team collaboration" },
+      { pattern: /\b(video conferencing|video call|meetings)\b/i, category: "video conferencing" },
+      { pattern: /\b(cloud storage|file sharing|file management)\b/i, category: "cloud storage" },
+      { pattern: /\b(payment|billing|subscription management)\b/i, category: "payments" },
+      { pattern: /\b(devops|ci\/cd|deployment|infrastructure)\b/i, category: "DevOps" },
+      { pattern: /\b(api |api management|developer platform)\b/i, category: "API platform" },
+    ];
+
+    for (const { pattern, category } of categoryPatterns) {
+      if (pattern.test(combined)) {
+        return { title, description, category };
+      }
+    }
+
+    return { title, description, category: null };
+  } catch {
+    return { title: "", description: "", category: null };
+  }
 }
 
 // Generate diverse queries optimized for each platform's strengths
-function generateQueries(domain: string): string[] {
+function generateQueries(domain: string, category: string | null): string[] {
   const brand = extractBrandName(domain);
   const year = new Date().getFullYear();
+
+  if (category) {
+    return [
+      // Perplexity — category-specific buyer query
+      `best ${category} tools ${year}`,
+      // Gemini — brand in category context
+      `${brand} vs alternatives for ${category}`,
+      // ChatGPT — recommendation with category context
+      `what ${category} software should I use instead of ${brand}`,
+    ];
+  }
 
   return [
     // Perplexity (web search + citations) — buyer comparison intent
     `best alternatives to ${brand} ${year}`,
     // Gemini (search grounding) — direct brand knowledge
-    `what is ${domain} and who are its main competitors`,
+    `what is ${domain} and what are the best alternatives`,
     // ChatGPT (knowledge base) — recommendation/evaluation intent
     `should I use ${brand} or is there a better option`,
   ];
@@ -245,7 +330,7 @@ interface PlatformResult {
  */
 function calculateVisibilityScore(
   results: PlatformResult[],
-  competitorCount: number,
+  otherBrandCount: number,
 ): {
   score: number;
   factors: {
@@ -254,7 +339,7 @@ function calculateVisibilityScore(
     brandEcho: number;           // 0-8: Brand name only (likely query echo)
     positionBonus: number;       // 0-12: Mentioned early (genuine only)
     mentionDepth: number;        // 0-10: Multiple genuine mentions
-    competitorDensity: number;   // 0-5: Market crowding
+    competitorDensity: number;   // 0-5: Market crowding (kept for API compat)
   };
   explanation: string;
 } {
@@ -297,8 +382,8 @@ function calculateVisibilityScore(
     .reduce((sum, r) => sum + r.mentionCount, 0);
   const mentionDepth = Math.round(10 * (1 - Math.exp(-genuineMentionCount / 3)));
 
-  // Tier 6: Competition density (0-5) — fewer competitors = less crowded
-  const competitorDensity = Math.round(5 * Math.exp(-competitorCount / 4));
+  // Tier 6: Market density (0-5) — fewer other brands = less crowded
+  const competitorDensity = Math.round(5 * Math.exp(-otherBrandCount / 4));
 
   const score = Math.min(100, citationPresence + domainVisibility + brandEcho + positionBonus + mentionDepth + competitorDensity);
 
@@ -316,8 +401,8 @@ function calculateVisibilityScore(
   if (citedCount === 0 && domainFoundCount === 0 && brandOnlyCount === 0) {
     parts.push(`Not found by any AI platform`);
   }
-  if (competitorCount > 0) {
-    parts.push(`${competitorCount} competitor${competitorCount !== 1 ? "s" : ""} recommended`);
+  if (otherBrandCount > 0) {
+    parts.push(`${otherBrandCount} other brand${otherBrandCount !== 1 ? "s" : ""} recommended`);
   }
 
   return {
@@ -356,8 +441,11 @@ export async function POST(request: NextRequest) {
     cleanDomain = cleanDomain.replace(/^www\./, "");
     cleanDomain = cleanDomain.split("/")[0];
 
-    const queries = generateQueries(cleanDomain);
     const brandName = extractBrandName(cleanDomain);
+
+    // Fetch site context for smarter queries (runs in parallel, 5s timeout)
+    const siteContext = await fetchSiteContext(cleanDomain);
+    const queries = generateQueries(cleanDomain, siteContext.category);
 
     const results: PlatformResult[] = [];
     const platformErrors: string[] = [];
@@ -439,21 +527,21 @@ export async function POST(request: NextRequest) {
       platformErrors.push("chatgpt");
     }
 
-    // Generate content preview in parallel if we have competitor data
-    const earlyCompetitors = results.flatMap(r => r.aiRecommends);
+    // Generate content preview in parallel if we have brand data
+    const detectedBrands = results.flatMap(r => r.aiRecommends);
     let contentPreview: ContentPreviewData | null = null;
-    if (earlyCompetitors.length > 0) {
+    if (detectedBrands.length > 0) {
       try {
-        contentPreview = await generateTeaserPreview(cleanDomain, earlyCompetitors, brandName);
+        contentPreview = await generateTeaserPreview(cleanDomain, detectedBrands, brandName);
       } catch {
         // Non-fatal
       }
     }
 
-    // Get unique competitors
-    const allCompetitors = new Set<string>();
-    results.forEach(r => r.aiRecommends.forEach(c => allCompetitors.add(c)));
-    const competitorsMentioned = Array.from(allCompetitors).slice(0, 10);
+    // Get unique brands AI recommends
+    const allBrands = new Set<string>();
+    results.forEach(r => r.aiRecommends.forEach(c => allBrands.add(c)));
+    const competitorsMentioned = Array.from(allBrands).slice(0, 10);
 
     // Calculate granular visibility score
     const scoring = calculateVisibilityScore(results, competitorsMentioned.length);

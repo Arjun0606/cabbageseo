@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     // Fetch pages
     const { data: pages, error } = await db
       .from("generated_pages")
-      .select("id, site_id, query, title, meta_description, word_count, ai_model, status, created_at, updated_at")
+      .select("id, site_id, query, title, meta_description, word_count, ai_model, status, created_at, updated_at, last_refreshed_at, refresh_count")
       .eq("site_id", siteId)
       .order("created_at", { ascending: false });
 
@@ -77,6 +77,8 @@ export async function GET(request: NextRequest) {
           status: string;
           created_at: string;
           updated_at: string;
+          last_refreshed_at: string | null;
+          refresh_count: number;
         }) => ({
           id: row.id,
           siteId: row.site_id,
@@ -88,6 +90,8 @@ export async function GET(request: NextRequest) {
           status: row.status,
           createdAt: row.created_at,
           updatedAt: row.updated_at,
+          lastRefreshedAt: row.last_refreshed_at,
+          refreshCount: row.refresh_count,
         })),
       },
     });

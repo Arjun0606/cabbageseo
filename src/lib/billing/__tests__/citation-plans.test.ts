@@ -64,7 +64,6 @@ describe("Limit escalation (higher tier >= lower tier)", () => {
   const limitKeys: (keyof typeof CITATION_PLANS.free.limits)[] = [
     "sites",
     "manualChecksPerDay",
-    "competitors",
     "historyDays",
     "queriesPerCheck",
     "customQueriesPerSite",
@@ -125,19 +124,17 @@ describe("Feature escalation (higher tier never loses a feature)", () => {
 // ============================================
 
 describe("Specific limit values per tier", () => {
-  it("Free: 1 site, 3 checks/day, 0 competitors", () => {
+  it("Free: 1 site, 3 checks/day", () => {
     const limits = CITATION_PLANS.free.limits;
     expect(limits.sites).toBe(1);
     expect(limits.manualChecksPerDay).toBe(3);
-    expect(limits.competitors).toBe(0);
   });
 
-  it("Scout: 1 site, unlimited checks, 3 competitors, 5 gap analyses, 5 pages", () => {
+  it("Scout: 1 site, unlimited checks, 5 gap analyses, 5 pages", () => {
     const limits = CITATION_PLANS.scout.limits;
     const intel = CITATION_PLANS.scout.intelligenceLimits;
     expect(limits.sites).toBe(1);
     expect(limits.manualChecksPerDay).toBe(-1);
-    expect(limits.competitors).toBe(3);
     expect(intel.gapAnalysesPerMonth).toBe(5);
     expect(intel.contentIdeasPerMonth).toBe(5);
     expect(intel.actionPlansPerMonth).toBe(0);
@@ -145,12 +142,11 @@ describe("Specific limit values per tier", () => {
     expect(intel.siteAuditsPerMonth).toBe(2);
   });
 
-  it("Command: 5 sites, unlimited checks, 10 competitors, unlimited gap analysis, 25 pages", () => {
+  it("Command: 5 sites, unlimited checks, unlimited gap analysis, 25 pages", () => {
     const limits = CITATION_PLANS.command.limits;
     const intel = CITATION_PLANS.command.intelligenceLimits;
     expect(limits.sites).toBe(5);
     expect(limits.manualChecksPerDay).toBe(-1);
-    expect(limits.competitors).toBe(10);
     expect(intel.gapAnalysesPerMonth).toBe(-1);
     expect(intel.contentIdeasPerMonth).toBe(-1);
     expect(intel.actionPlansPerMonth).toBe(4);
@@ -158,12 +154,11 @@ describe("Specific limit values per tier", () => {
     expect(intel.siteAuditsPerMonth).toBe(-1);
   });
 
-  it("Dominate: 25 sites, unlimited checks, 25 competitors, unlimited everything", () => {
+  it("Dominate: 25 sites, unlimited checks, unlimited everything", () => {
     const limits = CITATION_PLANS.dominate.limits;
     const intel = CITATION_PLANS.dominate.intelligenceLimits;
     expect(limits.sites).toBe(25);
     expect(limits.manualChecksPerDay).toBe(-1);
-    expect(limits.competitors).toBe(25);
     expect(intel.gapAnalysesPerMonth).toBe(-1);
     expect(intel.contentIdeasPerMonth).toBe(-1);
     expect(intel.actionPlansPerMonth).toBe(-1);
@@ -182,7 +177,6 @@ describe("Feature availability per tier", () => {
     expect(f.manualChecks).toBe(true);
     expect(f.geoScore).toBe(true);
     expect(f.dailyAutoCheck).toBe(false);
-    expect(f.competitorTracking).toBe(false);
     expect(f.citationGapAnalysis).toBe(false);
     expect(f.contentRecommendations).toBe(false);
     expect(f.weeklyActionPlan).toBe(false);
@@ -200,7 +194,6 @@ describe("Feature availability per tier", () => {
     expect(f.dailyAutoCheck).toBe(true);
     expect(f.emailAlerts).toBe(true);
     expect(f.weeklyReport).toBe(true);
-    expect(f.competitorTracking).toBe(true);
     expect(f.citationGapAnalysis).toBe(true);
     expect(f.citationGapFull).toBe(false);
     expect(f.contentRecommendations).toBe(true);
@@ -210,7 +203,6 @@ describe("Feature availability per tier", () => {
     expect(f.siteAudit).toBe(true);
     expect(f.siteAuditFull).toBe(false);
     expect(f.weeklyActionPlan).toBe(false);
-    expect(f.competitorDeepDive).toBe(false);
     expect(f.sprintFramework).toBe(true);
   });
 
@@ -220,7 +212,6 @@ describe("Feature availability per tier", () => {
     expect(f.citationGapFull).toBe(true);
     expect(f.contentRecsUnlimited).toBe(true);
     expect(f.weeklyActionPlan).toBe(true);
-    expect(f.competitorDeepDive).toBe(true);
     expect(f.pageGeneration).toBe(true);
     expect(f.schemaGeneration).toBe(true);
     expect(f.entityOptimization).toBe(true);
@@ -234,7 +225,6 @@ describe("Feature availability per tier", () => {
     expect(f.dailyAutoCheck).toBe(true);
     expect(f.emailAlerts).toBe(true);
     expect(f.weeklyReport).toBe(true);
-    expect(f.competitorTracking).toBe(true);
     expect(f.sprintFramework).toBe(true);
     expect(f.pageGeneration).toBe(true);
     expect(f.schemaGeneration).toBe(true);
@@ -282,7 +272,6 @@ describe("Helper functions", () => {
   it("getCitationPlanLimits returns limits object", () => {
     const limits = getCitationPlanLimits("scout");
     expect(limits.sites).toBe(1);
-    expect(limits.competitors).toBe(3);
   });
 
   it("getCitationPlanFeatures returns features object", () => {
@@ -315,7 +304,6 @@ describe("getIntelligenceFeatureSummary", () => {
     expect(summary.gapAnalysis).toBe("Not available");
     expect(summary.contentIdeas).toBe("Not available");
     expect(summary.actionPlan).toBe("Command only");
-    expect(summary.competitorDeepDive).toBe("Command only");
   });
 
   it("Scout: limited analyses", () => {
@@ -323,7 +311,6 @@ describe("getIntelligenceFeatureSummary", () => {
     expect(summary.gapAnalysis).toBe("5 analyses/month");
     expect(summary.contentIdeas).toBe("5 ideas/month");
     expect(summary.actionPlan).toBe("Command only");
-    expect(summary.competitorDeepDive).toBe("Command only");
   });
 
   it("Command: unlimited + full features", () => {
@@ -331,7 +318,6 @@ describe("getIntelligenceFeatureSummary", () => {
     expect(summary.gapAnalysis).toBe("Unlimited per-query analysis");
     expect(summary.contentIdeas).toBe("Unlimited ideas");
     expect(summary.actionPlan).toBe("Weekly Action Playbook");
-    expect(summary.competitorDeepDive).toBe("Full competitor breakdown");
   });
 
   it("Dominate: unlimited + full features", () => {
@@ -339,6 +325,5 @@ describe("getIntelligenceFeatureSummary", () => {
     expect(summary.gapAnalysis).toBe("Unlimited per-query analysis");
     expect(summary.contentIdeas).toBe("Unlimited ideas");
     expect(summary.actionPlan).toBe("Weekly Action Playbook");
-    expect(summary.competitorDeepDive).toBe("Full competitor breakdown");
   });
 });

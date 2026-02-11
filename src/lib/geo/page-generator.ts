@@ -1,9 +1,9 @@
 /**
  * Fix Page Generator
  *
- * Generates comparison pages, category explainers, and FAQs that reinforce authority.
- * Uses existing citation data, gap analysis, and competitor intelligence
- * to create deeply contextual pages that support trust signals AI looks for.
+ * Generates authority-building pages, category explainers, and FAQs.
+ * Uses existing citation data and gap analysis to create deeply contextual
+ * pages that make your site more citable by AI platforms.
  *
  * Cost: ~$0.02-0.04 per generation (gpt-5.2)
  */
@@ -19,7 +19,6 @@ export interface GeneratedPageResult {
   body: string; // Full markdown
   schemaMarkup: Record<string, unknown>;
   targetEntities: string[];
-  competitorsAnalyzed: string[];
   wordCount: number;
 }
 
@@ -67,10 +66,10 @@ async function gatherContext(siteId: string, query: string) {
   const supabase = createClient(supabaseUrl, serviceKey);
 
   // Fetch all context data in parallel
-  const [siteResult, citationsResult, competitorsResult, listingsResult] = await Promise.all([
+  const [siteResult, citationsResult, listingsResult] = await Promise.all([
     supabase
       .from("sites")
-      .select("domain, category, name")
+      .select("domain, category, name, main_topics")
       .eq("id", siteId)
       .single(),
     supabase
@@ -79,12 +78,6 @@ async function gatherContext(siteId: string, query: string) {
       .eq("site_id", siteId)
       .order("cited_at", { ascending: false })
       .limit(20),
-    supabase
-      .from("competitors")
-      .select("domain, total_citations, citations_this_week")
-      .eq("site_id", siteId)
-      .order("total_citations", { ascending: false })
-      .limit(10),
     supabase
       .from("source_listings")
       .select("source_domain, source_name, status")
@@ -95,7 +88,6 @@ async function gatherContext(siteId: string, query: string) {
   if (!site) throw new Error("Site not found");
 
   const citations = citationsResult.data || [];
-  const competitors = competitorsResult.data || [];
   const listings = listingsResult.data || [];
 
   // Find citations related to this query
@@ -116,7 +108,6 @@ async function gatherContext(siteId: string, query: string) {
     site,
     citations,
     queryCitations,
-    competitors,
     verifiedSources,
     missingSources,
   };
@@ -132,10 +123,6 @@ export async function generatePage(
   organizationId: string
 ): Promise<GeneratedPageResult> {
   const ctx = await gatherContext(siteId, query);
-
-  const competitorDomains = ctx.competitors.map(
-    (c: { domain: string }) => c.domain
-  );
 
   const systemPrompt = `You are an AI Search Optimization content strategist. Your job is to create pages that AI platforms (ChatGPT, Perplexity, Google AI) will cite when users ask relevant questions.
 
@@ -157,18 +144,20 @@ SITE CONTEXT:
 - Domain: ${ctx.site.domain}
 - Category: ${ctx.site.category || "General"}
 - Name: ${ctx.site.name || ctx.site.domain}
+- Topics: ${((ctx.site as Record<string, unknown>).main_topics as string[] || []).join(", ") || "General"}
 
-COMPETITIVE LANDSCAPE:
-- Competitors currently being cited by AI: ${competitorDomains.length > 0 ? competitorDomains.join(", ") : "Unknown"}
-- ${ctx.competitors.length > 0 ? ctx.competitors.map((c: { domain: string; total_citations: number }) => `${c.domain}: ${c.total_citations} total citations`).join(", ") : "No competitor data yet"}
-
-CITATION DATA:
+EXISTING CITATION DATA:
 ${ctx.queryCitations.length > 0
     ? ctx.queryCitations.map((c: { platform: string; snippet: string }) =>
         `- ${c.platform}: "${(c.snippet || "").slice(0, 200)}"`
       ).join("\n")
     : "No citations found for this specific query yet."
   }
+
+ALL RECENT CITATIONS (for context on what AI already cites this site for):
+${ctx.citations.slice(0, 10).map((c: { platform: string; query: string; confidence: string }) =>
+    `- "${c.query}" on ${c.platform} (${c.confidence})`
+  ).join("\n") || "No citations yet"}
 
 TRUST SOURCE PRESENCE:
 - Listed on: ${ctx.verifiedSources.length > 0 ? ctx.verifiedSources.join(", ") : "None yet"}
@@ -182,7 +171,8 @@ INSTRUCTIONS:
 5. Add 4-6 FAQ questions with clear answers
 6. Mention specific entities, statistics, and quotable facts
 7. Make the content genuinely useful, not just SEO-optimized
-8. Generate a Schema.org JSON-LD markup (FAQPage type) for the FAQ section
+8. Focus on establishing the site's authority and expertise in this topic
+9. Generate a Schema.org JSON-LD markup (FAQPage type) for the FAQ section
 
 Respond in this exact JSON format (no markdown code fences):
 {
@@ -226,7 +216,6 @@ Respond in this exact JSON format (no markdown code fences):
       body,
       schemaMarkup: parsed.schemaMarkup || {},
       targetEntities: parsed.targetEntities || [],
-      competitorsAnalyzed: competitorDomains,
       wordCount,
     };
   } catch {

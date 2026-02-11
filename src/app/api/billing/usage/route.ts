@@ -34,8 +34,8 @@ export async function GET() {
       const limits = getCitationPlanLimits("free");
       return NextResponse.json({
         data: {
-          usage: { checksUsed: 0, sitesUsed: 0, competitorsUsed: 0 },
-          limits: { checks: limits.manualChecksPerDay === -1 ? 999999 : limits.manualChecksPerDay, checksPerDay: limits.manualChecksPerDay, sites: limits.sites, competitors: limits.competitors },
+          usage: { checksUsed: 0, sitesUsed: 0 },
+          limits: { checks: limits.manualChecksPerDay === -1 ? 999999 : limits.manualChecksPerDay, checksPerDay: limits.manualChecksPerDay, sites: limits.sites },
         },
       });
     }
@@ -53,13 +53,13 @@ export async function GET() {
     // Get current period usage
     // Free tier uses daily period, paid tiers use monthly
     const isFreePlan = plan === "free";
-    const period = isFreePlan 
+    const period = isFreePlan
       ? new Date().toISOString().split('T')[0] // Daily for free tier
       : new Date().toISOString().slice(0, 7);  // Monthly for paid tiers
-    
+
     const { data: usageData } = await db
       .from("usage")
-      .select("checks_used, sites_used, competitors_used")
+      .select("checks_used, sites_used")
       .eq("organization_id", orgId)
       .eq("period", period)
       .maybeSingle();
@@ -70,41 +70,22 @@ export async function GET() {
       .select("id", { count: "exact", head: true })
       .eq("organization_id", orgId);
 
-    // Get max competitors per site (limit is per-site, not org-wide)
-    const { data: orgSites } = await db
-      .from("sites")
-      .select("id")
-      .eq("organization_id", orgId);
-
-    let competitorsCount = 0;
-    if (orgSites && orgSites.length > 0) {
-      for (const s of orgSites) {
-        const { count } = await db
-          .from("competitors")
-          .select("id", { count: "exact", head: true })
-          .eq("site_id", s.id);
-        competitorsCount = Math.max(competitorsCount, count || 0);
-      }
-    }
-
     // Calculate checks limit based on plan
     // Free: daily limit (3/day), Paid: unlimited (999999)
-    const checksLimit = limits.manualChecksPerDay === -1 
+    const checksLimit = limits.manualChecksPerDay === -1
       ? 999999  // Unlimited for paid plans
       : limits.manualChecksPerDay; // Daily limit for free tier
-    
+
     return NextResponse.json({
       data: {
         usage: {
           checksUsed: usageData?.checks_used || 0,
           sitesUsed: sitesCount || 0,
-          competitorsUsed: competitorsCount,
         },
         limits: {
           checks: checksLimit, // Daily limit for free, unlimited for paid
           checksPerDay: limits.manualChecksPerDay,
           sites: limits.sites,
-          competitors: limits.competitors,
         },
       },
     });

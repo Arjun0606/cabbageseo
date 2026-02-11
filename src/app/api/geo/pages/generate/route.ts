@@ -2,7 +2,7 @@
  * POST /api/geo/pages/generate
  *
  * Generate a support page for a specific query.
- * Uses citation data, competitor intelligence, and gap analysis
+ * Uses citation data and gap analysis
  * to produce comparison pages, explainers, and FAQs that reinforce authority.
  */
 
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     // Subscription check for free users
     if (planId === "free") {
-      const access = canAccessProduct("free", null, currentUser.email);
+      const access = canAccessProduct("free", currentUser.email);
       if (!access.allowed) {
         return NextResponse.json({ error: access.reason, code: "SUBSCRIPTION_REQUIRED", upgradeRequired: true }, { status: 403 });
       }
@@ -106,46 +106,59 @@ export async function POST(request: NextRequest) {
       }, { status: 403 });
     }
 
-    // Generate the page
-    const startTime = Date.now();
-    const result = await generatePage(siteId, query, organizationId);
-    const durationMs = Date.now() - startTime;
-
-    // Save to database
-    const { data: savedPage, error: saveError } = await db
-      .from("generated_pages")
-      .insert({
-        site_id: siteId,
-        query,
-        title: result.title,
-        meta_description: result.metaDescription,
-        body: result.body,
-        schema_markup: result.schemaMarkup,
-        target_entities: result.targetEntities,
-        competitors_analyzed: result.competitorsAnalyzed,
-        word_count: result.wordCount,
-        ai_model: "gpt-5.2",
-        status: "draft",
-      })
-      .select("*")
-      .single();
-
-    if (saveError) {
-      console.error("[Pages Generate] Save error:", saveError);
-      return NextResponse.json({ error: "Failed to save generated page" }, { status: 500 });
-    }
-
-    // Increment usage
+    // Increment usage FIRST to prevent race condition (two concurrent requests
+    // both passing the limit check before either increments)
     await incrementUsage(db, organizationId, currentMonth);
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        page: formatPage(savedPage),
-        generationTimeMs: durationMs,
-        remaining: canUse.remaining === -1 ? "unlimited" : (canUse.remaining || 0) - 1,
-      },
-    });
+    let result;
+    let savedPage;
+    try {
+      // Generate the page
+      const startTime = Date.now();
+      result = await generatePage(siteId, query, organizationId);
+      const durationMs = Date.now() - startTime;
+
+      // Save to database
+      const { data: pageData, error: saveError } = await db
+        .from("generated_pages")
+        .insert({
+          site_id: siteId,
+          query,
+          title: result.title,
+          meta_description: result.metaDescription,
+          body: result.body,
+          schema_markup: result.schemaMarkup,
+          target_entities: result.targetEntities,
+          competitors_analyzed: [],
+          word_count: result.wordCount,
+          ai_model: "gpt-5.2",
+          status: "draft",
+        })
+        .select("*")
+        .single();
+
+      if (saveError) {
+        console.error("[Pages Generate] Save error:", saveError);
+        // Roll back usage increment on failure
+        await decrementUsage(db, organizationId, currentMonth);
+        return NextResponse.json({ error: "Failed to save generated page" }, { status: 500 });
+      }
+
+      savedPage = pageData;
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          page: formatPage(savedPage),
+          generationTimeMs: durationMs,
+          remaining: canUse.remaining === -1 ? "unlimited" : (canUse.remaining || 0) - 1,
+        },
+      });
+    } catch (genError) {
+      // Roll back usage increment if generation or save failed
+      await decrementUsage(db, organizationId, currentMonth).catch(() => {});
+      throw genError;
+    }
   } catch (error) {
     console.error("[/api/geo/pages/generate POST] Error:", error);
     return NextResponse.json({
@@ -179,8 +192,27 @@ async function incrementUsage(client: any, organizationId: string, period: strin
         pages_generated: 1,
         checks_used: 0,
         sites_used: 0,
-        competitors_used: 0,
       });
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function decrementUsage(client: any, organizationId: string, period: string) {
+  const { data: existing } = await client
+    .from("usage")
+    .select("id, pages_generated")
+    .eq("organization_id", organizationId)
+    .eq("period", period)
+    .maybeSingle();
+
+  if (existing) {
+    const current = (existing as Record<string, number>).pages_generated || 0;
+    if (current > 0) {
+      await client
+        .from("usage")
+        .update({ pages_generated: current - 1, updated_at: new Date().toISOString() })
+        .eq("id", existing.id);
+    }
   }
 }
 
@@ -195,7 +227,6 @@ function formatPage(row: any) {
     body: row.body,
     schemaMarkup: row.schema_markup,
     targetEntities: row.target_entities || [],
-    competitorsAnalyzed: row.competitors_analyzed || [],
     wordCount: row.word_count,
     aiModel: row.ai_model,
     status: row.status,

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Users,
   Bell,
   Brain,
   Search,
@@ -27,43 +26,36 @@ const capabilities: Feature[] = [
   {
     name: "AI Citation Scanning",
     description:
-      "Real API calls to ChatGPT, Perplexity & Google AI with actual buyer questions. Not synthetic data — actual AI responses recorded and analyzed.",
+      "Find out exactly which buyer questions lead to your competitors, not you. Real queries to ChatGPT, Perplexity & Google AI \u2014 actual AI responses, not estimations.",
     icon: <Search className="w-5 h-5" />,
     plan: "all",
   },
   {
     name: "Gap Analysis",
     description:
-      "Per-query breakdown of which competitors AI recommends and why. See exactly what they have that you don\u2019t.",
+      "See every query where AI sends buyers elsewhere and understand why. Know exactly what\u2019s missing so you can close each gap systematically.",
     icon: <Brain className="w-5 h-5" />,
     plan: "scout",
   },
   {
     name: "Fix Pages",
     description:
-      "When AI recommends competitors instead of you, fix pages address the gap. Targeted comparison pages, explainers, and FAQs built from your actual citation data.",
+      "Turn every visibility gap into a targeted page that gets AI to recommend you. Comparison pages, explainers, and FAQs built from your actual data.",
     icon: <FileText className="w-5 h-5" />,
     plan: "scout",
   },
   {
     name: "30-Day Sprint",
     description:
-      "A structured 4-week program of prioritized actions. Week-by-week tasks with clear instructions — not a dashboard you stare at.",
+      "Go from invisible to recommended in 30 days. A structured week-by-week program of prioritized actions with clear instructions \u2014 not a dashboard to stare at.",
     icon: <Timer className="w-5 h-5" />,
     plan: "scout",
   },
   {
     name: "Automated Monitoring",
     description:
-      "Checks run on a schedule based on your plan. If your score drops, you get email + Slack alerts instantly.",
+      "Never be caught off guard. Daily or hourly scans detect the moment AI shifts. Instant email + Slack alerts if your visibility drops so you can act fast.",
     icon: <Bell className="w-5 h-5" />,
-    plan: "scout",
-  },
-  {
-    name: "Competitor Intelligence",
-    description:
-      "Track competitors across plans (3 on Scout, 10 on Command, 25 on Dominate). See who AI recommends, their trust sources, and where they\u2019re gaining ground.",
-    icon: <Users className="w-5 h-5" />,
     plan: "scout",
   },
 ];

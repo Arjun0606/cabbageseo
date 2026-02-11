@@ -19,7 +19,6 @@ import {
   Hash,
   Clock,
   Tag,
-  Users,
 } from "lucide-react";
 
 interface GeneratedPage {
@@ -31,12 +30,13 @@ interface GeneratedPage {
   body: string;
   schemaMarkup: Record<string, unknown> | null;
   targetEntities: string[];
-  competitorsAnalyzed: string[];
   wordCount: number | null;
   aiModel: string | null;
   status: string;
   createdAt: string;
   updatedAt: string;
+  lastRefreshedAt: string | null;
+  refreshCount: number;
 }
 
 type CopyState = "idle" | "copied";
@@ -102,6 +102,7 @@ export default function PageDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -185,6 +186,27 @@ export default function PageDetailPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    if (!page || page.status !== "published") return;
+    setRefreshing(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/geo/pages/${pageId}/refresh`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok && data.data?.page) {
+        setPage(data.data.page);
+      } else {
+        setError(data.error || "Failed to refresh page");
+      }
+    } catch {
+      setError("Failed to refresh page");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -220,6 +242,21 @@ export default function PageDetailPage() {
         </Link>
 
         <div className="flex items-center gap-2">
+          {page.status === "published" && (
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-2 px-3 py-1.5 text-emerald-400 hover:text-emerald-300 text-sm transition-colors disabled:opacity-50"
+              title="Refresh content in-place with latest competitive data"
+            >
+              {refreshing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+              {refreshing ? "Refreshing..." : "Refresh"}
+            </button>
+          )}
           <button
             onClick={handleRegenerate}
             disabled={regenerating}
@@ -253,7 +290,7 @@ export default function PageDetailPage() {
           <p className="text-zinc-400 text-sm">{page.metaDescription}</p>
         )}
 
-        <div className="flex items-center gap-4 mt-4 text-xs text-zinc-500">
+        <div className="flex items-center gap-4 mt-4 text-xs text-zinc-500 flex-wrap">
           {page.wordCount && (
             <span className="flex items-center gap-1">
               <Hash className="w-3 h-3" />
@@ -271,6 +308,15 @@ export default function PageDetailPage() {
           }`}>
             {page.status}
           </span>
+          {page.status === "published" && (
+            <span className="flex items-center gap-1">
+              <RefreshCw className="w-3 h-3" />
+              {page.lastRefreshedAt
+                ? `Refreshed ${new Date(page.lastRefreshedAt).toLocaleDateString()}`
+                : "Never refreshed"}
+              {page.refreshCount > 0 && ` (${page.refreshCount}x)`}
+            </span>
+          )}
         </div>
       </div>
 
@@ -324,7 +370,8 @@ export default function PageDetailPage() {
               <h3 className="text-white font-semibold mb-1">Published on your site</h3>
               <p className="text-zinc-400 text-sm mb-3">
                 AI models typically pick up new content within 1-2 weeks.
-                Run a follow-up check to see if AI starts recommending you for &ldquo;{page.query}&rdquo;.
+                This page auto-refreshes on your plan&apos;s schedule to stay competitive.
+                You can also refresh manually anytime using the button above.
               </p>
               <Link
                 href="/dashboard"
@@ -390,27 +437,6 @@ export default function PageDetailPage() {
           </div>
         )}
 
-        {/* Competitors analyzed */}
-        {page.competitorsAnalyzed.length > 0 && (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Users className="w-4 h-4 text-zinc-400" />
-              <h3 className="text-sm font-medium text-white">
-                Competitors Analyzed
-              </h3>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {page.competitorsAnalyzed.map((comp, i) => (
-                <span
-                  key={i}
-                  className="px-2.5 py-1 bg-zinc-800 text-zinc-400 text-xs rounded-lg"
-                >
-                  {comp}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Schema markup preview */}

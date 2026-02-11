@@ -193,70 +193,10 @@ export const dailyCitationCheck = inngest.createFunction(
       await step.sleep(`rate-limit-delay-${site.id}`, "2s");
     }
 
-    // ============================================
-    // COMPETITOR CHANGE DETECTION
-    // After checking all sites, look for competitor changes
-    // and emit events for sites whose competitors gained citations
-    // ============================================
-    const competitorAlerts = await step.run("detect-competitor-changes", async () => {
-      const alerts: Array<{ siteId: string; domain: string; orgId: string; competitorDomain: string; newCitations: number; change: number }> = [];
-
-      for (const site of sites) {
-        // Get competitors for this site
-        const { data: competitors } = await supabase
-          .from("competitors")
-          .select("id, domain, total_citations, citations_change")
-          .eq("site_id", site.id);
-
-        const competitorList = (competitors || []) as Array<{
-          id: string;
-          domain: string;
-          total_citations: number | null;
-          citations_change: number | null;
-        }>;
-
-        for (const comp of competitorList) {
-          const change = comp.citations_change || 0;
-          if (change > 0) {
-            alerts.push({
-              siteId: site.id,
-              domain: site.domain,
-              orgId: site.organization_id,
-              competitorDomain: comp.domain,
-              newCitations: comp.total_citations || 0,
-              change,
-            });
-          }
-        }
-      }
-
-      return alerts;
-    });
-
-    // Send competitor change events
-    for (const alert of competitorAlerts) {
-      await step.run(`competitor-alert-${alert.siteId}-${alert.competitorDomain}`, async () => {
-        await inngest.send({
-          name: "competitor/change.detected",
-          data: {
-            siteId: alert.siteId,
-            domain: alert.domain,
-            organizationId: alert.orgId,
-            competitorDomain: alert.competitorDomain,
-            newCitations: alert.newCitations,
-            change: alert.change,
-          },
-        });
-      });
-
-      await step.sleep(`competitor-alert-delay-${alert.competitorDomain}`, "500ms");
-    }
-
     return {
       checked: sites.length,
       successful: results.filter(r => r.success).length,
       totalNewCitations,
-      competitorAlertsSent: competitorAlerts.length,
       results,
     };
   }
@@ -520,19 +460,6 @@ export const weeklyReport = inngest.createFunction(
         const momentumScore = primarySite.momentum_score || 0;
         const momentumChange = primarySite.momentum_change || 0;
 
-        // Get top competitor move
-        const { data: topCompetitors } = await supabase
-          .from("competitors")
-          .select("domain, citations_change")
-          .eq("site_id", primarySite.id)
-          .order("citations_change", { ascending: false })
-          .limit(1);
-
-        const topCompetitor = (topCompetitors || [])[0] as { domain: string; citations_change: number | null } | undefined;
-        const competitorAlert = topCompetitor && (topCompetitor.citations_change || 0) > 0
-          ? `${topCompetitor.domain} gained ${topCompetitor.citations_change} citations`
-          : null;
-
         // Get next action (non-fatal)
         let nextActionTitle: string | null = null;
         try {
@@ -611,7 +538,7 @@ export const weeklyReport = inngest.createFunction(
           // Non-fatal
         }
 
-        // Send email - enhanced with momentum score, competitor, next action, AI quotes
+        // Send email - enhanced with momentum score, next action, AI quotes
         if (!process.env.RESEND_API_KEY) {
           console.error("[Weekly Report] RESEND_API_KEY not configured, skipping email");
           return;
@@ -652,7 +579,7 @@ export const weeklyReport = inngest.createFunction(
               ${isLosing ? `
                 <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: center;">
                   <p style="margin: 0; color: #ef4444; font-size: 14px;">
-                    You're losing citations. Competitors are gaining ground.
+                    Your AI visibility dropped this week. Time to take action.
                   </p>
                 </div>
               ` : ''}
@@ -672,14 +599,6 @@ export const weeklyReport = inngest.createFunction(
                   <div style="font-size: 12px; color: #71717a;">Change</div>
                 </div>
               </div>
-
-              ${competitorAlert ? `
-              <!-- Competitor Alert -->
-              <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-                <div style="font-size: 12px; color: #ef4444; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Competitor Alert</div>
-                <p style="margin: 0; color: #fca5a5; font-size: 14px;">${competitorAlert}</p>
-              </div>
-              ` : ''}
 
               ${nextActionTitle ? `
               <!-- #1 Action This Week -->
@@ -911,7 +830,7 @@ export const sendVisibilityDropAlert = inngest.createFunction(
             ${lostQueriesHtml}
 
             <p style="color: #a1a1aa; line-height: 1.6; text-align: center;">
-              AI platforms are recommending your competitors instead. Check your dashboard to see what changed and take action.
+              Your AI visibility score dropped. Check your dashboard to see what changed and take action.
             </p>
 
             <div style="text-align: center; margin: 30px 0;">
@@ -1095,7 +1014,7 @@ export const weeklyTeaserRescan = inngest.createFunction(
 
                   <div style="text-align: center; padding-top: 16px; border-top: 1px solid #27272a;">
                     <p style="color: #71717a; font-size: 13px; margin: 0 0 8px;">
-                      Want daily monitoring, competitor tracking, and an action plan?
+                      Want daily monitoring, AI intelligence, and an action plan?
                     </p>
                     <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://cabbageseo.com"}/signup?domain=${encodeURIComponent(domain)}" style="color: #10b981; font-size: 13px; text-decoration: none; font-weight: 600;">
                       Sign up &amp; subscribe →
@@ -1126,6 +1045,44 @@ export const weeklyTeaserRescan = inngest.createFunction(
 );
 
 // Export all functions
+// ============================================
+// POST-PUBLISH RECHECK
+// When a user publishes a fix page, recheck
+// that specific query 48h later to see if
+// visibility improved.
+// ============================================
+export const postPublishRecheck = inngest.createFunction(
+  {
+    id: "post-publish-recheck",
+    name: "Post-Publish Recheck (48h)",
+    retries: 2,
+  },
+  { event: "page/published" },
+  async ({ event, step }) => {
+    const { pageId, siteId, domain, query } = event.data;
+
+    // Wait 48 hours for AI platforms to re-index
+    await step.sleep("wait-for-reindex", "48h");
+
+    // Run a full site recheck (updates site scores, citations, and triggers auto-gen)
+    const result = await step.run("recheck-query", async () => {
+      const checkResult = await runCitationCheck(siteId, domain);
+
+      return {
+        success: checkResult.success,
+        citedCount: checkResult.citedCount,
+      };
+    });
+
+    return {
+      pageId,
+      siteId,
+      query,
+      recheckResult: result,
+    };
+  }
+);
+
 export const citationFunctions = [
   dailyCitationCheck,
   hourlyCitationCheck,
@@ -1134,5 +1091,6 @@ export const citationFunctions = [
   weeklyReport,
   resetWeeklyCounts,
   weeklyTeaserRescan,
+  postPublishRecheck,
 ];
 

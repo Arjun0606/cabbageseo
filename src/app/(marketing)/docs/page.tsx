@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Eye,
-  Target,
   BarChart3,
   CheckCircle2,
   Globe,
@@ -30,14 +29,14 @@ const sections = [
     items: [
       {
         title: "What is AI Visibility Intelligence?",
-        content: `CabbageSEO is a GEO (Generative Engine Optimization) platform that shows you who AI recommends when people search for products like yours. When someone asks ChatGPT "what's the best CRM?" or asks Perplexity for "project management tool alternatives" — AI picks winners. We show you if you're one of them, or if your competitors are getting all the recommendations.`,
+        content: `CabbageSEO is a GEO (Generative Engine Optimization) platform that shows you who AI recommends when people search for products like yours. When someone asks ChatGPT "what's the best CRM?" or asks Perplexity for "project management tool alternatives" — AI picks winners. We show you if you're one of them, or if other brands are getting all the recommendations.`,
       },
       {
         title: "How does it work?",
         content: `1. Enter your website domain on the homepage
 2. We query real AI platforms (ChatGPT, Perplexity, Google AI) with relevant questions
 3. We show you who AI recommends and whether you're mentioned
-4. You see exactly which competitors are winning and why`,
+4. You see exactly which brands are winning and why`,
       },
       {
         title: "Supported AI Platforms",
@@ -58,7 +57,7 @@ All results come from actual API calls. No fake data or estimates.`,
         title: "Running an AI Check",
         content: `From your dashboard, click "Run Check" to query AI platforms instantly. We'll show you:
 • Which queries you're winning (AI recommends you)
-• Which queries you're losing (AI recommends competitors)
+• Which queries you're losing (AI recommends others instead)
 • Who AI recommends instead of you
 
 The check queries ChatGPT, Perplexity, and Google AI with relevant questions about your product category. Results appear in real-time.`,
@@ -67,7 +66,7 @@ The check queries ChatGPT, Perplexity, and Google AI with relevant questions abo
         title: "Understanding Your Results",
         content: `Each check shows:
 • **AI Mentions Found** — How many times AI recommended you across all queries
-• **AI Mention Share** — What % of tracked queries mention you vs competitors
+• **AI Mention Share** — What % of tracked queries mention you vs other brands
 • **Wins** — Visual breakdown of queries where you were mentioned
 
 All numbers come from real AI responses. Citations in your dashboard represent actual mentions from AI platforms. If you haven't run any checks yet, you'll see a prompt to run your first check.`,
@@ -89,18 +88,18 @@ All numbers come from real AI responses. Citations in your dashboard represent a
     items: [
       {
         title: "What is the Trust Map?",
-        content: `AI platforms don't just make up recommendations — they pull from trusted sources like G2, Capterra, Product Hunt, and Reddit. The Trust Map shows you which sources AI uses, and highlights where your competitors are listed but you're not.`,
+        content: `AI platforms don't just make up recommendations — they pull from trusted sources like G2, Capterra, Product Hunt, and Reddit. The Trust Map shows you which sources AI uses, and highlights where other brands are listed but you're not.`,
       },
       {
         title: "How to use it",
         content: `Navigate to the Trust Map from your dashboard sidebar. You'll see:
 • Critical sources where you must be listed
-• Which competitors are on each source
+• Which brands are on each source
 • Whether you're currently listed or missing`,
       },
       {
         title: "Why it matters",
-        content: `If your competitors are on G2 with 500 reviews and you're not listed at all, AI will recommend them over you. The Trust Map shows you exactly which gaps to fill to start getting AI recommendations.`,
+        content: `If other brands are on G2 with 500 reviews and you're not listed at all, AI will recommend them over you. The Trust Map shows you exactly which gaps to fill to start getting AI recommendations.`,
       },
     ],
   },
@@ -111,14 +110,14 @@ All numbers come from real AI responses. Citations in your dashboard represent a
     items: [
       {
         title: "Understanding why you lose",
-        content: `For any query where AI recommends competitors instead of you, the gap analysis shows:
-• Which competitors AI recommended
+        content: `For any query where AI recommends other brands instead of you, the gap analysis shows:
+• Which brands AI recommended
 • Which trusted sources they appear on (that you don't)
 • Specific content advantages they have
 • Missing elements in your content
-• Authority gaps compared to competitors
+• Authority gaps you need to close
 
-**Note**: This feature requires running a check first. The analysis uses real AI responses and competitor data.`,
+**Note**: This feature requires running a check first. The analysis uses real AI responses and citation data.`,
       },
       {
         title: "Content fix suggestions",
@@ -145,7 +144,7 @@ This is your blueprint to win specific queries.`,
         title: "What are fix pages?",
         content: `Fix pages are comparison pages, category explainers, and FAQs designed to reinforce your credibility with AI systems. They work alongside your trust signals — G2 listings, Capterra reviews, Reddit mentions — by giving AI additional context to validate its recommendations.
 
-Pages are generated using your citation data, competitor intelligence, and gap analysis to create deeply relevant content that generic AI tools can't match.
+Pages are generated using your citation data and gap analysis to create deeply relevant content that generic AI tools can't match.
 
 Fix pages reinforce third-party trust signals (reviews, listings, mentions) so AI platforms can confidently cite you — they don't cause recommendations on their own.`,
       },
@@ -202,55 +201,21 @@ Sprints are available on Scout, Command, and Dominate plans.`,
     items: [
       {
         title: "What is your Momentum Score?",
-        content: `Your momentum score is a single number (0-100) that tracks your AI visibility progress. It updates weekly and shows whether you're gaining or losing ground against competitors.
+        content: `Your momentum score is a single number (0-100) that tracks your AI visibility progress. It updates weekly and shows whether you're gaining or losing ground in AI search.
 
 The score combines:
 • AI citation frequency across tracked queries
 • Citation quality (direct recommendation vs mention)
 • Week-over-week change
-• Competitor comparison`,
+• Market position trends`,
       },
       {
         title: "Reading your momentum",
         content: `• **Rising score**: You're gaining AI visibility — keep doing what you're doing
 • **Flat score**: No change — time to take action on your sprint items
-• **Falling score**: Competitors are gaining ground — check alerts for what changed
+• **Falling score**: Other brands are gaining ground — check alerts for what changed
 
 The momentum score is available on Scout, Command, and Dominate plans.`,
-      },
-    ],
-  },
-  {
-    id: "competitors",
-    title: "Competitor Tracking",
-    icon: Target,
-    items: [
-      {
-        title: "Tracking competitors",
-        content: `Add competitors to see who AI recommends side by side. Track their citation changes, content strategies, and trust sources.
-
-• **Scout**: Track up to 3 competitors
-• **Command**: Track up to 10 competitors with deep dive analysis
-• **Dominate**: Track up to 25 competitors with real-time alerts`,
-      },
-      {
-        title: "Competitor Deep Dive",
-        content: `Available on Command and Dominate plans. Full competitor analysis showing:
-• Why AI recommends them
-• Their trust sources and listings
-• Content strategy patterns
-• Authority signals
-
-Use this intelligence to build a targeted strategy for overtaking specific competitors.`,
-      },
-      {
-        title: "Competitor Alerts",
-        content: `Get notified when competitors gain or lose AI citations:
-• **Scout**: Weekly email summary
-• **Command**: Email alerts within 24 hours
-• **Dominate**: Priority email alerts
-
-Never be surprised by a competitor's move.`,
       },
     ],
   },
@@ -286,8 +251,8 @@ Drops are detected during automated checks. The alert includes specific queries 
         title: "Email Notifications",
         content: `Manage your email preferences in Settings > Notifications:
 • **Citation Alerts** — when new AI citations are found
-• **Competitor Alerts** — when competitors gain citations
-• **Weekly Report** — Monday morning digest with score, wins, competitor moves, and top action
+• **Visibility Drop Alerts** — when your AI visibility score decreases
+• **Weekly Report** — Monday morning digest with score, wins, and top action
 
 All email notifications can be toggled on/off individually.`,
       },
@@ -305,7 +270,7 @@ All email notifications can be toggled on/off individually.`,
 **What's tracked:**
 • Overall visibility score (0-100)
 • Queries won (AI recommends you)
-• Queries lost (AI recommends competitors)
+• Queries lost (AI recommends others instead)
 
 **History limits by plan:**
 • Scout: 30 days
@@ -471,10 +436,10 @@ Automated checks happen in the background. You'll receive email + Slack alerts w
 
 After signing up, you can:
 • Add multiple sites (up to plan limit)
-• Track competitors (Scout: 3, Command: 10, Dominate: 25)
+• Run gap analyses and generate fix pages
 • Set up automated monitoring
 
-Run a free scan on the homepage to see where you stand. Subscribe to unlock the full dashboard, automated monitoring, and competitor tracking.`,
+Run a free scan on the homepage to see where you stand. Subscribe to unlock the full dashboard, automated monitoring, and fix pages.`,
       },
       {
         title: "What makes AI recommend a product?",

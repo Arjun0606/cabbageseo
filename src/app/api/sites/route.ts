@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCitationPlanLimits, canAddSite, canAccessProduct } from "@/lib/billing/citation-plans";
 import { getUser } from "@/lib/api/get-user";
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
 
     // Check if free user needs to subscribe
     if (plan === "free") {
-      const access = canAccessProduct(plan, null, currentUser.email || null);
+      const access = canAccessProduct(plan, currentUser.email || null);
       if (!access.allowed) {
         return NextResponse.json({
           error: access.reason || "A subscription is required.",
@@ -221,14 +221,14 @@ export async function POST(request: NextRequest) {
 // DELETE - Remove site
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    if (!supabase) {
-      return NextResponse.json({ error: "Not configured" }, { status: 500 });
+    const currentUser = await getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const orgId = currentUser.organizationId;
+    if (!orgId) {
+      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -238,17 +238,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Site ID required" }, { status: 400 });
     }
 
-    const db = getDbClient() || supabase;
-
-    // Get user's organization
-    const { data: userData } = await db
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (!userData?.organization_id) {
-      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+    const db = getDbClient();
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
     }
 
     // Verify site belongs to user's org
@@ -258,11 +250,11 @@ export async function DELETE(request: NextRequest) {
       .eq("id", siteId)
       .maybeSingle();
 
-    if (!site || site.organization_id !== userData.organization_id) {
+    if (!site || site.organization_id !== orgId) {
       return NextResponse.json({ error: "Site not found" }, { status: 404 });
     }
 
-    // Delete site (cascades to citations, competitors)
+    // Delete site (cascades to citations)
     const { error } = await db
       .from("sites")
       .delete()

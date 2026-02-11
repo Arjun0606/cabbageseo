@@ -33,7 +33,6 @@ export function generateSprintActions(
     category?: string | null;
   },
   sourcesListed: string[], // e.g., ["g2.com", "capterra.com"]
-  topCompetitorDomain?: string | null
 ): SprintActionDef[] {
   const actions: SprintActionDef[] = [];
   const listedSet = new Set(sourcesListed.map((s) => s.toLowerCase()));
@@ -68,14 +67,10 @@ export function generateSprintActions(
   }
 
   // Week 2: Content + Product Hunt
-  const competitorName = topCompetitorDomain
-    ? topCompetitorDomain.replace(/\.(com|io|co|app|dev)$/, "")
-    : "competitors";
-
   actions.push({
     actionType: "publish_comparison",
-    actionTitle: `Publish a comparison page: You vs ${competitorName}`,
-    actionDescription: `AI frequently answers "vs" and "alternative to" queries. Create a detailed, honest comparison page on your site. Include features, pricing, pros/cons. This directly targets the queries where you're losing to competitors.`,
+    actionTitle: "Publish a comparison page for your category",
+    actionDescription: `AI frequently answers "vs" and "alternative to" queries. Create a detailed, honest comparison page on your site. Include features, pricing, pros/cons. This directly targets queries where AI is looking for recommendations.`,
     priority: 3,
     estimatedMinutes: 60,
     week: 2,
@@ -99,7 +94,7 @@ export function generateSprintActions(
   actions.push({
     actionType: "publish_alternatives",
     actionTitle: "Publish an alternatives/listicle page",
-    actionDescription: `Create a "Best ${siteData.category || "tools"} for [use case]" page on your blog. Include yourself alongside competitors with honest analysis. AI loves well-structured listicle content.`,
+    actionDescription: `Create a "Best ${siteData.category || "tools"} for [use case]" page on your blog. Include yourself with honest analysis of strengths. AI loves well-structured listicle content.`,
     priority: 5,
     estimatedMinutes: 45,
     week: 2,

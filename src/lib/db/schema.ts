@@ -306,7 +306,7 @@ export const usage = pgTable(
     // AI Visibility Intelligence usage
     checksUsed: integer("checks_used").default(0),
     sitesUsed: integer("sites_used").default(0),
-    competitorsUsed: integer("competitors_used").default(0),
+    competitorsUsed: integer("competitors_used").default(0), // DEPRECATED
 
     // Intelligence feature usage (Pro features)
     gapAnalysesUsed: integer("gap_analyses_used").default(0),
@@ -392,7 +392,7 @@ export const generatedPages = pgTable(
     body: text("body").notNull(), // Full markdown
     schemaMarkup: jsonb("schema_markup"), // Ready-to-paste JSON-LD
     targetEntities: jsonb("target_entities").$type<string[]>().default([]),
-    competitorsAnalyzed: jsonb("competitors_analyzed").$type<string[]>().default([]),
+    competitorsAnalyzed: jsonb("competitors_analyzed").$type<string[]>().default([]), // DEPRECATED
 
     // Metrics
     wordCount: integer("word_count"),
@@ -405,10 +405,15 @@ export const generatedPages = pgTable(
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
+
+    // Refresh tracking
+    lastRefreshedAt: timestamp("last_refreshed_at"),
+    refreshCount: integer("refresh_count").default(0).notNull(),
   },
   (table) => [
     index("generated_pages_site_idx").on(table.siteId),
     index("generated_pages_query_idx").on(table.query),
+    index("generated_pages_refresh_idx").on(table.status, table.lastRefreshedAt),
   ]
 );
 
@@ -1074,7 +1079,7 @@ export const geoAnalyses = pgTable(
 );
 
 // ============================================
-// COMPETITORS (Competitor tracking per site)
+// DEPRECATED: competitors table no longer used in product
 // ============================================
 
 export const competitors = pgTable(
@@ -1122,7 +1127,7 @@ export const notifications = pgTable(
     emailNewCitation: boolean("email_new_citation").default(true),
     emailLostCitation: boolean("email_lost_citation").default(true),
     emailWeeklyDigest: boolean("email_weekly_digest").default(true),
-    emailCompetitorCited: boolean("email_competitor_cited").default(false),
+    emailCompetitorCited: boolean("email_competitor_cited").default(false), // DEPRECATED
     
     // Timestamps
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -1322,7 +1327,7 @@ export const monthlyCheckpoints = pgTable(
     // Changes
     newQueries: jsonb("new_queries").default([]),
     lostQueries: jsonb("lost_queries").default([]),
-    competitorChanges: jsonb("competitor_changes").default([]),
+    competitorChanges: jsonb("competitor_changes").default([]), // DEPRECATED
 
     // Action
     topAction: text("top_action"),
@@ -1351,7 +1356,7 @@ export const teaserReports = pgTable(
     domain: text("domain").notNull(),
     visibilityScore: integer("visibility_score").notNull(),
     isInvisible: boolean("is_invisible").notNull(),
-    competitorsMentioned: jsonb("competitors_mentioned").$type<string[]>().default([]),
+    competitorsMentioned: jsonb("competitors_mentioned").$type<string[]>().default([]), // brands detected in AI responses (not competitor tracking)
     results: jsonb("results").notNull(),
     summary: jsonb("summary").notNull(),
     contentPreview: jsonb("content_preview").$type<ContentPreviewData | null>().default(null),
@@ -1370,7 +1375,7 @@ export type ContentPreviewData = {
   blurredBody: string;
   faqItems: Array<{ question: string; answer: string }>;
   wordCount: number;
-  competitorUsed: string;
+  brandUsed: string;
   generatedAt: string;
 };
 
@@ -1710,8 +1715,8 @@ export type Usage = typeof usage.$inferSelect;
 export type NewUsage = typeof usage.$inferInsert;
 export type ContentIdea = typeof contentIdeas.$inferSelect;
 export type NewContentIdea = typeof contentIdeas.$inferInsert;
-export type Competitor = typeof competitors.$inferSelect;
-export type NewCompetitor = typeof competitors.$inferInsert;
+export type Competitor = typeof competitors.$inferSelect; // DEPRECATED
+export type NewCompetitor = typeof competitors.$inferInsert; // DEPRECATED
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
 export type SourceListing = typeof sourceListings.$inferSelect;

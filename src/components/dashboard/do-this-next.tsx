@@ -55,8 +55,11 @@ export function DoThisNext({
         <h3 className="text-xl font-bold text-white mb-2">
           See if AI is citing you now
         </h3>
-        <p className="text-zinc-400 text-sm mb-4">
+        <p className="text-zinc-400 text-sm mb-1">
           You&apos;ve published new pages since your last check. Run a scan to see if AI platforms are starting to recommend you.
+        </p>
+        <p className="text-zinc-500 text-xs mb-4">
+          We&apos;ll also auto-recheck 48 hours after each page you publish.
         </p>
         <button
           onClick={onRunCheck}

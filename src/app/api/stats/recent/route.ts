@@ -53,7 +53,8 @@ export async function GET() {
         },
       },
     );
-  } catch {
+  } catch (error) {
+    console.error("[/api/stats/recent] Error:", error);
     return Response.json({ scans: [] });
   }
 }

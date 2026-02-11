@@ -8,7 +8,7 @@
 
 import { useEffect, useState, Suspense, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, AlertTriangle, ArrowRight } from "lucide-react";
+import { Loader2, AlertTriangle, ArrowRight, Check } from "lucide-react";
 
 function OnboardingContent() {
   const router = useRouter();
@@ -20,6 +20,7 @@ function OnboardingContent() {
   );
   const [domain, setDomain] = useState(domainFromUrl || "");
   const [error, setError] = useState("");
+  const [scanPhase, setScanPhase] = useState<"creating" | "chatgpt" | "perplexity" | "google" | "done">("creating");
   const scanStarted = useRef(false);
 
   const handleDomainSubmit = (e: React.FormEvent) => {
@@ -37,6 +38,8 @@ function OnboardingContent() {
 
   const startScan = useCallback(async () => {
     try {
+      setScanPhase("creating");
+
       const siteResponse = await fetch("/api/sites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -66,12 +69,20 @@ function OnboardingContent() {
         throw new Error("Failed to create site — no ID returned");
       }
 
+      // Animate through platform phases while the check runs
+      setScanPhase("chatgpt");
+      const phaseTimer1 = setTimeout(() => setScanPhase("perplexity"), 8000);
+      const phaseTimer2 = setTimeout(() => setScanPhase("google"), 16000);
+
       // Start the check
       const checkResponse = await fetch("/api/geo/citations/check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ siteId, domain }),
       });
+
+      clearTimeout(phaseTimer1);
+      clearTimeout(phaseTimer2);
 
       if (!checkResponse.ok) {
         console.error(
@@ -80,14 +91,27 @@ function OnboardingContent() {
         );
       }
 
+      setScanPhase("done");
+
+      // Brief pause to show "done" state
+      await new Promise(r => setTimeout(r, 500));
+
       // Go straight to dashboard
       router.push(
         `/dashboard?welcome=true&siteId=${siteId}&justScanned=true`
       );
     } catch (err) {
       console.error("Onboarding error:", err);
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      // Show user-friendly error messages
+      if (message.includes("already exists") || message.includes("duplicate")) {
+        setError("This site is already in your account. Redirecting to dashboard...");
+        setTimeout(() => router.push("/dashboard"), 2000);
+        return;
+      }
+      setError(message);
       setStep("domain");
+      scanStarted.current = false;
     }
   }, [domain, router]);
 
@@ -158,19 +182,53 @@ function OnboardingContent() {
   }
 
   // ========== SCANNING ==========
+  const scanSteps = [
+    { id: "creating", label: "Setting up your site" },
+    { id: "chatgpt", label: "Checking ChatGPT" },
+    { id: "perplexity", label: "Checking Perplexity" },
+    { id: "google", label: "Checking Google AI" },
+    { id: "done", label: "Building your dashboard" },
+  ];
+  const currentPhaseIndex = scanSteps.findIndex(s => s.id === scanPhase);
+
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
       <div className="max-w-md w-full mx-auto px-6 text-center">
-        <Loader2 className="w-16 h-16 text-emerald-400 animate-spin mx-auto" />
+        <Loader2 className="w-12 h-12 text-emerald-400 animate-spin mx-auto" />
         <h2 className="text-2xl font-bold text-white mt-6 mb-2">
           Scanning AI platforms...
         </h2>
-        <p className="text-zinc-400">
-          Checking if ChatGPT, Perplexity, and Google AI recommend{" "}
+        <p className="text-zinc-400 mb-8">
+          Checking if AI recommends{" "}
           <span className="text-white font-medium">{domain}</span>
         </p>
+
+        {/* Step progress */}
+        <div className="space-y-2 text-left max-w-xs mx-auto">
+          {scanSteps.map((s, i) => {
+            const isComplete = i < currentPhaseIndex;
+            const isCurrent = i === currentPhaseIndex;
+            return (
+              <div key={s.id} className="flex items-center gap-3">
+                {isComplete ? (
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                ) : isCurrent ? (
+                  <Loader2 className="w-4 h-4 text-emerald-400 animate-spin shrink-0" />
+                ) : (
+                  <div className="w-4 h-4 rounded-full border border-zinc-700 shrink-0" />
+                )}
+                <span className={`text-sm ${
+                  isComplete ? "text-zinc-500" : isCurrent ? "text-white font-medium" : "text-zinc-600"
+                }`}>
+                  {s.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
         <p className="mt-8 text-zinc-600 text-sm">
-          This takes about 30 seconds
+          Usually takes 20-40 seconds
         </p>
       </div>
     </div>

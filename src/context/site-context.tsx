@@ -50,8 +50,6 @@ interface Usage {
   checksLimit: number;
   sitesUsed: number;
   sitesLimit: number;
-  competitorsUsed: number;
-  competitorsLimit: number;
 }
 
 interface SubscriptionGate {
@@ -60,7 +58,6 @@ interface SubscriptionGate {
 
 export interface LostQuery {
   query: string;
-  competitors: string[];
   platform: string;
   snippet?: string;
 }
@@ -95,8 +92,6 @@ const defaultUsage: Usage = {
   checksLimit: 3,
   sitesUsed: 0,
   sitesLimit: 1,
-  competitorsUsed: 0,
-  competitorsLimit: 0,
 };
 
 const defaultSubscription: SubscriptionGate = {
@@ -201,8 +196,6 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           checksLimit: usageData.data?.limits?.checks || 3,
           sitesUsed: siteList.length,
           sitesLimit: usageData.data?.limits?.sites || 1,
-          competitorsUsed: usageData.data?.usage?.competitorsUsed || 0,
-          competitorsLimit: usageData.data?.limits?.competitors || 0,
         });
       }
     } catch (err) {
@@ -310,9 +303,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         // Extract lost queries from check results
         const lostQueries: LostQuery[] = (data.results || [])
           .filter((r: { isLoss?: boolean; error?: string }) => r.isLoss && !r.error)
-          .map((r: { query: string; competitors?: string[]; platform: string; snippet?: string }) => ({
+          .map((r: { query: string; platform: string; snippet?: string }) => ({
             query: r.query,
-            competitors: r.competitors || [],
             platform: r.platform,
             snippet: r.snippet,
           }));

@@ -56,9 +56,9 @@ const groups: ChangelogGroup[] = [
       },
       {
         category: "new",
-        title: "Competitor Quick-Scan",
+        title: "Brand Quick-Scan",
         description:
-          "After viewing a teaser report, scan any competitor with one click. Quick-scan buttons for the top competitors found in your report.",
+          "After viewing a teaser report, scan any brand with one click. Quick-scan buttons for the top brands found in your report.",
         icon: <Users className="w-5 h-5" />,
       },
       {
@@ -72,7 +72,7 @@ const groups: ChangelogGroup[] = [
         category: "new",
         title: "Teaser Drip Email Sequence",
         description:
-          "Automated 3-email nurture after free scans. Day 0: score recap. Day 2: competitor fear. Day 5: action preview with content preview teaser.",
+          "Automated 3-email nurture after free scans. Day 0: score recap. Day 2: market context. Day 5: action preview with content preview teaser.",
         icon: <Mail className="w-5 h-5" />,
       },
       {
@@ -128,7 +128,7 @@ const groups: ChangelogGroup[] = [
         category: "new",
         title: "Fix Pages",
         description:
-          "Generate comparison pages, category explainers, and FAQs that reinforce your credibility with AI systems using your citation data and competitor intelligence.",
+          "Generate comparison pages, category explainers, and FAQs that reinforce your credibility with AI systems using your citation data and gap analysis.",
         icon: <FileText className="w-5 h-5" />,
       },
       {
@@ -147,9 +147,9 @@ const groups: ChangelogGroup[] = [
       },
       {
         category: "new",
-        title: "Competitor Alerts",
+        title: "Visibility Drop Alerts",
         description:
-          "Get notified when competitors gain or lose AI citations. Email alerts keep you informed of competitor movements.",
+          "Get notified when your AI visibility changes. Email alerts keep you informed of citation gains and losses.",
         icon: <Bell className="w-5 h-5" />,
       },
       {
@@ -161,23 +161,23 @@ const groups: ChangelogGroup[] = [
       },
       {
         category: "new",
-        title: "Competitor Deep Dive",
+        title: "Brand Deep Dive",
         description:
-          "Full competitor analysis showing why AI recommends them. See their trust sources, content strategy, and authority signals.",
+          "Full analysis of any brand AI recommends. See their trust sources, content strategy, and authority signals.",
         icon: <Search className="w-5 h-5" />,
       },
       {
         category: "new",
         title: "Query Discovery",
         description:
-          "Find new queries where buyers ask about your category. AI-suggested queries based on your industry and competitors.",
+          "Find new queries where buyers ask about your category. AI-suggested queries based on your industry and market.",
         icon: <Compass className="w-5 h-5" />,
       },
       {
         category: "new",
         title: "Trust Map",
         description:
-          "Visual map showing which trust sources AI platforms use to form recommendations. See where competitors are listed and you're not.",
+          "Visual map showing which trust sources AI platforms use to form recommendations. See where other brands are listed and you're not.",
         icon: <Eye className="w-5 h-5" />,
       },
       {
@@ -191,7 +191,7 @@ const groups: ChangelogGroup[] = [
         category: "new",
         title: "Citation Gap Analysis",
         description:
-          "Per-query breakdown of why AI cited your competitor instead of you. See exactly what content, trust sources, and authority signals you're missing.",
+          "Per-query breakdown of why AI cited another brand instead of you. See exactly what content, trust sources, and authority signals you're missing.",
         icon: <Sparkles className="w-5 h-5" />,
       },
     ],

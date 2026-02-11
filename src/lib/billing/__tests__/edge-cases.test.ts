@@ -1,18 +1,18 @@
 import { describe, it, expect } from "vitest";
 import {
   canAddSite,
-  canAddCompetitor,
   canRunManualCheck,
   canUseGapAnalysis,
   canUseContentRecommendations,
   canUseActionPlan,
-  canUseCompetitorDeepDive,
   canGeneratePage,
   canRunSiteAudit,
   getCitationPlan,
   getCitationPlanLimits,
   getCitationPlanFeatures,
   canAccessProduct,
+  getRefreshFrequencyDays,
+  getRefreshFrequencyLabel,
   CITATION_PLANS,
 } from "../citation-plans";
 
@@ -64,11 +64,6 @@ describe("Legacy plan names in gating functions", () => {
     expect(canAddSite("pro_plus", 25).allowed).toBe(false);
   });
 
-  it("canAddCompetitor('starter', 2) uses scout limits (3)", () => {
-    expect(canAddCompetitor("starter", 2).allowed).toBe(true);
-    expect(canAddCompetitor("starter", 3).allowed).toBe(false);
-  });
-
   it("canRunManualCheck('starter', 999) is unlimited (scout)", () => {
     expect(canRunManualCheck("starter", 999).allowed).toBe(true);
   });
@@ -80,10 +75,6 @@ describe("Legacy plan names in gating functions", () => {
 
   it("canUseActionPlan('pro') uses command (allowed)", () => {
     expect(canUseActionPlan("pro", 0).allowed).toBe(true);
-  });
-
-  it("canUseCompetitorDeepDive('pro') uses command (allowed)", () => {
-    expect(canUseCompetitorDeepDive("pro").allowed).toBe(true);
   });
 
   it("canUseActionPlan('starter') uses scout (denied)", () => {
@@ -116,10 +107,6 @@ describe("Unknown plan names fall back to free", () => {
     expect(canAddSite("nonexistent", 1).allowed).toBe(false);
   });
 
-  it("canAddCompetitor with unknown plan: free limits (0 competitors)", () => {
-    expect(canAddCompetitor("nonexistent", 0).allowed).toBe(false);
-  });
-
   it("canRunManualCheck with unknown plan: free limits (3/day)", () => {
     expect(canRunManualCheck("nonexistent", 2).allowed).toBe(true);
     expect(canRunManualCheck("nonexistent", 3).allowed).toBe(false);
@@ -135,10 +122,6 @@ describe("Unknown plan names fall back to free", () => {
 
   it("canUseActionPlan with unknown plan: denied", () => {
     expect(canUseActionPlan("nonexistent", 0).allowed).toBe(false);
-  });
-
-  it("canUseCompetitorDeepDive with unknown plan: denied", () => {
-    expect(canUseCompetitorDeepDive("nonexistent").allowed).toBe(false);
   });
 
   it("canGeneratePage with unknown plan: denied (free limits)", () => {
@@ -244,7 +227,7 @@ describe("Free plan access — always denied", () => {
   });
 
   it("Free plan with recent date: still denied", () => {
-    const result = canAccessProduct("free", new Date());
+    const result = canAccessProduct("free");
     expect(result.allowed).toBe(false);
   });
 
@@ -336,17 +319,6 @@ describe("Denial messages are user-friendly", () => {
     expect(result.reason).toContain("Upgrade");
   });
 
-  it("canAddCompetitor denial for free mentions Scout", () => {
-    const result = canAddCompetitor("free", 0);
-    expect(result.reason).toContain("Scout");
-  });
-
-  it("canAddCompetitor denial for paid mentions limit", () => {
-    const result = canAddCompetitor("scout", 3);
-    expect(result.reason).toContain("3");
-    expect(result.reason).toContain("Upgrade");
-  });
-
   it("canRunManualCheck denial mentions daily limit", () => {
     const result = canRunManualCheck("free", 3);
     expect(result.reason).toContain("Daily limit");
@@ -366,11 +338,6 @@ describe("Denial messages are user-friendly", () => {
 
   it("canUseActionPlan denial mentions Command", () => {
     const result = canUseActionPlan("free", 0);
-    expect(result.reason).toContain("Command");
-  });
-
-  it("canUseCompetitorDeepDive denial mentions Command", () => {
-    const result = canUseCompetitorDeepDive("scout");
     expect(result.reason).toContain("Command");
   });
 
@@ -564,5 +531,59 @@ describe("canRunSiteAudit gating", () => {
 
   it("Dominate: always allowed (unlimited)", () => {
     expect(canRunSiteAudit("dominate", 999).allowed).toBe(true);
+  });
+});
+
+// ============================================
+// PAGE REFRESH FREQUENCY PER TIER
+// ============================================
+
+describe("Page refresh frequency per tier", () => {
+  it("Unsubscribed: no auto-refresh (0 days)", () => {
+    expect(CITATION_PLANS.free.intelligenceLimits.pageRefreshDays).toBe(0);
+    expect(getRefreshFrequencyDays("free")).toBe(0);
+  });
+
+  it("Scout: monthly refresh (30 days)", () => {
+    expect(CITATION_PLANS.scout.intelligenceLimits.pageRefreshDays).toBe(30);
+    expect(getRefreshFrequencyDays("scout")).toBe(30);
+  });
+
+  it("Command: bi-weekly refresh (14 days)", () => {
+    expect(CITATION_PLANS.command.intelligenceLimits.pageRefreshDays).toBe(14);
+    expect(getRefreshFrequencyDays("command")).toBe(14);
+  });
+
+  it("Dominate: weekly refresh (7 days)", () => {
+    expect(CITATION_PLANS.dominate.intelligenceLimits.pageRefreshDays).toBe(7);
+    expect(getRefreshFrequencyDays("dominate")).toBe(7);
+  });
+
+  it("Legacy plan names resolve correctly", () => {
+    expect(getRefreshFrequencyDays("starter")).toBe(30);
+    expect(getRefreshFrequencyDays("pro")).toBe(14);
+    expect(getRefreshFrequencyDays("pro_plus")).toBe(7);
+  });
+
+  it("Unknown plan falls back to unsubscribed (0 days)", () => {
+    expect(getRefreshFrequencyDays("nonexistent")).toBe(0);
+  });
+});
+
+describe("getRefreshFrequencyLabel", () => {
+  it("Unsubscribed: 'No auto-refresh'", () => {
+    expect(getRefreshFrequencyLabel("free")).toBe("No auto-refresh");
+  });
+
+  it("Scout: 'Monthly'", () => {
+    expect(getRefreshFrequencyLabel("scout")).toBe("Monthly");
+  });
+
+  it("Command: 'Every 2 weeks'", () => {
+    expect(getRefreshFrequencyLabel("command")).toBe("Every 2 weeks");
+  });
+
+  it("Dominate: 'Weekly'", () => {
+    expect(getRefreshFrequencyLabel("dominate")).toBe("Weekly");
   });
 });

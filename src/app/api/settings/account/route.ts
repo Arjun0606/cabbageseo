@@ -118,8 +118,8 @@ export async function GET() {
       return NextResponse.json({ error: "Failed to load or create user profile" }, { status: 500 });
     }
 
-    // Get organization
-    const { data: orgData } = await supabase
+    // Get organization (use serviceClient to bypass RLS, consistent with user queries above)
+    const { data: orgData } = await serviceClient
       .from("organizations")
       .select("*")
       .eq("id", profile.organization_id)
@@ -195,7 +195,7 @@ export async function PUT(request: NextRequest) {
 
     // Update user profile if name changed
     if (name !== undefined) {
-      await supabase
+      await serviceClient
         .from("users")
         .update({ name, updated_at: new Date().toISOString() } as never)
         .eq("id", user.id);
@@ -204,7 +204,7 @@ export async function PUT(request: NextRequest) {
     // Update organization if needed
     if (orgId && (timezone !== undefined || website !== undefined || organizationName !== undefined)) {
       // Get current org settings
-      const { data: orgData } = await supabase
+      const { data: orgData } = await serviceClient
         .from("organizations")
         .select("settings")
         .eq("id", orgId)
@@ -228,7 +228,7 @@ export async function PUT(request: NextRequest) {
         };
       }
 
-      await supabase
+      await serviceClient
         .from("organizations")
         .update(updates as never)
         .eq("id", orgId);
@@ -282,7 +282,7 @@ export async function DELETE() {
     // If user is org owner, delete the entire organization and all its data
     if (isOwner && orgId) {
       // First, get all site IDs for this organization
-      const { data: sitesData } = await supabase
+      const { data: sitesData } = await serviceClient
         .from("sites")
         .select("id")
         .eq("organization_id", orgId);
@@ -292,7 +292,6 @@ export async function DELETE() {
       if (siteIds.length > 0) {
         // Delete all site-related data (child tables first)
         await serviceClient.from("sprint_actions").delete().in("site_id", siteIds);
-        await serviceClient.from("competitors").delete().in("site_id", siteIds);
         await serviceClient.from("source_listings").delete().in("site_id", siteIds);
         await serviceClient.from("market_share_snapshots").delete().in("site_id", siteIds);
         await serviceClient.from("geo_analyses").delete().in("site_id", siteIds);

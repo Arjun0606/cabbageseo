@@ -150,10 +150,14 @@ export function FixPagesReady({
       </div>
 
       {draftPages.length > 0 && (
-        <p className="mt-4 text-xs text-zinc-500 flex items-center gap-1">
-          <ArrowRight className="w-3 h-3" />
-          Publish on your site, then mark as published to trigger a recheck
-        </p>
+        <div className="mt-4 border-t border-zinc-800 pt-3">
+          <p className="text-xs text-zinc-500 font-medium mb-1.5">How it works:</p>
+          <ol className="text-xs text-zinc-500 space-y-1 list-decimal list-inside">
+            <li>Click &ldquo;View &amp; Copy&rdquo; to see the full page and copy the content</li>
+            <li>Paste it as a new page on your website</li>
+            <li>Click &ldquo;I Published This&rdquo; so we know to track its impact</li>
+          </ol>
+        </div>
       )}
     </div>
   );

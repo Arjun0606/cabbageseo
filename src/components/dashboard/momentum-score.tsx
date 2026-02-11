@@ -40,14 +40,17 @@ export function MomentumScore({
     return (
       <div className="rounded-2xl p-8 border bg-zinc-800 border-zinc-700">
         <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wide mb-4">
-          AI Momentum
+          AI Momentum Score
         </h3>
         <div className="flex items-end gap-4 mb-3">
           <span className="text-6xl font-bold text-zinc-600">&mdash;</span>
           <span className="text-2xl text-zinc-600 mb-2">/100</span>
         </div>
-        <p className="text-sm text-zinc-500">
-          Run your first check to see your AI momentum score
+        <p className="text-sm text-zinc-400 mb-1">
+          Run your first check to see how visible you are to AI
+        </p>
+        <p className="text-xs text-zinc-600">
+          This score tracks how often ChatGPT, Perplexity, and Google AI recommend your brand to potential buyers. Higher = more people finding you through AI.
         </p>
       </div>
     );
@@ -111,7 +114,10 @@ export function MomentumScore({
 
       <p className={`text-lg font-medium ${trendColor} mb-1`}>{trendLabel}</p>
       <p className="text-sm text-zinc-500">
-        AI mentions you in {queriesWon} of {queriesTotal} queries checked
+        AI recommends you in {queriesWon} of {queriesTotal} buyer queries checked
+      </p>
+      <p className="text-xs text-zinc-600 mt-1">
+        This score measures how often ChatGPT, Perplexity, and Google AI mention your brand when people ask buying questions in your space.
       </p>
 
       {/* Score breakdown toggle */}

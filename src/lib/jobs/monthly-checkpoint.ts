@@ -5,8 +5,7 @@
  * For every active site:
  *   1. Calculates momentum score & month-over-month change
  *   2. Counts new vs lost citations compared to last month
- *   3. Gathers competitor citation changes
- *   4. Generates a single recommended action
+ *   3. Generates a single recommended action
  *   5. Inserts a monthly_checkpoints record
  *   6. Sends a monthly report email via Resend
  */
@@ -23,7 +22,6 @@ function buildReportEmail({
   momentumChange,
   newCitationsCount,
   lastMonthCitationsCount,
-  topCompetitor,
   topAction,
   appUrl,
 }: {
@@ -32,7 +30,6 @@ function buildReportEmail({
   momentumChange: number;
   newCitationsCount: number;
   lastMonthCitationsCount: number;
-  topCompetitor: { domain: string; change: number } | null;
   topAction: string;
   appUrl: string;
 }): string {
@@ -72,19 +69,6 @@ function buildReportEmail({
           <div style="font-size: 12px; color: #71717a;">vs Last Month</div>
         </div>
       </div>
-
-      <!-- Top Competitor Change -->
-      ${topCompetitor ? `
-      <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #71717a; margin-bottom: 8px;">Top Competitor Movement</div>
-        <p style="margin: 0; color: #fff; font-size: 16px;">
-          <strong>${topCompetitor.domain}</strong>
-          <span style="color: ${topCompetitor.change > 0 ? "#ef4444" : "#10b981"};">
-            ${topCompetitor.change > 0 ? "+" : ""}${topCompetitor.change} citations
-          </span>
-        </p>
-      </div>
-      ` : ""}
 
       <!-- Recommended Action -->
       <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
@@ -214,28 +198,6 @@ export const monthlyCheckpoint = inngest.createFunction(
         const newQueries = [...thisMonthQueries].filter((q) => !prevMonthQueries.has(q));
         const lostQueries = [...prevMonthQueries].filter((q) => !thisMonthQueries.has(q));
 
-        // --- Competitor changes ---
-        const { data: competitorData } = await supabase
-          .from("competitors")
-          .select("domain, name, total_citations, citations_change")
-          .eq("site_id", site.id)
-          .order("citations_change", { ascending: false });
-
-        const competitorChanges = (competitorData || []).map((c: {
-          domain: string;
-          name: string | null;
-          total_citations: number | null;
-          citations_change: number | null;
-        }) => ({
-          domain: c.domain,
-          name: c.name || c.domain,
-          totalCitations: c.total_citations || 0,
-          change: c.citations_change || 0,
-        }));
-
-        // Top competitor by positive change
-        const topCompetitor = competitorChanges.find((c: { change: number }) => c.change > 0) || null;
-
         // --- Momentum ---
         const momentumScore = site.momentum_score || 0;
         // Compute month-over-month change from previous checkpoint
@@ -255,10 +217,8 @@ export const monthlyCheckpoint = inngest.createFunction(
           topAction = "You received no new citations this month. Focus on getting listed on authority sources like G2, Capterra, or Product Hunt.";
         } else if (lostQueries.length > newQueries.length) {
           topAction = `You lost ${lostQueries.length} queries this month. Update your content to stay relevant for those topics.`;
-        } else if (topCompetitor && topCompetitor.change > 0) {
-          topAction = `${topCompetitor.domain} gained ${topCompetitor.change} citations. Analyze their content strategy and close the gap.`;
         } else if ((newCitationsCount || 0) > (lastMonthCitationsCount || 0)) {
-          topAction = "Momentum is building! Double down on what's working — publish more comparison content and earn reviews.";
+          topAction = "Momentum is building! Double down on what's working — publish more content and earn reviews.";
         }
 
         return {
@@ -266,8 +226,6 @@ export const monthlyCheckpoint = inngest.createFunction(
           lastMonthCitationsCount: lastMonthCitationsCount || 0,
           newQueries,
           lostQueries,
-          competitorChanges,
-          topCompetitor,
           momentumScore,
           momentumChange,
           topAction,
@@ -286,12 +244,10 @@ export const monthlyCheckpoint = inngest.createFunction(
             momentum_change: stats.momentumChange,
             new_queries: stats.newQueries,
             lost_queries: stats.lostQueries,
-            competitor_changes: stats.competitorChanges,
             top_action: stats.topAction,
             report_data: {
               newCitationsCount: stats.newCitationsCount,
               lastMonthCitationsCount: stats.lastMonthCitationsCount,
-              topCompetitor: stats.topCompetitor,
             },
           },
           { onConflict: "site_id,period" }
@@ -339,7 +295,6 @@ export const monthlyCheckpoint = inngest.createFunction(
             momentumChange: stats.momentumChange,
             newCitationsCount: stats.newCitationsCount,
             lastMonthCitationsCount: stats.lastMonthCitationsCount,
-            topCompetitor: stats.topCompetitor,
             topAction: stats.topAction,
             appUrl,
           }),

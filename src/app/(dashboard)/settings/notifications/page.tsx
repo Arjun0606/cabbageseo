@@ -6,7 +6,6 @@ import { Bell, Mail, Check, Loader2, MessageSquare, ExternalLink, AlertCircle } 
 export default function NotificationsPage() {
   const [settings, setSettings] = useState({
     emailAlerts: true,
-    competitorAlerts: true,
     weeklyReport: true,
     marketingEmails: false,
   });
@@ -35,7 +34,6 @@ export default function NotificationsPage() {
           if (data.settings) {
             setSettings({
               emailAlerts: data.settings.email_new_citation ?? true,
-              competitorAlerts: data.settings.email_competitor_cited ?? true,
               weeklyReport: data.settings.email_weekly_digest ?? true,
               marketingEmails: false,
             });
@@ -70,7 +68,6 @@ export default function NotificationsPage() {
           email_new_citation: settings.emailAlerts,
           email_lost_citation: settings.emailAlerts,
           email_weekly_digest: settings.weeklyReport,
-          email_competitor_cited: settings.competitorAlerts,
         }),
       });
       
@@ -124,25 +121,6 @@ export default function NotificationsPage() {
                   <div
                     className={`w-5 h-5 bg-white rounded-full transition-transform ${
                       settings.emailAlerts ? "translate-x-6" : "translate-x-0.5"
-                    }`}
-                  />
-                </button>
-              </label>
-
-              <label className="flex items-center justify-between cursor-pointer">
-                <div>
-                  <p className="text-white font-medium">Competitor Alerts</p>
-                  <p className="text-zinc-400 text-sm">Get notified when competitors gain or lose AI visibility</p>
-                </div>
-                <button
-                  onClick={() => handleToggle("competitorAlerts")}
-                  className={`w-12 h-6 rounded-full transition-colors ${
-                    settings.competitorAlerts ? "bg-emerald-500" : "bg-zinc-700"
-                  }`}
-                >
-                  <div
-                    className={`w-5 h-5 bg-white rounded-full transition-transform ${
-                      settings.competitorAlerts ? "translate-x-6" : "translate-x-0.5"
                     }`}
                   />
                 </button>

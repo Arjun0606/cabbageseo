@@ -4,7 +4,7 @@
  * Generates a 1200x630 PNG image for social sharing.
  * Designed to be scroll-stopping on Twitter/LinkedIn feeds.
  *
- * GET /api/og/score?domain=X&score=Y&invisible=bool&competitors=N&names=a,b,c
+ * GET /api/og/score?domain=X&score=Y&invisible=bool&brands=N&names=a,b,c
  */
 
 import { ImageResponse } from "next/og";
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const domain = searchParams.get("domain") || "example.com";
   const score = Math.min(100, Math.max(0, parseInt(searchParams.get("score") || "0", 10)));
   const invisible = searchParams.get("invisible") === "true";
-  const competitors = parseInt(searchParams.get("competitors") || "0", 10);
+  const competitors = parseInt(searchParams.get("brands") || searchParams.get("competitors") || "0", 10);
   const names = (searchParams.get("names") || "").split(",").filter(Boolean).slice(0, 3);
 
   const isLow = invisible || score === 0;
@@ -190,7 +190,7 @@ export async function GET(request: NextRequest) {
             </div>
           </div>
 
-          {/* Right: Competitors panel */}
+          {/* Right: Brands panel */}
           <div
             style={{
               display: "flex",
@@ -239,7 +239,7 @@ export async function GET(request: NextRequest) {
                     ))}
                     {competitors > names.length && (
                       <span style={{ color: "#71717a", fontSize: 13, textAlign: "center" as const, marginTop: 4 }}>
-                        +{competitors - names.length} more competitor{competitors - names.length !== 1 ? "s" : ""}
+                        +{competitors - names.length} more brand{competitors - names.length !== 1 ? "s" : ""}
                       </span>
                     )}
                   </div>
@@ -249,14 +249,14 @@ export async function GET(request: NextRequest) {
                       {competitors}
                     </span>
                     <span style={{ color: "#71717a", fontSize: 14 }}>
-                      competitor{competitors !== 1 ? "s" : ""} recommended
+                      brand{competitors !== 1 ? "s" : ""} recommended
                     </span>
                   </div>
                 )}
               </div>
             )}
 
-            {/* No competitors — show invisible message */}
+            {/* No brands — show invisible message */}
             {names.length === 0 && competitors === 0 && invisible && (
               <div
                 style={{

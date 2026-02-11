@@ -3,7 +3,7 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Pricing – AI Visibility Plans Starting at $49/mo",
   description:
-    "Scout ($49/mo), Command ($149/mo), and Dominate ($349/mo) plans. Track AI citations from ChatGPT & Perplexity, monitor competitors, identify gaps, and improve your AI visibility. Free scan available.",
+    "Scout ($49/mo), Command ($149/mo), and Dominate ($349/mo) plans. Track AI citations from ChatGPT & Perplexity, identify gaps, generate fix pages, and improve your AI visibility. Free scan available.",
   keywords: [
     "CabbageSEO pricing",
     "AI SEO tool pricing",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "CabbageSEO Pricing – Plans from $49/mo",
     description:
-      "Scout → Command → Dominate. AI monitoring, competitor tracking, gap analysis, and targeted fix pages. Free scan available.",
+      "Scout → Command → Dominate. AI monitoring, gap analysis, fix pages, and 30-day sprints. Free scan available.",
   },
 };
 
@@ -34,7 +34,7 @@ const pricingJsonLd = {
       availability: "https://schema.org/InStock",
       priceValidUntil: "2027-12-31",
       url: "https://cabbageseo.com/pricing",
-      description: "1 site, 3 competitors, daily AI monitoring",
+      description: "1 site, daily AI monitoring, gap analysis, fix pages",
     },
     {
       "@type": "Offer",
@@ -44,7 +44,7 @@ const pricingJsonLd = {
       availability: "https://schema.org/InStock",
       priceValidUntil: "2027-12-31",
       url: "https://cabbageseo.com/pricing",
-      description: "5 sites, 10 competitors, daily checks + hourly monitoring",
+      description: "5 sites, daily checks + hourly monitoring, unlimited gap analyses",
     },
     {
       "@type": "Offer",
@@ -54,7 +54,7 @@ const pricingJsonLd = {
       availability: "https://schema.org/InStock",
       priceValidUntil: "2027-12-31",
       url: "https://cabbageseo.com/pricing",
-      description: "25 sites, 25 competitors, daily + hourly AI monitoring",
+      description: "25 sites, daily + hourly AI monitoring, unlimited fix pages",
     },
   ],
 };
@@ -100,7 +100,7 @@ const faqJsonLd = {
       name: "What are fix pages?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Fix pages are comparison pages, category explainers, and FAQs designed to reinforce your credibility with AI systems. CabbageSEO uses your citation data, competitor intelligence, and gap analysis to create pages that reinforce the trust signals AI looks for. Scout gets 5 fix pages/month, Command gets 25, and Dominate gets unlimited.",
+        text: "Fix pages are comparison pages, category explainers, and FAQs designed to reinforce your credibility with AI systems. CabbageSEO uses your citation data and gap analysis to create pages that reinforce the trust signals AI looks for. Scout gets 5 fix pages/month, Command gets 25, and Dominate gets unlimited.",
       },
     },
     {
