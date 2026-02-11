@@ -109,7 +109,7 @@ function day0Email(report: SubscriberReport, email: string): { subject: string; 
       ${ctaButton("Start fixing your AI visibility →", `${APP_URL}/signup?domain=${encodeURIComponent(report.domain)}`)}
 
       <p style="text-align: center; color: #52525b; font-size: 12px;">
-        14-day money-back guarantee &bull; Cancel anytime
+        Cancel anytime &bull; No contracts
       </p>
     `, email, report.domain),
   };
@@ -225,7 +225,7 @@ function day5Email(report: SubscriberReport, email: string): { subject: string; 
       ${ctaButton("Get your full action plan →", `${APP_URL}/signup?domain=${encodeURIComponent(report.domain)}`)}
 
       <p style="text-align: center; color: #52525b; font-size: 12px;">
-        14-day money-back guarantee &bull; Cancel anytime
+        Cancel anytime &bull; No contracts
       </p>
     `, email, report.domain),
   };

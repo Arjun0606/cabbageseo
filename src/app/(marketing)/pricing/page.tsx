@@ -157,11 +157,6 @@ const faqs: FAQItem[] = [
     answer:
       "Yes. No contracts, no cancellation fees, no hoops. Cancel from your billing settings in two clicks. Your access continues until the end of your current billing period. If you\u2019re on an annual plan, you can cancel renewal and keep access for the remainder of your term.",
   },
-  {
-    question: "Do you offer refunds?",
-    answer:
-      "If you\u2019re unhappy after subscribing, contact us within 14 days of your first payment and we\u2019ll issue a full refund. After 14 days, you can cancel anytime and your access continues until the end of your billing period. You can also run a free scan before subscribing to see where you stand.",
-  },
 ];
 
 // ============================================
@@ -435,7 +430,7 @@ export default function PricingPage() {
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30">
                 <Check className="w-4 h-4 text-emerald-400" />
                 <span className="text-emerald-400 text-sm font-medium">
-                  14-day money-back guarantee on all plans
+                  Cancel anytime, no contracts
                 </span>
               </div>
               <p className="text-sm text-zinc-600">

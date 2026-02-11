@@ -80,7 +80,7 @@ export function SubscriptionRequired() {
           </Link>
 
           <p className="text-xs text-zinc-500 text-center">
-            Cancel anytime. 14-day money-back guarantee.
+            Cancel anytime. No contracts.
           </p>
         </div>
       </div>

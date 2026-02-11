@@ -93,7 +93,7 @@ export default function UpgradeGate({ domain, isInvisible, brandCount }: Upgrade
         <ArrowRight className="w-4 h-4" />
       </Link>
       <p className="text-xs text-zinc-500 text-center mt-2">
-        From $39/mo &bull; 14-day money-back guarantee &bull; Cancel anytime
+        From $39/mo &bull; Cancel anytime
       </p>
     </div>
   );

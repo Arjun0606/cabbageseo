@@ -334,8 +334,7 @@ export default function AboutPage() {
               ))}
             </div>
             <p className="text-zinc-500 text-sm mt-4">
-              Annual billing saves 20%. 14-day money-back guarantee on all
-              plans.
+              Annual billing saves 20%. Cancel anytime, no contracts.
             </p>
             <div className="mt-6">
               <Link

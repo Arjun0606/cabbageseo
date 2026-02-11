@@ -512,7 +512,7 @@ function HomeContent() {
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <p className="mt-3 text-zinc-600 text-sm">
-                From $49/mo · 14-day money-back guarantee · Cancel anytime
+                From $49/mo · Cancel anytime
               </p>
             </div>
           </AnimateIn>

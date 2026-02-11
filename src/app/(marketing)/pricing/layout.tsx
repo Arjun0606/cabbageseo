@@ -103,14 +103,6 @@ const faqJsonLd = {
         text: "Fix pages are comparison pages, category explainers, and FAQs designed to reinforce your credibility with AI systems. CabbageSEO uses your citation data and gap analysis to create pages that reinforce the trust signals AI looks for. Fix pages auto-generate after every scan: Scout creates 2 per scan, Command creates 5, and Dominate creates 10. You can also generate pages manually — Scout gets 5/month, Command 25, Dominate unlimited.",
       },
     },
-    {
-      "@type": "Question",
-      name: "Do you offer refunds?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "If you're unhappy after subscribing, contact us within 14 days of your first payment and we'll issue a full refund. You can also run a free scan before subscribing to see where you stand.",
-      },
-    },
   ],
 };
 
