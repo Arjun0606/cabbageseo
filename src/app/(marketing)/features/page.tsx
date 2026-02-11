@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
-  BarChart3,
   Bell,
   Brain,
   Search,
@@ -31,7 +30,7 @@ const capabilities: Feature[] = [
   {
     name: "AI Citation Scanning",
     description:
-      "Find out exactly which buyer questions lead to your competitors instead of you. Real queries to ChatGPT, Perplexity and Google AI with actual AI responses, not estimations.",
+      "Find out exactly which buyer questions AI answers without mentioning you. Real queries to ChatGPT, Perplexity and Google AI with actual AI responses, not estimations.",
     icon: <Search className="w-5 h-5" />,
     plan: "all",
   },
@@ -62,13 +61,6 @@ const capabilities: Feature[] = [
       "Daily or hourly scans detect the moment AI shifts. Instant email and Slack alerts if your visibility drops so you can act fast.",
     icon: <Bell className="w-5 h-5" />,
     plan: "scout",
-  },
-  {
-    name: "Industry Benchmarks",
-    description:
-      "See how your AI visibility stacks up against others in your space. Track market share across platforms and spot trends before your competitors do.",
-    icon: <BarChart3 className="w-5 h-5" />,
-    plan: "command",
   },
 ];
 
@@ -154,9 +146,9 @@ export default function FeaturesPage() {
               gaps, fix them, and track the results.
             </p>
           </AnimateIn>
-          <StaggerGroup className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <StaggerGroup className="flex flex-wrap justify-center gap-4">
             {capabilities.map((f) => (
-              <StaggerItem key={f.name}>
+              <StaggerItem key={f.name} className="w-full md:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.72rem)]">
                 <FeatureCard feature={f} />
               </StaggerItem>
             ))}
