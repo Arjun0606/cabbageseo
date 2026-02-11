@@ -191,7 +191,7 @@ function HomeContent() {
         <GridAnimation className="opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-zinc-950 pointer-events-none" />
 
-        <div className="relative max-w-5xl mx-auto px-6 text-center w-full">
+        <div className="relative max-w-7xl mx-auto px-6 text-center w-full">
           {/* Platform badges */}
           <AnimateIn delay={0.2} direction="up">
             <div className="flex justify-center gap-3 mb-10">
@@ -390,14 +390,14 @@ function HomeContent() {
 
       {/* ========== SOCIAL PROOF (always visible) ========== */}
       <section className="pb-16">
-        <div className="max-w-5xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-6">
           <SocialProofBar />
         </div>
       </section>
 
       {/* ========== HOW IT WORKS — CORE LOOP ========== */}
       <section className="py-20 border-t border-zinc-900">
-        <div className="max-w-6xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-6">
           <AnimateIn>
             <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">
               How it works
@@ -462,7 +462,7 @@ function HomeContent() {
 
       {/* ========== WHAT HAPPENS WHEN YOU SUBSCRIBE ========== */}
       <section className="py-20 border-t border-zinc-900">
-        <div className="max-w-6xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-6">
           <AnimateIn>
             <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">
               What happens when you subscribe

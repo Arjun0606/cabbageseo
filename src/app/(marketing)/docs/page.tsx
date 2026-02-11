@@ -506,7 +506,7 @@ export default function DocsPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <div className="container mx-auto px-4 py-12">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           {/* Title */}
           <AnimateIn direction="up" delay={0} once>
             <div className="text-center mb-12">

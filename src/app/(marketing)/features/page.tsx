@@ -109,7 +109,7 @@ export default function FeaturesPage() {
     <div className="min-h-screen bg-zinc-950">
       {/* Hero */}
       <section className="pt-20 pb-16">
-        <AnimateIn className="max-w-5xl mx-auto px-6 text-center">
+        <AnimateIn className="max-w-7xl mx-auto px-6 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             One loop. Five steps. Real results.
           </h1>
@@ -130,7 +130,7 @@ export default function FeaturesPage() {
       {/* Core Capabilities */}
       <section className="py-24 border-t border-white/[0.06] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.02] to-transparent pointer-events-none" />
-        <div className="max-w-6xl mx-auto px-6 relative">
+        <div className="max-w-7xl mx-auto px-6 relative">
           <AnimateIn className="mb-12">
             <Badge
               variant="outline"
@@ -168,7 +168,7 @@ export default function FeaturesPage() {
       {/* CTA */}
       <section className="py-16 border-t border-emerald-900/30 relative overflow-hidden">
         <GradientOrbs variant="emerald" />
-        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
+        <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
           <AnimateIn>
             <h2 className="text-2xl font-bold text-white mb-3">
               See which plan fits

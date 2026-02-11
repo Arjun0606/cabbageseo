@@ -63,7 +63,7 @@ export default function LeaderboardPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-yellow-950/20 via-zinc-950 to-zinc-950" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-yellow-500/5 rounded-full blur-3xl" />
 
-        <div className="relative max-w-6xl mx-auto px-6 text-center">
+        <div className="relative max-w-7xl mx-auto px-6 text-center">
           <AnimateIn direction="up" delay={0} once>
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-yellow-300 text-sm mb-6">
               <Trophy className="w-4 h-4" />
@@ -109,7 +109,7 @@ export default function LeaderboardPage() {
 
       {/* Leaderboard table */}
       <section className="pb-24">
-        <div className="max-w-6xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-6">
           {loading ? (
             <AnimateIn direction="up" delay={0} once>
               <div className="flex flex-col items-center justify-center py-20">

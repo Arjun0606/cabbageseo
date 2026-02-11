@@ -143,7 +143,7 @@ export default async function AiVisibilityPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div className="max-w-5xl mx-auto px-6 py-16">
+      <div className="max-w-7xl mx-auto px-6 py-16">
         {/* Breadcrumb */}
         <nav className="text-sm text-zinc-500 mb-8">
           <Link href="/" className="hover:text-emerald-400 transition-colors">Home</Link>

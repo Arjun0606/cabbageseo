@@ -343,7 +343,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         <Header onMenuClick={() => setMobileMenuOpen(true)} />
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             {showPaywall ? <SubscriptionRequired /> : children}
           </div>
         </main>

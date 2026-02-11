@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100">
-      <div className="max-w-4xl mx-auto px-6 py-16">
+      <div className="max-w-5xl mx-auto px-6 py-16">
         <Button variant="ghost" className="mb-8 text-zinc-400 hover:text-zinc-100" asChild>
           <Link href="/">
             <ArrowLeft className="w-4 h-4 mr-2" />
