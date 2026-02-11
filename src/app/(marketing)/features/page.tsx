@@ -118,7 +118,7 @@ export default function FeaturesPage() {
             scan, find gaps, fix, verify, repeat. Here&apos;s what powers each step.
           </p>
           <Link
-            href="/signup"
+            href="/"
             className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors"
           >
             Run a Free Scan
