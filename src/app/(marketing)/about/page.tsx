@@ -141,7 +141,7 @@ export default function AboutPage() {
       <div className="min-h-screen bg-zinc-950">
         {/* Hero */}
         <section className="pt-20 pb-16">
-          <div className="max-w-3xl mx-auto px-6">
+          <div className="max-w-5xl mx-auto px-6">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
               CabbageSEO is a GEO platform that gets AI to recommend you
             </h1>
@@ -181,7 +181,7 @@ export default function AboutPage() {
 
         {/* What GEO is */}
         <section className="py-16 border-t border-white/[0.06]">
-          <div className="max-w-3xl mx-auto px-6">
+          <div className="max-w-5xl mx-auto px-6">
             <h2 className="text-2xl font-bold text-white mb-4">
               What is GEO (Generative Engine Optimization)?
             </h2>
@@ -208,7 +208,7 @@ export default function AboutPage() {
 
         {/* How it works */}
         <section className="py-16 border-t border-white/[0.06]">
-          <div className="max-w-3xl mx-auto px-6">
+          <div className="max-w-5xl mx-auto px-6">
             <h2 className="text-2xl font-bold text-white mb-4">
               How CabbageSEO works
             </h2>
@@ -271,7 +271,7 @@ export default function AboutPage() {
 
         {/* Features */}
         <section className="py-16 border-t border-white/[0.06]">
-          <div className="max-w-3xl mx-auto px-6">
+          <div className="max-w-5xl mx-auto px-6">
             <h2 className="text-2xl font-bold text-white mb-8">
               Core capabilities
             </h2>
@@ -295,7 +295,7 @@ export default function AboutPage() {
 
         {/* Pricing summary */}
         <section className="py-16 border-t border-white/[0.06]">
-          <div className="max-w-3xl mx-auto px-6">
+          <div className="max-w-5xl mx-auto px-6">
             <h2 className="text-2xl font-bold text-white mb-4">Pricing</h2>
             <p className="text-zinc-400 mb-6">
               CabbageSEO offers three plans. All include real AI scanning across
@@ -350,7 +350,7 @@ export default function AboutPage() {
 
         {/* CTA */}
         <section className="py-16 border-t border-emerald-900/30 bg-emerald-950/20">
-          <div className="max-w-3xl mx-auto px-6 text-center">
+          <div className="max-w-5xl mx-auto px-6 text-center">
             <h2 className="text-2xl font-bold text-white mb-3">
               Check your AI visibility in 10 seconds
             </h2>

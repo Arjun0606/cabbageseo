@@ -40,7 +40,7 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      <article className="max-w-3xl mx-auto px-6 pt-20 pb-24">
+      <article className="max-w-4xl mx-auto px-6 pt-20 pb-24">
         {/* Back link */}
         <Link
           href="/blog"

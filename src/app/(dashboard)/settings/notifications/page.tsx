@@ -92,7 +92,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 p-6">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-white mb-2">Notifications</h1>
           <p className="text-zinc-400">Manage how you receive updates and alerts</p>

@@ -215,7 +215,7 @@ export default function ChangelogPage() {
     <div className="min-h-screen bg-zinc-950">
       {/* Hero */}
       <section className="pt-20 pb-12">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+        <div className="max-w-5xl mx-auto px-6 text-center">
           <AnimateIn direction="up" delay={0} once>
             <Badge variant="outline" className="mb-6 text-emerald-400 border-emerald-500/30">
               Updated regularly
@@ -236,7 +236,7 @@ export default function ChangelogPage() {
 
       {/* Timeline */}
       <section className="pb-24">
-        <div className="max-w-3xl mx-auto px-6">
+        <div className="max-w-5xl mx-auto px-6">
           {groups.map((group) => (
             <div key={group.label} className="mb-12">
               <AnimateIn direction="up" delay={0} once>
@@ -283,7 +283,7 @@ export default function ChangelogPage() {
       {/* CTA */}
       <section className="relative overflow-hidden py-16 bg-emerald-950/30 border-t border-emerald-900/30">
         <GradientOrbs variant="emerald" />
-        <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
+        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
           <AnimateIn direction="up" delay={0} once>
             <h2 className="text-2xl font-bold text-white mb-3">
               Try the latest features

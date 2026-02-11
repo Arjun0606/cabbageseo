@@ -92,7 +92,7 @@ export default function VsManualTrackingPage() {
     <div className="min-h-screen bg-zinc-950">
       {/* Hero */}
       <section className="pt-20 pb-16">
-        <div className="max-w-4xl mx-auto px-6 text-center">
+        <div className="max-w-6xl mx-auto px-6 text-center">
           <AnimateIn direction="up" delay={0} once>
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
               CabbageSEO vs. Manual AI Tracking
@@ -108,7 +108,7 @@ export default function VsManualTrackingPage() {
 
       {/* Comparison Table */}
       <section className="pb-24">
-        <div className="max-w-4xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
           {/* Table Header */}
           <AnimateIn direction="up" delay={0.2} once>
             <div className="grid grid-cols-3 gap-4 mb-2 px-4">

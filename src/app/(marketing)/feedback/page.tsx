@@ -78,7 +78,7 @@ export default function FeedbackPage() {
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950">
       {/* HERO */}
       <section className="pt-24 pb-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-5xl mx-auto text-center">
           <AnimateIn direction="up" delay={0} once>
             <Badge className="mb-4 bg-red-500/10 text-red-400 border-red-500/30">
               Direct Line to the Founder
@@ -175,7 +175,7 @@ export default function FeedbackPage() {
 
       {/* MY COMMITMENTS */}
       <section className="py-16 px-4 bg-zinc-900/30">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <AnimateIn direction="up" delay={0} once>
             <h2 className="text-2xl font-bold text-white text-center mb-12">
               My Commitments to You
@@ -200,7 +200,7 @@ export default function FeedbackPage() {
 
       {/* WHAT MAKES GREAT FEEDBACK */}
       <section className="py-16 px-4">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <AnimateIn direction="up" delay={0} once>
             <GlassCard hover={false} padding="lg" glow="emerald">
               <div className="flex items-center gap-2 mb-1">

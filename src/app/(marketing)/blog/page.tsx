@@ -10,7 +10,7 @@ export default function BlogPage() {
     <div className="min-h-screen bg-zinc-950">
       {/* Hero */}
       <section className="pt-20 pb-12">
-        <div className="max-w-4xl mx-auto px-6 text-center">
+        <div className="max-w-5xl mx-auto px-6 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             AI Visibility Blog
           </h1>
@@ -23,7 +23,7 @@ export default function BlogPage() {
 
       {/* Posts */}
       <section className="pb-24">
-        <div className="max-w-3xl mx-auto px-6">
+        <div className="max-w-5xl mx-auto px-6">
           {posts.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-zinc-500">Articles coming soon.</p>

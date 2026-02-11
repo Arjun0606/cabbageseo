@@ -21,7 +21,7 @@ export default function WhatIsGeoPage() {
     <div className="min-h-screen bg-zinc-950">
       {/* Hero */}
       <section className="pt-20 pb-16">
-        <div className="max-w-4xl mx-auto px-6 text-center">
+        <div className="max-w-6xl mx-auto px-6 text-center">
           <div className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium border bg-emerald-500/10 border-emerald-500/20 text-emerald-400 mb-6">
             The definitive guide to GEO
           </div>
@@ -55,7 +55,7 @@ export default function WhatIsGeoPage() {
 
       {/* What is GEO */}
       <section className="py-16 border-t border-white/[0.06]">
-        <div className="max-w-4xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-white mb-6">
             What is Generative Engine Optimization?
           </h2>
@@ -89,7 +89,7 @@ export default function WhatIsGeoPage() {
 
       {/* How GEO Works */}
       <section className="py-16 border-t border-white/[0.06]">
-        <div className="max-w-4xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-white mb-4">
             How does GEO work?
           </h2>
@@ -140,7 +140,7 @@ export default function WhatIsGeoPage() {
 
       {/* GEO vs SEO */}
       <section className="py-16 border-t border-white/[0.06] bg-white/[0.01]">
-        <div className="max-w-4xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-white mb-4">GEO vs SEO</h2>
           <p className="text-zinc-400 mb-8">
             GEO and SEO are complementary but target different systems.
@@ -211,7 +211,7 @@ export default function WhatIsGeoPage() {
 
       {/* Why GEO Matters */}
       <section className="py-16 border-t border-white/[0.06]">
-        <div className="max-w-4xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-white mb-4">
             Why GEO matters now
           </h2>
@@ -263,7 +263,7 @@ export default function WhatIsGeoPage() {
 
       {/* The GEO Loop */}
       <section className="py-16 border-t border-white/[0.06] bg-white/[0.01]">
-        <div className="max-w-4xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-white mb-4">
             The GEO loop: How to optimize for AI search
           </h2>
@@ -331,7 +331,7 @@ export default function WhatIsGeoPage() {
 
       {/* GEO Checklist */}
       <section className="py-16 border-t border-white/[0.06]">
-        <div className="max-w-4xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-white mb-4">
             GEO checklist: Are you doing these?
           </h2>
@@ -383,7 +383,7 @@ export default function WhatIsGeoPage() {
 
       {/* How CabbageSEO Helps */}
       <section className="py-16 border-t border-white/[0.06] bg-white/[0.01]">
-        <div className="max-w-4xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-white mb-4">
             How CabbageSEO automates your GEO strategy
           </h2>
@@ -448,7 +448,7 @@ export default function WhatIsGeoPage() {
 
       {/* FAQ */}
       <section className="py-16 border-t border-white/[0.06]">
-        <div className="max-w-4xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-white mb-8">
             Frequently asked questions about GEO
           </h2>
@@ -501,7 +501,7 @@ export default function WhatIsGeoPage() {
 
       {/* Final CTA */}
       <section className="py-16 border-t border-emerald-900/30">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+        <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-2xl font-bold text-white mb-3">
             Ready to start your GEO strategy?
           </h2>

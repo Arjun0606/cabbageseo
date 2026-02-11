@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
-  Bell,
-  Brain,
   Search,
+  Target,
   FileText,
-  Timer,
+  Lightbulb,
+  ShieldCheck,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AnimateIn } from "@/components/motion/animate-in";
@@ -16,7 +16,7 @@ import { GradientOrbs } from "@/components/backgrounds/gradient-orbs";
 
 export const metadata: Metadata = {
   title: "Features | CabbageSEO",
-  description: "AI Citation Scanning, Trust Source Mapping, Fix Pages, and more. See what CabbageSEO can do for your AI visibility.",
+  description: "AI Visibility Scanning, Gap Detection, Fix Pages, Intelligence & Action Plans, and Trust Source Tracking. See what CabbageSEO can do for your AI visibility.",
 };
 
 interface Feature {
@@ -28,38 +28,38 @@ interface Feature {
 
 const capabilities: Feature[] = [
   {
-    name: "AI Citation Scanning",
+    name: "AI Visibility Scanning",
     description:
-      "Find out exactly which buyer questions AI answers without mentioning you. Real queries to ChatGPT, Perplexity and Google AI with actual AI responses, not estimations.",
+      "Runs your key queries through ChatGPT, Perplexity, and Google AI to check if they mention you. Tracks citations over time so you can see whether you're gaining or losing visibility.",
     icon: <Search className="w-5 h-5" />,
     plan: "all",
   },
   {
-    name: "Gap Analysis",
+    name: "Gap Detection",
     description:
-      "See every query where AI sends buyers elsewhere and understand why. Know exactly what you're missing so you can close each gap systematically.",
-    icon: <Brain className="w-5 h-5" />,
+      "Identifies specific queries where AI talks about your space but doesn't mention you. These are your visibility gaps, the conversations happening without you.",
+    icon: <Target className="w-5 h-5" />,
     plan: "scout",
   },
   {
     name: "Fix Pages",
     description:
-      "Turn every visibility gap into a targeted page that gets AI to recommend you. Comparison pages, explainers, and FAQs built from your actual data.",
+      "Automatically generates expert-level content pages targeting each gap. Structured to be cited by AI with direct answers, comparison tables, FAQ sections, entity-rich text, and Schema.org markup.",
     icon: <FileText className="w-5 h-5" />,
     plan: "scout",
   },
   {
-    name: "30-Day Sprint",
+    name: "Intelligence & Action Plans",
     description:
-      "Go from invisible to recommended in 30 days. A structured week-by-week program of prioritized actions with clear instructions you can actually follow.",
-    icon: <Timer className="w-5 h-5" />,
+      "Gap analysis explains why you're not being cited for specific queries. Content recommendations and weekly action plans prioritize what to do next based on your data.",
+    icon: <Lightbulb className="w-5 h-5" />,
     plan: "scout",
   },
   {
-    name: "Automated Monitoring",
+    name: "Trust Source Tracking",
     description:
-      "Daily or hourly scans detect the moment AI shifts. Instant email and Slack alerts if your visibility drops so you can act fast.",
-    icon: <Bell className="w-5 h-5" />,
+      "Monitors whether you're listed on the review platforms AI trusts like G2, Capterra, Trustpilot, and Yelp. These third-party profiles are signals AI uses to decide if you're credible enough to recommend.",
+    icon: <ShieldCheck className="w-5 h-5" />,
     plan: "scout",
   },
 ];
@@ -109,7 +109,7 @@ export default function FeaturesPage() {
     <div className="min-h-screen bg-zinc-950">
       {/* Hero */}
       <section className="pt-20 pb-16">
-        <AnimateIn className="max-w-4xl mx-auto px-6 text-center">
+        <AnimateIn className="max-w-5xl mx-auto px-6 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             One loop. Five steps. Real results.
           </h1>
@@ -168,7 +168,7 @@ export default function FeaturesPage() {
       {/* CTA */}
       <section className="py-16 border-t border-emerald-900/30 relative overflow-hidden">
         <GradientOrbs variant="emerald" />
-        <div className="max-w-3xl mx-auto px-6 text-center relative z-10">
+        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <AnimateIn>
             <h2 className="text-2xl font-bold text-white mb-3">
               See which plan fits

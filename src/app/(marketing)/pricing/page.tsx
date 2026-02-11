@@ -362,7 +362,7 @@ export default function PricingPage() {
     <div className="bg-zinc-950 min-h-screen">
       {/* Hero */}
       <section className="pt-20 pb-12 sm:pt-24 sm:pb-16 px-6">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-5xl mx-auto text-center">
           <AnimateIn delay={0}>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 mb-8">
               <Sparkles className="w-4 h-4 text-emerald-400" />
@@ -476,7 +476,7 @@ export default function PricingPage() {
 
       {/* FAQ */}
       <section className="py-20 sm:py-24 px-6 border-t border-white/[0.06]">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <AnimateIn>
             <h2 className="text-3xl sm:text-4xl font-bold text-center text-white mb-4">
               Frequently asked questions

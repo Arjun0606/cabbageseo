@@ -136,7 +136,7 @@ export default async function ShareableTeaserPage({
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      <div className="max-w-3xl mx-auto px-6 py-12">
+      <div className="max-w-5xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-8">

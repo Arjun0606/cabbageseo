@@ -176,7 +176,7 @@ function formatDate(dateString: string): string {
 
 function SkeletonLoader() {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8 animate-pulse">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8 animate-pulse">
       {/* Header skeleton */}
       <div>
         <div className="h-8 w-48 bg-zinc-800 rounded-lg" />
@@ -242,7 +242,7 @@ function RunningState() {
   }, [messages.length]);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <div className="relative mb-6">
           <div className="w-20 h-20 rounded-full border-2 border-emerald-500/20 flex items-center justify-center">
@@ -696,7 +696,7 @@ export default function AuditPage() {
   // ------------------------------------------
   if (upgradeRequired) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         <UpgradeCTA message={upgradeMessage} />
       </div>
     );
@@ -707,7 +707,7 @@ export default function AuditPage() {
   // ------------------------------------------
   if (!currentSite) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
           <AlertCircle className="w-10 h-10 text-zinc-600 mb-4" />
           <h2 className="text-lg font-semibold text-white mb-1">No site selected</h2>
@@ -723,7 +723,7 @@ export default function AuditPage() {
   // Render: main page
   // ------------------------------------------
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
