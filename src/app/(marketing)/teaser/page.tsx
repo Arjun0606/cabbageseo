@@ -1,33 +1,21 @@
-"use client";
+import { redirect } from "next/navigation";
 
 /**
- * TEASER PAGE — Redirects to homepage scanner
+ * TEASER PAGE — Server component redirect
  * The teaser route now only serves shareable reports at /teaser/[id]
  */
 
-import { useEffect, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+export default async function TeaserPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ domain?: string }>;
+}) {
+  const params = await searchParams;
+  const domain = params.domain;
 
-function TeaserContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const domain = searchParams.get("domain");
+  if (!domain) {
+    redirect("/");
+  }
 
-  useEffect(() => {
-    if (!domain) {
-      router.push("/");
-      return;
-    }
-    router.replace(`/?domain=${encodeURIComponent(domain)}`);
-  }, [domain, router]);
-
-  return null;
-}
-
-export default function TeaserPage() {
-  return (
-    <Suspense>
-      <TeaserContent />
-    </Suspense>
-  );
+  redirect(`/?domain=${encodeURIComponent(domain)}`);
 }

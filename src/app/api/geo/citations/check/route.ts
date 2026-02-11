@@ -652,7 +652,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
       // Rate limit: 10 checks per minute per user (skip for automated jobs)
-      const rateLimit = citationCheckLimiter.check(currentUser.id);
+      const rateLimit = await citationCheckLimiter.check(currentUser.id);
       if (!rateLimit.allowed) {
         return NextResponse.json(
           { error: "Too many requests. Please wait a moment.", remaining: 0 },

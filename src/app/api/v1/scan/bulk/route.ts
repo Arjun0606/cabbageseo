@@ -8,30 +8,32 @@
  * Headers: x-api-key: <key>
  * Body: { domains: string[] }
  *
- * Rate limit: 50 domains per request, 200 per hour per API key.
+ * Rate limit: 50 domains per request, configurable per API key (default 200/hr).
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { apiKeys } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 
-// In-memory rate limiting per API key
+// In-memory rate limiting per API key (supplementary — key-level limits stored in DB)
 const keyUsage = new Map<string, { count: number; resetAt: number }>();
-const HOURLY_LIMIT = 200;
 const PER_REQUEST_LIMIT = 50;
 
-function checkKeyLimit(key: string): { allowed: boolean; remaining: number } {
+function checkKeyLimit(key: string, hourlyLimit: number): { allowed: boolean; remaining: number } {
   const now = Date.now();
   const entry = keyUsage.get(key);
 
   if (!entry || now > entry.resetAt) {
     keyUsage.set(key, { count: 0, resetAt: now + 60 * 60 * 1000 });
-    return { allowed: true, remaining: HOURLY_LIMIT };
+    return { allowed: true, remaining: hourlyLimit };
   }
 
-  if (entry.count >= HOURLY_LIMIT) {
+  if (entry.count >= hourlyLimit) {
     return { allowed: false, remaining: 0 };
   }
 
-  return { allowed: true, remaining: HOURLY_LIMIT - entry.count };
+  return { allowed: true, remaining: hourlyLimit - entry.count };
 }
 
 function incrementUsage(key: string, count: number) {
@@ -41,10 +43,31 @@ function incrementUsage(key: string, count: number) {
   }
 }
 
-// Valid API keys — in production, store these in the database
-function isValidApiKey(key: string): boolean {
-  const validKeys = (process.env.BULK_API_KEYS || "").split(",").filter(Boolean);
-  return validKeys.includes(key);
+/**
+ * Validates an API key against the database.
+ * Returns the key record if valid, null otherwise.
+ */
+async function validateApiKey(key: string) {
+  const [record] = await db
+    .select()
+    .from(apiKeys)
+    .where(and(eq(apiKeys.key, key), eq(apiKeys.isActive, true)))
+    .limit(1);
+
+  if (!record) return null;
+
+  // Check expiration
+  if (record.expiresAt && new Date(record.expiresAt) < new Date()) {
+    return null;
+  }
+
+  // Update last used timestamp (fire-and-forget)
+  db.update(apiKeys)
+    .set({ lastUsedAt: new Date() })
+    .where(eq(apiKeys.id, record.id))
+    .catch(() => {});
+
+  return record;
 }
 
 function cleanDomain(raw: string): string {
@@ -57,24 +80,34 @@ function cleanDomain(raw: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  // Auth check
-  const apiKey = request.headers.get("x-api-key");
-  if (!apiKey || !isValidApiKey(apiKey)) {
+  // Auth check — validate against database
+  const rawKey = request.headers.get("x-api-key");
+  if (!rawKey) {
     return NextResponse.json(
-      { error: "Invalid or missing API key. Set x-api-key header." },
+      { error: "Missing API key. Set x-api-key header." },
       { status: 401 }
     );
   }
 
+  const keyRecord = await validateApiKey(rawKey);
+  if (!keyRecord) {
+    return NextResponse.json(
+      { error: "Invalid or expired API key." },
+      { status: 401 }
+    );
+  }
+
+  const hourlyLimit = keyRecord.hourlyLimit ?? 200;
+
   // Rate limit check
-  const { allowed, remaining } = checkKeyLimit(apiKey);
+  const { allowed, remaining } = checkKeyLimit(rawKey, hourlyLimit);
   if (!allowed) {
     return NextResponse.json(
       { error: "Hourly rate limit exceeded. Try again later." },
       {
         status: 429,
         headers: {
-          "X-RateLimit-Limit": String(HOURLY_LIMIT),
+          "X-RateLimit-Limit": String(hourlyLimit),
           "X-RateLimit-Remaining": "0",
           "Retry-After": "3600",
         },
@@ -203,7 +236,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Increment usage counter
-  incrementUsage(apiKey, domains.length);
+  incrementUsage(rawKey, domains.length);
   const newRemaining = remaining - domains.length;
 
   return NextResponse.json(
@@ -211,14 +244,14 @@ export async function POST(request: NextRequest) {
       scanned: results.length,
       results,
       _meta: {
-        rateLimit: HOURLY_LIMIT,
+        rateLimit: hourlyLimit,
         remaining: newRemaining,
         batchSize: PER_REQUEST_LIMIT,
       },
     },
     {
       headers: {
-        "X-RateLimit-Limit": String(HOURLY_LIMIT),
+        "X-RateLimit-Limit": String(hourlyLimit),
         "X-RateLimit-Remaining": String(Math.max(0, newRemaining)),
       },
     }

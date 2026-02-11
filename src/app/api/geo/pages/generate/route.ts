@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limit: 5 page generations per minute per user
-    const rateLimit = pageGenerationLimiter.check(currentUser.id);
+    const rateLimit = await pageGenerationLimiter.check(currentUser.id);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Too many requests. Please wait a moment." },

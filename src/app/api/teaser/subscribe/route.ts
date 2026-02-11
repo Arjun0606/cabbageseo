@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   try {
     // Rate limit by IP (public endpoint)
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    const rateLimit = authLimiter.check(ip);
+    const rateLimit = await authLimiter.check(ip);
     if (!rateLimit.allowed) {
       return Response.json({ error: "Too many requests" }, { status: 429 });
     }

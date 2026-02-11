@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limit: 10 intelligence requests per minute per user
-    const rateLimit = intelligenceLimiter.check(currentUser.id);
+    const rateLimit = await intelligenceLimiter.check(currentUser.id);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Too many requests. Please wait a moment." },

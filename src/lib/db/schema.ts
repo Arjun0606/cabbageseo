@@ -257,7 +257,10 @@ export const usageEvents = pgTable(
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => [index("usage_event_org_idx").on(table.organizationId, table.createdAt)]
+  (table) => [
+    index("usage_event_org_idx").on(table.organizationId, table.createdAt),
+    index("usage_event_type_idx").on(table.eventType),
+  ]
 );
 
 // ============================================
@@ -534,6 +537,7 @@ export const sites = pgTable(
   (table) => [
     index("site_org_idx").on(table.organizationId),
     index("site_domain_idx").on(table.domain),
+    uniqueIndex("site_org_domain_unique").on(table.organizationId, table.domain),
   ]
 );
 
@@ -615,6 +619,7 @@ export const keywords = pgTable(
     index("keyword_cluster_idx").on(table.clusterId),
     index("keyword_status_idx").on(table.status),
     index("keywords_content_id_idx").on(table.contentId),
+    uniqueIndex("keyword_site_keyword_unique").on(table.siteId, table.keyword),
   ]
 );
 
@@ -703,6 +708,7 @@ export const content = pgTable(
     index("content_site_idx").on(table.siteId),
     index("content_status_idx").on(table.status),
     index("content_keyword_idx").on(table.keywordId),
+    index("content_site_status_created_idx").on(table.siteId, table.status, table.createdAt),
   ]
 );
 
@@ -779,6 +785,7 @@ export const pages = pgTable(
   (table) => [
     index("page_site_idx").on(table.siteId),
     index("page_url_idx").on(table.url),
+    index("page_crawl_idx").on(table.siteId, table.lastCrawledAt),
   ]
 );
 
@@ -872,6 +879,7 @@ export const issues = pgTable(
   (table) => [
     index("issue_site_idx").on(table.siteId),
     index("issue_severity_idx").on(table.severity),
+    index("issue_filter_idx").on(table.siteId, table.isResolved, table.severity),
   ]
 );
 
@@ -933,6 +941,7 @@ export const tasks = pgTable(
     index("task_site_idx").on(table.siteId),
     index("task_status_idx").on(table.status),
     index("task_scheduled_idx").on(table.scheduledFor),
+    index("task_queue_idx").on(table.status, table.priority, table.scheduledFor),
   ]
 );
 
@@ -1043,6 +1052,7 @@ export const citations = pgTable(
     index("citations_site_idx").on(table.siteId),
     index("citations_platform_idx").on(table.platform),
     index("citations_page_idx").on(table.pageId),
+    index("citations_site_cited_at_idx").on(table.siteId, table.citedAt),
     // Prevent duplicate citations for the same query/platform/site
     uniqueIndex("citations_unique_idx").on(table.siteId, table.platform, table.query),
   ]
@@ -1469,6 +1479,42 @@ export const industryBenchmarks = pgTable(
 );
 
 // ============================================
+// API KEYS (for bulk scan and external integrations)
+// ============================================
+
+export const apiKeys = pgTable(
+  "api_keys",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .references(() => organizations.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Key data
+    key: text("key").notNull().unique(),
+    name: text("name").notNull(), // "Production API Key", etc.
+
+    // Permissions
+    scopes: jsonb("scopes").$type<string[]>().default(["bulk_scan"]),
+
+    // Rate limits
+    hourlyLimit: integer("hourly_limit").default(200),
+
+    // Status
+    isActive: boolean("is_active").default(true),
+    lastUsedAt: timestamp("last_used_at"),
+
+    // Timestamps
+    expiresAt: timestamp("expires_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("api_keys_key_idx").on(table.key),
+    index("api_keys_org_idx").on(table.organizationId),
+  ]
+);
+
+// ============================================
 // REFERRALS
 // ============================================
 
@@ -1513,6 +1559,14 @@ export const organizationsRelations = relations(organizations, ({ one, many }) =
   tasks: many(tasks),
   integrations: many(integrations),
   creditBalance: one(creditBalance),
+  apiKeys: many(apiKeys),
+}));
+
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [apiKeys.organizationId],
+    references: [organizations.id],
+  }),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -1715,8 +1769,12 @@ export type Usage = typeof usage.$inferSelect;
 export type NewUsage = typeof usage.$inferInsert;
 export type ContentIdea = typeof contentIdeas.$inferSelect;
 export type NewContentIdea = typeof contentIdeas.$inferInsert;
-export type Competitor = typeof competitors.$inferSelect; // DEPRECATED
-export type NewCompetitor = typeof competitors.$inferInsert; // DEPRECATED
+/** @deprecated competitors table is no longer used — will be removed in a future migration */
+export type Competitor = typeof competitors.$inferSelect;
+/** @deprecated competitors table is no longer used — will be removed in a future migration */
+export type NewCompetitor = typeof competitors.$inferInsert;
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type NewApiKey = typeof apiKeys.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
 export type SourceListing = typeof sourceListings.$inferSelect;

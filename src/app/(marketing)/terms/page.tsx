@@ -1,9 +1,13 @@
-"use client";
-
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { AnimateIn } from "@/components/motion/animate-in";
+
+export const metadata: Metadata = {
+  title: "Terms of Service | CabbageSEO",
+  description: "Terms of service for CabbageSEO AI Visibility Intelligence platform.",
+};
 
 export default function TermsPage() {
   return (

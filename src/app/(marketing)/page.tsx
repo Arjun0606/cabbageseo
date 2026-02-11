@@ -191,10 +191,10 @@ function HomeContent() {
         <GridAnimation className="opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-zinc-950 pointer-events-none" />
 
-        <div className="relative max-w-2xl mx-auto px-6 text-center w-full">
+        <div className="relative max-w-3xl mx-auto px-6 text-center w-full">
           {/* Platform badges */}
           <AnimateIn delay={0.2} direction="up">
-            <div className="flex justify-center gap-3 mb-8">
+            <div className="flex justify-center gap-3 mb-10">
               {[
                 { name: "ChatGPT", color: "border-emerald-500/20 text-emerald-400" },
                 { name: "Perplexity", color: "border-blue-500/20 text-blue-400" },
@@ -211,26 +211,25 @@ function HomeContent() {
           </AnimateIn>
 
           <AnimateIn delay={0.4} direction="up">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              When buyers ask AI who to use
-              <br className="hidden sm:block" />
-              <span className="text-emerald-400"> &mdash; are you the answer?</span>
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-white mb-8 leading-[1.1] tracking-tight">
+              When buyers ask AI<br className="hidden sm:block" />
+              who to use, <span className="text-emerald-400">are you<br className="hidden sm:block" />
+              the answer?</span>
             </h1>
           </AnimateIn>
 
           <AnimateIn delay={0.6} direction="up">
-            <p className="text-lg text-zinc-400 mb-3 max-w-xl mx-auto">
-              Find out in 10 seconds. Most businesses are invisible to AI
-              and don&rsquo;t know it.
+            <p className="text-xl text-zinc-400 mb-4 max-w-2xl mx-auto leading-relaxed">
+              Find out in 10 seconds. Most businesses are invisible to AI and don&apos;t know it.
             </p>
-            <p className="text-sm text-red-400/80 font-medium mb-8 max-w-xl mx-auto">
+            <p className="text-sm text-red-400/80 font-medium mb-10 max-w-xl mx-auto">
               AI recommendations shift weekly. Check before your competitors do.
             </p>
           </AnimateIn>
 
           {/* Domain input */}
           <AnimateIn delay={0.8} direction="up">
-            <form onSubmit={handleSubmit} className="max-w-xl mx-auto mb-4">
+            <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-6">
               <GlassCard padding="sm" hover={false} className="!p-2">
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input
@@ -238,14 +237,14 @@ function HomeContent() {
                     value={domain}
                     onChange={(e) => setDomain(e.target.value)}
                     placeholder="yourdomain.com"
-                    className="flex-1 px-5 py-3.5 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white text-lg placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 transition-all"
+                    className="flex-1 px-5 py-4 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white text-lg placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 transition-all"
                     disabled={scanState === "scanning"}
                     autoFocus={!domainParam}
                   />
                   <button
                     type="submit"
                     disabled={scanState === "scanning" || !domain.trim()}
-                    className="px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-700 disabled:cursor-not-allowed text-black font-bold rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
+                    className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-700 disabled:cursor-not-allowed text-black font-bold rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
                   >
                     {scanState === "scanning" ? (
                       <Loader2 className="w-5 h-5 animate-spin text-black" />
@@ -262,11 +261,11 @@ function HomeContent() {
           </AnimateIn>
 
           <AnimateIn delay={1.0} direction="up">
-            <div className="flex items-center justify-center gap-4 text-sm text-zinc-600">
+            <div className="flex items-center justify-center gap-6 text-sm text-zinc-500">
               <span>Takes 10 seconds</span>
-              <span>&bull;</span>
+              <span className="text-zinc-700">·</span>
               <span>No signup required</span>
-              <span>&bull;</span>
+              <span className="text-zinc-700">·</span>
               <span>Real AI responses</span>
             </div>
           </AnimateIn>
@@ -372,7 +371,7 @@ function HomeContent() {
                     </form>
 
                     <p className="text-center text-zinc-500 text-xs mt-4">
-                      Plus free weekly rescans &bull; Unsubscribe anytime
+                      Plus free weekly rescans · Unsubscribe anytime
                     </p>
                   </div>
                 </div>
@@ -403,7 +402,7 @@ function HomeContent() {
             <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">
               How it works
             </h2>
-            <p className="text-zinc-500 text-center mb-12 max-w-xl mx-auto">
+            <p className="text-zinc-500 text-center mb-12 max-w-xl mx-auto leading-relaxed">
               The GEO loop: scan, find gaps, fix, verify, monitor. Repeat until AI recommends you.
             </p>
           </AnimateIn>
@@ -478,7 +477,7 @@ function HomeContent() {
               {
                 icon: <Rocket className="w-6 h-6 text-emerald-400" />,
                 title: "Your 30-day sprint starts",
-                desc: "Week-by-week actions tailored to your gaps. Not a dashboard to stare at \u2014 specific tasks with clear instructions.",
+                desc: "Week-by-week actions tailored to your gaps. Specific tasks with clear instructions, not a dashboard to stare at.",
               },
               {
                 icon: <ShieldCheck className="w-6 h-6 text-blue-400" />,
@@ -513,7 +512,7 @@ function HomeContent() {
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <p className="mt-3 text-zinc-600 text-sm">
-                From $49/mo &bull; 14-day money-back guarantee &bull; Cancel anytime
+                From $49/mo · 14-day money-back guarantee · Cancel anytime
               </p>
             </div>
           </AnimateIn>

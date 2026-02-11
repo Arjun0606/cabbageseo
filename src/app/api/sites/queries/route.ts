@@ -8,9 +8,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getCitationPlanLimits, getCitationPlanFeatures } from "@/lib/billing/citation-plans";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
-function getDbClient(): SupabaseClient | null {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getDbClient(): any {
   try {
     return createServiceClient();
   } catch {

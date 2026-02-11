@@ -1,8 +1,8 @@
-"use client";
-
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
+  BarChart3,
   Bell,
   Brain,
   Search,
@@ -15,6 +15,11 @@ import { StaggerGroup, StaggerItem } from "@/components/motion/stagger-group";
 import { GlassCard } from "@/components/ui/glass-card";
 import { GradientOrbs } from "@/components/backgrounds/gradient-orbs";
 
+export const metadata: Metadata = {
+  title: "Features | CabbageSEO",
+  description: "AI Citation Scanning, Trust Source Mapping, Fix Pages, and more. See what CabbageSEO can do for your AI visibility.",
+};
+
 interface Feature {
   name: string;
   description: string;
@@ -26,14 +31,14 @@ const capabilities: Feature[] = [
   {
     name: "AI Citation Scanning",
     description:
-      "Find out exactly which buyer questions lead to your competitors, not you. Real queries to ChatGPT, Perplexity & Google AI \u2014 actual AI responses, not estimations.",
+      "Find out exactly which buyer questions lead to your competitors instead of you. Real queries to ChatGPT, Perplexity and Google AI with actual AI responses, not estimations.",
     icon: <Search className="w-5 h-5" />,
     plan: "all",
   },
   {
     name: "Gap Analysis",
     description:
-      "See every query where AI sends buyers elsewhere and understand why. Know exactly what\u2019s missing so you can close each gap systematically.",
+      "See every query where AI sends buyers elsewhere and understand why. Know exactly what you're missing so you can close each gap systematically.",
     icon: <Brain className="w-5 h-5" />,
     plan: "scout",
   },
@@ -47,16 +52,23 @@ const capabilities: Feature[] = [
   {
     name: "30-Day Sprint",
     description:
-      "Go from invisible to recommended in 30 days. A structured week-by-week program of prioritized actions with clear instructions \u2014 not a dashboard to stare at.",
+      "Go from invisible to recommended in 30 days. A structured week-by-week program of prioritized actions with clear instructions you can actually follow.",
     icon: <Timer className="w-5 h-5" />,
     plan: "scout",
   },
   {
     name: "Automated Monitoring",
     description:
-      "Never be caught off guard. Daily or hourly scans detect the moment AI shifts. Instant email + Slack alerts if your visibility drops so you can act fast.",
+      "Daily or hourly scans detect the moment AI shifts. Instant email and Slack alerts if your visibility drops so you can act fast.",
     icon: <Bell className="w-5 h-5" />,
     plan: "scout",
+  },
+  {
+    name: "Industry Benchmarks",
+    description:
+      "See how your AI visibility stacks up against others in your space. Track market share across platforms and spot trends before your competitors do.",
+    icon: <BarChart3 className="w-5 h-5" />,
+    plan: "command",
   },
 ];
 

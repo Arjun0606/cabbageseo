@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limit
-    const rateLimit = siteCreationLimiter.check(currentUser.id);
+    const rateLimit = await siteCreationLimiter.check(currentUser.id);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Too many requests. Please wait a moment.", remaining: 0 },

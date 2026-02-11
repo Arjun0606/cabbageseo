@@ -9,9 +9,10 @@
  * 3. Progress (collapsible — improvement, lost queries, sprint)
  */
 
-import { useEffect, useState, Suspense, useCallback } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSite } from "@/context/site-context";
 import { MomentumScore } from "@/components/dashboard/momentum-score";
 import { SprintProgress } from "@/components/dashboard/sprint-progress";
@@ -19,9 +20,22 @@ import { DoThisNext } from "@/components/dashboard/do-this-next";
 import { FirstCitationGoal } from "@/components/dashboard/first-citation-goal";
 import { RevenueAtRisk, type LostQuery } from "@/components/dashboard/revenue-at-risk";
 import { ROISummary } from "@/components/dashboard/roi-summary";
-import { TrendChart, type Snapshot } from "@/components/dashboard/trend-chart";
+import { TrendChart } from "@/components/dashboard/trend-chart";
 import { FixPagesReady } from "@/components/dashboard/fix-pages-ready";
 import { RecheckResult } from "@/components/dashboard/recheck-result";
+import {
+  useMomentum,
+  useNextAction,
+  useListings,
+  useHistory,
+  useGeneratedPages,
+  useImprovement,
+  useOpportunities,
+  useAudit,
+  useSprint,
+  useLostQueries,
+} from "@/hooks/api/queries";
+import { useSprintAction, useInvalidateDashboard } from "@/hooks/api/mutations";
 import {
   RefreshCw,
   Loader2,
@@ -37,76 +51,10 @@ import {
 import Link from "next/link";
 import { useCheckout } from "@/hooks/use-checkout";
 
-interface MomentumData {
-  score: number;
-  change: number;
-  trend: "gaining" | "losing" | "stable";
-  citationsWon: number;
-  citationsLost: number;
-  queriesWon: number;
-  queriesTotal: number;
-  sourceCoverage: number;
-  breakdown?: {
-    baseScore: number;
-    sourceBonus: number;
-    momentumBonus: number;
-    explanation: string;
-    tip: string | null;
-  };
-}
-
-interface SprintData {
-  progress: {
-    totalActions: number;
-    completedActions: number;
-    percentComplete: number;
-    currentDay: number;
-    currentWeek: number;
-    daysRemaining: number;
-    isComplete: boolean;
-  };
-  actions: Array<{
-    id: string;
-    actionType: string;
-    title: string;
-    description: string;
-    actionUrl?: string | null;
-    priority: number;
-    estimatedMinutes: number;
-    week: number;
-    status: string;
-    completedAt: string | null;
-    proofUrl?: string | null;
-    notes?: string | null;
-  }>;
-}
-
-interface NextActionData {
-  id: string;
-  title: string;
-  description: string;
-  priority: "critical" | "high" | "medium" | "low";
-  estimatedMinutes: number;
-  actionUrl?: string;
-  category: "source" | "content" | "technical" | "monitoring";
-}
-
-interface CheckSnapshot {
-  date: string;
-  queriesWon: number;
-  queriesLost: number;
-  totalQueries: number;
-}
-
-interface ImprovementData {
-  firstCheck: CheckSnapshot | null;
-  latestCheck: CheckSnapshot | null;
-  checksCount: number;
-}
-
 function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const {
     currentSite,
     sites,
@@ -117,42 +65,29 @@ function DashboardContent() {
   } = useSite();
   const { checkout, loading: checkoutLoading } = useCheckout();
 
-  // State — Zone 1 + 2 (immediate)
-  const [momentum, setMomentum] = useState<MomentumData | null>(null);
-  const [nextAction, setNextAction] = useState<NextActionData | null>(null);
-  const [listings, setListings] = useState<{ listedCount: number } | null>(null);
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [checking, setChecking] = useState(false);
-  const [dashError, setDashError] = useState<string | null>(null);
+  const siteId = currentSite?.id;
 
-  // State — Zone 3 (deferred)
+  // ── React Query hooks (replace 15+ useState + 5 useEffect patterns) ──
+  const { data: momentum, isLoading: momentumLoading } = useMomentum(siteId);
+  const { data: nextAction } = useNextAction(siteId);
+  const { data: listings } = useListings(siteId);
+  const { data: snapshots = [] } = useHistory(siteId);
+  const { data: generatedPages = [], isLoading: pagesLoading } = useGeneratedPages(siteId);
+  const { data: improvement } = useImprovement(siteId);
+  const { data: oppsData } = useOpportunities(siteId);
+  const { data: auditData } = useAudit(siteId);
+
+  // Deferred data — only load when progress section is open
   const [showProgress, setShowProgress] = useState(false);
-  const [sprint, setSprint] = useState<SprintData | null>(null);
-  const [improvement, setImprovement] = useState<ImprovementData | null>(null);
-  const [checkResult, setCheckResult] = useState<{ lostQueries: LostQuery[] } | null>(null);
-  const [generatedPages, setGeneratedPages] = useState<
-    Array<{ id: string; query: string; status: string; wordCount: number | null; updatedAt: string | null }>
-  >([]);
-  const [progressLoaded, setProgressLoaded] = useState(false);
+  const { data: sprint } = useSprint(siteId, showProgress);
+  const { data: lostQueries = [] } = useLostQueries(siteId, showProgress);
 
-  // Fix Pages state
-  const [contentEngineData, setContentEngineData] = useState<{
-    open: number; pagesGenerated: number; pagesPublished: number;
-    topOpportunity: { query: string } | null;
-  } | null>(null);
+  // Mutations
+  const sprintAction = useSprintAction(siteId);
+  const invalidateDashboard = useInvalidateDashboard(siteId);
 
-  // Site Audit state
-  const [auditData, setAuditData] = useState<{
-    hasAudit: boolean;
-    score?: number;
-    grade?: string;
-    breakdown?: { contentClarity: number; authoritySignals: number; structuredData: number; citability: number; freshness: number; topicalDepth: number };
-    tipsCount?: number;
-    createdAt?: string;
-  } | null>(null);
-
-  // Recheck delta state
+  // UI state (the only manual state left)
+  const [checking, setChecking] = useState(false);
   const [showRecheckResult, setShowRecheckResult] = useState(false);
   const [recheckDelta, setRecheckDelta] = useState<{
     beforeWon: number; afterWon: number; beforeTotal: number; afterTotal: number; delta: number;
@@ -163,197 +98,22 @@ function DashboardContent() {
   const [generatingPages, setGeneratingPages] = useState(justScanned);
   const [generationTimedOut, setGenerationTimedOut] = useState(false);
 
-  // Fetch immediate data (Zone 1 + 2)
-  const fetchImmediateData = useCallback(async () => {
-    if (!currentSite?.id) return;
-
-    setLoading(true);
-    try {
-      const [momentumRes, nextActionRes, listingsRes, historyRes, pagesRes, improvementRes, oppsRes, auditRes] =
-        await Promise.all([
-          fetch(`/api/geo/momentum?siteId=${currentSite.id}`).catch(() => null),
-          fetch(`/api/geo/next-action?siteId=${currentSite.id}`).catch(() => null),
-          fetch(`/api/sites/listings?siteId=${currentSite.id}`).catch(() => null),
-          fetch(`/api/geo/history?siteId=${currentSite.id}`).catch(() => null),
-          fetch(`/api/geo/pages?siteId=${currentSite.id}`).catch(() => null),
-          fetch(`/api/geo/improvement?siteId=${currentSite.id}`).catch(() => null),
-          fetch(`/api/geo/opportunities?siteId=${currentSite.id}`).catch(() => null),
-          fetch(`/api/geo/audit?siteId=${currentSite.id}`).catch(() => null),
-        ]);
-
-      // Detect total connection failure
-      const allFailed = !momentumRes && !nextActionRes && !listingsRes && !historyRes && !pagesRes && !oppsRes;
-      if (allFailed) {
-        setDashError("Couldn't load dashboard data. Check your connection and try again.");
-        setLoading(false);
-        return;
-      }
-      setDashError(null);
-
-      if (momentumRes?.ok) {
-        const data = await momentumRes.json();
-        setMomentum(data.data || data);
-      } else {
-        // Don't show a fake score — let the component show its empty state
-        setMomentum(null);
-      }
-
-      if (nextActionRes?.ok) {
-        const data = await nextActionRes.json();
-        setNextAction(data.data || data);
-      }
-
-      if (listingsRes?.ok) {
-        const data = await listingsRes.json();
-        setListings({ listedCount: data.listedCount || 0 });
-      }
-
-      if (historyRes?.ok) {
-        const data = await historyRes.json();
-        setSnapshots(data.data?.snapshots || []);
-      }
-
-      if (pagesRes?.ok) {
-        const data = await pagesRes.json();
-        const pages = data.data?.pages || [];
-        setGeneratedPages(
-          pages.map((p: { id: string; query: string; status: string; wordCount: number | null; updatedAt: string | null }) => ({
-            id: p.id, query: p.query, status: p.status, wordCount: p.wordCount, updatedAt: p.updatedAt,
-          }))
-        );
-        if (pages.filter((p: { status: string }) => p.status === "draft").length > 0) {
-          setGeneratingPages(false);
-        }
-      }
-
-      if (improvementRes?.ok) {
-        const data = await improvementRes.json();
-        setImprovement(data.data || null);
-      }
-
-      if (oppsRes?.ok) {
-        const data = await oppsRes.json();
-        const summary = data.data?.summary;
-        const opps = data.data?.opportunities || [];
-        const firstOpen = opps.find((o: { hasPage: boolean }) => !o.hasPage);
-        setContentEngineData({
-          open: summary?.open || 0,
-          pagesGenerated: summary?.pagesGenerated || 0,
-          pagesPublished: summary?.pagesPublished || 0,
-          topOpportunity: firstOpen
-            ? { query: firstOpen.query }
-            : null,
-        });
-      }
-
-      if (auditRes?.ok) {
-        const data = await auditRes.json();
-        if (data.data?.hasAudit) {
-          const audit = data.data.audit;
-          setAuditData({
-            hasAudit: true,
-            score: audit.score?.overall,
-            grade: audit.score?.grade,
-            breakdown: audit.score?.breakdown,
-            tipsCount: Array.isArray(audit.tips) ? audit.tips.length : 0,
-            createdAt: audit.createdAt,
-          });
-        } else {
-          setAuditData({ hasAudit: false });
-        }
-      }
-
-    } catch {
-      // Individual section fallbacks handle display
-    } finally {
-      setLoading(false);
-    }
-  }, [currentSite]);
-
-  // Fetch deferred data (Zone 3) — only when expanded
-  const fetchProgressData = useCallback(async () => {
-    if (!currentSite?.id || progressLoaded) return;
-
-    try {
-      const [sprintRes, lostQueriesRes, pagesRes] = await Promise.all([
-        fetch(`/api/geo/sprint?siteId=${currentSite.id}`).catch(() => null),
-        fetch(`/api/geo/lost-queries?siteId=${currentSite.id}`).catch(() => null),
-        fetch(`/api/geo/pages?siteId=${currentSite.id}`).catch(() => null),
-      ]);
-
-      if (sprintRes?.ok) {
-        const data = await sprintRes.json();
-        setSprint(data.data || null);
-      }
-
-      if (lostQueriesRes?.ok) {
-        const data = await lostQueriesRes.json();
-        const lostQueries = data.data?.lostQueries || [];
-        if (lostQueries.length > 0) {
-          setCheckResult({ lostQueries });
-        }
-      }
-
-      if (pagesRes?.ok) {
-        const data = await pagesRes.json();
-        const pages = data.data?.pages || [];
-        setGeneratedPages(
-          pages.map((p: { id: string; query: string; status: string; wordCount: number | null; updatedAt: string | null }) => ({
-            id: p.id, query: p.query, status: p.status, wordCount: p.wordCount, updatedAt: p.updatedAt,
-          }))
-        );
-      }
-
-      setProgressLoaded(true);
-    } catch {
-      // Silent — sections show empty state
-    }
-  }, [currentSite, progressLoaded]);
-
-  useEffect(() => {
-    fetchImmediateData();
-  }, [fetchImmediateData]);
-
-  // Reset progress data when site changes so Zone 3 refetches
-  useEffect(() => {
-    setProgressLoaded(false);
-  }, [currentSite?.id]);
-
-  // Load progress data when section is expanded
-  useEffect(() => {
-    if (showProgress && !progressLoaded) {
-      fetchProgressData();
-    }
-  }, [showProgress, progressLoaded, fetchProgressData]);
-
   // Poll for auto-generated pages after first scan
   useEffect(() => {
-    if (!justScanned || !currentSite?.id || !generatingPages) return;
+    if (!justScanned || !siteId || !generatingPages) return;
 
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/geo/pages?siteId=${currentSite.id}`);
-        if (res.ok) {
-          const data = await res.json();
-          const pages = data.data?.pages || [];
-          const drafts = pages.filter((p: { status: string }) => p.status === "draft");
-          if (drafts.length > 0) {
-            setGeneratedPages(
-              pages.map((p: { id: string; query: string; status: string; wordCount: number | null; updatedAt: string | null }) => ({
-                id: p.id, query: p.query, status: p.status, wordCount: p.wordCount, updatedAt: p.updatedAt,
-              }))
-            );
-            setGeneratingPages(false);
-            setGenerationTimedOut(false);
-            clearInterval(interval);
-          }
-        }
-      } catch {
-        // Silent
-      }
+    const drafts = generatedPages.filter((p) => p.status === "draft");
+    if (drafts.length > 0) {
+      setGeneratingPages(false);
+      setGenerationTimedOut(false);
+      return;
+    }
+
+    // Keep polling via React Query refetch
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["pages", siteId] });
     }, 3000);
 
-    // Stop polling after 3 minutes
     const timeout = setTimeout(() => {
       setGeneratingPages(false);
       setGenerationTimedOut(true);
@@ -361,44 +121,37 @@ function DashboardContent() {
     }, 180000);
 
     return () => { clearInterval(interval); clearTimeout(timeout); };
-  }, [justScanned, currentSite?.id, generatingPages]);
+  }, [justScanned, siteId, generatingPages, generatedPages, queryClient]);
 
-  // Handle check with before/after comparison
+  // ── Handlers ──
+
   const handleCheck = async () => {
     if (checking) return;
 
-    // Capture snapshot before check
-    const beforeSnapshot = {
-      queriesWon: momentum?.queriesWon || 0,
-      queriesTotal: momentum?.queriesTotal || 0,
-    };
+    const beforeWon = momentum?.queriesWon || 0;
+    const beforeTotal = momentum?.queriesTotal || 0;
 
     setChecking(true);
     setShowRecheckResult(false);
     try {
-      const result = await runCheck();
-      if (result) {
-        setCheckResult({ lostQueries: result.lostQueries });
-      }
-      setProgressLoaded(false);
-      await fetchImmediateData();
+      await runCheck();
+      invalidateDashboard();
 
-      // Show before/after delta (only if this isn't the first check)
-      // Read fresh data directly from API — state closure is stale after setMomentum()
-      if (beforeSnapshot.queriesTotal > 0 && currentSite?.id) {
+      // Wait for fresh momentum data for delta display
+      if (beforeTotal > 0 && siteId) {
         try {
-          const freshRes = await fetch(`/api/geo/momentum?siteId=${currentSite.id}`);
+          const freshRes = await fetch(`/api/geo/momentum?siteId=${siteId}`);
           if (freshRes.ok) {
             const freshData = await freshRes.json();
             const after = freshData.data || freshData;
             const afterWon = after.queriesWon || 0;
             const afterTotal = after.queriesTotal || 0;
             setRecheckDelta({
-              beforeWon: beforeSnapshot.queriesWon,
+              beforeWon,
               afterWon,
-              beforeTotal: beforeSnapshot.queriesTotal,
+              beforeTotal,
               afterTotal,
-              delta: afterWon - beforeSnapshot.queriesWon,
+              delta: afterWon - beforeWon,
             });
             setShowRecheckResult(true);
           }
@@ -413,20 +166,9 @@ function DashboardContent() {
     }
   };
 
-  // Handle next action complete/skip
   const handleActionComplete = async (actionId: string) => {
     try {
-      await fetch("/api/geo/sprint", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ actionId, status: "completed" }),
-      });
-      const res = await fetch(`/api/geo/next-action?siteId=${currentSite?.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setNextAction(data.data || data);
-      }
-      setProgressLoaded(false);
+      await sprintAction.mutateAsync({ actionId, status: "completed" });
       toast.success("Action completed");
     } catch {
       toast.error("Failed to save. Please try again.");
@@ -434,60 +176,38 @@ function DashboardContent() {
   };
 
   const handleActionSkip = async (actionId: string) => {
-    try {
-      await fetch("/api/geo/sprint", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ actionId, status: "skipped" }),
-      });
-      const res = await fetch(`/api/geo/next-action?siteId=${currentSite?.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setNextAction(data.data || data);
-      }
-      setProgressLoaded(false);
-    } catch {
-      // Retry possible
-    }
+    sprintAction.mutate({ actionId, status: "skipped" });
   };
 
-  // Handle sprint action complete/skip (in progress section)
-  const handleSprintAction = async (actionId: string, status: "completed" | "skipped", proofUrl?: string, notes?: string) => {
-    try {
-      await fetch("/api/geo/sprint", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ actionId, status, proofUrl, notes }),
-      });
-      const res = await fetch(`/api/geo/sprint?siteId=${currentSite?.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setSprint(data.data);
-      }
-    } catch {
-      // Sprint action failed
-    }
+  const handleSprintAction = async (
+    actionId: string,
+    status: "completed" | "skipped",
+    proofUrl?: string,
+    notes?: string
+  ) => {
+    sprintAction.mutate({ actionId, status, proofUrl, notes });
   };
 
-  // Handle marking a page as published (local state update)
   const handleMarkPublished = (pageId: string) => {
-    setGeneratedPages((prev) =>
-      prev.map((p) => (p.id === pageId ? { ...p, status: "published" } : p))
+    // Optimistic update via React Query cache
+    queryClient.setQueryData(["pages", siteId], (old: typeof generatedPages | undefined) =>
+      (old || []).map((p) => (p.id === pageId ? { ...p, status: "published" } : p))
     );
   };
 
-  // Redirect to onboarding if no sites
+  // ── Derived state ──
+
   if (!siteLoading && sites.length === 0) {
     router.push("/onboarding");
     return null;
   }
 
+  const loading = momentumLoading || pagesLoading;
   const plan = organization?.plan || "free";
   const isPaid = plan !== "free";
   const totalCitations = currentSite?.totalCitations || 0;
   const showFirstCitationGoal = totalCitations === 0;
 
-  // Determine if we need a follow-up check
   const lastCheckDate = currentSite?.lastCheckedAt ? new Date(currentSite.lastCheckedAt) : null;
   const publishedPages = generatedPages.filter((p) => p.status === "published");
   const pagesPublishedSinceLastCheck = publishedPages.filter((p) => {
@@ -496,38 +216,36 @@ function DashboardContent() {
   });
   const needsFollowUpCheck = pagesPublishedSinceLastCheck.length > 0 && totalCitations > 0;
 
-  // Build first-citation steps
   const goalSteps = showFirstCitationGoal
     ? [
-        {
-          label: "Set up your trust sources",
-          completed: (listings?.listedCount || 0) > 0,
-          href: "/dashboard/actions",
-        },
-        {
-          label: "Run your first AI check",
-          completed: !!currentSite?.lastCheckedAt,
-        },
-        {
-          label: "Get your first citation",
-          completed: totalCitations > 0,
-        },
+        { label: "Set up your trust sources", completed: (listings?.listedCount || 0) > 0, href: "/dashboard/actions" },
+        { label: "Run your first AI check", completed: !!currentSite?.lastCheckedAt },
+        { label: "Get your first citation", completed: totalCitations > 0 },
       ]
     : [];
 
-  // Draft pages for fix-pages-ready card
   const recentPages = generatedPages.filter((p) => p.status === "draft" || p.status === "published");
-
-  // Build pages map for fix pipeline
   const pagesMap = new Map(
     generatedPages.map((p) => [p.query.toLowerCase(), { id: p.id, status: p.status }])
   );
 
-  // Progress summary for collapsed state
+  // Content engine data (derived from opportunities)
+  const contentEngineData = oppsData?.summary
+    ? {
+        open: oppsData.summary.open || 0,
+        pagesGenerated: oppsData.summary.pagesGenerated || 0,
+        pagesPublished: oppsData.summary.pagesPublished || 0,
+        topOpportunity: oppsData.opportunities.find((o) => !o.hasPage)
+          ? { query: oppsData.opportunities.find((o) => !o.hasPage)!.query }
+          : null,
+      }
+    : null;
+
   const checksCount = improvement?.checksCount || 0;
-  const queriesWonDelta = improvement?.latestCheck && improvement?.firstCheck
-    ? improvement.latestCheck.queriesWon - improvement.firstCheck.queriesWon
-    : 0;
+  const queriesWonDelta =
+    improvement?.latestCheck && improvement?.firstCheck
+      ? improvement.latestCheck.queriesWon - improvement.firstCheck.queriesWon
+      : 0;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
@@ -557,46 +275,26 @@ function DashboardContent() {
               <span className="hidden sm:inline">CSV</span>
             </a>
           )}
-        <button
-          onClick={handleCheck}
-          disabled={checking}
-          className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-zinc-700 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          {checking ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Checking...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="w-4 h-4" />
-              Run Check
-            </>
-          )}
-        </button>
+          <button
+            onClick={handleCheck}
+            disabled={checking}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-zinc-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            {checking ? (
+              <><Loader2 className="w-4 h-4 animate-spin" />Checking...</>
+            ) : (
+              <><RefreshCw className="w-4 h-4" />Run Check</>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Welcome banner for new users */}
+      {/* Welcome banner */}
       {searchParams.get("welcome") === "true" && (
         <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3">
           <p className="text-emerald-300 text-sm font-medium">
             Your first AI visibility check is complete. Here&apos;s where you stand.
           </p>
-        </div>
-      )}
-
-
-      {/* ═══ CONNECTION ERROR ═══ */}
-      {dashError && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center justify-between">
-          <p className="text-red-400 text-sm">{dashError}</p>
-          <button
-            onClick={() => { setDashError(null); fetchImmediateData(); }}
-            className="text-sm text-white bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg transition-colors"
-          >
-            Retry
-          </button>
         </div>
       )}
 
@@ -620,7 +318,7 @@ function DashboardContent() {
       )}
 
       {/* ═══ ZONE 2: The Task ═══ */}
-      {generationTimedOut && generatedPages.filter(p => p.status === "draft").length === 0 ? (
+      {generationTimedOut && generatedPages.filter((p) => p.status === "draft").length === 0 ? (
         <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6">
           <div className="flex items-center gap-3">
             <Clock className="w-5 h-5 text-amber-400" />
@@ -639,49 +337,24 @@ function DashboardContent() {
           <div className="flex items-center gap-3">
             <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
             <div className="flex-1">
-              <h3 className="text-white font-semibold">
-                Generating your fix pages...
-              </h3>
+              <h3 className="text-white font-semibold">Generating your fix pages...</h3>
               <p className="text-zinc-400 text-sm">
                 Analyzing your lost queries and creating content to improve your AI visibility
               </p>
             </div>
-            <Link
-              href="/dashboard/pages"
-              className="text-xs text-emerald-400 hover:text-emerald-300 shrink-0"
-            >
+            <Link href="/dashboard/pages" className="text-xs text-emerald-400 hover:text-emerald-300 shrink-0">
               View pages →
             </Link>
           </div>
         </div>
       ) : recentPages.length > 0 ? (
-        <FixPagesReady
-          pages={recentPages}
-          onMarkPublished={handleMarkPublished}
-          onRecheck={handleCheck}
-          checking={checking}
-        />
+        <FixPagesReady pages={recentPages} onMarkPublished={handleMarkPublished} onRecheck={handleCheck} checking={checking} />
       ) : showFirstCitationGoal ? (
-        <FirstCitationGoal
-          steps={goalSteps}
-          loading={loading}
-          onRecheck={handleCheck}
-          checking={checking}
-        />
+        <FirstCitationGoal steps={goalSteps} loading={loading} onRecheck={handleCheck} checking={checking} />
       ) : needsFollowUpCheck ? (
-        <DoThisNext
-          action={null}
-          needsRecheck
-          onRunCheck={handleCheck}
-          checking={checking}
-        />
+        <DoThisNext action={null} needsRecheck onRunCheck={handleCheck} checking={checking} />
       ) : (
-        <DoThisNext
-          action={nextAction}
-          loading={loading}
-          onComplete={handleActionComplete}
-          onSkip={handleActionSkip}
-        />
+        <DoThisNext action={nextAction ?? null} loading={loading} onComplete={handleActionComplete} onSkip={handleActionSkip} />
       )}
 
       {/* ═══ ZONE 3: Progress (collapsible) ═══ */}
@@ -695,14 +368,9 @@ function DashboardContent() {
               ? "Hide progress"
               : checksCount > 0
                 ? `${checksCount} check${checksCount !== 1 ? "s" : ""} done${queriesWonDelta > 0 ? ` · +${queriesWonDelta} queries won` : ""} · Show progress`
-                : "Show progress"
-            }
+                : "Show progress"}
           </span>
-          {showProgress ? (
-            <ChevronUp className="w-4 h-4 text-zinc-500" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-zinc-500" />
-          )}
+          {showProgress ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
         </button>
 
         {showProgress && (
@@ -778,8 +446,7 @@ function DashboardContent() {
                         {contentEngineData.open > 0
                           ? `${contentEngineData.open} citation gap${contentEngineData.open !== 1 ? "s" : ""} detected`
                           : `${contentEngineData.pagesGenerated} page${contentEngineData.pagesGenerated !== 1 ? "s" : ""} generated`}
-                        {contentEngineData.pagesPublished > 0 &&
-                          ` · ${contentEngineData.pagesPublished} published`}
+                        {contentEngineData.pagesPublished > 0 && ` · ${contentEngineData.pagesPublished} published`}
                       </p>
                     </div>
                   </div>
@@ -800,7 +467,7 @@ function DashboardContent() {
             <RevenueAtRisk
               queriesLost={(momentum?.queriesTotal || 0) - (momentum?.queriesWon || 0)}
               queriesTotal={momentum?.queriesTotal || 0}
-              lostQueries={checkResult?.lostQueries}
+              lostQueries={lostQueries.length > 0 ? lostQueries : undefined}
               existingPages={pagesMap}
               checking={checking}
               loading={loading}
@@ -810,17 +477,10 @@ function DashboardContent() {
             {/* Sprint Progress (paid) / Upgrade CTA (free) */}
             {isPaid ? (
               <SprintProgress
-                progress={
-                  sprint?.progress || {
-                    totalActions: 0,
-                    completedActions: 0,
-                    percentComplete: 0,
-                    currentDay: 1,
-                    currentWeek: 1,
-                    daysRemaining: 30,
-                    isComplete: false,
-                  }
-                }
+                progress={sprint?.progress || {
+                  totalActions: 0, completedActions: 0, percentComplete: 0,
+                  currentDay: 1, currentWeek: 1, daysRemaining: 30, isComplete: false,
+                }}
                 actions={sprint?.actions || []}
                 onComplete={(id, proofUrl, notes) => handleSprintAction(id, "completed", proofUrl, notes)}
                 onSkip={(id) => handleSprintAction(id, "skipped")}
@@ -842,10 +502,7 @@ function DashboardContent() {
                   {checkoutLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <>
-                      Upgrade to Scout — $39/mo
-                      <ArrowRight className="w-4 h-4" />
-                    </>
+                    <>Upgrade to Scout — $39/mo<ArrowRight className="w-4 h-4" /></>
                   )}
                 </button>
               </div>
