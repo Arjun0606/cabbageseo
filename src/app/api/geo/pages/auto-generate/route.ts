@@ -31,10 +31,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { siteId, organizationId, lostQueries } = await request.json() as {
+    const { siteId, organizationId, lostQueries, maxPages } = await request.json() as {
       siteId: string;
       organizationId: string;
       lostQueries: Array<{ query: string; competitors: string[]; platform: string }>;
+      maxPages?: number;
     };
 
     if (!siteId || !organizationId || !lostQueries?.length) {
@@ -83,7 +84,8 @@ export async function POST(request: NextRequest) {
 
     const generated: string[] = [];
 
-    for (const lq of newQueries.slice(0, 3)) {
+    const limit = maxPages || 3;
+    for (const lq of newQueries.slice(0, limit)) {
       // Check plan limit before each generation
       const canUse = canGeneratePage(citationPlan.id, pagesUsed);
       if (!canUse.allowed) break;

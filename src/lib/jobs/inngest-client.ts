@@ -158,17 +158,6 @@ export interface CitationNewDetectedEvent {
   };
 }
 
-export interface PageRefreshedEvent {
-  name: "page/refreshed";
-  data: {
-    pageId: string;
-    siteId: string;
-    domain: string;
-    query: string;
-    organizationId: string;
-  };
-}
-
 // Union type for all events
 export type CabbageSEOEvents =
   | CrawlSiteEvent
@@ -181,6 +170,5 @@ export type CabbageSEOEvents =
   | GEOSiteAddedEvent
   | VisibilityDropDetectedEvent
   | PagePublishedEvent
-  | CitationNewDetectedEvent
-  | PageRefreshedEvent;
+  | CitationNewDetectedEvent;
 

@@ -24,6 +24,7 @@ import {
 import {
   canRunManualCheck,
   canAccessProduct,
+  getAutoGenPerScan,
 } from "@/lib/billing/citation-plans";
 import { getUser } from "@/lib/api/get-user";
 import { logRecommendations, extractCitationRecommendations } from "@/lib/geo/recommendation-logger";
@@ -1058,10 +1059,12 @@ export async function POST(request: NextRequest) {
     logRecommendations(recEntries);
 
     // Auto-generate fix pages for lost queries (non-blocking, fire-and-forget)
-    if (siteId && orgId && plan !== "free") {
+    // Scale by tier: Scout 2, Command 5, Dominate 10 pages per scan
+    const autoGenLimit = getAutoGenPerScan(plan);
+    if (siteId && orgId && autoGenLimit > 0) {
       const lostForPages = competitiveResults
         .filter(r => r.isLoss && !r.error)
-        .slice(0, 3)
+        .slice(0, autoGenLimit)
         .map(r => ({ query: r.query, platform: r.platform }));
 
       if (lostForPages.length > 0) {
@@ -1073,7 +1076,7 @@ export async function POST(request: NextRequest) {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
           },
-          body: JSON.stringify({ siteId, organizationId: orgId, lostQueries: lostForPages }),
+          body: JSON.stringify({ siteId, organizationId: orgId, lostQueries: lostForPages, maxPages: autoGenLimit }),
         })
           .then(r => r.text()) // Consume response body
           .catch(err => console.error("[auto-gen] fire-and-forget failed:", err));

@@ -242,32 +242,18 @@ export default function PageDetailPage() {
         </Link>
 
         <div className="flex items-center gap-2">
-          {page.status === "published" && (
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center gap-2 px-3 py-1.5 text-emerald-400 hover:text-emerald-300 text-sm transition-colors disabled:opacity-50"
-              title="Refresh content in-place with latest competitive data"
-            >
-              {refreshing ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4" />
-              )}
-              {refreshing ? "Refreshing..." : "Refresh"}
-            </button>
-          )}
           <button
-            onClick={handleRegenerate}
-            disabled={regenerating}
+            onClick={page.status === "published" ? handleRefresh : handleRegenerate}
+            disabled={regenerating || refreshing}
             className="flex items-center gap-2 px-3 py-1.5 text-zinc-400 hover:text-white text-sm transition-colors disabled:opacity-50"
+            title="Regenerate this page with fresh AI content and latest data"
           >
-            {regenerating ? (
+            {regenerating || refreshing ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <RefreshCw className="w-4 h-4" />
             )}
-            Regenerate
+            {regenerating || refreshing ? "Regenerating..." : "Regenerate content"}
           </button>
           <button
             onClick={() => setShowDeleteConfirm(true)}
@@ -308,15 +294,6 @@ export default function PageDetailPage() {
           }`}>
             {page.status}
           </span>
-          {page.status === "published" && (
-            <span className="flex items-center gap-1">
-              <RefreshCw className="w-3 h-3" />
-              {page.lastRefreshedAt
-                ? `Refreshed ${new Date(page.lastRefreshedAt).toLocaleDateString()}`
-                : "Never refreshed"}
-              {page.refreshCount > 0 && ` (${page.refreshCount}x)`}
-            </span>
-          )}
         </div>
       </div>
 
@@ -370,8 +347,7 @@ export default function PageDetailPage() {
               <h3 className="text-white font-semibold mb-1">Published on your site</h3>
               <p className="text-zinc-400 text-sm mb-3">
                 AI models typically pick up new content within 1-2 weeks.
-                This page auto-refreshes on your plan&apos;s schedule to stay competitive.
-                You can also refresh manually anytime using the button above.
+                Run a follow-up check to see if your visibility improved.
               </p>
               <Link
                 href="/dashboard"

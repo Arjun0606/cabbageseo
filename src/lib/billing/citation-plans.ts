@@ -154,7 +154,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       actionPlansPerMonth: 0,
       pagesPerMonth: 5,
       siteAuditsPerMonth: 2,
-      pageRefreshDays: 30,
+      pageRefreshDays: 0,
     },
     features: {
       manualChecks: true,
@@ -206,7 +206,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       actionPlansPerMonth: 4,
       pagesPerMonth: 25,
       siteAuditsPerMonth: -1,
-      pageRefreshDays: 14,
+      pageRefreshDays: 0,
     },
     features: {
       manualChecks: true,
@@ -257,7 +257,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       actionPlansPerMonth: -1,
       pagesPerMonth: -1,
       siteAuditsPerMonth: -1,
-      pageRefreshDays: 7,
+      pageRefreshDays: 0,
     },
     features: {
       manualChecks: true,
@@ -568,20 +568,14 @@ export function getNextPlan(currentPlan: string): CitationPlanId | null {
 }
 
 // ============================================
-// PAGE REFRESH HELPERS
+// AUTO-GENERATION HELPERS
 // ============================================
 
-/** Get auto-refresh frequency in days for a plan (0 = no auto-refresh) */
-export function getRefreshFrequencyDays(planId: CitationPlanId | string): number {
-  return getCitationPlan(planId).intelligenceLimits.pageRefreshDays;
-}
-
-/** Human-readable refresh frequency label */
-export function getRefreshFrequencyLabel(planId: CitationPlanId | string): string {
-  const days = getRefreshFrequencyDays(planId);
-  if (days === 0) return "No auto-refresh";
-  if (days === 7) return "Weekly";
-  if (days === 14) return "Every 2 weeks";
-  if (days === 30) return "Monthly";
-  return `Every ${days} days`;
+/** Get max pages to auto-generate per scan based on plan tier */
+export function getAutoGenPerScan(planId: CitationPlanId | string): number {
+  const plan = getCitationPlan(planId);
+  if (plan.id === "dominate") return 10;
+  if (plan.id === "command") return 5;
+  if (plan.id === "scout") return 2;
+  return 0;
 }

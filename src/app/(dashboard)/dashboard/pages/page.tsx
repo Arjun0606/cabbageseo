@@ -17,7 +17,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSite } from "@/context/site-context";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { getCitationPlan, getRefreshFrequencyDays, getRefreshFrequencyLabel } from "@/lib/billing/citation-plans";
+import { getCitationPlan } from "@/lib/billing/citation-plans";
 import {
   Sparkles,
   Loader2,
@@ -328,11 +328,6 @@ function ContentEngineContent() {
               Last scan: {new Date(analyzedAt).toLocaleDateString()}
             </p>
           )}
-          {getRefreshFrequencyDays(plan) > 0 && (
-            <p className="text-zinc-600 text-xs mt-0.5">
-              Published pages auto-refresh {getRefreshFrequencyLabel(plan).toLowerCase()}
-            </p>
-          )}
         </div>
       </div>
 
@@ -581,36 +576,6 @@ function ContentEngineContent() {
                   }`}>
                     {page.status}
                   </span>
-                  {page.status === "published" && (() => {
-                    const refreshDays = getRefreshFrequencyDays(plan);
-                    const lastUpdate = page.lastRefreshedAt || page.updatedAt;
-                    const daysSince = Math.floor(
-                      (Date.now() - new Date(lastUpdate).getTime()) / (1000 * 60 * 60 * 24)
-                    );
-                    if (daysSince < 1) {
-                      return (
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
-                          Just refreshed
-                        </span>
-                      );
-                    }
-                    if (refreshDays > 0 && daysSince >= refreshDays) {
-                      return (
-                        <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400">
-                          Needs refresh
-                        </span>
-                      );
-                    }
-                    if (page.lastRefreshedAt) {
-                      return (
-                        <span className="flex items-center gap-1">
-                          <RefreshCw className="w-3 h-3" />
-                          {daysSince}d ago
-                        </span>
-                      );
-                    }
-                    return null;
-                  })()}
                 </div>
               </div>
             ))}

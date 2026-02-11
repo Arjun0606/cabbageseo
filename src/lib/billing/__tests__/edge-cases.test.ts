@@ -11,8 +11,7 @@ import {
   getCitationPlanLimits,
   getCitationPlanFeatures,
   canAccessProduct,
-  getRefreshFrequencyDays,
-  getRefreshFrequencyLabel,
+  getAutoGenPerScan,
   CITATION_PLANS,
 } from "../citation-plans";
 
@@ -535,55 +534,30 @@ describe("canRunSiteAudit gating", () => {
 });
 
 // ============================================
-// PAGE REFRESH FREQUENCY PER TIER
+// AUTO-GENERATION PER SCAN BY TIER
 // ============================================
 
-describe("Page refresh frequency per tier", () => {
-  it("Unsubscribed: no auto-refresh (0 days)", () => {
+describe("Auto-generation per scan by tier", () => {
+  it("Free: 0 pages per scan", () => {
+    expect(getAutoGenPerScan("free")).toBe(0);
+  });
+
+  it("Scout: 2 pages per scan", () => {
+    expect(getAutoGenPerScan("scout")).toBe(2);
+  });
+
+  it("Command: 5 pages per scan", () => {
+    expect(getAutoGenPerScan("command")).toBe(5);
+  });
+
+  it("Dominate: 10 pages per scan", () => {
+    expect(getAutoGenPerScan("dominate")).toBe(10);
+  });
+
+  it("pageRefreshDays is 0 for all plans (auto-refresh removed)", () => {
     expect(CITATION_PLANS.free.intelligenceLimits.pageRefreshDays).toBe(0);
-    expect(getRefreshFrequencyDays("free")).toBe(0);
-  });
-
-  it("Scout: monthly refresh (30 days)", () => {
-    expect(CITATION_PLANS.scout.intelligenceLimits.pageRefreshDays).toBe(30);
-    expect(getRefreshFrequencyDays("scout")).toBe(30);
-  });
-
-  it("Command: bi-weekly refresh (14 days)", () => {
-    expect(CITATION_PLANS.command.intelligenceLimits.pageRefreshDays).toBe(14);
-    expect(getRefreshFrequencyDays("command")).toBe(14);
-  });
-
-  it("Dominate: weekly refresh (7 days)", () => {
-    expect(CITATION_PLANS.dominate.intelligenceLimits.pageRefreshDays).toBe(7);
-    expect(getRefreshFrequencyDays("dominate")).toBe(7);
-  });
-
-  it("Legacy plan names resolve correctly", () => {
-    expect(getRefreshFrequencyDays("starter")).toBe(30);
-    expect(getRefreshFrequencyDays("pro")).toBe(14);
-    expect(getRefreshFrequencyDays("pro_plus")).toBe(7);
-  });
-
-  it("Unknown plan falls back to unsubscribed (0 days)", () => {
-    expect(getRefreshFrequencyDays("nonexistent")).toBe(0);
-  });
-});
-
-describe("getRefreshFrequencyLabel", () => {
-  it("Unsubscribed: 'No auto-refresh'", () => {
-    expect(getRefreshFrequencyLabel("free")).toBe("No auto-refresh");
-  });
-
-  it("Scout: 'Monthly'", () => {
-    expect(getRefreshFrequencyLabel("scout")).toBe("Monthly");
-  });
-
-  it("Command: 'Every 2 weeks'", () => {
-    expect(getRefreshFrequencyLabel("command")).toBe("Every 2 weeks");
-  });
-
-  it("Dominate: 'Weekly'", () => {
-    expect(getRefreshFrequencyLabel("dominate")).toBe("Weekly");
+    expect(CITATION_PLANS.scout.intelligenceLimits.pageRefreshDays).toBe(0);
+    expect(CITATION_PLANS.command.intelligenceLimits.pageRefreshDays).toBe(0);
+    expect(CITATION_PLANS.dominate.intelligenceLimits.pageRefreshDays).toBe(0);
   });
 });
