@@ -23,7 +23,7 @@ const pricingJsonLd = {
   "@context": "https://schema.org",
   "@type": "Product",
   name: "CabbageSEO",
-  description: "AI Visibility Intelligence — Track who AI recommends in your market",
+  description: "AI Visibility Intelligence — Track your brand's presence in AI search",
   brand: { "@type": "Brand", name: "CabbageSEO" },
   offers: [
     {

@@ -284,7 +284,7 @@ export default function WhatIsGeoPage() {
                 step: "2",
                 icon: <Brain className="w-5 h-5" />,
                 title: "Identify Gaps",
-                desc: "Compare your presence against competitors. Find the queries where AI recommends them instead of you, and understand why.",
+                desc: "Analyze your presence across key queries. Find the queries where AI doesn't mention you yet, and understand why.",
               },
               {
                 step: "3",
@@ -302,7 +302,7 @@ export default function WhatIsGeoPage() {
                 step: "5",
                 icon: <BarChart3 className="w-5 h-5" />,
                 title: "Monitor",
-                desc: "AI recommendations change as models update. Automated monitoring catches drops immediately so you can respond before competitors gain ground.",
+                desc: "AI recommendations change as models update. Automated monitoring catches drops immediately so you can respond before visibility is lost.",
               },
             ].map((item) => (
               <div
@@ -347,7 +347,7 @@ export default function WhatIsGeoPage() {
               </h3>
               {[
                 "AI mentions your brand by name",
-                "You have comparison pages (vs competitors)",
+                "You have comparison and category pages",
                 "Review sites list your product",
                 "Your content includes structured FAQs",
                 "You monitor AI recommendations regularly",
@@ -365,7 +365,7 @@ export default function WhatIsGeoPage() {
                 Signs you&rsquo;re invisible to AI
               </h3>
               {[
-                "AI recommends competitors but not you",
+                "AI doesn't mention your brand at all",
                 "No comparison or \"vs\" content exists",
                 "No recent reviews or third-party mentions",
                 "Your content is keyword-stuffed, not structured",
@@ -403,7 +403,7 @@ export default function WhatIsGeoPage() {
               {
                 icon: <Brain className="w-5 h-5" />,
                 title: "Gap Analysis",
-                desc: "See exactly which queries you're losing and what competitors have that you don't. Per-query breakdowns with actionable insights.",
+                desc: "See exactly which queries you're missing from and what's needed to close the gap. Per-query breakdowns with actionable insights.",
               },
               {
                 icon: <FileText className="w-5 h-5" />,
@@ -477,7 +477,7 @@ export default function WhatIsGeoPage() {
               },
               {
                 q: "Can I do GEO myself without a tool?",
-                a: "You can manually ask AI platforms about your brand, but it's slow and inconsistent. You'd need to check multiple platforms, track changes over time, identify competitors, and figure out what to fix — all manually. GEO tools like CabbageSEO automate scanning, tracking, gap analysis, and action planning so you can focus on implementation.",
+                a: "You can manually ask AI platforms about your brand, but it's slow and inconsistent. You'd need to check multiple platforms, track changes over time, identify visibility gaps, and figure out what to fix — all manually. GEO tools like CabbageSEO automate scanning, tracking, gap analysis, and action planning so you can focus on implementation.",
               },
             ].map((item) => (
               <details

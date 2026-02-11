@@ -31,11 +31,11 @@ import {
 
 const PREVIEW_DATA: Record<string, string> = {
   "gap-analysis":
-    "Your site is missing citations for 12 high-intent queries including 'best project management tool' and 'top CRM for startups'. Other brands rank here with comparison pages and FAQ schema...",
+    "Your site is missing citations for 12 high-intent queries including 'best project management tool' and 'top CRM for startups'. Filling these gaps with comparison pages and FAQ schema can boost your visibility...",
   "content-recommendations":
-    "Create a comparison page: 'YourBrand vs Competitor' — AI platforms cite comparison content 3.2x more often. Add JSON-LD FAQ schema targeting 'how to choose...' queries...",
+    "Create a comparison page: 'YourBrand vs Alternatives' — AI platforms cite comparison content 3.2x more often. Add JSON-LD FAQ schema targeting 'how to choose...' queries...",
   "action-plan":
-    "Week 1: Publish FAQ page targeting 'how to choose...' queries. Week 2: Get listed on G2 and Capterra. Week 3: Create comparison content vs top 3 competitors...",
+    "Week 1: Publish FAQ page targeting 'how to choose...' queries. Week 2: Get listed on G2 and Capterra. Week 3: Create comparison content covering top alternatives...",
 };
 
 // ============================================
@@ -661,7 +661,7 @@ export default function ActionsPage() {
         <div className="space-y-2">
           <AIToolRow
             title="Citation Gap Analysis"
-            description="Find gaps where AI recommends others instead of you"
+            description="Find visibility gaps where you're not being cited"
             icon={Search}
             isLocked={!features?.gapAnalysis?.available}
             requiredPlan="scout"

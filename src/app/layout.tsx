@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     template: "%s | CabbageSEO",
   },
   description:
-    "See who AI recommends in your market. Track ChatGPT, Perplexity & Google AI citations. Know where competitors win — and how to take it back.",
+    "Track your AI visibility across ChatGPT, Perplexity & Google AI. See where you stand, find your gaps, and improve your presence in AI search.",
   keywords: [
     "AI SEO",
     "AI visibility",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     "ChatGPT SEO",
     "Perplexity SEO",
     "AI search optimization",
-    "competitor intelligence",
+    "AI visibility tracking",
     "GEO optimization",
     "AI recommendation tracking",
     "ChatGPT visibility",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     siteName: "CabbageSEO",
     title: "CabbageSEO – AI Visibility Intelligence",
     description:
-      "See who AI recommends in your market. Track where competitors win.",
+      "Track your AI visibility across ChatGPT, Perplexity & Google AI. Find your gaps and fix them.",
     images: [
       {
         url: "/og-image.png",
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "CabbageSEO – AI Visibility Intelligence",
     description:
-      "See who AI recommends. Track ChatGPT, Perplexity & Google AI citations.",
+      "Track your AI visibility across ChatGPT, Perplexity & Google AI citations.",
     images: ["/og-image.png"],
     creator: "@Arjun06061",
   },
@@ -90,7 +90,7 @@ const jsonLdOrg = {
   name: "CabbageSEO",
   url: "https://cabbageseo.com",
   logo: "https://cabbageseo.com/apple-touch-icon.png",
-  description: "AI Visibility Intelligence — Track who AI recommends in your market",
+  description: "AI Visibility Intelligence — Track your brand's presence across AI search",
   sameAs: ["https://x.com/Arjun06061"],
   contactPoint: {
     "@type": "ContactPoint",
@@ -104,7 +104,7 @@ const jsonLdWebSite = {
   "@type": "WebSite",
   name: "CabbageSEO",
   url: "https://cabbageseo.com",
-  description: "AI Visibility Intelligence — See who AI recommends in your market",
+  description: "AI Visibility Intelligence — Track your brand's visibility in AI search",
   potentialAction: {
     "@type": "SearchAction",
     target: {

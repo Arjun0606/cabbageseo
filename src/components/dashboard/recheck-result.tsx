@@ -77,7 +77,7 @@ export function RecheckResult({ delta, onDismiss }: RecheckResultProps) {
             </div>
           </div>
           <p className="text-zinc-400 text-sm">
-            Competitors may have published new content. Check the Actions tab for fix pages.
+            Your visibility may have shifted. Check the Actions tab for ways to improve.
           </p>
         </>
       ) : (

@@ -16,7 +16,7 @@ import { useSite } from "@/context/site-context";
 const WHAT_YOU_GET = [
   {
     icon: Eye,
-    title: "See exactly who AI recommends instead of you",
+    title: "Track your AI visibility across every platform",
     description: "Real-time citation tracking across ChatGPT, Perplexity, and Google AI.",
   },
   {

@@ -30,8 +30,8 @@ export default function ShareButtons({
     (isInvisible
       ? "Result: INVISIBLE to ChatGPT & Perplexity\n"
       : `Result: Mentioned ${mentionedCount} time(s)\n`) +
-    (brandCount > 0
-      ? `AI recommends ${brandCount} other brands instead.\n`
+    (visibilityScore < 40
+      ? `AI barely knows this brand.\n`
       : "") +
     `\nCheck yours free: ${reportUrl}`;
 

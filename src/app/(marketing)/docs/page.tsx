@@ -29,14 +29,14 @@ const sections = [
     items: [
       {
         title: "What is AI Visibility Intelligence?",
-        content: `CabbageSEO is a GEO (Generative Engine Optimization) platform that shows you who AI recommends when people search for products like yours. When someone asks ChatGPT "what's the best CRM?" or asks Perplexity for "project management tool alternatives" — AI picks winners. We show you if you're one of them, or if other brands are getting all the recommendations.`,
+        content: `CabbageSEO is a GEO (Generative Engine Optimization) platform that shows you where you stand in AI search. When someone asks ChatGPT "what's the best CRM?" or asks Perplexity for "project management tool alternatives" — AI picks winners. We show you if you're one of them, and where your visibility gaps are.`,
       },
       {
         title: "How does it work?",
         content: `1. Enter your website domain on the homepage
 2. We query real AI platforms (ChatGPT, Perplexity, Google AI) with relevant questions
-3. We show you who AI recommends and whether you're mentioned
-4. You see exactly which brands are winning and why`,
+3. We show you whether AI mentions your brand and where your gaps are
+4. You see exactly where your visibility stands and what to improve`,
       },
       {
         title: "Supported AI Platforms",
@@ -56,9 +56,9 @@ All results come from actual API calls. No fake data or estimates.`,
       {
         title: "Running an AI Check",
         content: `From your dashboard, click "Run Check" to query AI platforms instantly. We'll show you:
-• Which queries you're winning (AI recommends you)
-• Which queries you're losing (AI recommends others instead)
-• Who AI recommends instead of you
+• Which queries mention your brand (AI recommends you)
+• Which queries don't mention you yet (visibility gaps)
+• Your overall AI visibility across all platforms
 
 The check queries ChatGPT, Perplexity, and Google AI with relevant questions about your product category. Results appear in real-time.`,
       },
@@ -66,7 +66,7 @@ The check queries ChatGPT, Perplexity, and Google AI with relevant questions abo
         title: "Understanding Your Results",
         content: `Each check shows:
 • **AI Mentions Found** — How many times AI recommended you across all queries
-• **AI Mention Share** — What % of tracked queries mention you vs other brands
+• **AI Mention Share** — What % of tracked queries mention your brand
 • **Wins** — Visual breakdown of queries where you were mentioned
 
 All numbers come from real AI responses. Citations in your dashboard represent actual mentions from AI platforms. If you haven't run any checks yet, you'll see a prompt to run your first check.`,
@@ -88,18 +88,18 @@ All numbers come from real AI responses. Citations in your dashboard represent a
     items: [
       {
         title: "What is the Trust Map?",
-        content: `AI platforms don't just make up recommendations — they pull from trusted sources like G2, Capterra, Product Hunt, and Reddit. The Trust Map shows you which sources AI uses, and highlights where other brands are listed but you're not.`,
+        content: `AI platforms don't just make up recommendations — they pull from trusted sources like G2, Capterra, Product Hunt, and Reddit. The Trust Map shows you which sources AI uses, and highlights where you're not yet listed.`,
       },
       {
         title: "How to use it",
         content: `Navigate to the Trust Map from your dashboard sidebar. You'll see:
 • Critical sources where you must be listed
-• Which brands are on each source
-• Whether you're currently listed or missing`,
+• Your listing status on each source
+• Exactly which gaps to fill to improve visibility`,
       },
       {
         title: "Why it matters",
-        content: `If other brands are on G2 with 500 reviews and you're not listed at all, AI will recommend them over you. The Trust Map shows you exactly which gaps to fill to start getting AI recommendations.`,
+        content: `If you're not listed on key review sites like G2, AI is far less likely to recommend you. The Trust Map shows you exactly which gaps to fill to start getting AI recommendations.`,
       },
     ],
   },
@@ -109,11 +109,11 @@ All numbers come from real AI responses. Citations in your dashboard represent a
     icon: AlertTriangle,
     items: [
       {
-        title: "Understanding why you lose",
-        content: `For any query where AI recommends other brands instead of you, the gap analysis shows:
-• Which brands AI recommended
-• Which trusted sources they appear on (that you don't)
-• Specific content advantages they have
+        title: "Understanding your visibility gaps",
+        content: `For any query where AI doesn't mention you, the gap analysis shows:
+• What the AI response included instead
+• Which trusted sources you're missing from
+• Specific content gaps in your online presence
 • Missing elements in your content
 • Authority gaps you need to close
 
@@ -131,7 +131,7 @@ All numbers come from real AI responses. Citations in your dashboard represent a
 **Command**: Unlimited gap analyses
 **Dominate**: Unlimited gap analyses
 
-This is your blueprint to win specific queries.`,
+This is your blueprint to improve visibility for specific queries.`,
       },
     ],
   },
@@ -219,7 +219,7 @@ The score combines:
         title: "Reading your momentum",
         content: `• **Rising score**: You're gaining AI visibility — keep doing what you're doing
 • **Flat score**: No change — time to take action on your sprint items
-• **Falling score**: Other brands are gaining ground — check alerts for what changed
+• **Falling score**: Your visibility may need attention — check alerts for what changed
 
 The momentum score is available on Scout, Command, and Dominate plans.`,
       },
@@ -247,11 +247,11 @@ The momentum score is available on Scout, Command, and Dominate plans.`,
       },
       {
         title: "Visibility Drop Alerts",
-        content: `When your AI visibility drops — meaning you're winning fewer queries than before — you'll get an instant alert via:
-• **Email** — includes the change and queries you're now losing
+        content: `When your AI visibility drops — meaning you're appearing in fewer queries than before — you'll get an instant alert via:
+• **Email** — includes the change and queries where you're no longer mentioned
 • **Slack** — if configured, sent to your channel automatically
 
-Drops are detected during automated checks. The alert includes specific queries you were winning but are now losing, so you can take targeted action.`,
+Drops are detected during automated checks. The alert includes specific queries where your visibility has changed, so you can take targeted action.`,
       },
       {
         title: "Email Notifications",
@@ -276,7 +276,7 @@ All email notifications can be toggled on/off individually.`,
 **What's tracked:**
 • Overall visibility score (0-100)
 • Queries won (AI recommends you)
-• Queries lost (AI recommends others instead)
+• Queries missed (AI doesn't mention you yet)
 
 **History limits by plan:**
 • Scout: 30 days
@@ -351,7 +351,7 @@ This is calculated only for queries you've tracked. It's labeled "AI mention sha
     items: [
       {
         title: "What is the AI Content Preview?",
-        content: `When you scan a domain with the free teaser tool, CabbageSEO generates a real "Brand vs Competitor" comparison page preview using your scan data. The first paragraph and one FAQ are fully visible; the rest is blurred behind a signup gate.
+        content: `When you scan a domain with the free teaser tool, CabbageSEO generates a real brand visibility comparison page preview using your scan data. The first paragraph and one FAQ are fully visible; the rest is blurred behind a signup gate.
 
 This shows you the kind of content CabbageSEO creates — before you even sign up.`,
       },
@@ -359,8 +359,8 @@ This shows you the kind of content CabbageSEO creates — before you even sign u
         title: "How is it generated?",
         content: `The preview is generated in parallel with your scan results using AI. It uses:
 • Your domain and brand name
-• The top competitor found during the scan
-• Real competitive data from the scan
+• The top alternative brand found during the scan
+• Real visibility data from the scan
 
 The preview runs non-blocking — if generation fails, your scan results still work normally.`,
       },
@@ -393,7 +393,7 @@ Each page includes headings, body content, FAQ schema, and structured data — r
         content: `Send a POST request with JSON body:
 
 {
-  "domains": ["example.com", "competitor.com"]
+  "domains": ["example.com", "example2.com"]
 }
 
 **Limits:**
@@ -517,8 +517,7 @@ export default function DocsPage() {
                 AI Visibility Intelligence
               </h1>
               <p className="text-xl text-zinc-400">
-                See who AI recommends in your market — and how to become one of
-                them
+                Track your AI visibility — and know exactly how to improve it
               </p>
             </div>
           </AnimateIn>
@@ -619,7 +618,7 @@ export default function DocsPage() {
               <AnimateIn direction="up" delay={0} once>
                 <div className="mt-16 text-center">
                   <h2 className="text-2xl font-bold text-white mb-4">
-                    Ready to see who AI recommends?
+                    Ready to check your AI visibility?
                   </h2>
                   <p className="text-zinc-400 mb-6">
                     Enter your domain and find out in 10 seconds. No signup

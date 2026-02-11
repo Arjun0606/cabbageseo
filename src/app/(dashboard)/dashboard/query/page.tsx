@@ -160,7 +160,7 @@ function QueryPageContent() {
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
           <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
-          <p className="text-zinc-400">Analyzing why AI prefers competitors...</p>
+          <p className="text-zinc-400">Analyzing your AI visibility gaps...</p>
         </div>
       </div>
     );
@@ -233,7 +233,7 @@ function QueryPageContent() {
           </p>
           {analysis.competitors.length > 0 && (
             <p className="text-red-400/80 text-lg mt-1">
-              {analysis.competitors.length} competitor{analysis.competitors.length !== 1 ? "s" : ""} recommended instead of you
+              {analysis.competitors.length} other domain{analysis.competitors.length !== 1 ? "s" : ""} cited — you have a visibility gap
             </p>
           )}
         </div>
@@ -241,7 +241,7 @@ function QueryPageContent() {
         {/* Who AI recommended */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
             <h2 className="text-lg font-semibold text-white mb-4">
-            Who AI trusts instead
+            Domains currently cited
           </h2>
           <div className="flex flex-wrap gap-2">
             {analysis.competitors.map((competitor, i) => (
@@ -255,12 +255,12 @@ function QueryPageContent() {
           </div>
         </div>
 
-        {/* Why they won */}
+        {/* Why you're not cited */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Target className="w-5 h-5 text-red-400" />
             <h2 className="text-lg font-semibold text-white">
-              Why they won
+              Why you&apos;re not being cited
             </h2>
           </div>
           <ul className="space-y-3">
@@ -278,11 +278,11 @@ function QueryPageContent() {
           <div className="flex items-center gap-2 mb-4">
             <ExternalLink className="w-5 h-5 text-red-400" />
             <h2 className="text-lg font-semibold text-white">
-              Where AI learned about them
+              Sources AI trusts
             </h2>
           </div>
           <p className="text-zinc-400 mb-4">
-            AI trusts these sources. Your competitors are listed. You're not.
+            AI pulls from these sources — but you&apos;re not listed on them yet.
           </p>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -295,7 +295,7 @@ function QueryPageContent() {
                 <div className="space-y-1 text-sm">
                   <p className="text-emerald-400">
                     <Check className="w-4 h-4 inline mr-1" />
-                    Competitors
+                    Currently listed
                   </p>
                   <p className="text-red-400">
                     <X className="w-4 h-4 inline mr-1" />

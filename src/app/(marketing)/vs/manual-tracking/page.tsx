@@ -43,7 +43,7 @@ const comparisonRows = [
   {
     feature: "Brand visibility tracking",
     manual: "Manual guesswork",
-    cabbage: "Automated — see which brands AI recommends",
+    cabbage: "Automated — see where your brand appears",
     icon: <Users className="w-4 h-4" />,
   },
   {

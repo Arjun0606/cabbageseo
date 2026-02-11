@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Is AI recommending your brand? Check free →",
     description:
-      "Find out if ChatGPT, Perplexity & Google AI recommend you or your competitors. 10 seconds, no signup.",
+      "Find out if ChatGPT, Perplexity & Google AI recommend your brand. 10 seconds, no signup.",
   },
 };
 

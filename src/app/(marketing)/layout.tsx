@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     template: "%s | CabbageSEO",
   },
   description:
-    "See who AI recommends in your market. Track your visibility across ChatGPT, Perplexity & Google AI. Find your gaps — and fix them.",
+    "Track your AI visibility across ChatGPT, Perplexity and Google AI. Find where you should be mentioned but aren't, and fix it.",
 };
 
 export default function MarketingLayout({

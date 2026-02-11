@@ -28,7 +28,7 @@ export default function AboutPage() {
     featureList: [
       "AI Citation Scanning across ChatGPT, Perplexity, and Google AI",
       "6-factor AI Visibility Scoring",
-      "Gap Analysis — see where AI recommends competitors instead",
+      "Gap Analysis — identify where your AI visibility has gaps",
       "AI Fix Pages — targeted content to close visibility gaps",
       "30-Day AI Visibility Sprint with week-by-week actions",
       "Automated daily and hourly AI monitoring with alerts",
@@ -105,7 +105,7 @@ export default function AboutPage() {
       icon: <Brain className="w-5 h-5 text-emerald-400" />,
       name: "Gap Analysis",
       description:
-        "Per-query breakdown of where AI sends buyers instead of to you, and exactly why. Actionable intelligence, not vanity metrics.",
+        "Per-query breakdown of where your AI visibility is weakest and exactly why. Actionable intelligence, not vanity metrics.",
     },
     {
       icon: <FileText className="w-5 h-5 text-emerald-400" />,

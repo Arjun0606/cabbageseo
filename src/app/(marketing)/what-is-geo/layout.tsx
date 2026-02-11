@@ -61,7 +61,7 @@ const faqItems = [
   {
     question: "Can I do GEO myself without a tool?",
     answer:
-      "You can manually ask AI platforms about your brand, but it's slow and inconsistent. You'd need to check multiple platforms, track changes over time, identify competitors, and figure out what to fix — all manually. GEO tools like CabbageSEO automate scanning, tracking, gap analysis, and action planning so you can focus on implementation.",
+      "You can manually ask AI platforms about your brand, but it's slow and inconsistent. You'd need to check multiple platforms, track changes over time, identify visibility gaps, and figure out what to fix — all manually. GEO tools like CabbageSEO automate scanning, tracking, gap analysis, and action planning so you can focus on implementation.",
   },
 ];
 

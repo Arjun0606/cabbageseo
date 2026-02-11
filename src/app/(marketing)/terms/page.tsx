@@ -47,7 +47,7 @@ export default function TermsPage() {
               <p>
                 CabbageSEO provides AI visibility intelligence tools that track how AI platforms
                 (ChatGPT, Perplexity, Google AI) recommend products in your market.
-                We help you understand where you&apos;re losing to competitors and how to become visible.
+                We help you understand your current AI visibility and how to improve it.
               </p>
             </section>
           </AnimateIn>

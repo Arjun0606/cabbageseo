@@ -63,7 +63,7 @@ function getWelcomeTemplate(name: string): EmailTemplate {
       <span class="step-num">1.</span> <strong>Your first AI check is running</strong> — we're scanning how AI platforms see your site right now.
     </div>
     <div class="step">
-      <span class="step-num">2.</span> <strong>We'll find the gaps</strong> — queries where competitors get recommended instead of you.
+      <span class="step-num">2.</span> <strong>We'll find the gaps</strong> — queries where you should be visible but aren't yet.
     </div>
     <div class="step">
       <span class="step-num">3.</span> <strong>Fix pages close them</strong> — targeted pages built from your actual citation data, not generic AI content.
@@ -94,7 +94,7 @@ CabbageSEO monitors whether AI platforms like ChatGPT, Perplexity, and Google AI
 Here's what happens next:
 
 1. Your first AI check is running — we're scanning how AI platforms see your site right now.
-2. We'll find the gaps — queries where competitors get recommended instead of you.
+2. We'll find the gaps — queries where you should be visible but aren't yet.
 3. Fix pages close them — targeted pages built from your actual citation data, not generic AI content.
 
 Go to your dashboard: ${process.env.NEXT_PUBLIC_APP_URL}/dashboard

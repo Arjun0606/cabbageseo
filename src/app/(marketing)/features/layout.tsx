@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Features – AI Visibility Tracking, GEO Intelligence & Fix Pages",
   description:
-    "Track who AI recommends in your market. Monitor ChatGPT, Perplexity & Google AI citations daily. Get visibility alerts, 30-day sprints, and targeted fix pages to improve your AI visibility.",
+    "Monitor your AI visibility across ChatGPT, Perplexity and Google AI. Get daily citation tracking, visibility alerts, and targeted fix pages to improve your presence.",
   keywords: [
     "AI citation scanning",
     "GEO tool",

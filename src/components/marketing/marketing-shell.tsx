@@ -209,7 +209,7 @@ function Footer() {
             </Link>
             <p className="text-zinc-500 text-sm mb-4">
               AI Visibility Intelligence.<br />
-              See who AI recommends — and win.
+              Know where you stand. Fix what&apos;s missing.
             </p>
             <div className="flex gap-3">
               <a

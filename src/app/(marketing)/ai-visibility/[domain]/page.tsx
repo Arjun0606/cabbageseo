@@ -67,7 +67,7 @@ export async function generateMetadata({
   const description = report
     ? report.isInvisible
       ? `${cleanDomain} is invisible to AI search. ChatGPT and Perplexity don't recommend ${titleBrand}. See the full AI visibility report.`
-      : `${cleanDomain} has an AI visibility score of ${report.visibilityScore}/100. See who AI recommends instead and how ${titleBrand} compares.`
+      : `${cleanDomain} has an AI visibility score of ${report.visibilityScore}/100. See the full report and how to improve ${titleBrand}'s visibility.`
     : `Check if ChatGPT, Perplexity & Google AI recommend ${cleanDomain}. Get a free AI visibility score in 10 seconds.`;
 
   const brandCount = report ? (report.competitorsMentioned as string[] || []).length : 0;
@@ -189,28 +189,28 @@ export default async function AiVisibilityPage({
                     AI <span className="text-emerald-400">knows about</span> {titleBrand}
                   </h2>
                   <p className="text-zinc-400">
-                    {cleanDomain} appears in some AI recommendations, but other brands
-                    may still be winning more citations.
+                    {cleanDomain} appears in some AI recommendations.
+                    There&apos;s room to strengthen visibility and earn more citations.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Brands AI Recommends */}
+            {/* Brands also cited by AI */}
             {brands.length > 0 && (
               <div className="bg-white/[0.03] backdrop-blur-md border border-white/[0.06] rounded-xl p-6 mb-8">
                 <h3 className="text-lg font-semibold text-white mb-4">
-                  Other brands AI recommends in this space
+                  Brands also cited by AI in this space
                 </h3>
                 <div className="space-y-2">
                   {brands.map((comp, i) => (
                     <Link
                       key={i}
                       href={`/ai-visibility/${encodeURIComponent(comp)}`}
-                      className="flex items-center justify-between px-4 py-3 bg-red-500/5 border border-red-500/10 rounded-lg hover:border-red-500/20 transition-colors"
+                      className="flex items-center justify-between px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg hover:border-zinc-600 transition-colors"
                     >
                       <span className="text-white font-medium">{comp}</span>
-                      <span className="text-red-400 text-sm">Recommended by AI →</span>
+                      <span className="text-zinc-400 text-sm">Cited by AI →</span>
                     </Link>
                   ))}
                 </div>
@@ -226,12 +226,12 @@ export default async function AiVisibilityPage({
                 When users ask AI assistants like ChatGPT, Perplexity, and Google AI for
                 product recommendations in {titleBrand}&apos;s category, the AI{" "}
                 {report.isInvisible
-                  ? `does not mention ${cleanDomain}. This means potential customers who use AI-powered search are being directed to other brands instead.`
+                  ? `does not mention ${cleanDomain}. This means potential customers using AI-powered search won't discover ${cleanDomain}.`
                   : `mentions ${cleanDomain} in some queries, scoring ${report.visibilityScore} out of 100 on AI visibility.`}
               </p>
               {brands.length > 0 && (
                 <p className="text-zinc-400 leading-relaxed mb-4">
-                  AI currently recommends {brands.length} other brand{brands.length !== 1 ? "s" : ""} in
+                  AI cites {brands.length} brand{brands.length !== 1 ? "s" : ""} in
                   {" "}{titleBrand}&apos;s space, including {brands.slice(0, 3).join(", ")}
                   {brands.length > 3 ? `, and ${brands.length - 3} more` : ""}.
                 </p>
@@ -286,12 +286,12 @@ export default async function AiVisibilityPage({
                 increasingly replacing traditional search for product recommendations.
                 When a buyer asks &quot;best {brandName} alternatives&quot; or &quot;top tools like {brandName}&quot;,
                 AI gives a direct answer — and if {cleanDomain} isn&apos;t mentioned,
-                that&apos;s a customer going to another brand.
+                {cleanDomain} misses that visibility opportunity.
               </p>
               <p className="text-zinc-400 leading-relaxed mb-4">
                 CabbageSEO&apos;s free AI visibility scanner checks {cleanDomain} across
-                multiple AI platforms in real-time and shows you exactly who AI recommends,
-                your visibility score, and which brands are winning.
+                multiple AI platforms in real-time and shows you your visibility score,
+                where you appear, and how to improve.
               </p>
               <p className="text-zinc-400 leading-relaxed">
                 The scan takes 10 seconds, requires no signup, and uses real API responses

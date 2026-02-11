@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, AlertTriangle, Search, Loader2, Mail, TrendingDown, Rocket, BarChart3, ShieldCheck } from "lucide-react";
+import { ArrowRight, AlertTriangle, Search, Loader2, Rocket, BarChart3, ShieldCheck } from "lucide-react";
 import { GridAnimation } from "@/components/backgrounds/grid-animation";
 import { AnimateIn } from "@/components/motion/animate-in";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -14,14 +14,14 @@ import { SocialProofBar } from "@/components/homepage/social-proof-bar";
 const SCAN_STEPS = [
   "Connecting to AI platforms...",
   "Asking Perplexity who they recommend...",
-  "Asking Google AI about your market...",
+  "Checking Google AI for your brand...",
   "Asking ChatGPT for recommendations...",
   "Extracting brand mentions...",
   "Scoring across 6 visibility factors...",
   "Generating your custom content preview...",
 ];
 
-type ScanState = "idle" | "scanning" | "email_gate" | "results" | "error";
+type ScanState = "idle" | "scanning" | "results" | "error";
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -32,17 +32,9 @@ function HomeContent() {
   const [scanStep, setScanStep] = useState(0);
   const [scanData, setScanData] = useState<TeaserData | null>(null);
   const [scanError, setScanError] = useState("");
-  const [emailCaptured, setEmailCaptured] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasAutoScanned = useRef(false);
-
-  // Restore email gate state from sessionStorage
-  useEffect(() => {
-    if (typeof window !== "undefined" && sessionStorage.getItem("cseo_email_captured")) {
-      setEmailCaptured(true);
-    }
-  }, []);
 
   const runScan = useCallback(
     async (scanDomain: string) => {
@@ -91,9 +83,8 @@ function HomeContent() {
 
         setScanData({ ...result, domain: scanDomain });
 
-        // If email already captured (e.g. returning visitor), go straight to results
-        const alreadyCaptured = typeof window !== "undefined" && sessionStorage.getItem("cseo_email_captured");
-        setScanState(alreadyCaptured || emailCaptured ? "results" : "email_gate");
+        // Show results directly — no email gate
+        setScanState("results");
 
         // Scroll to results/gate
         setTimeout(() => {
@@ -143,47 +134,6 @@ function HomeContent() {
     setScanError("");
   };
 
-  const [gateEmail, setGateEmail] = useState("");
-  const [gateLoading, setGateLoading] = useState(false);
-  const [gateError, setGateError] = useState("");
-
-  const handleEmailCaptured = () => {
-    setEmailCaptured(true);
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("cseo_email_captured", "1");
-    }
-    // Transition from gate to results
-    if (scanState === "email_gate" && scanData) {
-      setScanState("results");
-    }
-  };
-
-  const handleEmailGate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!gateEmail.trim()) return;
-    setGateLoading(true);
-    setGateError("");
-
-    try {
-      const res = await fetch("/api/teaser/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: gateEmail.trim(),
-          domain: scanData?.domain || domain,
-          reportId: scanData?.reportId || null,
-        }),
-      });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Failed to subscribe");
-      handleEmailCaptured();
-    } catch (err) {
-      setGateError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setGateLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-zinc-950">
       {/* ========== HERO ========== */}
@@ -223,7 +173,7 @@ function HomeContent() {
               Find out in 10 seconds. Most businesses are invisible to AI and don&apos;t know it.
             </p>
             <p className="text-sm text-red-400/80 font-medium mb-10 max-w-xl mx-auto">
-              AI recommendations shift weekly. Check before your competitors do.
+              AI recommendations shift weekly. Make sure you&apos;re still visible.
             </p>
           </AnimateIn>
 
@@ -298,89 +248,6 @@ function HomeContent() {
         </div>
       </section>
 
-      {/* ========== EMAIL GATE (shown after scan, before results) ========== */}
-      {scanState === "email_gate" && scanData && (
-        <section ref={resultsRef} id="scan-results" className="py-12">
-          <div className="max-w-lg mx-auto px-6">
-            <AnimateIn>
-              <div className="relative">
-                {/* Blurred teaser behind the gate */}
-                <div className="select-none pointer-events-none blur-md opacity-40" aria-hidden="true">
-                  <div className="bg-gradient-to-br from-red-950/80 via-zinc-900 to-zinc-900 border-2 border-red-500/30 rounded-2xl p-8 text-center">
-                    <div className="text-8xl font-black text-red-400 mb-2">{scanData.summary.visibilityScore ?? 0}</div>
-                    <p className="text-zinc-400">AI Visibility Score</p>
-                    <div className="mt-4 space-y-2">
-                      <div className="h-10 bg-white/[0.04] rounded-lg" />
-                      <div className="h-10 bg-white/[0.04] rounded-lg" />
-                      <div className="h-10 bg-white/[0.04] rounded-lg" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Email gate overlay */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-full max-w-md mx-auto bg-zinc-900/95 backdrop-blur-sm border border-zinc-700/50 rounded-2xl p-8 shadow-2xl">
-                    <div className="text-center mb-6">
-                      <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
-                        <TrendingDown className="w-7 h-7 text-red-400" />
-                      </div>
-                      <h3 className="text-xl font-bold text-white mb-2">
-                        Your AI Visibility Report is ready
-                      </h3>
-                      <p className="text-zinc-400 text-sm">
-                        We found{" "}
-                        <span className="text-red-400 font-semibold">
-                          {scanData.summary.brandsDetected?.length || 0} brands
-                        </span>{" "}
-                        AI recommends instead of{" "}
-                        <span className="text-white font-medium">{scanData.domain}</span>.
-                        Enter your email to see your full report.
-                      </p>
-                    </div>
-
-                    <form onSubmit={handleEmailGate} className="space-y-3">
-                      <div className="relative">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                        <input
-                          type="email"
-                          value={gateEmail}
-                          onChange={(e) => setGateEmail(e.target.value)}
-                          placeholder="you@company.com"
-                          required
-                          autoFocus
-                          className="w-full pl-10 pr-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 transition-all"
-                        />
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={gateLoading}
-                        className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-                      >
-                        {gateLoading ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                          <>
-                            See My Report
-                            <ArrowRight className="w-4 h-4" />
-                          </>
-                        )}
-                      </button>
-                      {gateError && (
-                        <p className="text-red-400 text-sm text-center">{gateError}</p>
-                      )}
-                    </form>
-
-                    <p className="text-center text-zinc-500 text-xs mt-4">
-                      Plus free weekly rescans · Unsubscribe anytime
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </AnimateIn>
-          </div>
-        </section>
-      )}
-
       {/* ========== RESULTS ========== */}
       {scanState === "results" && scanData && (
         <section ref={resultsRef} id="scan-results">
@@ -417,7 +284,7 @@ function HomeContent() {
               {
                 step: "2",
                 title: "See Gaps",
-                desc: "Find which queries you\u2019re losing and who\u2019s winning instead.",
+                desc: "Find which queries should mention you but don\u2019t yet.",
               },
               {
                 step: "3",

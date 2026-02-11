@@ -82,18 +82,18 @@ function day0Email(report: SubscriberReport, email: string): { subject: string; 
       ${report.isInvisible ? `
         <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
           <p style="margin: 0; color: #fca5a5; font-size: 14px; line-height: 1.6;">
-            <strong>What this means:</strong> When buyers ask ChatGPT, Perplexity, or Google AI for recommendations in your space, ${report.domain} doesn't come up. Every unanswered query is a customer going to a competitor.
+            <strong>What this means:</strong> When buyers ask ChatGPT, Perplexity, or Google AI for recommendations in your space, ${report.domain} doesn't come up. Every unanswered query is a missed opportunity to reach potential customers.
           </p>
         </div>
       ` : `
         <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
-          AI mentions ${report.domain} in some queries — but there's room to grow. ${competitorList.length > 0 ? `AI is also recommending other brands like ${competitorList.join(", ")} in your space.` : ""}
+          AI mentions ${report.domain} in some queries — but there's room to grow. ${competitorList.length > 0 ? `Other domains like ${competitorList.join(", ")} are also visible in your space — there's an opportunity to strengthen your presence.` : ""}
         </p>
       `}
 
       ${competitorList.length > 0 ? `
         <div style="margin-bottom: 20px;">
-          <p style="color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">AI recommends instead:</p>
+          <p style="color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Also visible in your space:</p>
           ${competitorList.map(c => `
             <div style="padding: 10px 14px; background: rgba(239, 68, 68, 0.05); border-left: 3px solid #ef4444; margin-bottom: 6px; border-radius: 0 8px 8px 0;">
               <span style="color: #fca5a5; font-size: 14px; font-weight: 500;">${c}</span>
@@ -128,25 +128,25 @@ function day2Email(report: SubscriberReport, email: string): { subject: string; 
 
       <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
         <p style="margin: 0; color: #fca5a5; font-size: 14px; line-height: 1.6;">
-          Since your scan 2 days ago, buyers have been asking AI for product recommendations in your category. Every time AI answers — and doesn't mention ${report.domain} — that's a customer you'll never know you lost.
+          Since your scan 2 days ago, buyers have been asking AI for product recommendations in your category. Every time AI answers — and doesn't mention ${report.domain} — that's visibility you're missing out on.
         </p>
       </div>
 
       ${competitorList.length > 0 ? `
         <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
-          These companies are already getting recommended by AI:
+          These domains are already visible to AI in your space:
         </p>
         <div style="margin-bottom: 20px;">
           ${competitorList.map(c => `
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #18181b; border: 1px solid #27272a; border-radius: 10px; margin-bottom: 6px;">
               <span style="color: #fff; font-size: 14px; font-weight: 600;">${c}</span>
-              <span style="color: #ef4444; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Winning</span>
+              <span style="color: #ef4444; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Visible</span>
             </div>
           `).join("")}
         </div>
       ` : `
         <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
-          The gap between brands AI recommends and brands it ignores is growing every day. Getting in early matters.
+          The window to establish your AI visibility is narrowing every day. Getting in early matters.
         </p>
       `}
 

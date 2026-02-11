@@ -257,33 +257,31 @@ export default async function ShareableTeaserPage({
                     </span>
                   </h1>
                   <p className="text-zinc-400 text-lg">
-                    Being cited and recommended. Focus on keeping the lead.
+                    Being cited and recommended. Focus on maintaining strong visibility.
                   </p>
                 </>
               )}
             </div>
 
-            {/* Brands vs You comparison */}
-            {brandCount > 0 && (
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-zinc-800/50 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-red-400 mb-1">
-                    {brandCount}
-                  </div>
-                  <p className="text-zinc-400 text-sm">
-                    Other brands AI recommends
-                  </p>
+            {/* Visibility stats */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-zinc-800/50 rounded-xl p-4 text-center">
+                <div className="text-3xl font-bold text-zinc-500 mb-1">
+                  {summary.mentionedCount}
                 </div>
-                <div className="bg-zinc-800/50 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-zinc-500 mb-1">
-                    {summary.mentionedCount}
-                  </div>
-                  <p className="text-zinc-400 text-sm">
-                    Times mentioned
-                  </p>
-                </div>
+                <p className="text-zinc-400 text-sm">
+                  Times AI mentions you
+                </p>
               </div>
-            )}
+              <div className="bg-zinc-800/50 rounded-xl p-4 text-center">
+                <div className="text-3xl font-bold text-emerald-400 mb-1">
+                  {summary.totalQueries}
+                </div>
+                <p className="text-zinc-400 text-sm">
+                  Queries checked
+                </p>
+              </div>
+            </div>
 
             {/* Share buttons */}
             <ShareButtons domain={report.domain} reportId={id} isInvisible={report.isInvisible} visibilityScore={report.visibilityScore} brandCount={brandCount} mentionedCount={summary.mentionedCount} />
@@ -296,21 +294,21 @@ export default async function ShareableTeaserPage({
         </div>
 
 
-        {/* Brands AI Recommends Block */}
+        {/* Brands mentioned by AI */}
         {report.competitorsMentioned && report.competitorsMentioned.length > 0 && (
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-8">
             <h3 className="text-lg font-semibold text-white mb-4">
-              Other brands AI recommends in your space
+              Brands AI mentions for your queries
             </h3>
             <div className="space-y-2">
               {report.competitorsMentioned.map((brand, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between px-4 py-3 bg-red-500/5 border border-red-500/10 rounded-lg"
+                  className="flex items-center justify-between px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg"
                 >
                   <span className="text-white font-medium">{brand}</span>
-                  <span className="text-red-400 text-sm">
-                    Recommended by AI
+                  <span className="text-zinc-400 text-sm">
+                    Cited by AI
                   </span>
                 </div>
               ))}

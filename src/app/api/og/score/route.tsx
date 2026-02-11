@@ -204,14 +204,14 @@ export async function GET(request: NextRequest) {
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  backgroundColor: "rgba(239, 68, 68, 0.05)",
-                  border: "1px solid rgba(239, 68, 68, 0.15)",
+                  backgroundColor: "rgba(161, 161, 170, 0.05)",
+                  border: "1px solid rgba(161, 161, 170, 0.15)",
                   borderRadius: 16,
                   padding: 24,
                 }}
               >
                 <span style={{ color: "#71717a", fontSize: 13, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: 1, marginBottom: 16 }}>
-                  AI recommends instead
+                  Also cited by AI
                 </span>
 
                 {names.length > 0 ? (
@@ -224,15 +224,15 @@ export async function GET(request: NextRequest) {
                           alignItems: "center",
                           justifyContent: "space-between",
                           padding: "10px 16px",
-                          backgroundColor: "rgba(239, 68, 68, 0.06)",
+                          backgroundColor: "rgba(161, 161, 170, 0.06)",
                           borderRadius: 10,
-                          border: "1px solid rgba(239, 68, 68, 0.1)",
+                          border: "1px solid rgba(161, 161, 170, 0.1)",
                         }}
                       >
                         <span style={{ color: "#ffffff", fontSize: 16, fontWeight: 600 }}>
                           {name}
                         </span>
-                        <span style={{ color: "#ef4444", fontSize: 12, fontWeight: 500 }}>
+                        <span style={{ color: "#a1a1aa", fontSize: 12, fontWeight: 500 }}>
                           CITED
                         </span>
                       </div>
@@ -245,11 +245,11 @@ export async function GET(request: NextRequest) {
                   </div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                    <span style={{ color: "#ef4444", fontSize: 36, fontWeight: 800 }}>
+                    <span style={{ color: "#a1a1aa", fontSize: 36, fontWeight: 800 }}>
                       {competitors}
                     </span>
                     <span style={{ color: "#71717a", fontSize: 14 }}>
-                      brand{competitors !== 1 ? "s" : ""} recommended
+                      brand{competitors !== 1 ? "s" : ""} also cited
                     </span>
                   </div>
                 )}

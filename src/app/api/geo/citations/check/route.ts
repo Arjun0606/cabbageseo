@@ -2,7 +2,7 @@
  * /api/geo/citations/check - AI REVENUE INTELLIGENCE
  * 
  * NO MOCK DATA. NO SIMULATIONS.
- * Uses actual AI platform APIs to detect WHO AI RECOMMENDS.
+ * Uses actual AI platform APIs to detect YOUR VISIBILITY.
  * 
  * This is the core of the revenue intelligence engine:
  * - Who is AI recommending?

@@ -51,7 +51,7 @@ const groups: ChangelogGroup[] = [
         category: "new",
         title: "AI Content Preview in Teaser",
         description:
-          'Free scans generate a real "Brand vs Competitor" comparison page preview. First paragraph and one FAQ visible immediately — rest blurred behind signup.',
+          'Free scans generate a real brand visibility comparison page preview. First paragraph and one FAQ visible immediately — rest blurred behind signup.',
         icon: <PenTool className="w-5 h-5" />,
       },
       {
@@ -177,7 +177,7 @@ const groups: ChangelogGroup[] = [
         category: "new",
         title: "Trust Map",
         description:
-          "Visual map showing which trust sources AI platforms use to form recommendations. See where other brands are listed and you're not.",
+          "Visual map showing which trust sources AI platforms use to form recommendations. See where you're not yet listed and which sources matter most.",
         icon: <Eye className="w-5 h-5" />,
       },
       {
@@ -191,7 +191,7 @@ const groups: ChangelogGroup[] = [
         category: "new",
         title: "Citation Gap Analysis",
         description:
-          "Per-query breakdown of why AI cited another brand instead of you. See exactly what content, trust sources, and authority signals you're missing.",
+          "Per-query breakdown of your AI visibility gaps. See exactly what content, trust sources, and authority signals you need to strengthen.",
         icon: <Sparkles className="w-5 h-5" />,
       },
     ],

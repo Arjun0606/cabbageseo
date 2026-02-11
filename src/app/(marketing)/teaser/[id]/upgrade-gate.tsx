@@ -13,7 +13,7 @@ const actionPreviews = [
   {
     icon: <FileText className="w-4 h-4 text-emerald-400" />,
     title: "Targeted fix pages generated for each gap",
-    blurred: "Our AI detects queries where other brands are cited and you're not, then generates optimized comparison pages, FAQs, and explainers to win those citations back...",
+    blurred: "Our AI detects queries where you're not being cited, then generates optimized pages, FAQs, and explainers to earn those citations...",
   },
   {
     icon: <Search className="w-4 h-4 text-emerald-400" />,
@@ -23,7 +23,7 @@ const actionPreviews = [
   {
     icon: <TrendingUp className="w-4 h-4 text-emerald-400" />,
     title: "Close the gaps in your AI visibility",
-    blurred: "Other brands have 3 authority signals you're missing. Build backlinks from industry directories, get mentioned in roundup posts, and...",
+    blurred: "You're missing 3 key authority signals AI looks for. Build backlinks from industry directories, get mentioned in roundup posts, and...",
   },
   {
     icon: <Bell className="w-4 h-4 text-emerald-400" />,
@@ -46,7 +46,7 @@ export default function UpgradeGate({ domain, isInvisible, brandCount }: Upgrade
         {isInvisible
           ? `4 steps to get ${domain} recommended by AI`
           : brandCount > 0
-            ? `4 steps to outrank ${brandCount} other brand${brandCount !== 1 ? "s" : ""} in AI recommendations`
+            ? `4 steps to boost ${domain}'s AI visibility score`
             : `4 steps to strengthen ${domain}'s AI visibility`
         }
       </p>
