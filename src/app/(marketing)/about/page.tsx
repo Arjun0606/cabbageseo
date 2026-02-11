@@ -39,7 +39,7 @@ export default function AboutPage() {
         name: "Scout",
         price: "49",
         priceCurrency: "USD",
-        description: "1 website, daily monitoring, 5 fix pages/month, 30-day sprint",
+        description: "Daily monitoring, 5 fix pages/month, 30-day sprint",
         url: "https://cabbageseo.com/pricing",
       },
       {
@@ -47,7 +47,7 @@ export default function AboutPage() {
         name: "Command",
         price: "149",
         priceCurrency: "USD",
-        description: "5 websites, hourly monitoring, 25 fix pages/month, weekly playbooks",
+        description: "Hourly monitoring, 25 fix pages/month, weekly playbooks",
         url: "https://cabbageseo.com/pricing",
       },
       {
@@ -55,7 +55,7 @@ export default function AboutPage() {
         name: "Dominate",
         price: "349",
         priceCurrency: "USD",
-        description: "25 websites, hourly monitoring, unlimited fix pages, monthly reports",
+        description: "Hourly monitoring, unlimited fix pages, monthly reports",
         url: "https://cabbageseo.com/pricing",
       },
     ],
@@ -306,17 +306,17 @@ export default function AboutPage() {
                 {
                   name: "Scout",
                   price: "$49/mo",
-                  desc: "1 website, daily monitoring, 5 fix pages/month, 30-day sprint, email alerts",
+                  desc: "Daily monitoring, 5 fix pages/month, 30-day sprint, email alerts",
                 },
                 {
                   name: "Command",
                   price: "$149/mo",
-                  desc: "5 websites, hourly monitoring, 25 fix pages/month, weekly playbooks, full GEO audit",
+                  desc: "Hourly monitoring, 25 fix pages/month, weekly playbooks, full GEO audit",
                 },
                 {
                   name: "Dominate",
                   price: "$349/mo",
-                  desc: "25 websites, hourly monitoring, unlimited fix pages, monthly checkpoint reports",
+                  desc: "Hourly monitoring, unlimited fix pages, monthly checkpoint reports",
                 },
               ].map((plan) => (
                 <div

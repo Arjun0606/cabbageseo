@@ -34,7 +34,7 @@ const pricingJsonLd = {
       availability: "https://schema.org/InStock",
       priceValidUntil: "2027-12-31",
       url: "https://cabbageseo.com/pricing",
-      description: "1 site, daily AI monitoring, gap analysis, fix pages",
+      description: "Daily AI monitoring, gap analysis, fix pages, 30-day sprint",
     },
     {
       "@type": "Offer",
@@ -44,7 +44,7 @@ const pricingJsonLd = {
       availability: "https://schema.org/InStock",
       priceValidUntil: "2027-12-31",
       url: "https://cabbageseo.com/pricing",
-      description: "5 sites, daily checks + hourly monitoring, unlimited gap analyses",
+      description: "Hourly monitoring, 25 fix pages/month, unlimited gap analyses, weekly playbooks",
     },
     {
       "@type": "Offer",
@@ -54,7 +54,7 @@ const pricingJsonLd = {
       availability: "https://schema.org/InStock",
       priceValidUntil: "2027-12-31",
       url: "https://cabbageseo.com/pricing",
-      description: "25 sites, daily + hourly AI monitoring, unlimited fix pages",
+      description: "Hourly monitoring, unlimited fix pages, unlimited everything",
     },
   ],
 };
@@ -92,7 +92,7 @@ const faqJsonLd = {
       name: "How do automated checks work?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "CabbageSEO automatically scans your AI visibility across ChatGPT, Perplexity, and Google AI on a schedule based on your plan. Scout gets daily checks, Command gets daily checks plus hourly monitoring, and Dominate gets daily checks plus hourly monitoring across all 25 sites. If your visibility score drops by 2 or more points, you'll get an instant alert via email and Slack.",
+        text: "CabbageSEO automatically scans your AI visibility across ChatGPT, Perplexity, and Google AI on a schedule based on your plan. Scout gets daily checks, while Command and Dominate get hourly monitoring. If your visibility score drops by 2 or more points, you'll get an instant alert via email and Slack.",
       },
     },
     {

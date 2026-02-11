@@ -6,7 +6,7 @@
  * No Plan: Unpaid (blocked from dashboard — free teaser scan only)
  * Scout ($49/mo): Monitor + start fixing your AI visibility
  * Command ($149/mo): Full GEO intelligence + maximum visibility
- * Dominate ($349/mo): Own your category across every AI platform
+ * Dominate ($349/mo): Maximum AI visibility, nothing held back
  *
  * Path to $100k MRR:
  * 50% Scout ($49) + 35% Command ($149) + 15% Dominate ($349)
@@ -192,7 +192,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     yearlyPrice: 119,
     popular: true,
     limits: {
-      sites: 5,
+      sites: 1,
       manualChecksPerDay: -1,
 
       historyDays: 365,
@@ -237,13 +237,13 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
   dominate: {
     id: "dominate",
     name: "Dominate",
-    description: "Own your category across every AI platform",
-    tagline: "Scale GEO across all your brands",
-    whoIsThisFor: "Agency or multi-product company. Win every AI conversation in your space.",
+    description: "Everything unlimited, nothing held back",
+    tagline: "Maximum AI visibility for your brand",
+    whoIsThisFor: "Serious about owning your space in AI. Want every advantage possible.",
     monthlyPrice: 349,
     yearlyPrice: 279,
     limits: {
-      sites: 25,
+      sites: 1,
       manualChecksPerDay: -1,
 
       historyDays: 365,

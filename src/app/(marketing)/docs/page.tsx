@@ -75,7 +75,7 @@ All numbers come from real AI responses. Citations in your dashboard represent a
         title: "Check Limits by Plan",
         content: `• **Scout ($49/mo)**: Unlimited manual checks + daily automated checks
 • **Command ($149/mo)**: Unlimited manual checks + daily checks + hourly monitoring
-• **Dominate ($349/mo)**: Unlimited manual checks + daily checks + hourly monitoring across all 25 sites
+• **Dominate ($349/mo)**: Unlimited manual checks + daily checks + hourly monitoring + unlimited everything
 
 **Note**: Automated checks run in the background and don't count against manual check limits. If your AI visibility drops significantly, you'll get an instant alert via email and Slack (if configured).`,
       },
@@ -432,7 +432,7 @@ Each result includes a shareable report URL and the overall visibility score.`,
         title: "How often are checks run?",
         content: `• **Scout**: Unlimited manual checks + daily automated checks
 • **Command**: Unlimited manual checks + daily checks + hourly monitoring
-• **Dominate**: Unlimited manual checks + daily checks + hourly monitoring across all 25 sites
+• **Dominate**: Unlimited manual checks + daily checks + hourly monitoring + unlimited everything
 
 Automated checks happen in the background. You'll receive email + Slack alerts when new citations are found or when your score drops.`,
       },
@@ -441,7 +441,7 @@ Automated checks happen in the background. You'll receive email + Slack alerts w
         content: `Yes! You can check any public website. Enter your domain on the homepage to get started (no signup required for the initial check).
 
 After signing up, you can:
-• Add multiple sites (up to plan limit)
+• Add your site and configure your queries
 • Run gap analyses and generate fix pages
 • Set up automated monitoring
 

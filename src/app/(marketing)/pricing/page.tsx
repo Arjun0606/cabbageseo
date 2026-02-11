@@ -68,7 +68,6 @@ const tiers: PricingTier[] = [
     href: "/signup?plan=scout",
     icon: <TrendingUp className="w-5 h-5 text-emerald-400" />,
     features: [
-      "1 website",
       "10 queries tracked per scan",
       "Daily AI citation monitoring",
       "5 fix pages/month + 2 auto-generated per scan",
@@ -92,7 +91,6 @@ const tiers: PricingTier[] = [
     popular: true,
     icon: <Zap className="w-5 h-5 text-emerald-400" />,
     features: [
-      "5 websites",
       "20 queries tracked per scan",
       "Hourly AI citation monitoring",
       "25 fix pages/month + 5 auto-generated per scan",
@@ -107,16 +105,15 @@ const tiers: PricingTier[] = [
   },
   {
     name: "Dominate",
-    tagline: "Scale GEO across all your brands",
+    tagline: "Maximum AI visibility for your brand",
     monthlyPrice: 349,
     annualPrice: 279,
     period: "/mo",
-    description: "Own your category across every AI platform",
+    description: "Everything unlimited, nothing held back",
     cta: "Get Dominate",
     href: "/signup?plan=dominate",
     icon: <Crown className="w-5 h-5 text-amber-400" />,
     features: [
-      "25 websites",
       "30 queries tracked per scan",
       "Hourly AI citation monitoring",
       "Unlimited fix pages + 10 auto-generated per scan",

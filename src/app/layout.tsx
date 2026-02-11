@@ -131,7 +131,7 @@ const jsonLdApp = {
       price: "49",
       priceCurrency: "USD",
       billingIncrement: "P1M",
-      description: "1 site, daily AI monitoring, 5 fix pages/month",
+      description: "Daily AI monitoring, 5 fix pages/month, 30-day sprint",
     },
     {
       "@type": "Offer",
@@ -139,7 +139,7 @@ const jsonLdApp = {
       price: "149",
       priceCurrency: "USD",
       billingIncrement: "P1M",
-      description: "5 sites, hourly monitoring, 25 fix pages/month",
+      description: "Hourly monitoring, 25 fix pages/month, weekly playbooks",
     },
     {
       "@type": "Offer",
@@ -147,7 +147,7 @@ const jsonLdApp = {
       price: "349",
       priceCurrency: "USD",
       billingIncrement: "P1M",
-      description: "25 sites, hourly monitoring, unlimited fix pages",
+      description: "Hourly monitoring, unlimited fix pages, unlimited everything",
     },
   ],
 };

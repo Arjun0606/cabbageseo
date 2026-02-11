@@ -210,7 +210,7 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
             <p className="text-[11px] text-zinc-400">
               {plan === "scout"
                 ? "Weekly playbooks & full intelligence"
-                : "25 sites, unlimited everything"}
+                : "Unlimited everything, nothing held back"}
             </p>
             <button
               onClick={() => checkout(nextPlanId!, "yearly")}

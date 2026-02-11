@@ -65,9 +65,9 @@ const comparisonRows = [
     icon: <BarChart3 className="w-4 h-4" />,
   },
   {
-    feature: "Scale",
-    manual: "1 site, barely",
-    cabbage: "Up to 25 sites, fully automated",
+    feature: "Effort",
+    manual: "Hours of manual work",
+    cabbage: "Fully automated, runs while you sleep",
     icon: <Zap className="w-4 h-4" />,
   },
 ];
