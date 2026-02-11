@@ -100,7 +100,7 @@ const faqJsonLd = {
       name: "What are fix pages?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Fix pages are comparison pages, category explainers, and FAQs designed to reinforce your credibility with AI systems. CabbageSEO uses your citation data and gap analysis to create pages that reinforce the trust signals AI looks for. Scout gets 5 fix pages/month, Command gets 25, and Dominate gets unlimited.",
+        text: "Fix pages are comparison pages, category explainers, and FAQs designed to reinforce your credibility with AI systems. CabbageSEO uses your citation data and gap analysis to create pages that reinforce the trust signals AI looks for. Fix pages auto-generate after every scan: Scout creates 2 per scan, Command creates 5, and Dominate creates 10. You can also generate pages manually — Scout gets 5/month, Command 25, Dominate unlimited.",
       },
     },
     {

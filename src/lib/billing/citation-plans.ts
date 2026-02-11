@@ -5,7 +5,7 @@
  *
  * No Plan: Unpaid (blocked from dashboard — free teaser scan only)
  * Scout ($49/mo): Monitor + start fixing your AI visibility
- * Command ($149/mo): Full GEO intelligence + competitive edge
+ * Command ($149/mo): Full GEO intelligence + maximum visibility
  * Dominate ($349/mo): Own your category across every AI platform
  *
  * Path to $100k MRR:

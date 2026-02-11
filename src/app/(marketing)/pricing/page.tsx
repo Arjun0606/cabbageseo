@@ -69,16 +69,16 @@ const tiers: PricingTier[] = [
     icon: <TrendingUp className="w-5 h-5 text-emerald-400" />,
     features: [
       "1 website",
-      "3 brand visibility sources",
+      "10 queries tracked per scan",
       "Daily AI citation monitoring",
-      "5 AI fix pages/month",
+      "5 fix pages/month + 2 auto-generated per scan",
       "Site GEO Audit (top 10 pages)",
       "Schema markup generation",
       "5 gap analyses/month",
       "30-day AI sprint",
-      "Email alerts",
+      "Weekly reports + email alerts",
     ],
-    promise: "Daily citation monitoring catches every AI shift. Your sprint tells you exactly what to fix.",
+    promise: "Daily monitoring catches every AI shift. Auto-generated fix pages close your gaps while you sleep.",
   },
   {
     name: "Command",
@@ -86,24 +86,24 @@ const tiers: PricingTier[] = [
     monthlyPrice: 149,
     annualPrice: 119,
     period: "/mo",
-    description: "Full GEO intelligence + competitive edge",
+    description: "Full GEO intelligence + maximum visibility",
     cta: "Get Command",
     href: "/signup?plan=command",
     popular: true,
     icon: <Zap className="w-5 h-5 text-emerald-400" />,
     features: [
       "5 websites",
-      "10 brand visibility sources",
+      "20 queries tracked per scan",
       "Hourly AI citation monitoring",
-      "25 AI fix pages/month",
+      "25 fix pages/month + 5 auto-generated per scan",
       "Full Site GEO Audit (100 pages)",
       "Entity optimization + schema markup",
       "Unlimited gap analysis + content ideas",
       "Weekly action playbooks",
-      "Brand visibility deep dives",
+      "CSV exports + 365-day history",
     ],
     highlight: "MOST POPULAR",
-    promise: "Hourly monitoring + weekly playbooks keep you ahead of every AI shift.",
+    promise: "Hourly monitoring + auto-generated fix pages mean gaps get closed before you even notice them.",
   },
   {
     name: "Dominate",
@@ -117,15 +117,15 @@ const tiers: PricingTier[] = [
     icon: <Crown className="w-5 h-5 text-amber-400" />,
     features: [
       "25 websites",
-      "25 brand visibility sources",
+      "30 queries tracked per scan",
       "Hourly AI citation monitoring",
-      "Unlimited AI fix pages",
+      "Unlimited fix pages + 10 auto-generated per scan",
       "Full Site GEO Audit (500 pages)",
       "Entity optimization + schema markup",
       "Unlimited action playbooks",
-      "Monthly checkpoint reports",
+      "Monthly checkpoint reports + 365-day history",
     ],
-    promise: "Hourly monitoring, unlimited fix pages, full GEO audits. The moment AI shifts, you already know.",
+    promise: "Every scan finds gaps and auto-generates fix pages. Unlimited everything. The AI never forgets you.",
   },
 ];
 
@@ -143,7 +143,7 @@ const faqs: FAQItem[] = [
   {
     question: "What are fix pages?",
     answer:
-      "When CabbageSEO finds queries where AI doesn\u2019t recommend you, it can generate targeted fix pages \u2014 comparison pages, explainers, and FAQs \u2014 designed to improve your chances. Unlike generic AI writing tools, these pages are driven by your actual citation data and gap analysis. Scout gets 5 pages/month, Command gets 25, and Dominate gets unlimited.",
+      "When CabbageSEO finds queries where AI doesn\u2019t recommend you, it generates targeted fix pages \u2014 comparison pages, explainers, and FAQs \u2014 designed to close those gaps. Unlike generic AI writing tools, these pages are driven by your actual citation data and gap analysis. Better yet, fix pages auto-generate after every scan: Scout creates 2 per scan, Command creates 5, and Dominate creates 10. You can also generate pages manually \u2014 Scout gets 5/month, Command 25, Dominate unlimited.",
   },
   {
     question: "What is a Site GEO Audit?",
@@ -153,7 +153,7 @@ const faqs: FAQItem[] = [
   {
     question: "How does AI citation monitoring work?",
     answer:
-      "CabbageSEO monitors your AI citations across ChatGPT, Perplexity, and Google AI Overviews on a schedule based on your plan. Scout gets daily monitoring, while Command and Dominate get hourly monitoring. If your citation score drops, you\u2019ll get an instant email alert. No manual action required \u2014 the system works while you sleep.",
+      "CabbageSEO queries ChatGPT, Perplexity, and Google AI Overviews with real user prompts about your market, then records exactly what they cite. Scout scans daily (10 queries), Command and Dominate scan hourly (20-30 queries). When your citation score drops, you get an instant email alert. After each scan, fix pages auto-generate for any new gaps found.",
   },
   {
     question: "Can I cancel anytime?",

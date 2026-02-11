@@ -159,11 +159,17 @@ Each page is tailored to your specific gaps and designed to reinforce the trust 
       },
       {
         title: "Fix page limits",
-        content: `• **Scout**: 5 pages per month
+        content: `**Manual generation (you choose the query):**
+• **Scout**: 5 pages per month
 • **Command**: 25 pages per month
 • **Dominate**: Unlimited pages
 
-Pages are counted per calendar month and reset on the 1st.`,
+**Auto-generation (created after each scan):**
+• **Scout**: 2 pages per scan
+• **Command**: 5 pages per scan
+• **Dominate**: 10 pages per scan
+
+After every citation scan, CabbageSEO automatically generates fix pages for newly discovered gaps. Manual pages are counted per calendar month and reset on the 1st. Auto-generated pages count toward your monthly limit.`,
       },
     ],
   },
