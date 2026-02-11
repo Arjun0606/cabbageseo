@@ -60,6 +60,35 @@ interface WeeklyActionPlan {
 // LLM HELPER
 // ============================================
 
+const GEO_EXPERT_SYSTEM_PROMPT = `You are a world-class Generative Engine Optimization (GEO) analyst. You have deep expertise in how AI platforms (ChatGPT, Perplexity, Google AI Overview) decide which websites to cite, quote, and recommend.
+
+YOUR KNOWLEDGE BASE:
+
+HOW AI CITATION WORKS:
+- AI platforms use retrieval-augmented generation (RAG) to find and cite sources. They rank sources by relevance, authority, freshness, and structural clarity.
+- ChatGPT uses Bing search index + its own training data. It prefers comprehensive, well-structured pages with clear H2/H3 hierarchy and direct answers in the first paragraph.
+- Perplexity runs real-time web searches and assembles answers from multiple sources. It prefers pages with specific facts, inline statistics, and clear attribution. It heavily weights recency.
+- Google AI Overview uses Google's search index and knowledge graph. It heavily weights traditional SEO signals (E-E-A-T, backlinks, domain authority) plus Schema.org markup.
+
+THE 8 FACTORS THAT DETERMINE IF AI CITES YOU:
+1. **Direct answer positioning** — First 1-2 sentences must directly answer the query. AI models extract the opening as their answer.
+2. **Quotable specificity** — AI cites sentences with specific numbers, dates, named entities, and concrete claims. Generic statements are never cited.
+3. **Source authority** — Sites with verified profiles on G2, Capterra, Product Hunt, Trustpilot, etc. are trusted more. Third-party review presence is a strong signal.
+4. **Content structure** — Clear heading hierarchy, FAQ sections, comparison tables, and schema markup make content parseable by AI.
+5. **Topical authority** — Sites that cover a topic comprehensively across multiple pages (topic clusters) are cited more than one-off pages.
+6. **Freshness** — Content mentioning current year, recent data, or recent events is prioritized. "As of 2026" is a strong freshness signal.
+7. **Entity density** — Mentioning specific companies, products, standards, certifications, and people throughout content signals expertise.
+8. **Third-party citations** — Content that references real studies, reports, and data sources is treated as more credible and cited more frequently.
+
+WHAT MAKES A RECOMMENDATION ACTIONABLE:
+- Specify exactly WHAT content to create (title, structure, key points to cover)
+- Specify WHERE it should live (new page, existing page addition, FAQ, etc.)
+- Specify WHY it will work (which AI citation factor it addresses)
+- Estimate the expected IMPACT (which queries it could win citations for)
+- Give PRIORITY based on effort vs. impact ratio
+
+Always respond in valid JSON format when asked. Be specific, never generic. Every recommendation should be something the user can act on today.`;
+
 function extractJSON(text: string): string {
   // Strip markdown code fences if present
   const fenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
@@ -84,12 +113,12 @@ async function askLLM(prompt: string): Promise<string> {
       messages: [
         {
           role: "system",
-          content: `You are an AI Search Optimization expert. You analyze why AI platforms (ChatGPT, Perplexity, Google AI) cite certain websites and help sites become more citable. You provide specific, actionable recommendations focused on what the site can do to improve. Always respond in valid JSON format when asked.`,
+          content: GEO_EXPERT_SYSTEM_PROMPT,
         },
         { role: "user", content: prompt },
       ],
       max_completion_tokens: 16000,
-      reasoning: { effort: "medium" },
+      reasoning: { effort: "high" },
     }),
   });
 
@@ -132,28 +161,32 @@ export async function analyzeCitationGap(
   const citedDomains = (citations?.map(c => c.source_domain || c.snippet?.match(/https?:\/\/([^/\s]+)/)?.[1])?.filter(Boolean) as string[]) || [];
   const wasYouCited = citedDomains.some(d => d?.includes(site.domain));
 
-  const prompt = `Analyze this AI search query and explain what ${site.domain} needs to do to get cited.
+  const prompt = `Perform a deep citation gap analysis for this query. Explain exactly why ${site.domain} ${wasYouCited ? "is or isn't consistently cited" : "is NOT being cited"} and provide a specific, actionable remediation plan.
 
 QUERY: "${query}"
-
-SITES THAT WERE CITED: ${citedDomains.length > 0 ? citedDomains.join(", ") : "Unknown (need to check)"}
+QUERY INTENT: What would a user asking this actually want to know? Think about this first.
 
 USER'S SITE: ${site.domain}
 USER'S TOPICS: ${(site.main_topics || []).join(", ") || "Not specified"}
-
 WAS USER CITED: ${wasYouCited ? "Yes" : "No"}
 
-${citations?.length ? `CITATION SNIPPETS:\n${citations.map(c => `- ${c.platform}: "${c.snippet}"`).join("\n")}` : "No citation data available yet."}
+SITES THAT WERE CITED INSTEAD: ${citedDomains.length > 0 ? citedDomains.join(", ") : "Unknown — analyze what type of sites would typically be cited for this query"}
 
-Analyze what ${site.domain} needs to improve to ${wasYouCited ? "maintain and strengthen their" : "earn"} citations for this query. Focus on what THEY can do — content to create, authority signals to build, structural improvements to make.
+${citations?.length ? `ACTUAL AI RESPONSES (what the AI platform said):\n${citations.map(c => `- ${c.platform}: "${c.snippet}"`).join("\n")}` : "No citation data available yet."}
+
+ANALYSIS INSTRUCTIONS:
+1. First, analyze the QUERY INTENT — what does the user really want? What kind of source would best answer this?
+2. Then analyze WHY the cited sites were chosen — what do they have that ${site.domain} doesn't? Be specific (e.g., "G2 has 500+ verified reviews for this category" not just "they have more authority").
+3. Identify the SPECIFIC content, authority, and structural gaps — not generic advice.
+4. Create ACTION ITEMS that are immediately executable. Each action should be a single, concrete step (e.g., "Create a page titled 'Best [Category] Tools in 2026' with a comparison table covering pricing, features, and integration options for the top 8 tools" — NOT "create comparison content").
 
 Respond in this exact JSON format:
 {
-  "whyNotYou": ["Reason 1 why you're not being cited", "Reason 2", "Reason 3"],
-  "missingElements": ["Content element you're missing", "Another missing element"],
-  "authorityGaps": ["Authority signal you need to build"],
-  "contentGaps": ["Content you should create to get cited"],
-  "actionItems": ["Specific action 1", "Specific action 2", "Specific action 3"],
+  "whyNotYou": ["Specific reason 1 — explain the exact gap with evidence from the citation data", "Specific reason 2", "Specific reason 3"],
+  "missingElements": ["Specific content element missing — e.g., 'No pricing comparison table for top alternatives'", "Another specific missing element"],
+  "authorityGaps": ["Specific authority signal needed — e.g., 'No G2 profile with verified reviews in this category'"],
+  "contentGaps": ["Specific content to create with title and structure — e.g., 'Create FAQ page: Top 10 questions about [topic] with data-backed answers'"],
+  "actionItems": ["Concrete action with specific deliverable and expected impact", "Another concrete action", "Third concrete action"],
   "confidence": "high" | "medium" | "low"
 }`;
 
@@ -227,37 +260,47 @@ export async function generateContentRecommendations(
 
   const verifiedSources = (listings || []).filter(l => l.status === "verified").map(l => l.source_domain);
 
-  const prompt = `Based on AI citation data, recommend content this site should create to get more AI citations.
+  // Separate high-confidence citations (wins) from low-confidence (gaps)
+  const wins = (citations || []).filter(c => c.confidence === "high" || c.confidence === "medium");
+  const gaps = (citations || []).filter(c => c.confidence === "low" || c.confidence === "none");
+
+  const prompt = `Analyze this site's citation data and generate ${limit} high-impact content recommendations. Each recommendation should target specific queries where AI platforms currently DON'T cite this site.
 
 SITE: ${site.domain}
 TOPICS: ${(site.main_topics || []).join(", ") || "General"}
-
 TRUST SOURCES VERIFIED: ${verifiedSources.length > 0 ? verifiedSources.join(", ") : "None yet"}
 
-RECENT QUERIES WHERE THIS SITE WAS MENTIONED:
-${citations?.slice(0, 20).map(c => `- "${c.query}" (${c.platform}, ${c.confidence} confidence)`).join("\n") || "No citations yet"}
+QUERIES WHERE THIS SITE IS ALREADY CITED (build on this authority):
+${wins.slice(0, 15).map(c => `  ✓ "${c.query}" on ${c.platform}`).join("\n") || "No confirmed citations yet — all content is foundational"}
 
-QUERIES WHERE THIS SITE WAS NOT CITED (from recent checks):
-${citations?.filter(c => c.confidence === "low").slice(0, 10).map(c => `- "${c.query}"`).join("\n") || "No low-confidence citations"}
+QUERIES WHERE THIS SITE IS NOT CITED (the gaps to close):
+${gaps.slice(0, 15).map(c => `  ✗ "${c.query}" on ${c.platform}`).join("\n") || "No gap data yet — recommend foundational content"}
 
-Generate ${limit} content recommendations that would help this site become more citable by AI platforms. Focus on:
-- Content that directly answers queries AI gets asked
-- Structured, authoritative pages with clear expertise signals
-- FAQ content, comparison pages, and "best of" guides
-- Content that builds topical authority in their niche
+CONTENT STRATEGY FRAMEWORK:
+For each recommendation, think through:
+1. WHICH queries will this content win? Be specific — map each recommendation to 2-4 real queries AI platforms get asked.
+2. WHY will AI cite this content? Reference specific citation factors: direct-answer positioning, comparison tables, FAQ extraction, entity density, freshness signals.
+3. WHAT structure should the content have? Specify the exact heading structure, whether it needs tables, FAQs, step-by-step sections, etc.
+4. HOW does this build topical authority? Explain how this piece fits into the site's content cluster.
+
+QUALITY STANDARDS:
+- Every recommendation should be genuinely useful content, not thin SEO bait
+- Titles should be specific and query-targeted (e.g., "Best Project Management Tools for Remote Teams in 2026: Complete Comparison" — NOT "Project Management Guide")
+- Each recommendation should address a DIFFERENT cluster of queries — no overlap
+- Prioritize by impact: which content would win the most valuable citations?
 
 Respond in this exact JSON format:
 {
   "recommendations": [
     {
-      "title": "Article/Page Title",
-      "description": "Brief description of what to create",
-      "targetQueries": ["query 1", "query 2"],
-      "entities": ["entity 1", "entity 2"],
-      "suggestedHeadings": ["H2 heading 1", "H2 heading 2"],
-      "faqQuestions": ["FAQ question 1?", "FAQ question 2?"],
+      "title": "Specific, query-targeted page title",
+      "description": "What this page covers and what makes it the best resource on the internet for this topic",
+      "targetQueries": ["specific query 1 that AI platforms receive", "specific query 2", "specific query 3"],
+      "entities": ["specific entity to mention", "another entity"],
+      "suggestedHeadings": ["## Specific H2 heading", "## Another H2", "### Relevant H3"],
+      "faqQuestions": ["Specific question users actually ask?", "Another real question?", "Third question?"],
       "priority": "high" | "medium" | "low",
-      "rationale": "Why this will help get citations"
+      "rationale": "Exactly which citation factor this addresses and why it will win citations for the target queries"
     }
   ]
 }`;
@@ -319,41 +362,62 @@ export async function generateWeeklyActionPlan(
 
   const verifiedSources = (listings || []).filter(l => l.status === "verified").map(l => l.source_domain);
 
-  const prompt = `Create a weekly AI search action plan for this site.
+  // Calculate citation trend
+  const citationsThisWeek = site.citations_this_week || 0;
+  const citationsLastWeek = site.citations_last_week || 0;
+  const trend = citationsThisWeek > citationsLastWeek ? "IMPROVING" : citationsThisWeek < citationsLastWeek ? "DECLINING" : "STABLE";
+  const trendDelta = citationsThisWeek - citationsLastWeek;
 
-SITE: ${site.domain}
-GEO SCORE: ${geoAnalysis?.score || "Not analyzed yet"}
-CITATIONS THIS WEEK: ${site.citations_this_week || 0}
-CITATIONS LAST WEEK: ${site.citations_last_week || 0}
-TOTAL CITATIONS: ${site.total_citations || 0}
-TRUST SOURCES VERIFIED: ${verifiedSources.length > 0 ? verifiedSources.join(", ") : "None yet"}
+  // Categorize recent citations by platform
+  const byPlatform: Record<string, number> = {};
+  for (const c of recentCitations || []) {
+    byPlatform[c.platform] = (byPlatform[c.platform] || 0) + 1;
+  }
 
-THIS WEEK'S CITATIONS:
-${recentCitations?.map(c => `- "${c.query}" on ${c.platform}`).join("\n") || "No new citations"}
+  const prompt = `Create a strategic weekly AI visibility action plan for ${site.domain}. This should be a consultant-grade analysis that a marketing director would act on immediately.
 
-GEO TIPS:
+PERFORMANCE SNAPSHOT:
+- Site: ${site.domain}
+- GEO Score: ${geoAnalysis?.score || "Not analyzed yet"} / 100
+- Citations this week: ${citationsThisWeek} (${trend}: ${trendDelta >= 0 ? "+" : ""}${trendDelta} vs last week)
+- Total lifetime citations: ${site.total_citations || 0}
+- Citations by platform: ${Object.entries(byPlatform).map(([p, n]) => `${p}: ${n}`).join(", ") || "None this week"}
+- Trust sources verified: ${verifiedSources.length > 0 ? verifiedSources.join(", ") : "None yet"}
+
+THIS WEEK'S CITATIONS (what AI platforms are citing you for):
+${recentCitations?.map(c => `- "${c.query}" on ${c.platform}`).join("\n") || "No new citations this week — this is the core problem to solve"}
+
+GEO ANALYSIS TIPS:
 ${JSON.stringify(geoAnalysis?.tips || [])}
 
-Create a prioritized action plan for next week focused entirely on improving this site's AI visibility. Focus on:
-- Content they should create or improve
-- Authority signals they should build
-- Technical improvements for AI readability
-- Trust source listings they should pursue
+ACTION PLAN REQUIREMENTS:
+1. SUMMARY: One powerful sentence that identifies the #1 priority for this week based on the data above. Not generic — reference specific numbers or trends.
+2. PRIORITIES (3-5 items, ranked by impact/effort ratio):
+   - Each priority must be a SPECIFIC, EXECUTABLE task — not "improve content" but "Create a comparison page titled '[specific title]' targeting [specific queries]"
+   - Include estimated time and expected outcome for each
+   - Tag each with impact (high/medium/low) and effort (low/medium/high)
+   - Focus on quick wins first (high impact + low effort)
+3. QUERIES WON: List queries where you gained or maintained citations this week
+4. QUERIES MISSING: List queries where you're still invisible — these are your targets
+5. INSIGHTS (2-3 strategic observations):
+   - Identify patterns in the data (e.g., "You're being cited on Perplexity but not ChatGPT — this suggests...")
+   - Highlight risks (e.g., "Your citation count dropped by 3 this week — likely due to...")
+   - Spot opportunities (e.g., "You're cited for 'best X' queries — create more comparison content to compound this")
 
 Respond in this exact JSON format:
 {
-  "summary": "One sentence summary of what to focus on this week",
+  "summary": "Strategic one-sentence priority for this week, referencing specific data",
   "priorities": [
     {
-      "title": "Priority title",
-      "description": "What to do and why",
+      "title": "Specific, actionable priority title",
+      "description": "Exactly what to do, why it matters based on the data, and what the expected outcome is",
       "impact": "high" | "medium" | "low",
       "effort": "low" | "medium" | "high"
     }
   ],
   "queriesWon": [{"query": "query text", "platform": "perplexity"}],
   "queriesMissing": [{"query": "query text", "platform": "chatgpt"}],
-  "insights": ["Insight about your AI visibility trends"]
+  "insights": ["Data-driven insight about AI visibility trends with specific numbers"]
 }`;
 
   const response = await askLLM(prompt);
