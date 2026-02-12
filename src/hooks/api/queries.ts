@@ -60,34 +60,6 @@ export interface ImprovementData {
   checksCount: number;
 }
 
-export interface SprintData {
-  progress: {
-    totalActions: number;
-    completedActions: number;
-    percentComplete: number;
-    currentDay: number;
-    currentWeek: number;
-    daysRemaining: number;
-    isComplete: boolean;
-  };
-  actions: SprintAction[];
-}
-
-export interface SprintAction {
-  id: string;
-  actionType: string;
-  title: string;
-  description: string;
-  actionUrl?: string | null;
-  priority: number;
-  estimatedMinutes: number;
-  week: number;
-  status: string;
-  completedAt: string | null;
-  proofUrl?: string | null;
-  notes?: string | null;
-}
-
 export interface AuditData {
   hasAudit: boolean;
   score?: number;
@@ -117,15 +89,25 @@ export interface Opportunity {
   platform: string;
   snippet: string;
   impact: "high" | "medium" | "low";
+  impactReason?: string;
   hasPage: boolean;
   pageId: string | null;
   pageStatus: string | null;
+  /** How many platforms missed you for this query */
+  missedPlatformCount?: number;
+  /** Platforms that DO cite you */
+  citedOnPlatforms?: string[];
+  /** Domains AI cited instead */
+  citedDomains?: string[];
+  /** Buyer intent score (0-1) */
+  buyerIntent?: number;
 }
 
 export interface OpportunitySummary {
   total: number;
   open: number;
   addressed: number;
+  highImpactOpen?: number;
   pagesGenerated: number;
   pagesPublished: number;
 }
@@ -276,19 +258,6 @@ export function useAudit(siteId: string | undefined) {
       return { hasAudit: false };
     },
     enabled: !!siteId,
-  });
-}
-
-export function useSprint(siteId: string | undefined, enabled = true) {
-  return useQuery({
-    queryKey: ["sprint", siteId],
-    queryFn: async (): Promise<SprintData | null> => {
-      const res = await fetch(`/api/geo/sprint?siteId=${siteId}`);
-      if (!res.ok) return null;
-      const json = await res.json();
-      return json.data || null;
-    },
-    enabled: !!siteId && enabled,
   });
 }
 

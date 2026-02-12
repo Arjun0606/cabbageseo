@@ -148,7 +148,7 @@ export default async function AiVisibilityPage({
         <nav className="text-sm text-zinc-500 mb-8">
           <Link href="/" className="hover:text-emerald-400 transition-colors">Home</Link>
           <span className="mx-2">/</span>
-          <Link href="/leaderboard" className="hover:text-emerald-400 transition-colors">AI Visibility</Link>
+          <Link href="/features" className="hover:text-emerald-400 transition-colors">AI Visibility</Link>
           <span className="mx-2">/</span>
           <span className="text-zinc-300">{cleanDomain}</span>
         </nav>

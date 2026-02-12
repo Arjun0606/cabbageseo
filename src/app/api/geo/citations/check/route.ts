@@ -19,6 +19,7 @@ import {
 import {
   extractSources,
   getTrustSourceInfo,
+  selectRelevantTrustSources,
   TRUST_SOURCES,
 } from "@/lib/ai-revenue/sources";
 import {
@@ -29,6 +30,7 @@ import {
 import { getUser } from "@/lib/api/get-user";
 import { logRecommendations, extractCitationRecommendations } from "@/lib/geo/recommendation-logger";
 import { citationCheckLimiter } from "@/lib/api/rate-limit";
+import { fetchSiteContext } from "@/lib/geo/site-context";
 import { timingSafeEqual } from "crypto";
 
 function safeCompare(a: string, b: string): boolean {
@@ -44,137 +46,128 @@ function getDbClient(): SupabaseClient | null {
   }
 }
 
-// Category-specific query templates
-const CATEGORY_QUERIES: Record<string, string[]> = {
-  productivity: [
-    "What is the best productivity app?",
-    "Best note-taking apps for teams",
-    "Top productivity tools for remote work",
-    "Best apps for organizing projects",
-    "What tools do startups use for documentation?",
-  ],
-  crm: [
-    "What is the best CRM software?",
-    "Best CRM for small businesses",
-    "Top sales management tools",
-    "Salesforce alternatives",
-    "Best free CRM tools",
-  ],
-  ecommerce: [
-    "Best ecommerce platforms",
-    "Shopify alternatives",
-    "How to start an online store",
-    "Best tools for selling online",
-    "Top ecommerce solutions for small business",
-  ],
-  marketing: [
-    "Best marketing automation tools",
-    "Top email marketing platforms",
-    "Best SEO tools",
-    "Social media management tools",
-    "Best analytics tools for marketing",
-  ],
-  design: [
-    "Best design tools for teams",
-    "Figma alternatives",
-    "Top UI/UX design software",
-    "Best prototyping tools",
-    "Collaborative design platforms",
-  ],
-  development: [
-    "Best developer tools",
-    "Top code editors",
-    "Best hosting platforms for developers",
-    "CI/CD tools comparison",
-    "Best API management tools",
-  ],
-  analytics: [
-    "Best analytics platforms",
-    "Google Analytics alternatives",
-    "Top business intelligence tools",
-    "Best data visualization software",
-    "Website analytics tools",
-  ],
-  communication: [
-    "Best team communication tools",
-    "Slack alternatives",
-    "Top video conferencing software",
-    "Best collaboration platforms",
-    "Team chat apps comparison",
-  ],
-  finance: [
-    "Best accounting software",
-    "Top invoicing tools",
-    "Best expense tracking apps",
-    "Payroll software for small business",
-    "Financial planning tools",
-  ],
-  education: [
-    "Best online learning platforms",
-    "Top educational tools",
-    "E-learning software comparison",
-    "Best LMS platforms",
-    "Online course creation tools",
-  ],
-};
+// ============================================
+// AI-POWERED QUERY GENERATION
+// Reads the actual site, understands the business, generates
+// queries a real customer would ask. No hardcoded categories.
+// ============================================
 
-// Generate queries based on domain, category, and plan
-function generateQueries(
+const TLD_PATTERN_CHECK = /\.(com|io|co|ai|app|dev|org|net|so|sh|me|cc|biz|info|xyz|tech|tools|software|cloud|studio|design|agency|pro|team|run|build|gg|fm|tv|to|ly|it|is|in|us|uk|de|fr|eu|co\.uk|com\.au|co\.in)$/;
+
+function extractBrandNameFromDomain(domain: string): string {
+  const cleaned = domain.replace(TLD_PATTERN_CHECK, "");
+  const parts = cleaned.split(".");
+  const name = parts[parts.length - 1];
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+/**
+ * Fetch site homepage for context.
+ * Uses the shared utility in lib/geo/site-context.ts.
+ */
+async function fetchSiteContextForQueries(domain: string): Promise<{
+  title: string;
+  description: string;
+  headings: string[];
+}> {
+  const ctx = await fetchSiteContext(domain);
+  return { title: ctx.title, description: ctx.description, headings: ctx.headings };
+}
+
+/**
+ * Use AI to generate queries scaled to the plan's limit.
+ * Falls back to simple brand queries if AI generation fails.
+ */
+async function generateSmartQueriesForScan(
   domain: string,
-  category: string | null,
   customQueries: string[],
-  plan: string
-): string[] {
-  const name = domain.replace(/\.(com|io|co|ai|app|dev|org|net|me|sh|cc|so|biz|xyz|tech|tools|software|cloud|pro|gg|fm|tv|to|ly|co\.uk|com\.au)$/, "").split(".").pop() || domain.split(".")[0];
-  const cleanName = name.charAt(0).toUpperCase() + name.slice(1);
-
-  // Base queries (always included — simulate real buyer questions)
-  const baseQueries = [
-    `What is ${cleanName} and what do they do?`,
-    `Tell me about ${domain}`,
-    `What are the best alternatives to ${cleanName}?`,
-  ];
-
-  // Expanded intent queries for paid plans (work for any domain/category)
-  const intentQueries = [
-    `Best alternatives to ${cleanName} ${new Date().getFullYear()}`,
-    `${cleanName} vs competitors comparison`,
-    `Is ${cleanName} any good?`,
-    `Products similar to ${cleanName}`,
-    `${cleanName} reviews and pricing`,
-    `Should I use ${cleanName}?`,
-    `${cleanName} pros and cons`,
-    `Who competes with ${cleanName}?`,
-    `Top tools like ${cleanName}`,
-    `What do people think about ${cleanName}?`,
-    `How does ${cleanName} compare to other options?`,
-    `${cleanName} features overview`,
-    `Recommend something like ${domain}`,
-    `Why do people choose ${cleanName}?`,
-    `${cleanName} for small businesses`,
-  ];
-
-  // Category-specific queries
-  const categoryQueries = category && CATEGORY_QUERIES[category.toLowerCase()]
-    ? CATEGORY_QUERIES[category.toLowerCase()]
-    : [];
-
-  // Determine query count by plan (must match queriesPerCheck in citation-plans.ts)
-  let maxQueries = 3; // Free
+  plan: string,
+  siteContext: { title: string; description: string; headings: string[] },
+): Promise<string[]> {
+  let maxQueries = 3;
   if (plan === "scout") maxQueries = 10;
   if (plan === "command") maxQueries = 20;
   if (plan === "dominate") maxQueries = 30;
 
-  // Combine: custom queries first, then base, then category, then intent
-  const allQueries = [
-    ...customQueries.slice(0, (plan === "command" || plan === "dominate") ? 100 : 5),
-    ...baseQueries,
-    ...categoryQueries,
-    ...intentQueries,
-  ];
+  const brand = extractBrandNameFromDomain(domain);
+  const aiQueryCount = Math.max(3, maxQueries - customQueries.length);
 
-  // Return unique queries up to the plan limit
-  return [...new Set(allQueries)].slice(0, maxQueries);
+  const apiKey = process.env.OPENAI_API_KEY;
+  const hasContext = siteContext.title || siteContext.description;
+
+  if (apiKey && hasContext) {
+    try {
+      const contextParts = [`Domain: ${domain}`, `Brand: ${brand}`];
+      if (siteContext.title) contextParts.push(`Title: ${siteContext.title}`);
+      if (siteContext.description) contextParts.push(`Description: ${siteContext.description}`);
+      if (siteContext.headings.length > 0) contextParts.push(`Headings: ${siteContext.headings.join(" | ")}`);
+
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-5.2",
+          messages: [{
+            role: "user",
+            content: `You are testing whether AI assistants know about a specific business. Given a website's information, generate exactly ${aiQueryCount} search queries that REAL potential customers would type into ChatGPT, Perplexity, or Google AI.
+
+RULES:
+- Every query must be 5-20 words, natural language, like a real person would type
+- Queries must be SPECIFIC to what this business actually does — not generic categories
+- Mix these types:
+  * DISCOVERY (${Math.ceil(aiQueryCount * 0.4)}): Queries from someone looking for this type of product/service WITHOUT knowing this brand. Focus on the specific problem it solves, not generic categories.
+  * BRAND (${Math.ceil(aiQueryCount * 0.2)}): Queries about this specific brand — reviews, pricing, what it does, is it good
+  * DECISION (${Math.ceil(aiQueryCount * 0.2)}): Queries from someone comparing options in this exact niche — "best X for Y", alternatives, comparisons
+  * USE-CASE (${Math.ceil(aiQueryCount * 0.2)}): Queries about specific problems this product solves — "how to [thing this product helps with]"
+- Do NOT repeat the same idea in different words
+- Do NOT use generic filler like "best tools 2026" — be specific about WHAT the tool does
+- Include the current year (${new Date().getFullYear()}) in 2-3 queries maximum
+
+RESPOND with exactly ${aiQueryCount} lines, one query per line. No numbering, no labels, no extra text.
+
+Website information:
+${contextParts.join("\n")}`,
+          }],
+          max_completion_tokens: Math.min(1500, aiQueryCount * 60),
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const text = (data.choices?.[0]?.message?.content || "").trim();
+        const aiQueries = text.split("\n")
+          .map((line: string) => line.replace(/^\d+[\.\)]\s*/, "").replace(/^[-*]\s*/, "").trim())
+          .filter((q: string) => q.length > 5 && q.length < 200 && !q.startsWith("DISCOVERY") && !q.startsWith("BRAND") && !q.startsWith("USE"));
+
+        if (aiQueries.length >= 3) {
+          const combined = [...customQueries, ...aiQueries];
+          return [...new Set(combined)].slice(0, maxQueries);
+        }
+      }
+    } catch {
+      // Fall through to fallback
+    }
+  }
+
+  // Fallback: basic brand queries if AI generation fails
+  const fallback = [
+    `What is ${brand} and what do they do?`,
+    `Tell me about ${domain}`,
+    `Is ${brand} any good? Reviews and pricing`,
+    `${brand} alternatives ${new Date().getFullYear()}`,
+    `Should I use ${brand}?`,
+    `How does ${brand} compare to other options?`,
+    `${brand} pros and cons`,
+    `Products similar to ${brand}`,
+    `What do people think about ${brand}?`,
+    `${brand} features and pricing overview`,
+  ];
+  const combined = [...customQueries, ...fallback];
+  return [...new Set(combined)].slice(0, maxQueries);
 }
 
 interface CheckResult {
@@ -197,15 +190,16 @@ interface TrustSourcePresence {
 
 // ============================================
 // TRUST SOURCE VERIFICATION
-// Uses Perplexity to check if domain is listed on G2, Capterra, etc.
+// Single batched Perplexity call instead of one per source.
+// Sources are selected by AI based on what the business does.
 // ============================================
 async function checkTrustSourcePresence(
   domain: string,
-  sourcesToCheck: string[] = ["g2.com", "capterra.com", "producthunt.com"]
+  sourcesToCheck: string[],
 ): Promise<TrustSourcePresence[]> {
   const apiKey = process.env.PERPLEXITY_API_KEY;
-  
-  if (!apiKey) {
+
+  if (!apiKey || sourcesToCheck.length === 0) {
     return sourcesToCheck.map(source => ({
       source,
       domain: source,
@@ -214,88 +208,102 @@ async function checkTrustSourcePresence(
     }));
   }
 
-  const results: TrustSourcePresence[] = [];
+  const sourceList = sourcesToCheck.map(s => {
+    const info = getTrustSourceInfo(s);
+    return info ? info.name : s;
+  }).join(", ");
 
-  for (const source of sourcesToCheck) {
-    try {
-      const response = await fetch("https://api.perplexity.ai/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "sonar",
-          messages: [
-            { 
-              role: "system", 
-              content: "Answer with yes or no, then provide the URL if available. Be concise." 
-            },
-            { 
-              role: "user", 
-              content: `Is ${domain} listed on ${source}? If yes, what's the profile URL?` 
-            },
-          ],
-          return_citations: true,
-        }),
-        signal: AbortSignal.timeout(30000),
-      });
+  try {
+    const response = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "sonar",
+        messages: [
+          {
+            role: "system",
+            content: "You check whether a business is listed on specific platforms. For each platform, answer YES or NO and include the profile URL if you find one. Be factual — only say YES if you can verify the listing exists.",
+          },
+          {
+            role: "user",
+            content: `Check if ${domain} is listed on each of these platforms: ${sourceList}
 
-      if (!response.ok) {
-        results.push({
-          source,
-          domain: source,
-          isListed: false,
-          error: `API error: ${response.status}`,
-        });
-        continue;
-      }
+For each one, respond in this exact format (one per line):
+PLATFORM_NAME: YES|NO [URL if found]`,
+          },
+        ],
+        return_citations: true,
+      }),
+      signal: AbortSignal.timeout(30000),
+    });
 
-      const data = await response.json();
-      const content = (data.choices?.[0]?.message?.content || "").toLowerCase();
-      const citations = data.citations || [];
-      
-      // Check if answer indicates listing
-      const isListed = content.includes("yes") && 
-                       !content.includes("no") && 
-                       !content.includes("not listed") &&
-                       !content.includes("not found");
-      
-      // Try to extract profile URL
-      let profileUrl: string | undefined;
-      const sourceBase = source.replace(".com", "").replace(".net", "");
-      
-      // Check citations for direct link
-      const directLink = citations.find((c: string) => 
-        c.toLowerCase().includes(sourceBase) && 
-        c.toLowerCase().includes(domain.toLowerCase().replace("www.", "").split(".")[0])
-      );
-      
-      if (directLink) {
-        profileUrl = directLink;
-      }
-      
-      results.push({
-        source,
-        domain: source,
-        isListed,
-        profileUrl,
-      });
-
-      // Rate limit
-      await new Promise(r => setTimeout(r, 200));
-      
-    } catch (error) {
-      results.push({
+    if (!response.ok) {
+      return sourcesToCheck.map(source => ({
         source,
         domain: source,
         isListed: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+        error: `API error: ${response.status}`,
+      }));
     }
-  }
 
-  return results;
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || "";
+    const citations: string[] = data.citations || [];
+
+    const results: TrustSourcePresence[] = [];
+    for (const sourceDomain of sourcesToCheck) {
+      const info = getTrustSourceInfo(sourceDomain);
+      const sourceName = info?.name || sourceDomain;
+
+      const lines = content.split("\n");
+      const sourceLine = lines.find((line: string) =>
+        line.toLowerCase().includes(sourceName.toLowerCase()) ||
+        line.toLowerCase().includes(sourceDomain.toLowerCase())
+      );
+
+      let isListed = false;
+      let profileUrl: string | undefined;
+
+      if (sourceLine) {
+        const lower = sourceLine.toLowerCase();
+        isListed = lower.includes("yes") &&
+                   !lower.includes("not listed") &&
+                   !lower.includes("not found") &&
+                   !lower.includes("no listing");
+
+        const urlMatch = sourceLine.match(/https?:\/\/[^\s\])"']+/i);
+        if (urlMatch) profileUrl = urlMatch[0];
+      }
+
+      // Also check citations for a direct link
+      if (!profileUrl) {
+        const brandName = domain.split(".")[0].toLowerCase();
+        const sourceBase = sourceDomain.replace(/\.(com|org|net|co)$/, "");
+        const directLink = citations.find((c: string) =>
+          c.toLowerCase().includes(sourceBase) &&
+          c.toLowerCase().includes(brandName)
+        );
+        if (directLink) {
+          profileUrl = directLink;
+          isListed = true;
+        }
+      }
+
+      results.push({ source: sourceDomain, domain: sourceDomain, isListed, profileUrl });
+    }
+
+    return results;
+  } catch (error) {
+    return sourcesToCheck.map(source => ({
+      source,
+      domain: source,
+      isListed: false,
+      error: error instanceof Error ? error.message : "Check failed",
+    }));
+  }
 }
 
 // ============================================
@@ -713,7 +721,6 @@ export async function POST(request: NextRequest) {
 
     // Get user's plan and site data for smart query generation
     let plan = "free";
-    let category: string | null = null;
     let customQueries: string[] = [];
     if (orgId) {
       // Fetch org plan from database
@@ -766,16 +773,15 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // If we have a siteId, get the site's category and custom queries
+      // If we have a siteId, get the site's custom queries
       if (siteId) {
         const { data: siteInfo } = await db
           .from("sites")
-          .select("category, custom_queries")
+          .select("custom_queries")
           .eq("id", siteId)
           .maybeSingle();
 
         if (siteInfo) {
-          category = siteInfo.category || null;
           customQueries = Array.isArray(siteInfo.custom_queries)
             ? siteInfo.custom_queries
             : [];
@@ -783,8 +789,9 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Generate queries based on plan, category, and custom queries
-    const generatedQueries = generateQueries(cleanDomain, category, customQueries, plan);
+    // Fetch site context and generate AI-powered queries
+    const siteContext = await fetchSiteContextForQueries(cleanDomain);
+    const generatedQueries = await generateSmartQueriesForScan(cleanDomain, customQueries, plan, siteContext);
 
     // Log check metadata (no PII)
     console.error(`[Citation Check] queries=${generatedQueries.length}${singleQuery ? ' (re-check)' : ''}`);
@@ -810,10 +817,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Select relevant trust sources for this business using AI
+    const relevantSources = await selectRelevantTrustSources(cleanDomain, siteContext);
+    const sourceDomains = relevantSources.map(s => s.domain);
+
     // Run ALL checks in parallel (plus trust source presence)
     const [results, trustSourceResults] = await Promise.all([
       Promise.all(checkTasks),
-      checkTrustSourcePresence(cleanDomain, ["g2.com", "capterra.com", "producthunt.com", "trustpilot.com"]),
+      checkTrustSourcePresence(cleanDomain, sourceDomains),
     ]);
     
     // Count how many APIs were actually called
@@ -1032,11 +1043,25 @@ export async function POST(request: NextRequest) {
             },
             queries: competitiveResults
               .filter((r) => r.isLoss && !r.error)
-              .map((r) => ({
-                query: r.query,
-                platform: r.platform,
-                snippet: r.snippet,
-              })),
+              .map((r) => {
+                // Find all results for the same query across platforms
+                const sameQuery = competitiveResults.filter(cr => cr.query === r.query && !cr.error);
+                const platformsCitedOn = sameQuery.filter(cr => cr.cited).map(cr => cr.platform);
+                const platformsMissedOn = sameQuery.filter(cr => !cr.cited).map(cr => cr.platform);
+
+                return {
+                  query: r.query,
+                  platform: r.platform,
+                  snippet: r.snippet,
+                  buyerIntent: r.buyerIntent,
+                  // Which platforms DO cite you for this query (cross-platform context)
+                  citedOnPlatforms: platformsCitedOn,
+                  // Which platforms DON'T cite you
+                  missedOnPlatforms: platformsMissedOn,
+                  // Domains that AI cited instead of you
+                  citedDomains: r.sources.map(s => s.name),
+                };
+              }),
             raw_data: competitiveResults,
           } as never);
         } catch (e) {
@@ -1099,7 +1124,7 @@ export async function POST(request: NextRequest) {
         totalQueriesChecked: totalMentions,
         queriesWon: yourMentions,
         queriesLost: totalMentions - yourMentions,
-        category: category,
+        category: null,
       },
       // Distribution intelligence (based on actual check results)
       distributionIntelligence: {

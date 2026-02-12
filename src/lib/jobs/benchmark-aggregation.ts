@@ -3,10 +3,10 @@
  *
  * Runs every Monday at 2 AM UTC.
  * Aggregates ai_recommendations data from the past week into
- * industry_benchmarks for the leaderboard, public reports, and API.
+ * industry_benchmarks for public reports and API.
  *
  * Produces:
- * - "all" category: global leaderboard across every domain
+ * - "all" category: global benchmarks across every domain
  * - Per-category benchmarks: filtered by site categories (saas, ecommerce, etc.)
  *
  * This is the moat compounding in action.

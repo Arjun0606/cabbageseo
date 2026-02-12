@@ -7,7 +7,6 @@ import {
   RefreshCw,
   BarChart3,
   Globe,
-  Zap,
   CheckCircle,
   XCircle,
 } from "lucide-react";
@@ -410,11 +409,6 @@ export default function WhatIsGeoPage() {
                 title: "AI-Generated Fix Pages",
                 desc: "Comparison pages, FAQs, and explainers built from your gap data. Designed to reinforce the trust signals AI looks for.",
               },
-              {
-                icon: <Zap className="w-5 h-5" />,
-                title: "30-Day Sprint",
-                desc: "A structured 4-week GEO program with prioritized actions. Week-by-week tasks — not a dashboard you stare at.",
-              },
             ].map((item) => (
               <div
                 key={item.title}
@@ -469,7 +463,7 @@ export default function WhatIsGeoPage() {
               },
               {
                 q: "How long does GEO take to show results?",
-                a: "AI models update their knowledge regularly. After implementing GEO improvements — like publishing comparison pages, getting mentioned on review sites, and building structured content — most businesses see changes in AI recommendations within 2-4 weeks. CabbageSEO's 30-day sprint is designed around this timeline.",
+                a: "AI models update their knowledge regularly. After implementing GEO improvements — like publishing comparison pages, getting mentioned on review sites, and building structured content — most businesses see changes in AI recommendations within 2-4 weeks. CabbageSEO's action plans are designed around this timeline.",
               },
               {
                 q: "Which AI platforms does GEO apply to?",

@@ -1,36 +1,38 @@
 /**
- * AI Trust Sources - The Distribution Intelligence Engine
- * 
- * This is the sticky feature:
- * - Extract WHERE AI gets its information
- * - Build Trust Map (who is on which sources)
- * - Show distribution gaps (where you need to be)
- * - Generate "how to get listed" action plans
+ * AI Trust Sources — The Distribution Intelligence Engine
+ *
+ * Trust sources vary by business type. A SaaS needs G2 and Capterra.
+ * A restaurant needs Yelp and TripAdvisor. A law firm needs Avvo.
+ *
+ * Instead of hardcoding which sources to check, we maintain a broad
+ * catalog and use AI to select the relevant ones per business.
  */
 
 // ============================================
-// KNOWN TRUST SOURCES
+// TRUST SOURCE CATALOG
 // ============================================
 
 export interface TrustSource {
   domain: string;
   name: string;
   category: "review" | "directory" | "community" | "media" | "comparison";
-  trustScore: number; // 1-10, how much AI trusts this source
+  /** Which types of business this source is relevant for */
+  relevantFor: string[];
+  trustScore: number; // 1-10
   howToGetListed: string;
   estimatedEffort: "low" | "medium" | "high";
   estimatedTime: string;
 }
 
-// The sites AI trusts most for product recommendations
 export const TRUST_SOURCES: TrustSource[] = [
-  // Review Sites (highest trust)
+  // ---- Software / SaaS Review Sites ----
   {
     domain: "g2.com",
     name: "G2",
     category: "review",
+    relevantFor: ["saas", "software", "devtools", "b2b"],
     trustScore: 10,
-    howToGetListed: "Create a free vendor profile, claim your listing, and collect at least 10 verified reviews from customers.",
+    howToGetListed: "Create a free vendor profile at sell.g2.com, claim your listing, and collect at least 10 verified reviews.",
     estimatedEffort: "medium",
     estimatedTime: "2-4 weeks",
   },
@@ -38,8 +40,9 @@ export const TRUST_SOURCES: TrustSource[] = [
     domain: "capterra.com",
     name: "Capterra",
     category: "review",
+    relevantFor: ["saas", "software", "b2b"],
     trustScore: 9,
-    howToGetListed: "Submit your product for free listing, complete your profile with screenshots and pricing, encourage customer reviews.",
+    howToGetListed: "Submit your product at vendors.capterra.com for free listing. Complete profile with screenshots and pricing.",
     estimatedEffort: "low",
     estimatedTime: "1-2 weeks",
   },
@@ -47,6 +50,7 @@ export const TRUST_SOURCES: TrustSource[] = [
     domain: "trustradius.com",
     name: "TrustRadius",
     category: "review",
+    relevantFor: ["saas", "software", "enterprise", "b2b"],
     trustScore: 8,
     howToGetListed: "Claim your free profile, add product details, and invite customers to leave detailed reviews.",
     estimatedEffort: "medium",
@@ -56,8 +60,9 @@ export const TRUST_SOURCES: TrustSource[] = [
     domain: "getapp.com",
     name: "GetApp",
     category: "review",
+    relevantFor: ["saas", "software", "b2b"],
     trustScore: 7,
-    howToGetListed: "Submit through Gartner Digital Markets (same as Capterra), complete profile with features and pricing.",
+    howToGetListed: "Submit through Gartner Digital Markets (same network as Capterra). Profile syncs automatically.",
     estimatedEffort: "low",
     estimatedTime: "1 week",
   },
@@ -65,19 +70,127 @@ export const TRUST_SOURCES: TrustSource[] = [
     domain: "softwareadvice.com",
     name: "Software Advice",
     category: "review",
+    relevantFor: ["saas", "software", "b2b"],
     trustScore: 7,
     howToGetListed: "Part of Gartner network. Once listed on Capterra, you appear here automatically.",
     estimatedEffort: "low",
     estimatedTime: "1 week",
   },
-  
-  // Directories
+
+  // ---- General Review Sites ----
+  {
+    domain: "trustpilot.com",
+    name: "Trustpilot",
+    category: "review",
+    relevantFor: ["ecommerce", "saas", "service", "fintech", "b2c", "marketplace"],
+    trustScore: 9,
+    howToGetListed: "Claim your free business profile. Invite customers to leave reviews. Respond to feedback.",
+    estimatedEffort: "low",
+    estimatedTime: "1 week",
+  },
+  {
+    domain: "bbb.org",
+    name: "Better Business Bureau",
+    category: "review",
+    relevantFor: ["service", "ecommerce", "finance", "insurance", "local", "b2c"],
+    trustScore: 8,
+    howToGetListed: "Apply for BBB accreditation or claim your free profile at bbb.org/get-accredited.",
+    estimatedEffort: "medium",
+    estimatedTime: "2-4 weeks",
+  },
+  {
+    domain: "sitejabber.com",
+    name: "Sitejabber",
+    category: "review",
+    relevantFor: ["ecommerce", "marketplace", "b2c", "service"],
+    trustScore: 7,
+    howToGetListed: "Claim your business page for free. Encourage customers to review. Respond to feedback.",
+    estimatedEffort: "low",
+    estimatedTime: "1 week",
+  },
+
+  // ---- Local / Restaurant / Hospitality ----
+  {
+    domain: "yelp.com",
+    name: "Yelp",
+    category: "review",
+    relevantFor: ["local", "restaurant", "service", "retail", "health", "beauty"],
+    trustScore: 9,
+    howToGetListed: "Claim your business at biz.yelp.com. Add photos, hours, and menu. Respond to reviews.",
+    estimatedEffort: "low",
+    estimatedTime: "1 week",
+  },
+  {
+    domain: "tripadvisor.com",
+    name: "TripAdvisor",
+    category: "review",
+    relevantFor: ["restaurant", "hospitality", "travel", "tourism", "local"],
+    trustScore: 9,
+    howToGetListed: "Claim your listing at tripadvisor.com/Owners. Add photos, respond to reviews, update details.",
+    estimatedEffort: "low",
+    estimatedTime: "1 week",
+  },
+  {
+    domain: "google.com/maps",
+    name: "Google Business Profile",
+    category: "directory",
+    relevantFor: ["local", "restaurant", "service", "retail", "health", "beauty", "professional"],
+    trustScore: 10,
+    howToGetListed: "Create or claim your profile at business.google.com. Add photos, hours, and respond to reviews.",
+    estimatedEffort: "low",
+    estimatedTime: "1-2 weeks for verification",
+  },
+
+  // ---- Professional Services ----
+  {
+    domain: "avvo.com",
+    name: "Avvo",
+    category: "directory",
+    relevantFor: ["legal", "lawyer", "attorney"],
+    trustScore: 8,
+    howToGetListed: "Claim your free lawyer profile. Add practice areas, experience, and client reviews.",
+    estimatedEffort: "low",
+    estimatedTime: "1 week",
+  },
+  {
+    domain: "healthgrades.com",
+    name: "Healthgrades",
+    category: "directory",
+    relevantFor: ["health", "medical", "doctor", "dentist", "healthcare"],
+    trustScore: 8,
+    howToGetListed: "Claim your profile at update.healthgrades.com. Verify credentials and update practice info.",
+    estimatedEffort: "low",
+    estimatedTime: "1-2 weeks",
+  },
+  {
+    domain: "zocdoc.com",
+    name: "Zocdoc",
+    category: "directory",
+    relevantFor: ["health", "medical", "doctor", "dentist", "healthcare"],
+    trustScore: 8,
+    howToGetListed: "Apply to join Zocdoc's provider network. Complete verification and set up online booking.",
+    estimatedEffort: "medium",
+    estimatedTime: "2-4 weeks",
+  },
+  {
+    domain: "clutch.co",
+    name: "Clutch",
+    category: "review",
+    relevantFor: ["agency", "consulting", "development", "design", "marketing", "b2b"],
+    trustScore: 8,
+    howToGetListed: "Create a free company profile. Request verified reviews from clients. Complete portfolio section.",
+    estimatedEffort: "medium",
+    estimatedTime: "2-4 weeks",
+  },
+
+  // ---- Directories ----
   {
     domain: "producthunt.com",
     name: "Product Hunt",
     category: "directory",
+    relevantFor: ["saas", "software", "startup", "devtools", "app", "b2c"],
     trustScore: 9,
-    howToGetListed: "Launch your product on Product Hunt. Prepare maker profile, create good visuals, engage with community, time your launch.",
+    howToGetListed: "Launch your product on Product Hunt. Prepare maker profile, visuals, and engage on launch day.",
     estimatedEffort: "high",
     estimatedTime: "1-2 weeks prep",
   },
@@ -85,8 +198,9 @@ export const TRUST_SOURCES: TrustSource[] = [
     domain: "alternativeto.net",
     name: "AlternativeTo",
     category: "directory",
+    relevantFor: ["saas", "software", "app", "devtools"],
     trustScore: 8,
-    howToGetListed: "Submit your product as an alternative to popular tools. Add description, screenshots, and key features.",
+    howToGetListed: "Submit your product as an alternative to popular tools. Add description, screenshots, and features.",
     estimatedEffort: "low",
     estimatedTime: "1-3 days",
   },
@@ -94,17 +208,29 @@ export const TRUST_SOURCES: TrustSource[] = [
     domain: "saashub.com",
     name: "SaaSHub",
     category: "directory",
+    relevantFor: ["saas", "software"],
     trustScore: 6,
     howToGetListed: "Submit your SaaS product with complete details. Free listing available.",
     estimatedEffort: "low",
     estimatedTime: "1-3 days",
   },
-  
-  // Community
+  {
+    domain: "crunchbase.com",
+    name: "Crunchbase",
+    category: "directory",
+    relevantFor: ["startup", "saas", "fintech", "b2b", "venture"],
+    trustScore: 8,
+    howToGetListed: "Create a free organization profile. Add funding, team, and product details.",
+    estimatedEffort: "low",
+    estimatedTime: "1 week",
+  },
+
+  // ---- Community ----
   {
     domain: "reddit.com",
     name: "Reddit",
     category: "community",
+    relevantFor: ["saas", "software", "ecommerce", "gaming", "finance", "health", "education", "startup", "devtools"],
     trustScore: 8,
     howToGetListed: "Participate authentically in relevant subreddits. Answer questions, share value. Avoid self-promotion spam.",
     estimatedEffort: "high",
@@ -114,6 +240,7 @@ export const TRUST_SOURCES: TrustSource[] = [
     domain: "news.ycombinator.com",
     name: "Hacker News",
     category: "community",
+    relevantFor: ["saas", "software", "devtools", "startup", "ai"],
     trustScore: 8,
     howToGetListed: "Share your product on Show HN. Engage authentically with the community. Focus on technical value.",
     estimatedEffort: "high",
@@ -123,17 +250,19 @@ export const TRUST_SOURCES: TrustSource[] = [
     domain: "indiehackers.com",
     name: "Indie Hackers",
     category: "community",
+    relevantFor: ["saas", "startup", "software", "bootstrapped"],
     trustScore: 7,
     howToGetListed: "Create a product page, share your journey, engage with the community.",
     estimatedEffort: "medium",
     estimatedTime: "Ongoing",
   },
-  
-  // Media & Blogs
+
+  // ---- Media & Comparison ----
   {
     domain: "techcrunch.com",
     name: "TechCrunch",
     category: "media",
+    relevantFor: ["saas", "startup", "fintech", "ai", "venture"],
     trustScore: 9,
     howToGetListed: "Pitch your story to reporters. Focus on unique angle, growth metrics, or funding news.",
     estimatedEffort: "high",
@@ -141,59 +270,23 @@ export const TRUST_SOURCES: TrustSource[] = [
   },
   {
     domain: "zapier.com",
-    name: "Zapier Blog",
+    name: "Zapier",
     category: "comparison",
+    relevantFor: ["saas", "software", "productivity", "automation"],
     trustScore: 9,
-    howToGetListed: "Integrate with Zapier, reach out about being featured in their comparison articles and app directory.",
+    howToGetListed: "Build a Zapier integration. Reach out about being featured in their comparison articles and app directory.",
     estimatedEffort: "medium",
     estimatedTime: "2-4 weeks",
-  },
-  {
-    domain: "pcmag.com",
-    name: "PCMag",
-    category: "media",
-    trustScore: 8,
-    howToGetListed: "Submit for review, provide press materials and demo access to reviewers.",
-    estimatedEffort: "medium",
-    estimatedTime: "4-8 weeks",
-  },
-  {
-    domain: "techradar.com",
-    name: "TechRadar",
-    category: "media",
-    trustScore: 8,
-    howToGetListed: "Pitch to their review team with press materials, unique angles, and demo access.",
-    estimatedEffort: "medium",
-    estimatedTime: "4-8 weeks",
   },
   {
     domain: "forbes.com",
     name: "Forbes",
     category: "media",
+    relevantFor: ["finance", "saas", "ecommerce", "enterprise", "startup"],
     trustScore: 9,
     howToGetListed: "Pitch contributor articles or submit press releases for major announcements.",
     estimatedEffort: "high",
     estimatedTime: "Varies",
-  },
-  
-  // Comparison Sites
-  {
-    domain: "versus.com",
-    name: "Versus",
-    category: "comparison",
-    trustScore: 6,
-    howToGetListed: "Submit your product for comparison listings.",
-    estimatedEffort: "low",
-    estimatedTime: "1 week",
-  },
-  {
-    domain: "slant.co",
-    name: "Slant",
-    category: "comparison",
-    trustScore: 6,
-    howToGetListed: "Add your product to relevant comparison discussions and recommendations.",
-    estimatedEffort: "low",
-    estimatedTime: "1-3 days",
   },
 ];
 
@@ -201,45 +294,123 @@ export const TRUST_SOURCES: TrustSource[] = [
 const SOURCE_MAP = new Map(TRUST_SOURCES.map(s => [s.domain, s]));
 
 // ============================================
+// RELEVANT SOURCE SELECTION
+// Uses AI to pick the right sources for a business
+// ============================================
+
+/**
+ * Given site context, use AI to determine which trust sources
+ * are actually relevant for this business. Returns 4-8 sources.
+ */
+export async function selectRelevantTrustSources(
+  domain: string,
+  siteContext: { title: string; description: string; headings: string[] },
+): Promise<TrustSource[]> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  const hasContext = siteContext.title || siteContext.description;
+
+  if (apiKey && hasContext) {
+    try {
+      const allSourceNames = TRUST_SOURCES.map(s => `${s.name} (${s.domain}) — ${s.relevantFor.join(", ")}`).join("\n");
+      const contextParts = [`Domain: ${domain}`];
+      if (siteContext.title) contextParts.push(`Title: ${siteContext.title}`);
+      if (siteContext.description) contextParts.push(`Description: ${siteContext.description}`);
+      if (siteContext.headings.length > 0) contextParts.push(`Headings: ${siteContext.headings.join(" | ")}`);
+
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-5.2",
+          messages: [
+            {
+              role: "user",
+              content: `Given a business website, select the 5-8 most relevant trust sources from the list below. These are the platforms AI uses to decide whether to recommend a brand. Only pick sources where it makes sense for THIS specific business to be listed.
+
+For example:
+- A SaaS tool → G2, Capterra, Product Hunt, Reddit, Trustpilot
+- A restaurant → Yelp, Google Business Profile, TripAdvisor
+- A law firm → Avvo, Google Business Profile, BBB, Yelp
+- A dev tool → G2, Product Hunt, Hacker News, AlternativeTo, Reddit
+- An e-commerce store → Trustpilot, BBB, Sitejabber, Google Business Profile
+
+RESPOND with ONLY the domain names, one per line. No numbering, no extra text.
+
+AVAILABLE SOURCES:
+${allSourceNames}
+
+BUSINESS:
+${contextParts.join("\n")}`,
+            },
+          ],
+          max_completion_tokens: 300,
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const text = (data.choices?.[0]?.message?.content || "").trim();
+        const selectedDomains = text.split("\n")
+          .map((line: string) => line.trim().toLowerCase().replace(/^[-*•]\s*/, ""))
+          .filter((d: string) => d.length > 3);
+
+        const matched = selectedDomains
+          .map((d: string) => TRUST_SOURCES.find(s => s.domain === d || d.includes(s.domain)))
+          .filter((s: TrustSource | undefined): s is TrustSource => !!s);
+
+        if (matched.length >= 3) {
+          return matched.slice(0, 8);
+        }
+      }
+    } catch {
+      // Fall through to heuristic
+    }
+  }
+
+  // Fallback: return the 6 highest-trust sources (universally useful)
+  return TRUST_SOURCES
+    .filter(s => s.trustScore >= 8)
+    .sort((a, b) => b.trustScore - a.trustScore)
+    .slice(0, 6);
+}
+
+// ============================================
 // SOURCE EXTRACTION
 // ============================================
 
 /**
- * Extract source domains from AI response
- * Perplexity includes citations, we parse them
+ * Extract source domains from AI response text and citations.
  */
 export function extractSources(aiResponse: string): string[] {
   const sources: Set<string> = new Set();
-  
-  // Look for URLs in the response
+
   const urlRegex = /https?:\/\/([a-zA-Z0-9.-]+)/g;
   let match;
   while ((match = urlRegex.exec(aiResponse)) !== null) {
-    const domain = match[1].toLowerCase().replace(/^www\./, "");
-    sources.add(domain);
+    sources.add(match[1].toLowerCase().replace(/^www\./, ""));
   }
-  
-  // Look for citation patterns like [1], [2] followed by source
-  // Also look for "Source: X" or "According to X"
+
   const sourcePatterns = [
     /source[s]?:\s*([a-zA-Z0-9.-]+\.(?:com|org|net|io|co))/gi,
     /according to\s+([a-zA-Z0-9.-]+\.(?:com|org|net|io|co))/gi,
     /cited by\s+([a-zA-Z0-9.-]+\.(?:com|org|net|io|co))/gi,
   ];
-  
   for (const pattern of sourcePatterns) {
     while ((match = pattern.exec(aiResponse)) !== null) {
       sources.add(match[1].toLowerCase().replace(/^www\./, ""));
     }
   }
-  
-  // Check for known trust source mentions by name
+
   for (const source of TRUST_SOURCES) {
     if (aiResponse.toLowerCase().includes(source.name.toLowerCase())) {
       sources.add(source.domain);
     }
   }
-  
+
   return Array.from(sources);
 }
 
@@ -247,265 +418,12 @@ export function extractSources(aiResponse: string): string[] {
  * Get trust source info for a domain
  */
 export function getTrustSourceInfo(domain: string): TrustSource | null {
-  // Try exact match
-  if (SOURCE_MAP.has(domain)) {
-    return SOURCE_MAP.get(domain)!;
-  }
-  
-  // Try without subdomain
+  if (SOURCE_MAP.has(domain)) return SOURCE_MAP.get(domain)!;
   const parts = domain.split(".");
   if (parts.length > 2) {
-    const mainDomain = parts.slice(-2).join(".");
-    if (SOURCE_MAP.has(mainDomain)) {
-      return SOURCE_MAP.get(mainDomain)!;
-    }
+    const main = parts.slice(-2).join(".");
+    if (SOURCE_MAP.has(main)) return SOURCE_MAP.get(main)!;
   }
-  
   return null;
-}
-
-// ============================================
-// AI TRUST MAP
-// ============================================
-
-export interface TrustMapEntry {
-  source: TrustSource;
-  yourPresence: boolean;
-  competitors: { name: string; present: boolean }[];
-  priority: "critical" | "high" | "medium" | "low";
-  actionRequired: boolean;
-}
-
-export interface TrustMap {
-  entries: TrustMapEntry[];
-  yourCoverage: number; // 0-100%
-  avgCompetitorCoverage: number;
-  criticalGaps: TrustSource[];
-}
-
-/**
- * Build AI Trust Map from check results
- */
-export function buildTrustMap(
-  userDomain: string,
-  competitorDomains: string[],
-  sourceMentions: Map<string, string[]> // source domain -> products mentioned
-): TrustMap {
-  const entries: TrustMapEntry[] = [];
-  const userDomainClean = userDomain.toLowerCase().replace(/^www\./, "");
-  
-  // For each known trust source
-  for (const source of TRUST_SOURCES) {
-    const mentions = sourceMentions.get(source.domain) || [];
-    
-    // Check if user is mentioned on this source
-    const yourPresence = mentions.some(m => 
-      m.toLowerCase().includes(userDomainClean) ||
-      userDomainClean.includes(m.toLowerCase())
-    );
-    
-    // Check competitors
-    const competitors = competitorDomains.map(comp => ({
-      name: comp,
-      present: mentions.some(m => 
-        m.toLowerCase().includes(comp.toLowerCase()) ||
-        comp.toLowerCase().includes(m.toLowerCase())
-      ),
-    }));
-    
-    const competitorsPresent = competitors.filter(c => c.present).length;
-    
-    // Determine priority based on:
-    // 1. Source trust score
-    // 2. How many competitors are there
-    // 3. Whether you're missing
-    let priority: TrustMapEntry["priority"] = "low";
-    
-    if (!yourPresence && competitorsPresent > 0) {
-      if (source.trustScore >= 9) priority = "critical";
-      else if (source.trustScore >= 7) priority = "high";
-      else priority = "medium";
-    } else if (!yourPresence && source.trustScore >= 8) {
-      priority = "medium";
-    }
-    
-    entries.push({
-      source,
-      yourPresence,
-      competitors,
-      priority,
-      actionRequired: !yourPresence && (competitorsPresent > 0 || source.trustScore >= 8),
-    });
-  }
-  
-  // Sort by priority
-  const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-  entries.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
-  
-  // Calculate coverage
-  const yourCoverage = Math.round(
-    (entries.filter(e => e.yourPresence).length / entries.length) * 100
-  );
-  
-  const competitorCoverages = competitorDomains.map(comp => 
-    entries.filter(e => e.competitors.find(c => c.name === comp && c.present)).length
-  );
-  const avgCompetitorCoverage = competitorCoverages.length > 0
-    ? Math.round((competitorCoverages.reduce((a, b) => a + b, 0) / competitorCoverages.length / entries.length) * 100)
-    : 0;
-  
-  const criticalGaps = entries
-    .filter(e => e.priority === "critical" && !e.yourPresence)
-    .map(e => e.source);
-  
-  return {
-    entries,
-    yourCoverage,
-    avgCompetitorCoverage,
-    criticalGaps,
-  };
-}
-
-// ============================================
-// DISTRIBUTION GAP ANALYSIS
-// ============================================
-
-export interface DistributionGap {
-  source: TrustSource;
-  competitorsOnIt: string[];
-  impactScore: number; // 1-10
-  actionPlan: {
-    step: string;
-    description: string;
-  }[];
-}
-
-/**
- * Generate distribution gap analysis
- */
-export function analyzeDistributionGaps(trustMap: TrustMap): DistributionGap[] {
-  const gaps: DistributionGap[] = [];
-  
-  for (const entry of trustMap.entries) {
-    if (!entry.yourPresence && entry.actionRequired) {
-      const competitorsOnIt = entry.competitors
-        .filter(c => c.present)
-        .map(c => c.name);
-      
-      // Calculate impact score
-      const impactScore = Math.min(10, Math.round(
-        entry.source.trustScore * (1 + competitorsOnIt.length * 0.2)
-      ));
-      
-      // Generate action plan
-      const actionPlan = generateActionPlan(entry.source);
-      
-      gaps.push({
-        source: entry.source,
-        competitorsOnIt,
-        impactScore,
-        actionPlan,
-      });
-    }
-  }
-  
-  // Sort by impact
-  gaps.sort((a, b) => b.impactScore - a.impactScore);
-  
-  return gaps;
-}
-
-/**
- * Generate step-by-step action plan for getting listed on a source
- */
-function generateActionPlan(source: TrustSource): { step: string; description: string }[] {
-  const plans: Record<string, { step: string; description: string }[]> = {
-    "g2.com": [
-      { step: "Create vendor profile", description: "Sign up at sell.g2.com with your work email" },
-      { step: "Claim your listing", description: "Search for your product and claim ownership" },
-      { step: "Complete your profile", description: "Add logo, screenshots, pricing, and features" },
-      { step: "Collect reviews", description: "Email customers asking for G2 reviews (need 10+ for visibility)" },
-      { step: "Add G2 badges", description: "Display G2 badges on your website for social proof" },
-    ],
-    "capterra.com": [
-      { step: "Submit your product", description: "Go to vendors.capterra.com and submit for free listing" },
-      { step: "Complete profile", description: "Add detailed description, screenshots, and pricing" },
-      { step: "Request reviews", description: "Send review requests to existing customers" },
-      { step: "Respond to reviews", description: "Engage with feedback to show active support" },
-    ],
-    "producthunt.com": [
-      { step: "Create maker profile", description: "Set up your Product Hunt profile and verify" },
-      { step: "Prepare assets", description: "Create thumbnail, gallery images, and tagline" },
-      { step: "Write description", description: "Craft compelling copy with clear value prop" },
-      { step: "Build hunter network", description: "Connect with active hunters who might feature you" },
-      { step: "Plan launch timing", description: "Launch Tuesday-Thursday for best visibility" },
-      { step: "Engage on launch day", description: "Respond to every comment, share updates" },
-    ],
-    "alternativeto.net": [
-      { step: "Submit product", description: "Add your product as an alternative to competitors" },
-      { step: "Add details", description: "Include screenshots, description, and key features" },
-      { step: "List as alternative", description: "Connect to relevant popular products" },
-    ],
-    "reddit.com": [
-      { step: "Identify subreddits", description: "Find 3-5 relevant subreddits in your niche" },
-      { step: "Participate genuinely", description: "Answer questions and provide value (no spam)" },
-      { step: "Share when relevant", description: "Mention your product only when it genuinely helps" },
-      { step: "Do an AMA", description: "Consider an Ask Me Anything about your expertise" },
-    ],
-  };
-  
-  return plans[source.domain] || [
-    { step: "Research listing process", description: `Visit ${source.domain} and find their submission/vendor section` },
-    { step: "Prepare materials", description: "Gather logo, screenshots, description, and pricing info" },
-    { step: "Submit listing", description: source.howToGetListed },
-    { step: "Follow up", description: "Monitor for approval and complete any verification steps" },
-  ];
-}
-
-// ============================================
-// WEEKLY DISTRIBUTION REPORT
-// ============================================
-
-export interface DistributionReport {
-  yourCoverage: number;
-  competitorAvgCoverage: number;
-  coverageGap: number;
-  topPriorities: DistributionGap[];
-  estimatedRevenueAtRisk: number;
-  weeklyActionItems: string[];
-}
-
-/**
- * Generate weekly distribution report
- */
-export function generateDistributionReport(
-  trustMap: TrustMap,
-  gaps: DistributionGap[],
-  category: string | null
-): DistributionReport {
-  const coverageGap = trustMap.avgCompetitorCoverage - trustMap.yourCoverage;
-  
-  // Estimate revenue at risk based on coverage gap
-  const baseRevenue = category === "productivity" ? 20000 : 
-                      category === "crm" ? 25000 :
-                      category === "marketing" ? 22000 : 15000;
-  const estimatedRevenueAtRisk = Math.round(baseRevenue * (coverageGap / 100));
-  
-  // Top priorities
-  const topPriorities = gaps.slice(0, 3);
-  
-  // Weekly action items
-  const weeklyActionItems = topPriorities.map(gap => 
-    `Get listed on ${gap.source.name}: ${gap.actionPlan[0]?.description || gap.source.howToGetListed}`
-  );
-  
-  return {
-    yourCoverage: trustMap.yourCoverage,
-    competitorAvgCoverage: trustMap.avgCompetitorCoverage,
-    coverageGap,
-    topPriorities,
-    estimatedRevenueAtRisk,
-    weeklyActionItems,
-  };
 }
 

@@ -6,7 +6,7 @@
  * Three zones:
  * 1. Score Hero (full-width momentum score)
  * 2. The Task (single action card — first citation goal, next action, or recheck)
- * 3. Progress (collapsible — improvement, lost queries, sprint)
+ * 3. Progress (collapsible — improvement, lost queries, trend)
  */
 
 import { useState, Suspense, useEffect } from "react";
@@ -15,7 +15,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSite } from "@/context/site-context";
 import { MomentumScore } from "@/components/dashboard/momentum-score";
-import { SprintProgress } from "@/components/dashboard/sprint-progress";
 import { DoThisNext } from "@/components/dashboard/do-this-next";
 import { FirstCitationGoal } from "@/components/dashboard/first-citation-goal";
 import { RevenueAtRisk, type LostQuery } from "@/components/dashboard/revenue-at-risk";
@@ -32,10 +31,9 @@ import {
   useImprovement,
   useOpportunities,
   useAudit,
-  useSprint,
   useLostQueries,
 } from "@/hooks/api/queries";
-import { useSprintAction, useInvalidateDashboard } from "@/hooks/api/mutations";
+import { useInvalidateDashboard } from "@/hooks/api/mutations";
 import {
   RefreshCw,
   Loader2,
@@ -79,11 +77,10 @@ function DashboardContent() {
 
   // Deferred data — only load when progress section is open
   const [showProgress, setShowProgress] = useState(false);
-  const { data: sprint } = useSprint(siteId, showProgress);
+  // Sprint removed — action plans + next action replace it
   const { data: lostQueries = [] } = useLostQueries(siteId, showProgress);
 
   // Mutations
-  const sprintAction = useSprintAction(siteId);
   const invalidateDashboard = useInvalidateDashboard(siteId);
 
   // UI state (the only manual state left)
@@ -164,28 +161,6 @@ function DashboardContent() {
     } finally {
       setChecking(false);
     }
-  };
-
-  const handleActionComplete = async (actionId: string) => {
-    try {
-      await sprintAction.mutateAsync({ actionId, status: "completed" });
-      toast.success("Action completed");
-    } catch {
-      toast.error("Failed to save. Please try again.");
-    }
-  };
-
-  const handleActionSkip = async (actionId: string) => {
-    sprintAction.mutate({ actionId, status: "skipped" });
-  };
-
-  const handleSprintAction = async (
-    actionId: string,
-    status: "completed" | "skipped",
-    proofUrl?: string,
-    notes?: string
-  ) => {
-    sprintAction.mutate({ actionId, status, proofUrl, notes });
   };
 
   const handleMarkPublished = (pageId: string) => {
@@ -474,39 +449,6 @@ function DashboardContent() {
               onRunCheck={handleCheck}
             />
 
-            {/* Sprint Progress (paid) / Upgrade CTA (free) */}
-            {isPaid ? (
-              <SprintProgress
-                progress={sprint?.progress || {
-                  totalActions: 0, completedActions: 0, percentComplete: 0,
-                  currentDay: 1, currentWeek: 1, daysRemaining: 30, isComplete: false,
-                }}
-                actions={sprint?.actions || []}
-                onComplete={(id, proofUrl, notes) => handleSprintAction(id, "completed", proofUrl, notes)}
-                onSkip={(id) => handleSprintAction(id, "skipped")}
-                loading={loading}
-              />
-            ) : (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  30-Day AI Visibility Sprint
-                </h3>
-                <p className="text-zinc-400 text-sm mb-4">
-                  Get a structured 4-week program to become AI&apos;s recommended choice.
-                </p>
-                <button
-                  onClick={() => checkout("scout", "yearly")}
-                  disabled={checkoutLoading}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {checkoutLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>Upgrade to Scout — $39/mo<ArrowRight className="w-4 h-4" /></>
-                  )}
-                </button>
-              </div>
-            )}
           </div>
         )}
       </div>

@@ -455,19 +455,13 @@ function BillingContent() {
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400" />
                           {planData.id === "dominate"
-                            ? "Daily + hourly auto-checks"
+                            ? "2x daily auto-checks"
                             : planData.id === "command"
-                            ? "Daily + hourly monitoring"
+                            ? "Daily monitoring"
                             : planData.id === "scout"
                             ? "Daily auto-checks"
                             : "Manual checks only"}
                         </li>
-                        {planData.features.sprintFramework && (
-                          <li className="flex items-center gap-2">
-                            <Check className="w-4 h-4 text-emerald-400" />
-                            30-day sprint program
-                          </li>
-                        )}
                       </ul>
                       <Button
                         onClick={() => handleUpgrade(planId)}

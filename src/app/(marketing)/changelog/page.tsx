@@ -5,16 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
   Sparkles,
-  Timer,
   TrendingUp,
   Search,
   Compass,
-  Calendar,
   Bell,
   DollarSign,
   FileText,
   Eye,
-  MessageSquare,
   LineChart,
   AlertTriangle,
   Zap,
@@ -22,7 +19,6 @@ import {
   Share2,
   PenTool,
   Database,
-  Trophy,
   Mail,
   Users,
 } from "lucide-react";
@@ -62,10 +58,10 @@ const groups: ChangelogGroup[] = [
         icon: <Users className="w-5 h-5" />,
       },
       {
-        category: "new",
-        title: "Bulk Scanning API",
+        category: "improved",
+        title: "Smarter Scan Queries",
         description:
-          "Programmatic access to scan up to 50 domains per request. POST to /api/v1/scan/bulk with an API key. Rate-limited to 200 scans/hour.",
+          "AI-powered query generation that reads your site content and generates customer-centric queries tailored to your business, instead of generic templates.",
         icon: <Database className="w-5 h-5" />,
       },
       {
@@ -77,30 +73,16 @@ const groups: ChangelogGroup[] = [
       },
       {
         category: "new",
-        title: "AI Visibility Leaderboard",
-        description:
-          "Public leaderboard of the top recommended brands in AI search, powered by real scan data. Available at /leaderboard.",
-        icon: <Trophy className="w-5 h-5" />,
-      },
-      {
-        category: "new",
-        title: "Slack Integration",
-        description:
-          "Get AI visibility alerts directly in Slack. Check results, score drop notifications, and weekly summaries delivered to your channel.",
-        icon: <MessageSquare className="w-5 h-5" />,
-      },
-      {
-        category: "new",
         title: "Score Drop Alerts",
         description:
-          "Email and Slack notification when your AI visibility drops significantly. Includes the specific queries you're now losing.",
+          "Email notification when your AI visibility drops significantly. Includes the specific queries you're now losing.",
         icon: <AlertTriangle className="w-5 h-5" />,
       },
       {
         category: "new",
         title: "Plan-Tiered Auto-Checks",
         description:
-          "Automated checks run daily for all paid plans. Command and Dominate also get hourly monitoring.",
+          "Automated checks run daily for Scout and Command. Dominate gets 2x daily monitoring.",
         icon: <Zap className="w-5 h-5" />,
       },
       {
@@ -140,24 +122,10 @@ const groups: ChangelogGroup[] = [
       },
       {
         category: "new",
-        title: "30-Day Sprint Framework",
-        description:
-          "A structured 4-week program to improve your AI visibility. Each week has targeted actions with clear instructions, estimated time, and priority.",
-        icon: <Timer className="w-5 h-5" />,
-      },
-      {
-        category: "new",
         title: "Visibility Drop Alerts",
         description:
           "Get notified when your AI visibility changes. Email alerts keep you informed of citation gains and losses.",
         icon: <Bell className="w-5 h-5" />,
-      },
-      {
-        category: "new",
-        title: "Monthly Checkpoints",
-        description:
-          "Automated monthly progress reports showing how your AI visibility has changed. Includes citation trends and recommended next steps.",
-        icon: <Calendar className="w-5 h-5" />,
       },
       {
         category: "new",

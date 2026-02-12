@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "CabbageSEO Pricing – Plans from $49/mo",
     description:
-      "Scout → Command → Dominate. AI monitoring, gap analysis, fix pages, and 30-day sprints. Free scan available.",
+      "Scout → Command → Dominate. AI monitoring, gap analysis, fix pages, and action plans. Free scan available.",
   },
 };
 
@@ -34,7 +34,7 @@ const pricingJsonLd = {
       availability: "https://schema.org/InStock",
       priceValidUntil: "2027-12-31",
       url: "https://cabbageseo.com/pricing",
-      description: "Daily AI monitoring, gap analysis, fix pages, 30-day sprint",
+      description: "Daily AI monitoring, gap analysis, fix pages, action plan",
     },
     {
       "@type": "Offer",
@@ -44,7 +44,7 @@ const pricingJsonLd = {
       availability: "https://schema.org/InStock",
       priceValidUntil: "2027-12-31",
       url: "https://cabbageseo.com/pricing",
-      description: "Hourly monitoring, 25 fix pages/month, unlimited gap analyses, weekly playbooks",
+      description: "Daily monitoring, 25 fix pages/month, 15 gap analyses/month, 4 action plans/month",
     },
     {
       "@type": "Offer",
@@ -54,7 +54,7 @@ const pricingJsonLd = {
       availability: "https://schema.org/InStock",
       priceValidUntil: "2027-12-31",
       url: "https://cabbageseo.com/pricing",
-      description: "Hourly monitoring, unlimited fix pages, unlimited everything",
+      description: "2x daily monitoring, 50 fix pages/month, 30 gap analyses/month, 8 action plans/month",
     },
   ],
 };
@@ -73,14 +73,6 @@ const faqJsonLd = {
     },
     {
       "@type": "Question",
-      name: "What's the 30-day sprint?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "The 30-day sprint is a structured program included with Scout and above. Each week you get specific, prioritized actions based on your current visibility data: content to create, pages to optimize, entities to reference, and comparisons to add. By day 30, most customers see measurable improvement in their AI recommendation rate.",
-      },
-    },
-    {
-      "@type": "Question",
       name: "Can I cancel anytime?",
       acceptedAnswer: {
         "@type": "Answer",
@@ -92,7 +84,7 @@ const faqJsonLd = {
       name: "How do automated checks work?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "CabbageSEO automatically scans your AI visibility across ChatGPT, Perplexity, and Google AI on a schedule based on your plan. Scout gets daily checks, while Command and Dominate get hourly monitoring. If your visibility score drops by 2 or more points, you'll get an instant alert via email and Slack.",
+        text: "CabbageSEO automatically scans your AI visibility across ChatGPT, Perplexity, and Google AI on a schedule based on your plan. Scout and Command get daily checks, while Dominate gets 2x daily monitoring. If your visibility score drops by 2 or more points, you'll get an instant alert via email.",
       },
     },
     {
@@ -100,7 +92,7 @@ const faqJsonLd = {
       name: "What are fix pages?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Fix pages are comparison pages, category explainers, and FAQs designed to reinforce your credibility with AI systems. CabbageSEO uses your citation data and gap analysis to create pages that reinforce the trust signals AI looks for. Fix pages auto-generate after every scan: Scout creates 2 per scan, Command creates 5, and Dominate creates 10. You can also generate pages manually — Scout gets 5/month, Command 25, Dominate unlimited.",
+        text: "Fix pages are comparison pages, category explainers, and FAQs designed to reinforce your credibility with AI systems. CabbageSEO uses your citation data and gap analysis to create pages that reinforce the trust signals AI looks for. Fix pages auto-generate after every scan: Scout creates 2 per scan, Command creates 5, and Dominate creates 10. You can also generate pages manually — Scout gets 5/month, Command 25, Dominate 50.",
       },
     },
   ],

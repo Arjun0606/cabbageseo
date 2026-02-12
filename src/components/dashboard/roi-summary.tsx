@@ -74,7 +74,7 @@ export function ROISummary({
       summary = `You've gained ${queriesDelta} more AI citation${queriesDelta !== 1 ? "s" : ""} since your first check.`;
     }
   } else if (isDecline) {
-    summary = `Your AI win rate dropped from ${firstWinRate}% to ${latestWinRate}%. Check your sprint actions for ways to recover.`;
+    summary = `Your AI win rate dropped from ${firstWinRate}% to ${latestWinRate}%. Check your action plans for ways to recover.`;
   } else {
     summary = `Your AI visibility is holding steady at ${latestWinRate}% win rate across ${latestQueriesTotal} queries.`;
   }

@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "CabbageSEO Features – AI Visibility Intelligence",
     description:
-      "Daily AI citation monitoring. Gap analysis and fix pages. 30-day action sprints. Everything you need to win in AI search.",
+      "Daily AI citation monitoring. Gap analysis and fix pages. Personalized action plans. Everything you need to be visible in AI search.",
   },
 };
 

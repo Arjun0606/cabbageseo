@@ -154,7 +154,7 @@ function day2Email(report: SubscriberReport, email: string): { subject: string; 
         The good news? Most companies haven't started optimizing for AI visibility yet. <strong style="color: #fff;">If you start now, you'll have a massive head start.</strong>
       </p>
 
-      ${ctaButton("Start your 30-day sprint →", `${APP_URL}/signup?domain=${encodeURIComponent(report.domain)}`)}
+      ${ctaButton("Start improving your visibility →", `${APP_URL}/signup?domain=${encodeURIComponent(report.domain)}`)}
 
       <p style="text-align: center; color: #52525b; font-size: 12px;">
         We build the action plan for you &bull; Cancel anytime
@@ -173,7 +173,7 @@ function day5Email(report: SubscriberReport, email: string): { subject: string; 
       </div>
 
       <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
-        Based on your scan, here's a preview of what CabbageSEO would do for ${report.domain} in the first 30 days:
+        Based on your scan, here's a preview of what CabbageSEO would do for ${report.domain}:
       </p>
 
       <div style="margin-bottom: 24px;">

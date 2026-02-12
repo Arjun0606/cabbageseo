@@ -175,7 +175,7 @@ function ContentEngineContent() {
             <Zap className="w-5 h-5" />Unlock Fix Pages &mdash; $39/mo<ArrowRight className="w-5 h-5" />
           </Link>
           <p className="text-zinc-600 text-xs mt-3">
-            Scout: 5 pages/mo &bull; Command: 25 pages/mo &bull; Dominate: Unlimited
+            Scout: 5 pages/mo &bull; Command: 25 pages/mo &bull; Dominate: 50 pages/mo
           </p>
         </div>
       </div>
@@ -253,15 +253,31 @@ function ContentEngineContent() {
             {visibleOpps.map((opp) => {
               const impactStyle = IMPACT_STYLES[opp.impact];
               const isGenerating = generatePage.isPending && generatePage.variables?.query === opp.query;
+              const missedCount = opp.missedPlatformCount ?? 1;
+              const citedDomains = opp.citedDomains ?? [];
+              const impactReason = opp.impactReason ?? "";
               return (
                 <div key={opp.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className={`text-[10px] uppercase tracking-wider font-medium ${impactStyle.text}`}>{impactStyle.label}</span>
+                        {missedCount >= 2 && (
+                          <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">
+                            Missed on {missedCount} platforms
+                          </span>
+                        )}
                         <span className="text-zinc-600 text-[10px]">{PLATFORM_LABELS[opp.platform] || opp.platform}</span>
                       </div>
-                      <p className="text-white font-medium text-sm mb-1.5">&ldquo;{opp.query}&rdquo;</p>
+                      <p className="text-white font-medium text-sm mb-1">&ldquo;{opp.query}&rdquo;</p>
+                      {impactReason && (
+                        <p className="text-zinc-500 text-xs mb-1">{impactReason}</p>
+                      )}
+                      {citedDomains.length > 0 && (
+                        <p className="text-zinc-600 text-xs">
+                          AI cited: {citedDomains.slice(0, 3).join(", ")}{citedDomains.length > 3 ? ` +${citedDomains.length - 3} more` : ""}
+                        </p>
+                      )}
                     </div>
                     <button
                       onClick={() => handleGenerate(opp.query)}

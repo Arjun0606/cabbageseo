@@ -2,7 +2,7 @@
  * AI Recommendation Logger — Data Moat Engine
  *
  * Logs every AI recommendation observed across all scan types
- * (teaser, citation check, bulk scan) into the ai_recommendations table.
+ * (teaser, citation check) into the ai_recommendations table.
  *
  * This is the proprietary dataset that compounds over time.
  * Every scan makes the moat deeper.
@@ -18,7 +18,7 @@ export interface RecommendationEntry {
   position?: number;
   snippet?: string;
   confidence?: string;
-  source: "teaser" | "citation_check" | "bulk_scan";
+  source: "teaser" | "citation_check";
   siteId?: string;
 }
 

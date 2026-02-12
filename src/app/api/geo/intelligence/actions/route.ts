@@ -305,21 +305,15 @@ export async function GET() {
       features: {
         gapAnalysis: {
           available: citationPlan.features.citationGapAnalysis,
-          fullVersion: citationPlan.features.citationGapFull,
           used: gapAnalysesUsed,
           limit: citationPlan.intelligenceLimits.gapAnalysesPerMonth,
-          remaining: citationPlan.intelligenceLimits.gapAnalysesPerMonth === -1
-            ? "unlimited"
-            : Math.max(0, citationPlan.intelligenceLimits.gapAnalysesPerMonth - gapAnalysesUsed),
+          remaining: Math.max(0, citationPlan.intelligenceLimits.gapAnalysesPerMonth - gapAnalysesUsed),
         },
         contentRecommendations: {
           available: citationPlan.features.contentRecommendations,
-          unlimited: citationPlan.features.contentRecsUnlimited,
           used: contentIdeasUsed,
           limit: citationPlan.intelligenceLimits.contentIdeasPerMonth,
-          remaining: citationPlan.intelligenceLimits.contentIdeasPerMonth === -1
-            ? "unlimited"
-            : Math.max(0, citationPlan.intelligenceLimits.contentIdeasPerMonth - contentIdeasUsed),
+          remaining: Math.max(0, citationPlan.intelligenceLimits.contentIdeasPerMonth - contentIdeasUsed),
         },
         actionPlan: {
           available: citationPlan.features.weeklyActionPlan,

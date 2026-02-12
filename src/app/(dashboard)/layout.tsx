@@ -205,12 +205,12 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
         {nextPlan && plan !== "free" && (
           <div className="rounded-xl p-3 bg-zinc-800/50 border border-zinc-700/50 space-y-2">
             <p className="text-xs font-medium text-white">
-              {plan === "scout" ? "Unlock AI Tools" : "Go Unlimited"}
+              {plan === "scout" ? "Unlock Full Intelligence" : "Get Maximum Coverage"}
             </p>
             <p className="text-[11px] text-zinc-400">
               {plan === "scout"
-                ? "Weekly playbooks & full intelligence"
-                : "Unlimited everything, nothing held back"}
+                ? "Action plans, full GEO audit & more"
+                : "50 queries, 2x daily scans, highest limits"}
             </p>
             <button
               onClick={() => checkout(nextPlanId!, "yearly")}

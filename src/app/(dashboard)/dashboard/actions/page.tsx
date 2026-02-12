@@ -45,13 +45,13 @@ const PREVIEW_DATA: Record<string, string> = {
 interface TrustSource {
   name: string;
   domain: string;
-  icon: string;
-  description: string;
-  importance: "critical" | "high" | "medium";
-  submissionUrl: string;
+  category: string;
+  trustScore: number;
+  howToGetListed: string;
+  estimatedEffort: string;
+  estimatedTime: string;
   youListed: boolean;
-  howToGetListed: string[];
-  timeToList: string;
+  profileUrl: string | null;
 }
 
 interface FeatureInfo {
@@ -75,102 +75,22 @@ interface CardState {
   error: string | null;
 }
 
-// ============================================
-// TRUST SOURCES DATA
-// ============================================
+// Icon map based on source category / trustScore
+function getSourceIcon(source: TrustSource): string {
+  if (source.trustScore >= 9) return "🏆";
+  if (source.category === "review") return "⭐";
+  if (source.category === "directory") return "🚀";
+  if (source.category === "community") return "💬";
+  if (source.category === "media") return "📰";
+  if (source.category === "comparison") return "📊";
+  return "🌐";
+}
 
-const TRUST_SOURCES: Omit<TrustSource, "youListed">[] = [
-  {
-    name: "G2",
-    domain: "g2.com",
-    icon: "🏆",
-    description: "Software reviews and ratings platform",
-    importance: "critical",
-    submissionUrl: "https://sell.g2.com/create-a-profile",
-    howToGetListed: [
-      "Create a free G2 seller account",
-      "Claim your product listing",
-      "Add product details and screenshots",
-      "Invite customers to leave reviews",
-    ],
-    timeToList: "2-3 hours",
-  },
-  {
-    name: "Capterra",
-    domain: "capterra.com",
-    icon: "📊",
-    description: "Business software comparison platform",
-    importance: "critical",
-    submissionUrl: "https://vendors.capterra.com/sign-up",
-    howToGetListed: [
-      "Create a Capterra vendor account",
-      "Submit your product for review",
-      "Complete your product profile",
-      "Gather customer reviews",
-    ],
-    timeToList: "2-3 hours",
-  },
-  {
-    name: "Product Hunt",
-    domain: "producthunt.com",
-    icon: "🚀",
-    description: "Product discovery and launch platform",
-    importance: "high",
-    submissionUrl: "https://www.producthunt.com/posts/new",
-    howToGetListed: [
-      "Create a Product Hunt account",
-      "Prepare launch assets (images, tagline)",
-      "Schedule your launch day",
-      "Engage with the community",
-    ],
-    timeToList: "1-2 hours",
-  },
-  {
-    name: "Reddit",
-    domain: "reddit.com",
-    icon: "💬",
-    description: "Community discussions and recommendations",
-    importance: "high",
-    submissionUrl: "https://www.reddit.com/subreddits/search",
-    howToGetListed: [
-      "Find relevant subreddits for your niche",
-      "Participate in discussions genuinely",
-      "Share when contextually relevant",
-      "Build community presence over time",
-    ],
-    timeToList: "Ongoing",
-  },
-  {
-    name: "Trustpilot",
-    domain: "trustpilot.com",
-    icon: "⭐",
-    description: "Consumer review platform",
-    importance: "medium",
-    submissionUrl: "https://business.trustpilot.com/signup",
-    howToGetListed: [
-      "Claim your business profile",
-      "Verify your business",
-      "Invite customers to review",
-      "Respond to reviews",
-    ],
-    timeToList: "1-2 hours",
-  },
-  {
-    name: "TrustRadius",
-    domain: "trustradius.com",
-    icon: "🎯",
-    description: "B2B software reviews",
-    importance: "medium",
-    submissionUrl: "https://www.trustradius.com/vendor",
-    howToGetListed: [
-      "Create vendor profile",
-      "Add product information",
-      "Invite verified buyers to review",
-      "Engage with reviewers",
-    ],
-    timeToList: "2-3 hours",
-  },
-];
+function getImportance(trustScore: number): "critical" | "high" | "medium" {
+  if (trustScore >= 9) return "critical";
+  if (trustScore >= 7) return "high";
+  return "medium";
+}
 
 // ============================================
 // RESULT RENDERER (for AI tools)
@@ -433,7 +353,7 @@ export default function ActionsPage() {
   const plan = organization?.plan || "free";
   const isPaid = plan === "scout" || plan === "command" || plan === "dominate";
 
-  // Fetch trust source listings
+  // Fetch trust source listings (dynamically selected per business)
   useEffect(() => {
     const fetchSources = async () => {
       if (!currentSite?.id) {
@@ -444,20 +364,25 @@ export default function ActionsPage() {
         const response = await fetch(`/api/sites/listings?siteId=${currentSite.id}`);
         if (response.ok) {
           const data = await response.json();
-          const listings = data.listings || [];
-          const listingsByDomain = new Map<string, boolean>();
-          listings.forEach((l: { source_domain: string; status: string }) => {
-            listingsByDomain.set(l.source_domain, l.status === "verified");
-          });
-          setSources(TRUST_SOURCES.map(source => ({
-            ...source,
-            youListed: listingsByDomain.get(source.domain) || false,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const listings: any[] = data.listings || [];
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setSources(listings.map((l: any) => ({
+            name: l.source_name,
+            domain: l.source_domain,
+            category: l.category || "review",
+            trustScore: l.trust_score || 5,
+            howToGetListed: l.how_to_get_listed || "",
+            estimatedEffort: l.estimated_effort || "medium",
+            estimatedTime: l.estimated_time || "Varies",
+            youListed: l.status === "verified",
+            profileUrl: l.profile_url || null,
           })));
         } else {
-          setSources(TRUST_SOURCES.map(source => ({ ...source, youListed: false })));
+          setSources([]);
         }
       } catch {
-        setSources(TRUST_SOURCES.map(source => ({ ...source, youListed: false })));
+        setSources([]);
       } finally {
         setSourcesLoading(false);
       }
@@ -553,103 +478,118 @@ export default function ActionsPage() {
         </div>
 
         {/* Source list */}
-        <div className="space-y-2">
-          {sources.map((source) => (
-            <div
-              key={source.domain}
-              className={`border rounded-xl overflow-hidden ${
-                source.importance === "critical" && !source.youListed
-                  ? "border-red-500/20"
-                  : "border-zinc-800"
-              }`}
-            >
-              {/* Row header */}
-              <button
-                onClick={() => setExpandedSource(expandedSource === source.name ? null : source.name)}
-                className="w-full flex items-center gap-3 p-4 hover:bg-zinc-900/50 transition-colors text-left"
-              >
-                <span className="text-xl">{source.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-white font-medium text-sm">{source.name}</h3>
-                    {source.importance === "critical" && (
-                      <span className="px-1.5 py-0.5 bg-red-500/10 text-red-400 text-[10px] rounded">Critical</span>
-                    )}
-                  </div>
-                  <p className="text-zinc-500 text-xs truncate">{source.description}</p>
-                </div>
-                <span className={`flex items-center gap-1 text-xs font-medium ${
-                  source.youListed ? "text-emerald-400" : "text-red-400"
-                }`}>
-                  {source.youListed ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                  {source.youListed ? "Listed" : "Not listed"}
-                </span>
-                <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${
-                  expandedSource === source.name ? "rotate-180" : ""
-                }`} />
-              </button>
-
-              {/* Expanded content */}
-              {expandedSource === source.name && (
-                <div className="border-t border-zinc-800 p-4 bg-zinc-950/50">
-                  {!isPaid && source.importance !== "critical" ? (
-                    <SourceUpgradeGate />
-                  ) : (
-                    <>
-                      <p className="text-xs text-zinc-500 mb-3">
-                        Time to get listed: ~{source.timeToList}
-                      </p>
-                      <ol className="space-y-2 mb-4">
-                        {(isPaid ? source.howToGetListed : source.howToGetListed.slice(0, 1)).map((step, j) => (
-                          <li key={j} className="flex items-start gap-2.5">
-                            <span className="flex-shrink-0 w-5 h-5 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center text-xs font-medium">
-                              {j + 1}
-                            </span>
-                            <span className="text-zinc-300 text-sm">{step}</span>
-                          </li>
-                        ))}
-                      </ol>
-                      {!isPaid && source.howToGetListed.length > 1 && (
-                        <p className="text-zinc-500 text-xs mb-3">
-                          See all {source.howToGetListed.length} steps — <button onClick={() => checkout("scout", "yearly")} className="text-emerald-400 hover:text-emerald-300">upgrade to Scout ($39/mo)</button>
-                        </p>
-                      )}
+        {sources.length === 0 ? (
+          <div className="border border-zinc-800 rounded-xl p-8 text-center">
+            <Globe className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
+            <p className="text-zinc-400 text-sm mb-1">No trust sources detected yet</p>
+            <p className="text-zinc-600 text-xs">Run an AI visibility scan to discover the platforms that matter for your business.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {sources.map((source) => {
+              const importance = getImportance(source.trustScore);
+              const icon = getSourceIcon(source);
+              return (
+                <div
+                  key={source.domain}
+                  className={`border rounded-xl overflow-hidden ${
+                    importance === "critical" && !source.youListed
+                      ? "border-red-500/20"
+                      : "border-zinc-800"
+                  }`}
+                >
+                  {/* Row header */}
+                  <button
+                    onClick={() => setExpandedSource(expandedSource === source.name ? null : source.name)}
+                    className="w-full flex items-center gap-3 p-4 hover:bg-zinc-900/50 transition-colors text-left"
+                  >
+                    <span className="text-xl">{icon}</span>
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <a
-                          href={source.submissionUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors text-sm"
-                        >
-                          Submit Listing
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                        {!source.youListed && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleMarkListed(source.domain, source.name);
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 rounded-lg transition-colors text-sm"
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                            Mark as Done
-                          </button>
+                        <h3 className="text-white font-medium text-sm">{source.name}</h3>
+                        {importance === "critical" && (
+                          <span className="px-1.5 py-0.5 bg-red-500/10 text-red-400 text-[10px] rounded">Critical</span>
                         )}
-                        {source.youListed && (
-                          <span className="inline-flex items-center gap-1.5 text-emerald-400 text-sm">
-                            <Check className="w-3.5 h-3.5" />
-                            Listed
-                          </span>
-                        )}
+                        <span className="px-1.5 py-0.5 bg-zinc-800 text-zinc-400 text-[10px] rounded capitalize">{source.category}</span>
                       </div>
-                    </>
+                      <p className="text-zinc-500 text-xs truncate">
+                        Trust score: {source.trustScore}/10 · {source.estimatedEffort} effort · ~{source.estimatedTime}
+                      </p>
+                    </div>
+                    <span className={`flex items-center gap-1 text-xs font-medium ${
+                      source.youListed ? "text-emerald-400" : "text-red-400"
+                    }`}>
+                      {source.youListed ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                      {source.youListed ? "Listed" : "Not listed"}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${
+                      expandedSource === source.name ? "rotate-180" : ""
+                    }`} />
+                  </button>
+
+                  {/* Expanded content */}
+                  {expandedSource === source.name && (
+                    <div className="border-t border-zinc-800 p-4 bg-zinc-950/50">
+                      {!isPaid && importance !== "critical" ? (
+                        <SourceUpgradeGate />
+                      ) : (
+                        <>
+                          <div className="mb-4">
+                            <p className="text-zinc-300 text-sm leading-relaxed">
+                              {source.howToGetListed}
+                            </p>
+                          </div>
+                          {source.profileUrl && (
+                            <div className="mb-3">
+                              <a
+                                href={source.profileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-emerald-400 hover:text-emerald-300 text-sm flex items-center gap-1"
+                              >
+                                View your profile
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={`https://${source.domain}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors text-sm"
+                            >
+                              Visit {source.name}
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                            {!source.youListed && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMarkListed(source.domain, source.name);
+                                }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 rounded-lg transition-colors text-sm"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                Mark as Listed
+                              </button>
+                            )}
+                            {source.youListed && (
+                              <span className="inline-flex items-center gap-1.5 text-emerald-400 text-sm">
+                                <Check className="w-3.5 h-3.5" />
+                                Listed
+                              </span>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* ═══ SECTION 2: AI Analysis Tools ═══ */}

@@ -17,12 +17,12 @@ const WHAT_YOU_GET = [
   {
     icon: Eye,
     title: "Track your AI visibility across every platform",
-    description: "Real-time citation tracking across ChatGPT, Perplexity, and Google AI.",
+    description: "Daily citation tracking across ChatGPT, Perplexity, and Google AI.",
   },
   {
     icon: TrendingUp,
-    title: "30-day sprint to improve your AI visibility",
-    description: "Weekly action plans, gap analysis, and AI-generated fix pages.",
+    title: "Fix gaps and improve AI visibility",
+    description: "Gap analysis, AI-generated fix pages, and action plans to get you cited.",
   },
 ];
 

@@ -2,7 +2,7 @@
  * Public Benchmarks API
  *
  * Returns aggregated industry benchmark data from real scan observations.
- * Powers the leaderboard page and can be used by external consumers.
+ * Returns industry-level visibility data. Used by public reports and external consumers.
  */
 
 import { NextRequest, NextResponse } from "next/server";

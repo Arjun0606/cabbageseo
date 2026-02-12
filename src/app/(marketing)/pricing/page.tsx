@@ -68,40 +68,42 @@ const tiers: PricingTier[] = [
     href: "/signup?plan=scout",
     icon: <TrendingUp className="w-5 h-5 text-emerald-400" />,
     features: [
-      "10 queries tracked per scan",
-      "Daily AI citation monitoring",
+      "10 queries tracked (5 custom)",
+      "Daily AI scans across ChatGPT, Perplexity & Google AI",
       "5 fix pages/month + 2 auto-generated per scan",
-      "Site GEO Audit (top 10 pages)",
-      "Schema markup generation",
       "5 gap analyses/month",
-      "30-day AI sprint",
+      "3 content ideas/month",
+      "Site GEO Audit (10 pages, 2/month)",
+      "Schema markup generation",
+      "30-day history",
       "Weekly reports + email alerts",
     ],
     promise: "Every day: scan runs, gaps found, fix pages generated. You wake up to a dashboard that's already working.",
   },
   {
     name: "Command",
-    tagline: "The complete toolkit to win AI recommendations",
+    tagline: "Full GEO intelligence with maximum coverage",
     monthlyPrice: 149,
     annualPrice: 119,
     period: "/mo",
-    description: "Full GEO intelligence + maximum visibility",
+    description: "Deep intelligence + high-volume content generation",
     cta: "Get Command",
     href: "/signup?plan=command",
     popular: true,
     icon: <Zap className="w-5 h-5 text-emerald-400" />,
     features: [
-      "20 queries tracked per scan",
-      "Hourly AI citation monitoring",
+      "25 queries tracked (15 custom)",
+      "Daily AI scans across ChatGPT, Perplexity & Google AI",
       "25 fix pages/month + 5 auto-generated per scan",
-      "Full Site GEO Audit (100 pages)",
-      "Entity optimization + schema markup",
-      "Unlimited gap analysis + content ideas",
-      "Weekly action playbooks",
+      "15 gap analyses/month",
+      "10 content ideas/month",
+      "4 action plans/month",
+      "Site GEO Audit (100 pages, 4/month)",
       "CSV exports + 365-day history",
+      "Weekly reports + email alerts",
     ],
     highlight: "MOST POPULAR",
-    promise: "Every hour: scan runs, new gaps detected, 5 fix pages auto-generated per scan. Gaps close before you notice them.",
+    promise: "Every day: scans run, new gaps detected, 5 fix pages auto-generated per scan. Gaps close before you notice them.",
   },
   {
     name: "Dominate",
@@ -109,20 +111,22 @@ const tiers: PricingTier[] = [
     monthlyPrice: 349,
     annualPrice: 279,
     period: "/mo",
-    description: "Everything unlimited, nothing held back",
+    description: "Highest limits, fastest scans, nothing held back",
     cta: "Get Dominate",
     href: "/signup?plan=dominate",
     icon: <Crown className="w-5 h-5 text-amber-400" />,
     features: [
-      "30 queries tracked per scan",
-      "Hourly AI citation monitoring",
-      "Unlimited fix pages + 10 auto-generated per scan",
-      "Full Site GEO Audit (500 pages)",
-      "Entity optimization + schema markup",
-      "Unlimited action playbooks",
-      "Monthly checkpoint reports + 365-day history",
+      "50 queries tracked (30 custom)",
+      "2x daily AI scans across ChatGPT, Perplexity & Google AI",
+      "50 fix pages/month + 10 auto-generated per scan",
+      "30 gap analyses/month",
+      "20 content ideas/month",
+      "8 action plans/month",
+      "Site GEO Audit (500 pages, 4/month)",
+      "CSV exports + 365-day history",
+      "Weekly reports + email alerts",
     ],
-    promise: "Every hour: scan runs, 10 fix pages auto-generated, unlimited manual pages. The system never sleeps.",
+    promise: "Twice a day: scans run, 10 fix pages auto-generated, highest query coverage. The system never sleeps.",
   },
 ];
 
@@ -133,29 +137,29 @@ const faqs: FAQItem[] = [
       "Yes. Every data point comes from real API calls to ChatGPT, Perplexity, and Google AI Overviews. We query the actual AI platforms with real user prompts and record exactly what they cite and recommend. No synthetic data, no estimations \u2014 just what AI actually says when someone asks about your market.",
   },
   {
-    question: "What\u2019s the 30-day AI sprint?",
-    answer:
-      "The 30-day AI sprint is a structured GEO program included with Scout and above. Each week you get specific, prioritized actions based on your current citation data: content to create, pages to optimize, entities to reference, and schema to implement. By day 30, most customers see measurable improvement in their AI citation rate. Think of it as a personal trainer for your GEO strategy.",
-  },
-  {
     question: "What are fix pages?",
     answer:
-      "When CabbageSEO finds queries where AI doesn\u2019t recommend you, it generates targeted fix pages \u2014 comparison pages, explainers, and FAQs \u2014 designed to close those gaps. Unlike generic AI writing tools, these pages are driven by your actual citation data and gap analysis. Better yet, fix pages auto-generate after every scan: Scout creates 2 per scan, Command creates 5, and Dominate creates 10. You can also generate pages manually \u2014 Scout gets 5/month, Command 25, Dominate unlimited.",
+      "When CabbageSEO finds queries where AI doesn\u2019t recommend you, it generates targeted fix pages \u2014 comparison pages, explainers, and FAQs \u2014 designed to close those gaps. Unlike generic AI writing tools, these pages are driven by your actual citation data and gap analysis. Fix pages auto-generate after every scan: Scout creates 2 per scan, Command creates 5, and Dominate creates 10. You can also generate pages manually \u2014 Scout gets 5/month, Command 25, Dominate 50.",
   },
   {
     question: "What is a Site GEO Audit?",
     answer:
-      "A Site GEO Audit crawls your pages and evaluates them for AI-readability: schema markup, entity clarity, content structure, and citation-worthiness. Scout audits your top 10 pages, Command audits up to 100, and Dominate covers up to 500. You get actionable recommendations for every page to improve how AI platforms understand and cite your content.",
+      "A Site GEO Audit crawls your pages and evaluates them for AI-readability: schema markup, entity clarity, content structure, and citation-worthiness. Scout audits your top 10 pages (2/month), Command audits up to 100 pages (4/month), and Dominate covers up to 500 pages (4/month). You get actionable recommendations for every page to improve how AI platforms understand and cite your content.",
   },
   {
     question: "How does AI citation monitoring work?",
     answer:
-      "CabbageSEO queries ChatGPT, Perplexity, and Google AI Overviews with real user prompts about your market, then records exactly what they cite. Scout scans daily (10 queries), Command and Dominate scan hourly (20-30 queries). When your citation score drops, you get an instant email alert. After each scan, fix pages auto-generate for any new gaps found.",
+      "CabbageSEO queries ChatGPT, Perplexity, and Google AI Overviews with real user prompts about your market, then records exactly what they cite. Scout scans daily (10 queries), Command scans daily (25 queries), and Dominate scans twice daily (50 queries). When your citation score drops, you get an instant email alert. After each scan, fix pages auto-generate for any new gaps found.",
   },
   {
     question: "Why can\u2019t I just fix my visibility once and cancel?",
     answer:
-      "AI models retrain regularly, competitors publish new content, and the queries people ask AI evolve constantly. A page that gets you cited today might not work next month. CabbageSEO scans continuously (daily or hourly depending on your plan), catches every shift the moment it happens, and auto-generates new fix pages for any new gaps. Without ongoing monitoring, you\u2019re flying blind \u2014 your visibility could drop and you\u2019d have no idea until customers stop finding you.",
+      "AI models retrain regularly, new content gets published constantly, and the queries people ask AI evolve every week. A page that gets you cited today might not work next month. CabbageSEO scans continuously, catches every shift the moment it happens, and auto-generates new fix pages for any new gaps. Without ongoing monitoring, your visibility could drop and you\u2019d have no idea until customers stop finding you.",
+  },
+  {
+    question: "What are action plans?",
+    answer:
+      "Action plans are AI-generated playbooks based on your scan data. They prioritize exactly what to do next to improve your AI visibility \u2014 which pages to publish, which trust sources to claim, which queries to target. Command gets 4/month, Dominate gets 8/month. Each plan is personalized to your specific gaps and industry.",
   },
   {
     question: "Can I cancel anytime?",
@@ -453,10 +457,10 @@ export default function PricingPage() {
               </h3>
               <div className="space-y-3">
                 {[
-                  { day: "Day 1", action: "Full AI scan across ChatGPT, Perplexity & Google AI. See your score and every gap." },
-                  { day: "Day 2", action: "Your 30-day sprint generates. Week 1 actions are ready to go." },
-                  { day: "Day 3-6", action: "Fix pages auto-generate for your biggest gaps. Publish with one click." },
-                  { day: "Day 7", action: "First progress check. See which actions moved your score." },
+                  { day: "Day 1", action: "Full AI scan across ChatGPT, Perplexity & Google AI. See your score, every gap, and trust source status." },
+                  { day: "Day 2", action: "Fix pages auto-generate for your biggest gaps. Gap analysis explains exactly why you're not cited." },
+                  { day: "Day 3-6", action: "Publish fix pages with one click. Run a Site GEO Audit to optimize existing pages." },
+                  { day: "Day 7", action: "Weekly report arrives. See which gaps closed and what to tackle next." },
                 ].map((item) => (
                   <div key={item.day} className="flex gap-4 items-start">
                     <span className="shrink-0 w-16 text-right text-emerald-400 text-sm font-bold pt-0.5">
@@ -484,21 +488,24 @@ export default function PricingPage() {
                     tier: "Scout",
                     frequency: "Daily scans",
                     auto: "2 fix pages per scan",
-                    manual: "5 manual pages/mo",
+                    manual: "5 pages/mo total",
+                    intel: "5 gap analyses/mo",
                     color: "border-emerald-500/20",
                   },
                   {
                     tier: "Command",
-                    frequency: "Hourly scans",
+                    frequency: "Daily scans",
                     auto: "5 fix pages per scan",
-                    manual: "25 manual pages/mo",
+                    manual: "25 pages/mo total",
+                    intel: "15 gap analyses + 4 action plans/mo",
                     color: "border-emerald-500/40",
                   },
                   {
                     tier: "Dominate",
-                    frequency: "Hourly scans",
+                    frequency: "2x daily scans",
                     auto: "10 fix pages per scan",
-                    manual: "Unlimited pages",
+                    manual: "50 pages/mo total",
+                    intel: "30 gap analyses + 8 action plans/mo",
                     color: "border-amber-500/30",
                   },
                 ].map((t) => (
@@ -508,7 +515,7 @@ export default function PricingPage() {
                       <p>{t.frequency}</p>
                       <p>{t.auto}</p>
                       <p>{t.manual}</p>
-                      <p>Fresh action plan weekly</p>
+                      <p>{t.intel}</p>
                       <p>Alerts on any drop</p>
                     </div>
                   </div>

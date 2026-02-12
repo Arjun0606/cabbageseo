@@ -177,7 +177,6 @@ function Footer() {
       { href: "/what-is-geo", label: "What is GEO?" },
       { href: "/about", label: "About CabbageSEO" },
       { href: "/blog", label: "Blog" },
-      { href: "/docs", label: "Documentation" },
     ],
     community: [
       { href: "/feedback", label: "Feedback" },

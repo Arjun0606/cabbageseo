@@ -180,7 +180,6 @@ describe("Feature availability per tier", () => {
     expect(f.citationGapAnalysis).toBe(false);
     expect(f.contentRecommendations).toBe(false);
     expect(f.weeklyActionPlan).toBe(false);
-    expect(f.sprintFramework).toBe(false);
     expect(f.pageGeneration).toBe(false);
     expect(f.siteAudit).toBe(false);
   });
@@ -189,46 +188,40 @@ describe("Feature availability per tier", () => {
     expect(CITATION_PLANS.free.intelligenceLimits.pagesPerMonth).toBe(0);
   });
 
-  it("Scout: monitoring + basic intelligence + page generation + site audit, no action plans", () => {
+  it("Scout: daily monitoring + basic intelligence + page generation + site audit, no action plans", () => {
     const f = CITATION_PLANS.scout.features;
     expect(f.dailyAutoCheck).toBe(true);
+    expect(f.twiceDailyAutoCheck).toBe(false);
     expect(f.emailAlerts).toBe(true);
     expect(f.weeklyReport).toBe(true);
     expect(f.citationGapAnalysis).toBe(true);
-    expect(f.citationGapFull).toBe(false);
     expect(f.contentRecommendations).toBe(true);
     expect(f.pageGeneration).toBe(true);
     expect(f.schemaGeneration).toBe(true);
-    expect(f.entityOptimization).toBe(false);
     expect(f.siteAudit).toBe(true);
     expect(f.siteAuditFull).toBe(false);
     expect(f.weeklyActionPlan).toBe(false);
-    expect(f.sprintFramework).toBe(true);
   });
 
-  it("Command: full intelligence + entity optimization + full site audit", () => {
+  it("Command: daily monitoring + full intelligence + full site audit", () => {
     const f = CITATION_PLANS.command.features;
-    expect(f.hourlyAutoCheck).toBe(true);
-    expect(f.citationGapFull).toBe(true);
-    expect(f.contentRecsUnlimited).toBe(true);
+    expect(f.dailyAutoCheck).toBe(true);
+    expect(f.twiceDailyAutoCheck).toBe(false);
     expect(f.weeklyActionPlan).toBe(true);
     expect(f.pageGeneration).toBe(true);
     expect(f.schemaGeneration).toBe(true);
-    expect(f.entityOptimization).toBe(true);
     expect(f.siteAudit).toBe(true);
     expect(f.siteAuditFull).toBe(true);
   });
 
-  it("Dominate: all GEO features enabled", () => {
+  it("Dominate: 2x daily monitoring + all features", () => {
     const f = CITATION_PLANS.dominate.features;
-    expect(f.hourlyAutoCheck).toBe(true);
     expect(f.dailyAutoCheck).toBe(true);
+    expect(f.twiceDailyAutoCheck).toBe(true);
     expect(f.emailAlerts).toBe(true);
     expect(f.weeklyReport).toBe(true);
-    expect(f.sprintFramework).toBe(true);
     expect(f.pageGeneration).toBe(true);
     expect(f.schemaGeneration).toBe(true);
-    expect(f.entityOptimization).toBe(true);
     expect(f.siteAudit).toBe(true);
     expect(f.siteAuditFull).toBe(true);
   });
@@ -277,7 +270,7 @@ describe("Helper functions", () => {
   it("getCitationPlanFeatures returns features object", () => {
     const features = getCitationPlanFeatures("command");
     expect(features.weeklyActionPlan).toBe(true);
-    expect(features.entityOptimization).toBe(true);
+    expect(features.siteAuditFull).toBe(true);
   });
 
   it("isPaidPlan returns false for free, true for others", () => {

@@ -28,7 +28,7 @@ const actionPreviews = [
   {
     icon: <Bell className="w-4 h-4 text-emerald-400" />,
     title: "Track progress and detect new opportunities weekly",
-    blurred: "Daily auto-checks detect new queries to target. Score drop alerts notify you in Slack. New content opportunities appear automatically so you never fall behind...",
+    blurred: "Daily auto-checks detect new queries to target. Score drop alerts notify you via email. New content opportunities appear automatically so you never fall behind...",
   },
 ];
 

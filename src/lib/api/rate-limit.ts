@@ -198,11 +198,6 @@ export const pageGenerationLimiter = createRateLimiter({
   max: 5,
 });
 
-/** Bulk scan: 3 per minute per API key */
-export const bulkScanLimiter = createRateLimiter({
-  windowMs: 60_000,
-  max: 3,
-});
 
 /** Intelligence/action plans: 10 per minute per user */
 export const intelligenceLimiter = createRateLimiter({

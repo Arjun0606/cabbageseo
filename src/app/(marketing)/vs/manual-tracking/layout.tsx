@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Why CabbageSEO Beats Manual AI Tracking",
     description:
-      "Automated daily checks. Visibility alerts. 30-day sprints. Everything manual tracking can't do.",
+      "Automated daily checks. Visibility alerts. Personalized action plans. Everything manual tracking can't do.",
   },
 };
 

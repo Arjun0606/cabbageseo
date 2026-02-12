@@ -30,8 +30,8 @@ export default function AboutPage() {
       "6-factor AI Visibility Scoring",
       "Gap Analysis — identify where your AI visibility has gaps",
       "AI Fix Pages — targeted content to close visibility gaps",
-      "30-Day AI Visibility Sprint with week-by-week actions",
-      "Automated daily and hourly AI monitoring with alerts",
+      "Action plans with week-by-week priorities",
+      "Automated daily and 2x daily AI monitoring with alerts",
     ],
     offers: [
       {
@@ -39,7 +39,7 @@ export default function AboutPage() {
         name: "Scout",
         price: "49",
         priceCurrency: "USD",
-        description: "Daily monitoring, 5 fix pages/month, 30-day sprint",
+        description: "Daily monitoring, 5 fix pages/month, gap analysis, email alerts",
         url: "https://cabbageseo.com/pricing",
       },
       {
@@ -47,7 +47,7 @@ export default function AboutPage() {
         name: "Command",
         price: "149",
         priceCurrency: "USD",
-        description: "Hourly monitoring, 25 fix pages/month, weekly playbooks",
+        description: "Daily monitoring, 25 fix pages/month, 4 action plans/month, full GEO audit",
         url: "https://cabbageseo.com/pricing",
       },
       {
@@ -55,7 +55,7 @@ export default function AboutPage() {
         name: "Dominate",
         price: "349",
         priceCurrency: "USD",
-        description: "Hourly monitoring, unlimited fix pages, monthly reports",
+        description: "2x daily monitoring, 50 fix pages/month, 8 action plans/month, full GEO audit",
         url: "https://cabbageseo.com/pricing",
       },
     ],
@@ -115,15 +115,15 @@ export default function AboutPage() {
     },
     {
       icon: <Timer className="w-5 h-5 text-emerald-400" />,
-      name: "30-Day Sprint",
+      name: "Action Plans",
       description:
-        "A structured week-by-week program of prioritized actions. Not a dashboard to stare at — specific tasks with clear instructions based on your scan data.",
+        "Prioritized actions tailored to your business. AI identifies your biggest gaps and builds week-by-week plans — trust sources to claim, fix pages to publish, improvements to make.",
     },
     {
       icon: <Bell className="w-5 h-5 text-emerald-400" />,
       name: "Automated Monitoring",
       description:
-        "Daily or hourly scans across all three AI platforms. Instant email alerts if your visibility drops so you can respond before it impacts pipeline.",
+        "Daily or 2x daily scans across all three AI platforms depending on your plan. Instant email alerts if your visibility drops so you can respond before it impacts pipeline.",
     },
   ];
 
@@ -259,9 +259,9 @@ export default function AboutPage() {
                 <div>
                   <h3 className="text-white font-semibold mb-1">Monitor</h3>
                   <p className="text-zinc-400 text-sm">
-                    Automated daily or hourly scans track your visibility over
-                    time. Instant alerts when your score drops. Monthly
-                    checkpoint reports show progress.
+                    Automated daily or 2x daily scans track your visibility over
+                    time. Instant alerts when your score drops. Weekly
+                    reports show progress.
                   </p>
                 </div>
               </li>
@@ -306,17 +306,17 @@ export default function AboutPage() {
                 {
                   name: "Scout",
                   price: "$49/mo",
-                  desc: "Daily monitoring, 5 fix pages/month, 30-day sprint, email alerts",
+                  desc: "Daily monitoring, 5 fix pages/month, gap analysis, email alerts",
                 },
                 {
                   name: "Command",
                   price: "$149/mo",
-                  desc: "Hourly monitoring, 25 fix pages/month, weekly playbooks, full GEO audit",
+                  desc: "Daily monitoring, 25 fix pages/month, action plans, full GEO audit",
                 },
                 {
                   name: "Dominate",
                   price: "$349/mo",
-                  desc: "Hourly monitoring, unlimited fix pages, monthly checkpoint reports",
+                  desc: "2x daily monitoring, 50 fix pages/month, action plans, full GEO audit",
                 },
               ].map((plan) => (
                 <div

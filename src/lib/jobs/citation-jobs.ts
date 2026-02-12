@@ -2,8 +2,8 @@
  * AI Visibility Intelligence - Inngest Jobs
  * 
  * AUTOMATED CITATION TRACKING
- * - Daily checks for all users
- * - Hourly checks for Command/Dominate users
+ * - Daily checks for all paid users (10 AM UTC)
+ * - Evening checks for Dominate users (10 PM UTC — 2x/day)
  * - Weekly reports
  * - Alert emails
  * 
@@ -109,7 +109,7 @@ export const dailyCitationCheck = inngest.createFunction(
     });
 
     // All paid plans get daily auto-checks.
-    // Command + Dominate also get hourly monitoring (separate cron).
+    // Dominate also gets an evening check (separate cron — 2x/day).
     const sites = allSites.filter((site) => {
       const plan = resolvePlan(site.organizations?.plan || "free");
       return plan !== "free"; // All paid plans run daily
@@ -203,21 +203,22 @@ export const dailyCitationCheck = inngest.createFunction(
 );
 
 // ============================================
-// HOURLY CITATION CHECK (Paid Plans)
-// Runs every hour for Command/Dominate plans
+// EVENING CITATION CHECK (Dominate only)
+// Runs at 10 PM UTC — gives Dominate 2x/day scans
+// (Daily check runs at 10 AM for all paid plans)
 // ============================================
-export const hourlyCitationCheck = inngest.createFunction(
+export const eveningCitationCheck = inngest.createFunction(
   {
-    id: "hourly-citation-check",
-    name: "Hourly Citation Check (Paid)",
+    id: "evening-citation-check",
+    name: "Evening Citation Check (Dominate)",
     retries: 1,
   },
-  { cron: "0 * * * *" },
+  { cron: "0 22 * * *" },
   async ({ step }) => {
     const supabase = createServiceClient();
 
-    // Get sites from Command/Dominate organizations
-    const sites = await step.run("get-paid-sites", async () => {
+    // Only Dominate plans get 2x/day scans
+    const sites = await step.run("get-dominate-sites", async () => {
       const { data, error } = await supabase
         .from("sites")
         .select(`
@@ -227,23 +228,23 @@ export const hourlyCitationCheck = inngest.createFunction(
           organizations!inner(plan)
         `)
         .eq("status", "active")
-        .in("organizations.plan", ["command", "dominate", "pro", "pro_plus"]);
+        .in("organizations.plan", ["dominate", "pro_plus"]);
       
       if (error) {
-        console.error("Failed to fetch paid sites:", error);
+        console.error("Failed to fetch dominate sites:", error);
         return [];
       }
       return (data || []) as Array<{ id: string; domain: string; organization_id: string }>;
     });
 
     if (sites.length === 0) {
-      return { checked: 0, message: "No paid sites to check" };
+      return { checked: 0, message: "No Dominate sites to check" };
     }
 
     const results = [];
 
     for (const site of sites) {
-      const result = await step.run(`check-paid-${site.id}`, async () => {
+      const result = await step.run(`check-evening-${site.id}`, async () => {
         const checkResult = await runCitationCheck(site.id, site.domain);
         
         if (checkResult.citedCount > 0) {
@@ -324,14 +325,14 @@ export const sendCitationAlert = inngest.createFunction(
       await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL || "CabbageSEO <hello@cabbageseo.com>",
         to: userEmail.email,
-        subject: `⚔️ You just won a battle: ${domain} is being cited!`,
+        subject: `${domain} was just cited by AI!`,
         html: `
           <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #09090b; color: #fff;">
             <div style="text-align: center; margin-bottom: 30px;">
               <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 30px;">🏆</span>
+                <span style="font-size: 30px;">✅</span>
               </div>
-              <h1 style="font-size: 24px; margin: 0; color: #fff;">You Won This One!</h1>
+              <h1 style="font-size: 24px; margin: 0; color: #fff;">New Citation Found</h1>
             </div>
             
             <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
@@ -341,27 +342,27 @@ export const sendCitationAlert = inngest.createFunction(
             </div>
             
             <p style="color: #a1a1aa; line-height: 1.6;">
-              ${newCitations} new citation${newCitations > 1 ? "s" : ""} detected. AI is recommending you to users asking questions in your industry.
+              ${newCitations} new citation${newCitations > 1 ? "s" : ""} detected. AI is recommending you to users asking questions in your space.
             </p>
             
             <p style="color: #a1a1aa; line-height: 1.6; margin-top: 16px;">
-              <strong style="color: #fff;">But are you winning everywhere?</strong> Check your dashboard to see other battles you might be losing.
+              <strong style="color: #fff;">Are you visible across all queries?</strong> Check your dashboard to see where else you should be showing up.
             </p>
             
             <div style="text-align: center; margin: 30px 0;">
               <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" 
                  style="display: inline-block; background: #10b981; color: #000; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                See All Battles →
+                View Dashboard →
               </a>
             </div>
             
             <div style="background: #18181b; border-radius: 8px; padding: 16px; margin: 24px 0; text-align: center;">
               <p style="color: #a1a1aa; font-size: 13px; margin: 0 0 8px;">
-                🎉 Share this win!
+                Share your visibility score
               </p>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL}/ai-profile/${encodeURIComponent(domain)}" 
+              <a href="${process.env.NEXT_PUBLIC_APP_URL}/ai-visibility/${encodeURIComponent(domain)}" 
                  style="color: #10b981; font-size: 12px; word-break: break-all;">
-                ${process.env.NEXT_PUBLIC_APP_URL}/ai-profile/${encodeURIComponent(domain)}
+                ${process.env.NEXT_PUBLIC_APP_URL}/ai-visibility/${encodeURIComponent(domain)}
               </a>
             </div>
             
@@ -377,17 +378,6 @@ export const sendCitationAlert = inngest.createFunction(
       });
     });
 
-    // Send Slack notification if configured
-    await step.run("send-slack-notification", async () => {
-      try {
-        const { getOrgSlackWebhook, sendSlackNotification } = await import("@/lib/notifications/slack");
-        const webhookUrl = await getOrgSlackWebhook(organizationId, supabase);
-        if (!webhookUrl) return;
-        await sendSlackNotification(webhookUrl, {
-          text: `:trophy: New citation for ${domain}! Cited by ${platforms.join(", ")} (${newCitations} new citation${newCitations > 1 ? "s" : ""})`,
-        });
-      } catch { /* Non-fatal */ }
-    });
 
     return { sent: true, to: userEmail.email };
   }
@@ -460,18 +450,18 @@ export const weeklyReport = inngest.createFunction(
         const momentumScore = primarySite.momentum_score || 0;
         const momentumChange = primarySite.momentum_change || 0;
 
-        // Get next action (non-fatal)
+        // Get next action from recommendations (non-fatal)
         let nextActionTitle: string | null = null;
         try {
-          const { data: nextActions } = await supabase
-            .from("sprint_actions")
-            .select("action_title")
+          const { data: recs } = await supabase
+            .from("recommendations")
+            .select("title")
             .eq("site_id", primarySite.id)
             .eq("status", "pending")
             .order("priority", { ascending: true })
             .limit(1);
-          if (nextActions && nextActions.length > 0) {
-            nextActionTitle = (nextActions[0] as { action_title: string }).action_title;
+          if (recs && recs.length > 0) {
+            nextActionTitle = (recs[0] as { title: string }).title;
           }
         } catch {
           // Non-fatal
@@ -549,10 +539,10 @@ export const weeklyReport = inngest.createFunction(
         const isLosing = change < 0;
         const scoreColor = momentumScore >= 70 ? '#10b981' : momentumScore >= 40 ? '#f59e0b' : '#ef4444';
         const subjectLine = isLosing
-          ? `Score ${momentumScore}/100 — you lost ground this week`
+          ? `Score ${momentumScore}/100 — visibility dropped this week`
           : thisWeek > 0
-          ? `Score ${momentumScore}/100 — ${thisWeek} wins this week`
-          : `Score ${momentumScore}/100 — weekly intel for ${primarySite.domain}`;
+          ? `Score ${momentumScore}/100 — ${thisWeek} new citation${thisWeek > 1 ? "s" : ""} this week`
+          : `Score ${momentumScore}/100 — weekly report for ${primarySite.domain}`;
 
         await resend.emails.send({
           from: process.env.RESEND_FROM_EMAIL || "CabbageSEO <hello@cabbageseo.com>",
@@ -588,11 +578,11 @@ export const weeklyReport = inngest.createFunction(
               <div style="display: flex; gap: 12px; margin-bottom: 24px;">
                 <div style="flex: 1; background: #18181b; padding: 16px; border-radius: 12px; text-align: center; border: 1px solid #27272a;">
                   <div style="font-size: 28px; font-weight: bold; color: #fff;">${totalCitations}</div>
-                  <div style="font-size: 12px; color: #71717a;">Total Wins</div>
+                  <div style="font-size: 12px; color: #71717a;">Total Citations</div>
                 </div>
                 <div style="flex: 1; background: ${thisWeek > 0 ? 'rgba(16, 185, 129, 0.1)' : '#18181b'}; padding: 16px; border-radius: 12px; text-align: center; border: 1px solid ${thisWeek > 0 ? 'rgba(16, 185, 129, 0.3)' : '#27272a'};">
                   <div style="font-size: 28px; font-weight: bold; color: ${thisWeek > 0 ? '#10b981' : '#fff'};">${thisWeek}</div>
-                  <div style="font-size: 12px; color: #71717a;">This Week</div>
+                  <div style="font-size: 12px; color: #71717a;">New This Week</div>
                 </div>
                 <div style="flex: 1; background: ${change >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; padding: 16px; border-radius: 12px; text-align: center; border: 1px solid ${change >= 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};">
                   <div style="font-size: 28px; font-weight: bold; color: ${change >= 0 ? '#10b981' : '#ef4444'};">${change >= 0 ? '+' : ''}${change}%</div>
@@ -611,7 +601,7 @@ export const weeklyReport = inngest.createFunction(
               ${lostQueryQuotes.length > 0 ? `
               <!-- What AI Is Saying -->
               <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-                <div style="font-size: 12px; color: #ef4444; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">What AI Is Telling Your Customers</div>
+                <div style="font-size: 12px; color: #ef4444; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Queries Where You're Not Cited</div>
                 ${lostQueryQuotes.map(q => `
                   <div style="margin-bottom: 12px; padding-left: 12px; border-left: 2px solid rgba(239, 68, 68, 0.3);">
                     <div style="font-size: 13px; color: #fff; margin-bottom: 4px;">&ldquo;${q.query}&rdquo;</div>
@@ -671,24 +661,6 @@ export const weeklyReport = inngest.createFunction(
             </div>
           `,
         });
-
-        // Send Slack weekly summary if configured
-        try {
-          const { getOrgSlackWebhook, sendSlackNotification, buildWeeklySummaryBlocks } = await import("@/lib/notifications/slack");
-          const webhookUrl = await getOrgSlackWebhook(org.id, supabase);
-          if (webhookUrl) {
-            const slackPayload = buildWeeklySummaryBlocks({
-              domain: primarySite.domain,
-              score: momentumScore,
-              change: momentumChange,
-              queriesWon: thisWeek,
-              queriesLost: 0,
-            });
-            await sendSlackNotification(webhookUrl, slackPayload);
-          }
-        } catch {
-          // Non-fatal
-        }
 
         reportsSent++;
       });
@@ -850,25 +822,6 @@ export const sendVisibilityDropAlert = inngest.createFunction(
           </div>
         `,
       });
-    });
-
-    // Send Slack notification if configured
-    await step.run("send-drop-slack", async () => {
-      try {
-        const { getOrgSlackWebhook, sendSlackNotification, buildScoreDropBlocks } = await import("@/lib/notifications/slack");
-        const webhookUrl = await getOrgSlackWebhook(organizationId, supabase);
-        if (!webhookUrl) return;
-        const slackPayload = buildScoreDropBlocks({
-          domain,
-          previousScore,
-          newScore,
-          drop,
-          lostQueries,
-        });
-        await sendSlackNotification(webhookUrl, slackPayload);
-      } catch {
-        // Non-fatal
-      }
     });
 
     return { sent: true, to: userData.email, drop };
@@ -1085,7 +1038,7 @@ export const postPublishRecheck = inngest.createFunction(
 
 export const citationFunctions = [
   dailyCitationCheck,
-  hourlyCitationCheck,
+  eveningCitationCheck,
   sendCitationAlert,
   sendVisibilityDropAlert,
   weeklyReport,

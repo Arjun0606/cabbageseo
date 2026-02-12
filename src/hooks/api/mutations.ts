@@ -8,39 +8,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 // ============================================
-// SPRINT ACTIONS
-// ============================================
-
-export function useSprintAction(siteId: string | undefined) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      actionId,
-      status,
-      proofUrl,
-      notes,
-    }: {
-      actionId: string;
-      status: "completed" | "skipped";
-      proofUrl?: string;
-      notes?: string;
-    }) => {
-      const res = await fetch("/api/geo/sprint", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ actionId, status, proofUrl, notes }),
-      });
-      if (!res.ok) throw new Error("Sprint action failed");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sprint", siteId] });
-      queryClient.invalidateQueries({ queryKey: ["next-action", siteId] });
-    },
-  });
-}
-
-// ============================================
 // PAGE GENERATION
 // ============================================
 
@@ -107,7 +74,6 @@ export function useInvalidateDashboard(siteId: string | undefined) {
       "improvement",
       "opportunities",
       "audit",
-      "sprint",
       "lost-queries",
     ];
     keys.forEach((key) => {

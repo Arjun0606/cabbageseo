@@ -191,7 +191,7 @@ export default function VsManualTrackingPage() {
                   Results in 30 days
                 </h3>
                 <p className="text-zinc-400">
-                  The 30-day sprint gives you a structured path. Week by week actions. Not a dashboard you stare at — a program that works.
+                  Action plans give you a structured path. Week-by-week priorities tailored to your business. Not a dashboard you stare at — a program that works.
                 </p>
               </GlassCard>
             </StaggerItem>

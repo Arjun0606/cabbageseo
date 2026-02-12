@@ -51,7 +51,7 @@ const faqItems = [
   {
     question: "How long does GEO take to show results?",
     answer:
-      "AI models update their knowledge regularly. After implementing GEO improvements — like publishing comparison pages, getting mentioned on review sites, and building structured content — most businesses see changes in AI recommendations within 2-4 weeks. CabbageSEO's 30-day sprint is designed around this timeline.",
+      "AI models update their knowledge regularly. After implementing GEO improvements — like publishing comparison pages, getting mentioned on review sites, and building structured content — most businesses see changes in AI recommendations within 2-4 weeks. CabbageSEO's action plans are designed around this timeline.",
   },
   {
     question: "Which AI platforms does GEO apply to?",

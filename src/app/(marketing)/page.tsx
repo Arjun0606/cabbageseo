@@ -350,7 +350,7 @@ function HomeContent() {
                   </div>
                   <div>
                     <h3 className="text-white font-semibold">First 30 days</h3>
-                    <p className="text-emerald-400 text-xs font-medium">Your sprint to get visible</p>
+                    <p className="text-emerald-400 text-xs font-medium">Action Plans</p>
                   </div>
                 </div>
                 <ul className="space-y-3">
@@ -383,7 +383,7 @@ function HomeContent() {
                 </div>
                 <ul className="space-y-3">
                   {[
-                    "Scans run daily or hourly depending on your plan, catching every shift",
+                    "Scans run daily or 2x daily depending on your plan, catching every shift",
                     "New fix pages auto-generate whenever new gaps are found",
                     "Alerts fire instantly if your visibility score drops on any platform",
                     "Fresh action plans reprioritize based on what changed this week",

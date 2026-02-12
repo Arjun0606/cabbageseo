@@ -1,12 +1,12 @@
 /**
- * REAL Site Analyzer for GEO Intelligence
- * 
- * NO FAKE DATA. Analyzes actual websites:
- * - Fetches real HTML content
- * - Checks structured data (JSON-LD, schema.org)
- * - Analyzes content structure
- * - Uses AI to evaluate citability
- * 
+ * Site GEO Audit Engine
+ *
+ * Analyzes a website's readiness for AI citation:
+ * - Fetches pages in parallel (homepage + key subpages)
+ * - Scores content structure, authority signals, Schema.org, citability, freshness, depth
+ * - Uses GPT-5.2 for intelligent, site-specific tips (not templates)
+ * - Uses a single batched Perplexity call for query discovery (not 6 serial calls)
+ *
  * "We analyze your site the same way AI does."
  */
 
@@ -90,39 +90,36 @@ async function fetchPage(url: string): Promise<string | null> {
         "Accept": "text/html,application/xhtml+xml",
       },
       signal: controller.signal,
+      redirect: "follow",
     });
 
     clearTimeout(timeout);
 
     if (!response.ok) return null;
     return await response.text();
-  } catch (error) {
-    console.error(`Failed to fetch ${url}:`, error);
+  } catch {
     return null;
   }
 }
 
 function parseHTML(html: string, url: string): PageContent {
-  // Extract title
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   const title = titleMatch ? titleMatch[1].trim() : "";
 
-  // Extract meta description
   const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i) ||
                     html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i);
   const description = descMatch ? descMatch[1].trim() : "";
 
-  // Extract headings
   const headings: { level: number; text: string }[] = [];
-  const headingRegex = /<h([1-6])[^>]*>([^<]+)<\/h[1-6]>/gi;
+  const headingRegex = /<h([1-6])[^>]*>([\s\S]*?)<\/h[1-6]>/gi;
   let match;
   while ((match = headingRegex.exec(html)) !== null) {
-    headings.push({ level: parseInt(match[1]), text: match[2].trim() });
+    const text = match[2].replace(/<[^>]+>/g, "").trim();
+    if (text) headings.push({ level: parseInt(match[1]), text });
   }
 
-  // Extract paragraphs (sample first 20)
   const paragraphs: string[] = [];
-  const pRegex = /<p[^>]*>([^<]+(?:<[^/][^>]*>[^<]*<\/[^>]+>[^<]*)*)<\/p>/gi;
+  const pRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
   let pCount = 0;
   while ((match = pRegex.exec(html)) !== null && pCount < 20) {
     const text = match[1].replace(/<[^>]+>/g, "").trim();
@@ -132,16 +129,15 @@ function parseHTML(html: string, url: string): PageContent {
     }
   }
 
-  // Extract lists
   const lists: string[] = [];
-  const listRegex = /<li[^>]*>([^<]+)<\/li>/gi;
+  const listRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
   while ((match = listRegex.exec(html)) !== null) {
-    lists.push(match[1].trim());
+    const text = match[1].replace(/<[^>]+>/g, "").trim();
+    if (text) lists.push(text);
   }
 
-  // Extract JSON-LD structured data
   const structuredData: object[] = [];
-  const jsonLdRegex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([^<]+)<\/script>/gi;
+  const jsonLdRegex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
   while ((match = jsonLdRegex.exec(html)) !== null) {
     try {
       const data = JSON.parse(match[1]);
@@ -151,23 +147,20 @@ function parseHTML(html: string, url: string): PageContent {
     }
   }
 
-  // Check for author information
-  const hasAuthor = 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hasAuthor =
     /<[^>]*(?:class|id)=["'][^"']*author[^"']*["'][^>]*>/i.test(html) ||
     /<meta[^>]*name=["']author["']/i.test(html) ||
     structuredData.some((d: any) => d.author || d["@type"] === "Person");
 
-  // Check for dates
-  const hasDate = 
+  const hasDate =
     /<time[^>]*datetime/i.test(html) ||
     /<meta[^>]*property=["']article:published_time["']/i.test(html) ||
     /(?:published|updated|modified).*\d{4}/i.test(html);
 
-  // Extract last modified from meta
   const modifiedMatch = html.match(/<meta[^>]*property=["']article:modified_time["'][^>]*content=["']([^"']+)["']/i);
   const lastModified = modifiedMatch ? modifiedMatch[1] : null;
 
-  // Count external links
   const externalLinks: string[] = [];
   const domain = new URL(url).hostname;
   const linkRegex = /<a[^>]*href=["'](https?:\/\/[^"']+)["']/gi;
@@ -182,7 +175,6 @@ function parseHTML(html: string, url: string): PageContent {
     }
   }
 
-  // Calculate word count from visible text
   const textContent = html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
@@ -192,50 +184,71 @@ function parseHTML(html: string, url: string): PageContent {
   const wordCount = textContent.split(/\s+/).length;
 
   return {
-    url,
-    title,
-    description,
-    headings,
-    paragraphs,
-    lists,
-    structuredData,
-    hasAuthor,
-    hasDate,
-    lastModified,
-    externalLinks,
-    wordCount,
+    url, title, description, headings, paragraphs, lists, structuredData,
+    hasAuthor, hasDate, lastModified, externalLinks, wordCount,
   };
 }
 
 // ============================================
-// SCORING HELPERS — Continuous curves for granular scores
+// DISCOVER INTERNAL LINKS (crawl subpages)
 // ============================================
 
-/**
- * Smooth diminishing-returns curve: value/(value+halfPoint) * max
- * Produces granular outputs like 13, 22, 27 instead of 10, 20, 30
- */
+function extractInternalLinks(html: string, domain: string): string[] {
+  const links: Set<string> = new Set();
+  const linkRegex = /<a[^>]*href=["']((?:https?:\/\/[^"']*|\/[^"']*))['"]/gi;
+  let match;
+
+  while ((match = linkRegex.exec(html)) !== null) {
+    let href = match[1];
+
+    // Convert relative to absolute
+    if (href.startsWith("/")) {
+      href = `https://${domain}${href}`;
+    }
+
+    try {
+      const url = new URL(href);
+      if (url.hostname.replace("www.", "") === domain.replace("www.", "")) {
+        const path = url.pathname.replace(/\/$/, "");
+        // Skip non-content pages
+        if (
+          path &&
+          path !== "" &&
+          !path.match(/\.(css|js|png|jpg|gif|svg|ico|woff|pdf|xml|json)$/i) &&
+          !path.includes("login") &&
+          !path.includes("signup") &&
+          !path.includes("admin") &&
+          !path.includes("api/") &&
+          !path.includes("#")
+        ) {
+          links.add(`https://${domain}${path}`);
+        }
+      }
+    } catch {
+      // Invalid URL
+    }
+  }
+
+  return Array.from(links).slice(0, 10);
+}
+
+// ============================================
+// SCORING HELPERS — Continuous curves
+// ============================================
+
 function smoothScale(value: number, halfPoint: number, maxOutput: number): number {
   if (value <= 0) return 0;
   return maxOutput * (value / (value + halfPoint));
 }
 
-/**
- * Word count scoring curve — peaks in the 1000-2500 sweet spot.
- * Too short = penalized, too long = slight diminishing returns.
- */
 function wordCountScore(wc: number, maxPoints: number): number {
   if (wc < 100) return maxPoints * (wc / 100) * 0.15;
   if (wc < 500) return maxPoints * 0.15 + maxPoints * 0.35 * ((wc - 100) / 400);
   if (wc <= 2500) return maxPoints * 0.5 + maxPoints * 0.5 * ((wc - 500) / 2000);
-  if (wc <= 5000) return maxPoints; // sweet spot
+  if (wc <= 5000) return maxPoints;
   return maxPoints * Math.max(0.7, 1 - (wc - 5000) / 20000);
 }
 
-/**
- * Freshness decay curve — recent content scores higher, with smooth decay.
- * 0 days → max, 30 days → 80%, 90 days → 50%, 365 days → 20%
- */
 function freshnessDecay(daysSince: number, maxPoints: number): number {
   if (daysSince <= 0) return maxPoints;
   return maxPoints * Math.exp(-daysSince / 180);
@@ -266,11 +279,10 @@ function calculateScores(pages: PageContent[]): SiteAnalysis["score"]["breakdown
   const avgExternalLinks = pages.reduce((sum, p) => sum + p.externalLinks.length, 0) / pages.length;
 
   // Content Clarity (0-100)
-  // Continuous curves for headings, lists, word count + binary for structure
-  let contentClarity = 18; // baseline for having a website
-  contentClarity += smoothScale(avgHeadings, 4, 28);  // 1→7, 3→16, 5→16, 8→19, 12→22
-  contentClarity += smoothScale(avgLists, 2.5, 18);    // 1→5, 2→10, 4→11, 8→14
-  contentClarity += wordCountScore(avgWordCount, 22);  // continuous curve, peaks 1000-2500
+  let contentClarity = 18;
+  contentClarity += smoothScale(avgHeadings, 4, 28);
+  contentClarity += smoothScale(avgLists, 2.5, 18);
+  contentClarity += wordCountScore(avgWordCount, 22);
   const hasGoodStructure = pages.some(p => {
     const h1Index = p.headings.findIndex(h => h.level === 1);
     const h2Index = p.headings.findIndex(h => h.level === 2);
@@ -280,39 +292,30 @@ function calculateScores(pages: PageContent[]): SiteAnalysis["score"]["breakdown
   contentClarity = Math.min(100, Math.round(contentClarity));
 
   // Authority Signals (0-100)
-  // Continuous curve for external links + booleans for author/authority
-  let authoritySignals = 20; // baseline
+  let authoritySignals = 20;
   if (hasAuthorInfo) authoritySignals += 22;
-  authoritySignals += smoothScale(avgExternalLinks, 3, 23); // 1→6, 2→9, 5→14, 10→18
+  authoritySignals += smoothScale(avgExternalLinks, 3, 23);
   const authorityLinkCount = pages.reduce((sum, p) =>
     sum + p.externalLinks.filter(link =>
-      link.endsWith(".gov") ||
-      link.endsWith(".edu") ||
-      link.includes("wikipedia") ||
-      link.includes("reuters") ||
-      link.includes("nytimes") ||
-      link.includes("harvard") ||
-      link.includes("stanford") ||
-      link.includes("nature.com") ||
+      link.endsWith(".gov") || link.endsWith(".edu") ||
+      link.includes("wikipedia") || link.includes("reuters") ||
+      link.includes("nytimes") || link.includes("harvard") ||
+      link.includes("stanford") || link.includes("nature.com") ||
       link.includes("sciencedirect")
     ).length, 0);
-  authoritySignals += smoothScale(authorityLinkCount, 2, 18); // 1→6, 2→9, 4→12
-  // Fraction of pages with authors
+  authoritySignals += smoothScale(authorityLinkCount, 2, 18);
   const authorFraction = pages.filter(p => p.hasAuthor).length / pages.length;
   authoritySignals += Math.round(authorFraction * 17);
   authoritySignals = Math.min(100, Math.round(authoritySignals));
 
   // Structured Data (0-100)
-  // Points for presence, then per-type bonuses with diminishing returns
-  let structuredDataScore = 12; // baseline
+  let structuredDataScore = 12;
   if (hasStructuredData) {
-    structuredDataScore += 30; // significant boost for having any schema
-    const schemaTypes = pages.flatMap(p =>
-      p.structuredData.map((d: any) => d["@type"])
-    ).filter(Boolean);
+    structuredDataScore += 30;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const schemaTypes = pages.flatMap(p => p.structuredData.map((d: any) => d["@type"])).filter(Boolean);
     const uniqueTypes = new Set(schemaTypes);
 
-    // Per-type bonuses (higher value types first)
     const typeScores: Record<string, number> = {
       Article: 10, BlogPosting: 10, FAQPage: 12, HowTo: 9,
       Organization: 8, Person: 7, Product: 8, Review: 6,
@@ -322,85 +325,59 @@ function calculateScores(pages: PageContent[]): SiteAnalysis["score"]["breakdown
     for (const t of uniqueTypes) {
       typeBonus += typeScores[t as string] ?? 3;
     }
-    // Diminishing returns for many types
     structuredDataScore += Math.round(smoothScale(typeBonus, 15, 48));
   }
   structuredDataScore = Math.min(100, Math.round(structuredDataScore));
 
   // Citability (0-100)
-  // How quotable/citable is the content for AI systems?
-  let citability = 15; // baseline
-  // Statistics density — count paragraphs with data points
+  let citability = 15;
   const statsCount = pages.reduce((sum, p) =>
     sum + p.paragraphs.filter(para =>
       /\d+%|\$[\d,]+|\d+\s*(million|billion|thousand|percent)/i.test(para)
     ).length, 0);
-  citability += smoothScale(statsCount, 4, 22); // 1→4, 3→11, 6→13, 10→16
-  // List density — more lists = more quotable
+  citability += smoothScale(statsCount, 4, 22);
   const totalLists = pages.reduce((sum, p) => sum + p.lists.length, 0);
   citability += smoothScale(totalLists, 6, 16);
-  // Meta quality — continuous based on title + description length
-  const bestTitle = Math.max(...pages.map(p => p.title.length));
-  const bestDesc = Math.max(...pages.map(p => p.description.length));
+  const bestTitle = Math.max(...pages.map(p => p.title.length), 0);
+  const bestDesc = Math.max(...pages.map(p => p.description.length), 0);
   citability += smoothScale(bestTitle, 40, 10) + smoothScale(bestDesc, 120, 10);
-  // Content comprehensiveness
   citability += wordCountScore(avgWordCount, 17);
-  // Unique insights signal: has both stats AND lists
   if (statsCount > 0 && totalLists > 3) citability += 10;
   citability = Math.min(100, Math.round(citability));
 
   // Freshness (0-100)
-  // Decay curve based on how recently content was modified
-  let freshness = 15; // baseline
-  if (hasDates) freshness += 18; // having dates at all is a signal
-
-  // Find most recent modification
+  let freshness = 15;
+  if (hasDates) freshness += 18;
   const modifiedDates = pages
     .filter(p => p.lastModified)
-    .map(p => {
-      const modified = new Date(p.lastModified!);
-      return (Date.now() - modified.getTime()) / (1000 * 60 * 60 * 24);
-    });
-
+    .map(p => (Date.now() - new Date(p.lastModified!).getTime()) / (1000 * 60 * 60 * 24));
   if (modifiedDates.length > 0) {
     const mostRecentDays = Math.min(...modifiedDates);
-    freshness += freshnessDecay(mostRecentDays, 42); // smooth decay
-    // Bonus for multiple recently-updated pages
+    freshness += freshnessDecay(mostRecentDays, 42);
     const recentPages = modifiedDates.filter(d => d < 120).length;
     freshness += smoothScale(recentPages, 2, 12);
   } else if (hasDates) {
-    freshness += 13; // dates present but no parseable modified dates
+    freshness += 13;
   }
   freshness = Math.min(100, Math.round(freshness));
 
   // Topical Depth (0-100)
-  // Content breadth + heading diversity + page coverage
-  let topicalDepth = 12; // baseline
-  topicalDepth += wordCountScore(avgWordCount, 25); // longer = deeper
-  // Page coverage — continuous curve
-  topicalDepth += smoothScale(pages.length, 2, 22); // 1→7, 2→11, 3→13, 5→16
-  // Heading diversity — unique H2s across all pages
+  let topicalDepth = 12;
+  topicalDepth += wordCountScore(avgWordCount, 25);
+  topicalDepth += smoothScale(pages.length, 2, 22);
   const uniqueH2s = new Set(
     pages.flatMap(p => p.headings.filter(h => h.level === 2).map(h => h.text.toLowerCase()))
   );
-  topicalDepth += smoothScale(uniqueH2s.size, 6, 24); // 2→6, 5→11, 10→15, 20→18
-  // Paragraph density — more paragraphs = more depth
+  topicalDepth += smoothScale(uniqueH2s.size, 6, 24);
   const avgParagraphs = pages.reduce((sum, p) => sum + p.paragraphs.length, 0) / pages.length;
   topicalDepth += smoothScale(avgParagraphs, 10, 17);
   topicalDepth = Math.min(100, Math.round(topicalDepth));
 
-  return {
-    contentClarity,
-    authoritySignals,
-    structuredData: structuredDataScore,
-    citability,
-    freshness,
-    topicalDepth,
-  };
+  return { contentClarity, authoritySignals, structuredData: structuredDataScore, citability, freshness, topicalDepth };
 }
 
 // ============================================
-// AI-POWERED TIPS GENERATION
+// AI-POWERED TIPS — GPT-5.2 for site-specific advice
 // ============================================
 
 async function generateAITips(
@@ -408,9 +385,114 @@ async function generateAITips(
   pages: PageContent[],
   scores: SiteAnalysis["score"]["breakdown"]
 ): Promise<SiteAnalysis["tips"]> {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  // Build a content summary for GPT
+  const contentSummary = pages.map(p => ({
+    url: p.url,
+    title: p.title,
+    description: p.description.slice(0, 150),
+    headings: p.headings.slice(0, 8).map(h => `H${h.level}: ${h.text}`),
+    wordCount: p.wordCount,
+    hasAuthor: p.hasAuthor,
+    hasDate: p.hasDate,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    schemaTypes: p.structuredData.map((d: any) => d["@type"]).filter(Boolean),
+    externalLinks: p.externalLinks.length,
+    lists: p.lists.length,
+    statsCount: p.paragraphs.filter(para =>
+      /\d+%|\$[\d,]+|\d+\s*(million|billion|thousand)/i.test(para)
+    ).length,
+  }));
+
+  if (apiKey && pages.length > 0) {
+    try {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-5.2",
+          messages: [
+            {
+              role: "system",
+              content: "You are a GEO (Generative Engine Optimization) auditor. You analyze websites for AI-citability and give specific, actionable advice. Never generic tips — reference the actual pages and content you see. Respond in JSON only.",
+            },
+            {
+              role: "user",
+              content: `Audit ${domain} for AI visibility. Give the 5-6 most impactful, specific tips to improve AI citation.
+
+SCORE BREAKDOWN:
+- Content Clarity: ${scores.contentClarity}/100
+- Authority Signals: ${scores.authoritySignals}/100
+- Structured Data: ${scores.structuredData}/100
+- Citability: ${scores.citability}/100
+- Freshness: ${scores.freshness}/100
+- Topical Depth: ${scores.topicalDepth}/100
+
+PAGES ANALYZED:
+${JSON.stringify(contentSummary, null, 1).slice(0, 3000)}
+
+FIRST PAGE CONTENT SAMPLE:
+${pages[0]?.paragraphs.slice(0, 3).join("\n").slice(0, 500) || "No content extracted"}
+
+RULES:
+- Reference specific pages (by URL) and content you see
+- Include the EXACT Schema.org types to add if structured data score is low
+- If headings are weak, suggest SPECIFIC heading rewrites
+- If meta description is missing, write a suggested one
+- Estimate score impact for each tip
+- Sort by impact (highest first)
+
+Return JSON:
+{
+  "tips": [
+    {
+      "id": "unique-id",
+      "category": "Content Structure | Authority | Technical | Content | Maintenance",
+      "priority": "high | medium | low",
+      "title": "Specific actionable title",
+      "description": "Specific advice referencing actual content from the site. Include exactly what to do.",
+      "impact": "+X potential score increase"
+    }
+  ]
+}`,
+            },
+          ],
+          max_completion_tokens: 3000,
+          reasoning: { effort: "medium" },
+        }),
+        signal: AbortSignal.timeout(20000),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        let content = data.choices?.[0]?.message?.content || "";
+        const fenceMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+        if (fenceMatch) content = fenceMatch[1].trim();
+
+        const parsed = JSON.parse(content);
+        if (parsed.tips && parsed.tips.length > 0) {
+          return parsed.tips.slice(0, 6);
+        }
+      }
+    } catch {
+      // Fall through to rule-based tips
+    }
+  }
+
+  // Fallback: rule-based tips (same quality as before)
+  return generateRuleBasedTips(pages, scores);
+}
+
+function generateRuleBasedTips(
+  pages: PageContent[],
+  scores: SiteAnalysis["score"]["breakdown"],
+): SiteAnalysis["tips"] {
   const tips: SiteAnalysis["tips"] = [];
 
-  // Structured Data Tips
   if (scores.structuredData < 60) {
     const hasAnySchema = pages.some(p => p.structuredData.length > 0);
     tips.push({
@@ -418,45 +500,29 @@ async function generateAITips(
       category: "Technical",
       priority: "high",
       title: hasAnySchema ? "Enhance Your Structured Data" : "Add Structured Data Markup",
-      description: hasAnySchema 
+      description: hasAnySchema
         ? "You have some structured data, but adding FAQ or HowTo schema would significantly improve AI understanding."
         : "No JSON-LD structured data found. Adding schema.org markup helps AI understand and cite your content.",
       impact: "+15-25 potential score increase",
     });
   }
 
-  // Content Clarity Tips
   if (scores.contentClarity < 65) {
     const avgHeadings = pages.reduce((sum, p) => sum + p.headings.length, 0) / Math.max(pages.length, 1);
-    const avgLists = pages.reduce((sum, p) => sum + p.lists.length, 0) / Math.max(pages.length, 1);
-    
     if (avgHeadings < 4) {
       tips.push({
         id: "headings",
         category: "Content Structure",
         priority: "high",
         title: "Add More Descriptive Headings",
-        description: `Your pages average only ${Math.round(avgHeadings)} headings. AI extracts information from heading structure - use H2s and H3s to break up content into clear sections.`,
+        description: `Your pages average only ${Math.round(avgHeadings)} headings. AI extracts information from heading structure — use H2s and H3s to break up content into clear sections.`,
         impact: "+10-15 potential score increase",
-      });
-    }
-    
-    if (avgLists < 2) {
-      tips.push({
-        id: "lists",
-        category: "Content Structure",
-        priority: "medium",
-        title: "Use Bullet Points and Lists",
-        description: "AI loves lists! They're easy to extract and cite. Convert paragraphs with multiple points into bulleted or numbered lists.",
-        impact: "+8-12 potential score increase",
       });
     }
   }
 
-  // Authority Signals Tips
   if (scores.authoritySignals < 60) {
     const hasAuthor = pages.some(p => p.hasAuthor);
-    
     if (!hasAuthor) {
       tips.push({
         id: "author",
@@ -467,67 +533,35 @@ async function generateAITips(
         impact: "+10-15 potential score increase",
       });
     }
-    
-    const avgExternalLinks = pages.reduce((sum, p) => sum + p.externalLinks.length, 0) / Math.max(pages.length, 1);
-    if (avgExternalLinks < 3) {
-      tips.push({
-        id: "citations",
-        category: "Authority",
-        priority: "medium",
-        title: "Cite Authoritative Sources",
-        description: "Link to reputable sources (.gov, .edu, research papers) to build credibility. AI values well-sourced content.",
-        impact: "+8-12 potential score increase",
-      });
-    }
   }
 
-  // Citability Tips
   if (scores.citability < 70) {
-    const hasStats = pages.some(p => 
-      p.paragraphs.some(para => /\d+%|\$[\d,]+|\d+\s*(million|billion|thousand)/i.test(para))
-    );
-    
-    if (!hasStats) {
-      tips.push({
-        id: "statistics",
-        category: "Content",
-        priority: "medium",
-        title: "Add Statistics and Data Points",
-        description: "Include specific numbers, percentages, and data. AI frequently cites content with concrete statistics.",
-        impact: "+10-15 potential score increase",
-      });
-    }
-
     tips.push({
       id: "quotable",
       category: "Content",
       priority: "medium",
       title: "Create Quotable Statements",
-      description: "Add clear, concise statements that AI can easily extract and quote. Think 'tweetable' insights.",
+      description: "Add clear, concise statements that AI can easily extract. Think self-contained facts with specific numbers.",
       impact: "+8-12 potential score increase",
     });
   }
 
-  // Freshness Tips
   if (scores.freshness < 55) {
     const hasDates = pages.some(p => p.hasDate);
-    
     tips.push({
       id: "freshness",
       category: "Maintenance",
       priority: hasDates ? "medium" : "high",
       title: hasDates ? "Update Content More Frequently" : "Add Publication Dates",
-      description: hasDates 
-        ? "Your content may be outdated. AI prefers recent information - update key pages quarterly."
+      description: hasDates
+        ? "Your content may be outdated. AI prefers recent information — update key pages quarterly."
         : "No publication dates found. Add 'Published' and 'Last Updated' dates to signal content freshness.",
       impact: "+10-15 potential score increase",
     });
   }
 
-  // Topical Depth Tips
   if (scores.topicalDepth < 60) {
     const avgWordCount = pages.reduce((sum, p) => sum + p.wordCount, 0) / Math.max(pages.length, 1);
-    
     if (avgWordCount < 1000) {
       tips.push({
         id: "depth",
@@ -540,101 +574,164 @@ async function generateAITips(
     }
   }
 
-  // Sort by priority
   const priorityOrder = { high: 0, medium: 1, low: 2 };
   tips.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
-
-  return tips.slice(0, 6); // Return top 6 tips
+  return tips.slice(0, 6);
 }
 
 // ============================================
-// QUERY INTELLIGENCE (Real API Calls)
+// QUERY DISCOVERY — Single batched Perplexity call + AI
 // ============================================
 
-async function discoverQueries(domain: string): Promise<SiteAnalysis["queries"]> {
-  const queries: SiteAnalysis["queries"] = [];
-  const name = domain.split(".")[0];
-  const cleanName = name.charAt(0).toUpperCase() + name.slice(1);
+async function discoverQueries(
+  domain: string,
+  pages: PageContent[],
+): Promise<SiteAnalysis["queries"]> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  const perplexityKey = process.env.PERPLEXITY_API_KEY;
 
-  // Use Perplexity to find what queries mention the domain
-  const apiKey = process.env.PERPLEXITY_API_KEY;
-  
-  const testQueries = [
-    `What is ${cleanName}?`,
-    `${cleanName} review`,
-    `best ${cleanName} alternatives`,
-    `how to use ${cleanName}`,
-    `is ${cleanName} worth it`,
-    `best ${cleanName} alternatives`,
-  ];
-
-  if (!apiKey) {
-    // Return queries with unknown positions if no API key
-    return testQueries.map(q => ({
-      query: q,
-      searchVolume: "unknown",
-      yourPosition: "unknown",
-      opportunity: true,
-    }));
-  }
-
-  // Check each query against Perplexity
-  for (const query of testQueries) {
+  // Step 1: Use GPT-5.2 to generate realistic customer queries based on actual site content
+  let aiQueries: string[] = [];
+  if (apiKey && pages.length > 0) {
     try {
-      const response = await fetch("https://api.perplexity.ai/chat/completions", {
+      const siteInfo = {
+        domain,
+        title: pages[0]?.title || "",
+        description: pages[0]?.description || "",
+        headings: pages.flatMap(p => p.headings.slice(0, 5).map(h => h.text)).slice(0, 15),
+        firstParagraph: pages[0]?.paragraphs[0]?.slice(0, 200) || "",
+      };
+
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "sonar",
+          model: "gpt-5.2",
           messages: [
-            { role: "system", content: "Answer briefly with sources." },
-            { role: "user", content: query },
+            {
+              role: "user",
+              content: `Given this website, generate 6 realistic queries that a potential customer would type into ChatGPT, Perplexity, or Google AI — the exact kind of queries where this site SHOULD appear.
+
+SITE:
+Domain: ${siteInfo.domain}
+Title: ${siteInfo.title}
+Description: ${siteInfo.description}
+Key headings: ${siteInfo.headings.join(" | ")}
+First paragraph: ${siteInfo.firstParagraph}
+
+Generate queries across these types:
+- 2 discovery queries ("best X for Y", "what is the best...")
+- 2 specific queries ("how to X", "X vs Y", "does X work for...")
+- 2 brand queries ("what is ${domain.split(".")[0]}?", "${domain.split(".")[0]} review")
+
+Return ONLY the queries, one per line. No numbering, no labels.`,
+            },
           ],
-          return_citations: true,
+          max_completion_tokens: 500,
         }),
+        signal: AbortSignal.timeout(10000),
       });
 
-      if (!response.ok) {
-        queries.push({
-          query,
-          searchVolume: "medium",
-          yourPosition: "unknown",
-          opportunity: true,
-        });
-        continue;
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content || "";
+        aiQueries = text.split("\n")
+          .map((l: string) => l.trim().replace(/^\d+[\.\)]\s*/, "").replace(/^[-*]\s*/, ""))
+          .filter((q: string) => q.length > 10 && q.length < 150);
       }
-
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || "";
-      const citations: string[] = data.citations || [];
-
-      const domainLower = domain.toLowerCase();
-      const isCited = citations.some((c: string) => c.toLowerCase().includes(domainLower)) ||
-                      content.toLowerCase().includes(domainLower);
-
-      queries.push({
-        query,
-        searchVolume: "medium",
-        yourPosition: isCited ? "cited" : "not cited",
-        opportunity: !isCited,
-      });
-
-      // Rate limit
-      await new Promise(r => setTimeout(r, 300));
-    } catch (error) {
-      queries.push({
-        query,
-        searchVolume: "medium",
-        yourPosition: "unknown",
-        opportunity: true,
-      });
+    } catch {
+      // Fall through to defaults
     }
   }
 
-  return queries;
+  // Fallback if AI generation failed
+  if (aiQueries.length < 3) {
+    const name = domain.split(".")[0];
+    const cleanName = name.charAt(0).toUpperCase() + name.slice(1);
+    aiQueries = [
+      `What is ${cleanName}?`,
+      `${cleanName} review`,
+      `best ${cleanName} alternatives`,
+      `how to use ${cleanName}`,
+      `is ${cleanName} worth it`,
+    ];
+  }
+
+  // Step 2: Check all queries in a single batched Perplexity call
+  if (!perplexityKey) {
+    return aiQueries.map(q => ({
+      query: q,
+      searchVolume: "medium",
+      yourPosition: "unknown",
+      opportunity: true,
+    }));
+  }
+
+  try {
+    const response = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${perplexityKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "sonar",
+        messages: [
+          {
+            role: "system",
+            content: `You are checking whether the website ${domain} is mentioned or cited when answering these queries. For each query, answer it naturally and note whether ${domain} appears in your response or sources.`,
+          },
+          {
+            role: "user",
+            content: `Answer each of these queries briefly. For each one, note if ${domain} is mentioned in your answer or sources.\n\n${aiQueries.map((q, i) => `${i + 1}. ${q}`).join("\n")}`,
+          },
+        ],
+        return_citations: true,
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+
+    if (!response.ok) {
+      return aiQueries.map(q => ({
+        query: q,
+        searchVolume: "medium",
+        yourPosition: "unknown",
+        opportunity: true,
+      }));
+    }
+
+    const data = await response.json();
+    const content = (data.choices?.[0]?.message?.content || "").toLowerCase();
+    const citations: string[] = (data.citations || []).map((c: string) => c.toLowerCase());
+    const domainLower = domain.toLowerCase();
+
+    // Check each query for mention
+    return aiQueries.map(q => {
+      // Check if domain appears near the query text in the response
+      const queryWords = q.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+      const querySection = queryWords.some(w => content.includes(w));
+
+      const isCited = citations.some(c => c.includes(domainLower)) ||
+                      (querySection && content.includes(domainLower));
+
+      return {
+        query: q,
+        searchVolume: "medium",
+        yourPosition: isCited ? "cited" : "not cited",
+        opportunity: !isCited,
+      };
+    });
+  } catch {
+    return aiQueries.map(q => ({
+      query: q,
+      searchVolume: "medium",
+      yourPosition: "unknown",
+      opportunity: true,
+    }));
+  }
 }
 
 // ============================================
@@ -642,36 +739,45 @@ async function discoverQueries(domain: string): Promise<SiteAnalysis["queries"]>
 // ============================================
 
 export async function analyzeSite(domain: string): Promise<SiteAnalysis> {
-  console.log(`[GEO Analysis] Starting real analysis for ${domain}`);
+  console.log(`[GEO Audit] Starting analysis for ${domain}`);
 
-  // URLs to analyze
-  const urlsToCheck = [
-    `https://${domain}`,
-    `https://${domain}/about`,
-    `https://${domain}/blog`,
-    `https://www.${domain}`,
-  ];
+  // Step 1: Fetch homepage first
+  const homepageHtml = await fetchPage(`https://${domain}`);
+  const wwwHtml = homepageHtml ? null : await fetchPage(`https://www.${domain}`);
+  const primaryHtml = homepageHtml || wwwHtml;
 
-  // Fetch and parse pages
   const pages: PageContent[] = [];
-  
-  for (const url of urlsToCheck) {
-    const html = await fetchPage(url);
-    if (html) {
-      const parsed = parseHTML(html, url);
-      pages.push(parsed);
-      console.log(`[GEO Analysis] Analyzed ${url}: ${parsed.wordCount} words, ${parsed.headings.length} headings`);
+
+  if (primaryHtml) {
+    const homepage = parseHTML(primaryHtml, `https://${domain}`);
+    pages.push(homepage);
+
+    // Step 2: Discover internal links from homepage and fetch them in parallel
+    const internalLinks = extractInternalLinks(primaryHtml, domain);
+    // Also add common pages
+    const commonPages = [`https://${domain}/about`, `https://${domain}/blog`, `https://${domain}/pricing`];
+    const allLinks = [...new Set([...internalLinks, ...commonPages])].slice(0, 8);
+
+    const subpageResults = await Promise.all(
+      allLinks.map(async (url) => {
+        const html = await fetchPage(url);
+        if (html) return parseHTML(html, url);
+        return null;
+      })
+    );
+
+    for (const page of subpageResults) {
+      if (page) pages.push(page);
     }
+  } else {
+    console.log(`[GEO Audit] Could not fetch any pages for ${domain}`);
   }
 
-  if (pages.length === 0) {
-    console.log(`[GEO Analysis] Could not fetch any pages for ${domain}`);
-  }
+  console.log(`[GEO Audit] Analyzed ${pages.length} pages for ${domain}`);
 
-  // Calculate real scores
+  // Step 3: Calculate scores
   const breakdown = calculateScores(pages);
-  
-  // Calculate overall score (weighted average)
+
   const weights = {
     contentClarity: 0.20,
     authoritySignals: 0.15,
@@ -680,7 +786,7 @@ export async function analyzeSite(domain: string): Promise<SiteAnalysis> {
     freshness: 0.10,
     topicalDepth: 0.10,
   };
-  
+
   const overall = Math.round(
     breakdown.contentClarity * weights.contentClarity +
     breakdown.authoritySignals * weights.authoritySignals +
@@ -690,7 +796,6 @@ export async function analyzeSite(domain: string): Promise<SiteAnalysis> {
     breakdown.topicalDepth * weights.topicalDepth
   );
 
-  // Determine grade (sub-grades for more granularity)
   let grade: string;
   if (overall >= 90) grade = "A+";
   else if (overall >= 80) grade = "A";
@@ -701,7 +806,6 @@ export async function analyzeSite(domain: string): Promise<SiteAnalysis> {
   else if (overall >= 40) grade = "D+";
   else grade = "D";
 
-  // Generate contextual summary based on score
   let summary = "";
   if (overall >= 80) {
     summary = `Your site scores ${overall}/100 for AI visibility. Strong across most dimensions — focus on maintaining freshness and expanding citability.`;
@@ -713,16 +817,16 @@ export async function analyzeSite(domain: string): Promise<SiteAnalysis> {
     summary = `Your site scores ${overall}/100. Significant room for improvement — start with structured data and content depth.`;
   }
 
-  // Generate tips based on actual analysis
-  const tips = await generateAITips(domain, pages, breakdown);
+  // Step 4: Generate tips and discover queries in parallel
+  const [tips, queries] = await Promise.all([
+    generateAITips(domain, pages, breakdown),
+    discoverQueries(domain, pages),
+  ]);
 
-  // Discover query intelligence
-  const queries = await discoverQueries(domain);
-
-  // Generate opportunities based on queries where not cited
+  // Step 5: Generate opportunities from gaps
   const opportunities = queries
     .filter(q => q.yourPosition !== "cited")
-    .slice(0, 3)
+    .slice(0, 5)
     .map(q => ({
       query: q.query,
       platform: "Perplexity",
@@ -730,10 +834,10 @@ export async function analyzeSite(domain: string): Promise<SiteAnalysis> {
       difficulty: "medium",
     }));
 
-  // Raw data for transparency
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawData = {
     pagesAnalyzed: pages.length,
-    structuredDataFound: pages.flatMap(p => 
+    structuredDataFound: pages.flatMap(p =>
       p.structuredData.map((d: any) => d["@type"]).filter(Boolean)
     ),
     headingsCount: pages.reduce((sum, p) => sum + p.headings.length, 0),
@@ -744,19 +848,13 @@ export async function analyzeSite(domain: string): Promise<SiteAnalysis> {
     externalLinksCount: pages.reduce((sum, p) => sum + p.externalLinks.length, 0),
   };
 
-  console.log(`[GEO Analysis] Complete for ${domain}: Score ${overall} (${grade})`);
+  console.log(`[GEO Audit] Complete for ${domain}: Score ${overall} (${grade}), ${pages.length} pages`);
 
   return {
-    score: {
-      overall,
-      breakdown,
-      grade,
-      summary,
-    },
+    score: { overall, breakdown, grade, summary },
     tips,
     queries,
     opportunities,
     rawData,
   };
 }
-

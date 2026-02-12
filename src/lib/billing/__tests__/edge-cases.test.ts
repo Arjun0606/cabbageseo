@@ -425,33 +425,7 @@ describe("Site GEO audit features per tier", () => {
     expect(CITATION_PLANS.dominate.features.siteAudit).toBe(true);
     expect(CITATION_PLANS.dominate.features.siteAuditFull).toBe(true);
     expect(CITATION_PLANS.dominate.limits.auditPagesPerSite).toBe(500);
-    expect(CITATION_PLANS.dominate.intelligenceLimits.siteAuditsPerMonth).toBe(-1);
-  });
-});
-
-// ============================================
-// SPRINT/CHECKPOINT FEATURES PER TIER
-// ============================================
-
-describe("Sprint and checkpoint features per tier", () => {
-  it("Free: no sprint, no checkpoints", () => {
-    expect(CITATION_PLANS.free.features.sprintFramework).toBe(false);
-    expect(CITATION_PLANS.free.features.monthlyCheckpoints).toBe(false);
-  });
-
-  it("Scout: has sprint + checkpoints", () => {
-    expect(CITATION_PLANS.scout.features.sprintFramework).toBe(true);
-    expect(CITATION_PLANS.scout.features.monthlyCheckpoints).toBe(true);
-  });
-
-  it("Command: has sprint + checkpoints", () => {
-    expect(CITATION_PLANS.command.features.sprintFramework).toBe(true);
-    expect(CITATION_PLANS.command.features.monthlyCheckpoints).toBe(true);
-  });
-
-  it("Dominate: has sprint + checkpoints", () => {
-    expect(CITATION_PLANS.dominate.features.sprintFramework).toBe(true);
-    expect(CITATION_PLANS.dominate.features.monthlyCheckpoints).toBe(true);
+    expect(CITATION_PLANS.dominate.intelligenceLimits.siteAuditsPerMonth).toBe(4);
   });
 });
 
@@ -484,22 +458,22 @@ describe("Alert features per tier", () => {
 describe("Auto-check frequency per tier", () => {
   it("Free: no auto-checks", () => {
     expect(CITATION_PLANS.free.features.dailyAutoCheck).toBe(false);
-    expect(CITATION_PLANS.free.features.hourlyAutoCheck).toBe(false);
+    expect(CITATION_PLANS.free.features.twiceDailyAutoCheck).toBe(false);
   });
 
   it("Scout: daily only", () => {
     expect(CITATION_PLANS.scout.features.dailyAutoCheck).toBe(true);
-    expect(CITATION_PLANS.scout.features.hourlyAutoCheck).toBe(false);
+    expect(CITATION_PLANS.scout.features.twiceDailyAutoCheck).toBe(false);
   });
 
-  it("Command: daily + hourly", () => {
+  it("Command: daily only", () => {
     expect(CITATION_PLANS.command.features.dailyAutoCheck).toBe(true);
-    expect(CITATION_PLANS.command.features.hourlyAutoCheck).toBe(true);
+    expect(CITATION_PLANS.command.features.twiceDailyAutoCheck).toBe(false);
   });
 
-  it("Dominate: daily + hourly", () => {
+  it("Dominate: daily + 2x daily", () => {
     expect(CITATION_PLANS.dominate.features.dailyAutoCheck).toBe(true);
-    expect(CITATION_PLANS.dominate.features.hourlyAutoCheck).toBe(true);
+    expect(CITATION_PLANS.dominate.features.twiceDailyAutoCheck).toBe(true);
   });
 });
 

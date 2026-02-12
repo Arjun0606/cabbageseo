@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, teaserReports } from "@/lib/db";
 import { generateTeaserPreview, type ContentPreviewData } from "@/lib/geo/teaser-preview-generator";
 import { logRecommendations, extractTeaserRecommendations } from "@/lib/geo/recommendation-logger";
+import { fetchSiteContext as fetchSiteContextShared } from "@/lib/geo/site-context";
 
 // Rate limiting: simple in-memory store (in production, use Redis)
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
@@ -49,9 +50,8 @@ function extractBrandName(domain: string): string {
 }
 
 /**
- * Fetch the site homepage and extract meaningful context:
- * title, meta description, key headings, and OG data.
- * This gives AI enough to understand what the business actually does.
+ * Fetch the site homepage and extract meaningful context.
+ * Uses the shared utility in lib/geo/site-context.ts.
  */
 async function fetchSiteContext(domain: string): Promise<{
   title: string;
@@ -59,51 +59,7 @@ async function fetchSiteContext(domain: string): Promise<{
   headings: string[];
   ogData: { type?: string; siteName?: string };
 }> {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-
-    const res = await fetch(`https://${domain}`, {
-      headers: {
-        "User-Agent": "CabbageSEO-Bot/1.0 (GEO Analysis)",
-        "Accept": "text/html",
-      },
-      signal: controller.signal,
-      redirect: "follow",
-    });
-
-    clearTimeout(timeout);
-    if (!res.ok) return { title: "", description: "", headings: [], ogData: {} };
-
-    const html = await res.text();
-
-    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-    const title = titleMatch ? titleMatch[1].trim() : "";
-
-    const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i) ||
-                      html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i);
-    const description = descMatch ? descMatch[1].trim() : "";
-
-    const headings: string[] = [];
-    const headingRegex = /<h[12][^>]*>([^<]+)<\/h[12]>/gi;
-    let hMatch;
-    while ((hMatch = headingRegex.exec(html)) !== null && headings.length < 5) {
-      const text = hMatch[1].trim();
-      if (text.length > 3 && text.length < 200) headings.push(text);
-    }
-
-    const ogTypeMatch = html.match(/<meta[^>]*property=["']og:type["'][^>]*content=["']([^"']+)["']/i);
-    const ogSiteMatch = html.match(/<meta[^>]*property=["']og:site_name["'][^>]*content=["']([^"']+)["']/i);
-
-    return {
-      title,
-      description,
-      headings,
-      ogData: { type: ogTypeMatch?.[1], siteName: ogSiteMatch?.[1] },
-    };
-  } catch {
-    return { title: "", description: "", headings: [], ogData: {} };
-  }
+  return fetchSiteContextShared(domain);
 }
 
 /**
@@ -118,7 +74,7 @@ async function generateSmartQueries(
   domain: string,
   siteContext: { title: string; description: string; headings: string[]; ogData: { type?: string; siteName?: string } },
 ): Promise<{ queries: string[]; businessSummary: string }> {
-  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   const brand = extractBrandName(domain);
 
   const contextParts: string[] = [`Domain: ${domain}`, `Brand name: ${brand}`];
@@ -131,25 +87,27 @@ async function generateSmartQueries(
 
   if (apiKey && hasContext) {
     try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `You are helping test whether AI assistants know about a specific business. Given a website's information below, do two things:
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-5.2",
+          messages: [{
+            role: "user",
+            content: `You are testing whether AI assistants know about a specific business. Given a website's information, do two things:
 
-1. Write a one-sentence summary of what this business does (max 20 words).
-2. Generate exactly 3 search queries that a REAL potential customer of this SPECIFIC business would type into an AI assistant (ChatGPT, Perplexity, Google AI).
+1. Write a one-sentence summary of what this business does (max 20 words). Be specific — not "a SaaS tool" but what it actually does.
+2. Generate exactly 3 search queries that a REAL potential customer would type into ChatGPT, Perplexity, or Google AI.
 
-RULES FOR QUERIES:
-- Query 1 (Discovery): A query someone would ask when looking for this TYPE of product/service — without knowing this brand exists. Be specific to what this business actually does, not a generic category.
-- Query 2 (Brand): A direct query about this specific brand — someone who heard the name and wants to know more.
-- Query 3 (Decision): A query someone would ask when deciding whether to use this specific product/service, or looking for the best option in this exact niche.
-- Each query must be 5-15 words, natural language, like a real person would type.
-- Do NOT use generic categories. Be precise about what the business does.
+CRITICAL RULES:
+- Query 1 (Discovery): A query from someone who has the SPECIFIC PROBLEM this product solves, but doesn't know this brand exists. Focus on the exact problem or need, not a generic category. Do NOT include the brand name. Example for a startup directory: "where can I list my startup to get discovered by investors" — NOT "best startup tools".
+- Query 2 (Brand): A direct query about this brand — someone heard the name and wants to know if it's legit, what it does, pricing, reviews.
+- Query 3 (Decision): A query from someone actively comparing options in this exact niche. Be specific to the niche, not generic like "best tools 2026."
+- Each query: 5-15 words, natural language, how a real person talks to AI.
+- Be SPECIFIC to what this business actually does. Read the title, description, and headings carefully.
 
 RESPOND IN EXACTLY THIS FORMAT (no markdown, no extra text):
 SUMMARY: [what the business does]
@@ -158,18 +116,16 @@ Q2: [brand query]
 Q3: [decision query]
 
 Website information:
-${siteInfo}`
-              }]
-            }],
-            generationConfig: { maxOutputTokens: 200, temperature: 0.3 },
-          }),
-          signal: AbortSignal.timeout(8000),
-        }
-      );
+${siteInfo}`,
+          }],
+          max_completion_tokens: 200,
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
 
       if (res.ok) {
         const data = await res.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        const text = (data.choices?.[0]?.message?.content || "").trim();
 
         const summaryMatch = text.match(/SUMMARY:\s*(.+)/i);
         const q1Match = text.match(/Q1:\s*(.+)/i);
@@ -571,7 +527,7 @@ export async function POST(request: NextRequest) {
     // Generate content preview if we have results
     let contentPreview: ContentPreviewData | null = null;
     try {
-      contentPreview = await generateTeaserPreview(cleanDomain, [], brandName);
+      contentPreview = await generateTeaserPreview(cleanDomain, [], brandName, businessSummary);
     } catch {
       // Non-fatal
     }

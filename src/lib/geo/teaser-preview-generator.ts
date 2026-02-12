@@ -1,8 +1,9 @@
 /**
  * Teaser Content Preview Generator
  *
- * Generates a mini comparison page preview for teaser reports.
- * Uses domain + brand data from the teaser scan (no auth/site required).
+ * Generates a sample "fix page" preview for the free scan report.
+ * Shows users what AI-optimized content looks like — the hook that
+ * convinces them to subscribe.
  *
  * Cost: ~$0.003 per generation (gpt-5-mini)
  * Time: ~2-4 seconds
@@ -27,8 +28,9 @@ function extractJSON(text: string): string {
 
 export async function generateTeaserPreview(
   domain: string,
-  otherBrands: string[],
+  _otherBrands: string[],
   brandName: string,
+  businessSummary?: string,
 ): Promise<ContentPreviewData | null> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -36,36 +38,30 @@ export async function generateTeaserPreview(
     return null;
   }
 
-  if (otherBrands.length === 0) {
-    return null;
-  }
+  const systemPrompt = `You are an AI visibility content strategist. You create authority-building pages that ChatGPT, Perplexity, and Google AI will cite when users ask questions. You respond ONLY with valid JSON. No markdown code fences.`;
 
-  const topBrand = otherBrands[0];
-  const topBrandName = topBrand.replace(/\.(com|io|co|ai|app|dev|org|net|me|sh|cc|so|biz|xyz|tech|tools|software|cloud|pro|gg|fm|tv|to|ly|co\.uk|com\.au)$/, "");
-
-  const systemPrompt = `You are an AI Search Optimization content strategist. You create comparison pages that AI platforms (ChatGPT, Perplexity, Google AI) will cite when answering questions. You respond ONLY with valid JSON. No markdown code fences, no extra text.`;
-
-  const userPrompt = `Generate a comparison page preview for: "${brandName} vs ${topBrandName}"
+  const userPrompt = `Generate a sample fix page preview for: "${brandName}"
 
 CONTEXT:
 - Domain: ${domain}
-- Top alternative: ${topBrand}
-- This is a PREVIEW to show what AI-optimized content looks like
+${businessSummary ? `- What they do: ${businessSummary}` : ""}
+- This is a PREVIEW to show users what AI-optimized content looks like before they subscribe
 
 INSTRUCTIONS:
-1. Write a compelling SEO title (60-70 chars)
-2. Write a meta description (150-160 chars)
-3. Write an opening paragraph (80-120 words) that directly answers "How does ${brandName} compare to ${topBrandName}?" — make it authoritative and specific
-4. Write a body section (200-300 words) covering key comparison points with ## headings and bullet points
-5. Write 4 FAQ questions with concise answers (2-3 sentences each)
-6. Make it genuinely useful and authoritative
+1. Pick a realistic query that a potential customer of ${brandName} would ask AI (e.g. "best [category] for [use case]")
+2. Write a compelling SEO title (60-70 chars) targeting that query
+3. Write a meta description (150-160 chars)
+4. Write an opening paragraph (80-120 words) that directly answers the query — position ${brandName} as a knowledgeable authority, not just promotional
+5. Write a body section (200-300 words) with ## headings, real substance, and specific detail
+6. Write 4 FAQ questions that real users would ask, with concise answers (2-3 sentences each)
+7. Make it genuinely useful — this needs to convince people the content is worth paying for
 
 Respond in this exact JSON format:
 {
   "title": "SEO title here",
   "metaDescription": "Meta description here",
   "firstParagraph": "Opening paragraph in markdown",
-  "body": "Rest of the comparison content in markdown (## headings, bullet points, etc.)",
+  "body": "Rest of the content in markdown (## headings, bullet points, etc.)",
   "faqItems": [
     {"question": "Q1?", "answer": "A1"},
     {"question": "Q2?", "answer": "A2"},
@@ -117,13 +113,13 @@ Respond in this exact JSON format:
     const wordCount = fullBody.split(/\s+/).filter(Boolean).length;
 
     return {
-      title: parsed.title || `${brandName} vs ${topBrandName}: Complete Comparison`,
-      metaDescription: parsed.metaDescription || `Compare ${brandName} and ${topBrandName} side by side.`,
+      title: parsed.title || `${brandName}: The Complete Guide`,
+      metaDescription: parsed.metaDescription || `Everything you need to know about ${brandName}.`,
       firstParagraph: parsed.firstParagraph || "",
       blurredBody: parsed.body || "",
       faqItems: (parsed.faqItems || []).slice(0, 4),
       wordCount,
-      brandUsed: topBrand,
+      brandUsed: brandName,
       generatedAt: new Date().toISOString(),
     };
   } catch (error) {

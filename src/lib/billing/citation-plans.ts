@@ -3,68 +3,64 @@
  *
  * PRICING (Feb 2026) — GEO-First Product
  *
- * No Plan: Unpaid (blocked from dashboard — free teaser scan only)
+ * No Plan: Free teaser scan only (blocked from dashboard)
  * Scout ($49/mo): Monitor + start fixing your AI visibility
- * Command ($149/mo): Full GEO intelligence + maximum visibility
- * Dominate ($349/mo): Maximum AI visibility, nothing held back
+ * Command ($149/mo): Full GEO intelligence + maximum coverage
+ * Dominate ($349/mo): Maximum coverage, highest limits
  *
- * Path to $100k MRR:
- * 50% Scout ($49) + 35% Command ($149) + 15% Dominate ($349)
- * = blended ARPU ~$127 → ~785 customers
+ * Key gating dimensions:
+ * 1. Queries tracked (10 → 25 → 50)
+ * 2. Fix pages per month (5 → 25 → 50)
+ * 3. Intelligence depth (gap analyses, content ideas, action plans)
+ * 4. Scan frequency (daily → daily → 2x/day)
+ * 5. History retention (30 days → 365 → 365)
  */
 
 export type CitationPlanId = "free" | "scout" | "command" | "dominate";
 
 export interface CitationPlanLimits {
   sites: number;
-  manualChecksPerDay: number;
+  manualChecksPerDay: number;        // -1 = unlimited
   historyDays: number;
-  queriesPerCheck: number;
-  customQueriesPerSite: number; // -1 = unlimited
-  auditPagesPerSite: number;   // How many pages per site audit
+  queriesPerCheck: number;           // Total queries tracked per scan
+  customQueriesPerSite: number;      // Subset of queriesPerCheck that can be user-defined
+  auditPagesPerSite: number;         // How many pages per site audit crawl
 }
 
 export interface CitationPlanFeatures {
   // Monitoring
   manualChecks: boolean;
   dailyAutoCheck: boolean;
-  hourlyAutoCheck: boolean;
+  twiceDailyAutoCheck: boolean;      // 2x/day scans (Dominate only)
   emailAlerts: boolean;
   weeklyReport: boolean;
   csvExport: boolean;
+
+  // Scoring
   geoScore: boolean;
   geoTips: boolean;
 
   // Intelligence
   citationGapAnalysis: boolean;
-  citationGapFull: boolean;
   contentRecommendations: boolean;
-  contentRecsUnlimited: boolean;
   weeklyActionPlan: boolean;
   customQueries: boolean;
 
-  // Fix Pages (GEO-focused generation)
+  // Fix Pages
   pageGeneration: boolean;
-  schemaGeneration: boolean;     // JSON-LD schema markup in generated pages
-  entityOptimization: boolean;   // Entity analysis + optimization in content
+  schemaGeneration: boolean;
 
   // Site GEO Audit
-  siteAudit: boolean;            // Page-level GEO readiness audit
-  siteAuditFull: boolean;        // Full site crawl (vs top-10 pages only)
-
-  // Sprint
-  sprintFramework: boolean;
-  monthlyCheckpoints: boolean;
-
+  siteAudit: boolean;
+  siteAuditFull: boolean;            // Full crawl (vs top-10 only)
 }
 
 export interface CitationIntelligenceLimits {
-  gapAnalysesPerMonth: number;   // -1 = unlimited
-  contentIdeasPerMonth: number;  // -1 = unlimited
-  actionPlansPerMonth: number;   // 0 = not available
-  pagesPerMonth: number;         // -1 = unlimited, 0 = not available
-  siteAuditsPerMonth: number;    // -1 = unlimited, 0 = not available
-  pageRefreshDays: number;       // 0 = no auto-refresh, N = refresh every N days
+  gapAnalysesPerMonth: number;       // 0 = not available
+  contentIdeasPerMonth: number;      // 0 = not available
+  actionPlansPerMonth: number;       // 0 = not available
+  pagesPerMonth: number;             // 0 = not available
+  siteAuditsPerMonth: number;        // 0 = not available
 }
 
 export interface CitationPlan {
@@ -91,7 +87,6 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     limits: {
       sites: 1,
       manualChecksPerDay: 3,
-
       historyDays: 7,
       queriesPerCheck: 3,
       customQueriesPerSite: 0,
@@ -103,38 +98,30 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
       actionPlansPerMonth: 0,
       pagesPerMonth: 0,
       siteAuditsPerMonth: 0,
-      pageRefreshDays: 0,
     },
     features: {
       manualChecks: true,
       dailyAutoCheck: false,
-      hourlyAutoCheck: false,
+      twiceDailyAutoCheck: false,
       emailAlerts: false,
       weeklyReport: false,
       csvExport: false,
-
       geoScore: true,
       geoTips: false,
       citationGapAnalysis: false,
-      citationGapFull: false,
       contentRecommendations: false,
-      contentRecsUnlimited: false,
       weeklyActionPlan: false,
-
       customQueries: false,
       pageGeneration: false,
       schemaGeneration: false,
-      entityOptimization: false,
       siteAudit: false,
       siteAuditFull: false,
-      sprintFramework: false,
-      monthlyCheckpoints: false,
     },
   },
   scout: {
     id: "scout",
     name: "Scout",
-    description: "Monitor + start fixing your AI visibility",
+    description: "See where you stand and start fixing gaps",
     tagline: "See your blind spots and start fixing them",
     whoIsThisFor: "Solo founder with one product. You want to know where you stand and start getting cited.",
     monthlyPrice: 49,
@@ -142,7 +129,6 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     limits: {
       sites: 1,
       manualChecksPerDay: -1,
-
       historyDays: 30,
       queriesPerCheck: 10,
       customQueriesPerSite: 5,
@@ -150,139 +136,113 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     },
     intelligenceLimits: {
       gapAnalysesPerMonth: 5,
-      contentIdeasPerMonth: 5,
+      contentIdeasPerMonth: 3,
       actionPlansPerMonth: 0,
       pagesPerMonth: 5,
       siteAuditsPerMonth: 2,
-      pageRefreshDays: 0,
     },
     features: {
       manualChecks: true,
       dailyAutoCheck: true,
-      hourlyAutoCheck: false,
+      twiceDailyAutoCheck: false,
       emailAlerts: true,
       weeklyReport: true,
-      csvExport: true,
-
+      csvExport: false,
       geoScore: true,
       geoTips: true,
       citationGapAnalysis: true,
-      citationGapFull: false,
       contentRecommendations: true,
-      contentRecsUnlimited: false,
       weeklyActionPlan: false,
-
       customQueries: true,
       pageGeneration: true,
       schemaGeneration: true,
-      entityOptimization: false,
       siteAudit: true,
       siteAuditFull: false,
-      sprintFramework: true,
-      monthlyCheckpoints: true,
     },
   },
   command: {
     id: "command",
     name: "Command",
-    description: "Full GEO intelligence + maximum visibility",
-    tagline: "The complete toolkit to win AI recommendations",
-    whoIsThisFor: "Growing SaaS doing $5k-$50k MRR. Ready to maximize your AI citations.",
+    description: "Full GEO intelligence with maximum coverage",
+    tagline: "The complete toolkit for AI visibility",
+    whoIsThisFor: "Growing business ready to maximize AI citations with deep intelligence.",
     monthlyPrice: 149,
     yearlyPrice: 119,
     popular: true,
     limits: {
       sites: 1,
       manualChecksPerDay: -1,
-
       historyDays: 365,
-      queriesPerCheck: 20,
-      customQueriesPerSite: -1,
+      queriesPerCheck: 25,
+      customQueriesPerSite: 15,
       auditPagesPerSite: 100,
     },
     intelligenceLimits: {
-      gapAnalysesPerMonth: -1,
-      contentIdeasPerMonth: -1,
+      gapAnalysesPerMonth: 15,
+      contentIdeasPerMonth: 10,
       actionPlansPerMonth: 4,
       pagesPerMonth: 25,
-      siteAuditsPerMonth: -1,
-      pageRefreshDays: 0,
+      siteAuditsPerMonth: 4,
     },
     features: {
       manualChecks: true,
       dailyAutoCheck: true,
-      hourlyAutoCheck: true,
+      twiceDailyAutoCheck: false,
       emailAlerts: true,
       weeklyReport: true,
       csvExport: true,
-
       geoScore: true,
       geoTips: true,
       citationGapAnalysis: true,
-      citationGapFull: true,
       contentRecommendations: true,
-      contentRecsUnlimited: true,
       weeklyActionPlan: true,
-
       customQueries: true,
       pageGeneration: true,
       schemaGeneration: true,
-      entityOptimization: true,
       siteAudit: true,
       siteAuditFull: true,
-      sprintFramework: true,
-      monthlyCheckpoints: true,
     },
   },
   dominate: {
     id: "dominate",
     name: "Dominate",
-    description: "Everything unlimited, nothing held back",
+    description: "Maximum coverage, highest limits, nothing held back",
     tagline: "Maximum AI visibility for your brand",
-    whoIsThisFor: "Serious about owning your space in AI. Want every advantage possible.",
+    whoIsThisFor: "Serious about owning your space in AI. Highest query coverage and content volume.",
     monthlyPrice: 349,
     yearlyPrice: 279,
     limits: {
       sites: 1,
       manualChecksPerDay: -1,
-
       historyDays: 365,
-      queriesPerCheck: 30,
-      customQueriesPerSite: -1,
+      queriesPerCheck: 50,
+      customQueriesPerSite: 30,
       auditPagesPerSite: 500,
     },
     intelligenceLimits: {
-      gapAnalysesPerMonth: -1,
-      contentIdeasPerMonth: -1,
-      actionPlansPerMonth: -1,
-      pagesPerMonth: -1,
-      siteAuditsPerMonth: -1,
-      pageRefreshDays: 0,
+      gapAnalysesPerMonth: 30,
+      contentIdeasPerMonth: 20,
+      actionPlansPerMonth: 8,
+      pagesPerMonth: 50,
+      siteAuditsPerMonth: 4,
     },
     features: {
       manualChecks: true,
       dailyAutoCheck: true,
-      hourlyAutoCheck: true,
+      twiceDailyAutoCheck: true,
       emailAlerts: true,
       weeklyReport: true,
       csvExport: true,
-
       geoScore: true,
       geoTips: true,
       citationGapAnalysis: true,
-      citationGapFull: true,
       contentRecommendations: true,
-      contentRecsUnlimited: true,
       weeklyActionPlan: true,
-
       customQueries: true,
       pageGeneration: true,
       schemaGeneration: true,
-      entityOptimization: true,
       siteAudit: true,
       siteAuditFull: true,
-      sprintFramework: true,
-      monthlyCheckpoints: true,
     },
   },
 };
@@ -355,20 +315,20 @@ export function getIntelligenceFeatureSummary(planId: CitationPlanId | string): 
     gapAnalysis:
       intel.gapAnalysesPerMonth === 0
         ? "Not available"
-        : intel.gapAnalysesPerMonth === -1
-          ? "Unlimited per-query analysis"
-          : `${intel.gapAnalysesPerMonth} analyses/month`,
+        : `${intel.gapAnalysesPerMonth} analyses/month`,
     contentIdeas:
       intel.contentIdeasPerMonth === 0
         ? "Not available"
-        : intel.contentIdeasPerMonth === -1
-          ? "Unlimited ideas"
-          : `${intel.contentIdeasPerMonth} ideas/month`,
+        : `${intel.contentIdeasPerMonth} ideas/month`,
     actionPlan: !plan.features.weeklyActionPlan
-      ? "Command only"
-      : "Weekly Action Playbook",
+      ? "Not available"
+      : `${intel.actionPlansPerMonth} plans/month`,
   };
 }
+
+// ============================================
+// LIMIT CHECKS
+// ============================================
 
 export function canRunManualCheck(
   planId: CitationPlanId | string,
@@ -414,24 +374,13 @@ export function canUseGapAnalysis(
   const limit = plan.intelligenceLimits.gapAnalysesPerMonth;
 
   if (limit === 0) {
-    return {
-      allowed: false,
-      reason: "Gap analysis requires Scout plan or higher.",
-    };
-  }
-
-  if (limit === -1) {
-    return { allowed: true, remaining: -1 };
+    return { allowed: false, reason: "Gap analysis requires Scout plan or higher." };
   }
 
   if (usedThisMonth >= limit) {
     const next = getNextPlan(plan.id);
-    const upgradeTip = next ? ` Upgrade to ${getCitationPlan(next).name} for unlimited.` : "";
-    return {
-      allowed: false,
-      reason: `Monthly limit reached (${limit} analyses).${upgradeTip}`,
-      remaining: 0,
-    };
+    const tip = next ? ` Upgrade to ${getCitationPlan(next).name} for more.` : "";
+    return { allowed: false, reason: `Monthly limit reached (${limit} analyses).${tip}`, remaining: 0 };
   }
 
   return { allowed: true, remaining: limit - usedThisMonth };
@@ -445,22 +394,11 @@ export function canUseContentRecommendations(
   const limit = plan.intelligenceLimits.contentIdeasPerMonth;
 
   if (limit === 0) {
-    return {
-      allowed: false,
-      reason: "Content recommendations require Scout plan or higher.",
-    };
-  }
-
-  if (limit === -1) {
-    return { allowed: true, remaining: -1 };
+    return { allowed: false, reason: "Content ideas require Scout plan or higher." };
   }
 
   if (usedThisMonth >= limit) {
-    return {
-      allowed: false,
-      reason: `Monthly limit reached (${limit} recommendations). Upgrade for more.`,
-      remaining: 0,
-    };
+    return { allowed: false, reason: `Monthly limit reached (${limit} ideas). Upgrade for more.`, remaining: 0 };
   }
 
   return { allowed: true, remaining: limit - usedThisMonth };
@@ -474,22 +412,11 @@ export function canUseActionPlan(
   const limit = plan.intelligenceLimits.actionPlansPerMonth;
 
   if (limit === 0) {
-    return {
-      allowed: false,
-      reason: "Action plans require Command plan or higher.",
-    };
-  }
-
-  if (limit === -1) {
-    return { allowed: true, remaining: -1 };
+    return { allowed: false, reason: "Action plans require Command plan or higher." };
   }
 
   if (usedThisMonth >= limit) {
-    return {
-      allowed: false,
-      reason: `Monthly limit reached (${limit} plans). Upgrade for more.`,
-      remaining: 0,
-    };
+    return { allowed: false, reason: `Monthly limit reached (${limit} plans). Upgrade for more.`, remaining: 0 };
   }
 
   return { allowed: true, remaining: limit - usedThisMonth };
@@ -502,24 +429,13 @@ export function canGeneratePage(
   const plan = getCitationPlan(planId);
 
   if (!plan.features.pageGeneration) {
-    return {
-      allowed: false,
-      reason: "Fix pages require Scout plan or higher.",
-    };
+    return { allowed: false, reason: "Fix pages require Scout plan or higher." };
   }
 
   const limit = plan.intelligenceLimits.pagesPerMonth;
 
-  if (limit === -1) {
-    return { allowed: true, remaining: -1 };
-  }
-
   if (usedThisMonth >= limit) {
-    return {
-      allowed: false,
-      reason: `Monthly limit reached (${limit} pages). Upgrade for more.`,
-      remaining: 0,
-    };
+    return { allowed: false, reason: `Monthly limit reached (${limit} pages). Upgrade for more.`, remaining: 0 };
   }
 
   return { allowed: true, remaining: limit - usedThisMonth };
@@ -532,36 +448,24 @@ export function canRunSiteAudit(
   const plan = getCitationPlan(planId);
 
   if (!plan.features.siteAudit) {
-    return {
-      allowed: false,
-      reason: "Site GEO Audit requires Scout plan or higher.",
-    };
+    return { allowed: false, reason: "Site GEO Audit requires Scout plan or higher." };
   }
 
   const limit = plan.intelligenceLimits.siteAuditsPerMonth;
 
-  if (limit === -1) {
-    return { allowed: true, remaining: -1 };
-  }
-
   if (usedThisMonth >= limit) {
-    return {
-      allowed: false,
-      reason: `Monthly limit reached (${limit} audits). Upgrade for more.`,
-      remaining: 0,
-    };
+    return { allowed: false, reason: `Monthly limit reached (${limit} audits). Upgrade for more.`, remaining: 0 };
   }
 
   return { allowed: true, remaining: limit - usedThisMonth };
 }
 
 // ============================================
-// UPGRADE HELPERS (used by checkout hooks, sidebar, modals)
+// UPGRADE HELPERS
 // ============================================
 
 const PLAN_ORDER: CitationPlanId[] = ["free", "scout", "command", "dominate"];
 
-/** Get the next upgrade tier, or null if already on Dominate */
 export function getNextPlan(currentPlan: string): CitationPlanId | null {
   const idx = PLAN_ORDER.indexOf(currentPlan as CitationPlanId);
   return idx >= 0 && idx < PLAN_ORDER.length - 1 ? PLAN_ORDER[idx + 1] : null;

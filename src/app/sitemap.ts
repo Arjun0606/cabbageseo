@@ -56,12 +56,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Resources
     {
-      url: `${baseUrl}/docs`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
       url: `${baseUrl}/changelog`,
       lastModified: now,
       changeFrequency: "weekly",
@@ -95,13 +89,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.8,
     },
-    {
-      url: `${baseUrl}/leaderboard`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-
     // Legal
     {
       url: `${baseUrl}/privacy`,

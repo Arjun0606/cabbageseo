@@ -291,7 +291,6 @@ export async function DELETE() {
 
       if (siteIds.length > 0) {
         // Delete all site-related data (child tables first)
-        await serviceClient.from("sprint_actions").delete().in("site_id", siteIds);
         await serviceClient.from("source_listings").delete().in("site_id", siteIds);
         await serviceClient.from("market_share_snapshots").delete().in("site_id", siteIds);
         await serviceClient.from("geo_analyses").delete().in("site_id", siteIds);
