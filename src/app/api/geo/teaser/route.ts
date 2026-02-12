@@ -1,10 +1,12 @@
 /**
- * Teaser API - Quick AI scan without authentication
+ * Teaser API - Quick AI visibility scan without authentication
  *
- * Queries 3 AI platforms (Perplexity, Google AI, ChatGPT) in parallel,
- * then calculates a granular visibility score using 6 weighted factors.
+ * 1. Fetches the site to understand what the business does
+ * 2. Uses AI to generate realistic customer queries (no hardcoded templates)
+ * 3. Runs those queries through Perplexity, Google AI, and ChatGPT in parallel
+ * 4. Scores visibility across 5 factors
  *
- * No signup required - this is the hook that converts visitors.
+ * No signup required - this is the free scan that converts visitors.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -42,60 +44,24 @@ function extractBrandName(domain: string): string {
   const cleaned = domain.replace(TLD_PATTERN, "");
   const parts = cleaned.split(".");
   const name = parts[parts.length - 1];
-  // If brand name is hyphenated and long, it's probably not a real brand name
-  // e.g. "best-project-management-tool" → use domain instead
   if (name.includes("-") && name.length > 20) return domain;
   return name;
 }
 
-// Use AI to classify a website's category from its title + description
-async function classifyWithAI(title: string, description: string, domain: string): Promise<string | null> {
-  const apiKey = process.env.GOOGLE_AI_API_KEY;
-  if (!apiKey) return null;
-  if (!title && !description) return null;
-
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `What product/service category does this website belong to? Respond with ONLY the category name in 1-4 words (e.g. "project management", "CRM", "restaurant", "law firm", "real estate", "fitness app", "cloud storage"). If unclear, respond "unknown".
-
-Domain: ${domain}
-Title: ${title}
-Description: ${description}`
-            }]
-          }],
-          generationConfig: { maxOutputTokens: 20 },
-        }),
-        signal: AbortSignal.timeout(5000),
-      }
-    );
-
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toLowerCase();
-    if (!answer || answer === "unknown" || answer.length > 50) return null;
-    return answer;
-  } catch {
-    return null;
-  }
-}
-
-// Fetch site homepage to extract category context for smarter queries
+/**
+ * Fetch the site homepage and extract meaningful context:
+ * title, meta description, key headings, and OG data.
+ * This gives AI enough to understand what the business actually does.
+ */
 async function fetchSiteContext(domain: string): Promise<{
   title: string;
   description: string;
-  category: string | null;
+  headings: string[];
+  ogData: { type?: string; siteName?: string };
 }> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const timeout = setTimeout(() => controller.abort(), 8000);
 
     const res = await fetch(`https://${domain}`, {
       headers: {
@@ -107,56 +73,133 @@ async function fetchSiteContext(domain: string): Promise<{
     });
 
     clearTimeout(timeout);
-    if (!res.ok) return { title: "", description: "", category: null };
+    if (!res.ok) return { title: "", description: "", headings: [], ogData: {} };
 
     const html = await res.text();
 
-    // Extract title
     const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
     const title = titleMatch ? titleMatch[1].trim() : "";
 
-    // Extract meta description
     const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i) ||
                       html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i);
     const description = descMatch ? descMatch[1].trim() : "";
 
-    // Use AI to classify the site category (fast, ~1s with Gemini)
-    const category = await classifyWithAI(title, description, domain);
+    const headings: string[] = [];
+    const headingRegex = /<h[12][^>]*>([^<]+)<\/h[12]>/gi;
+    let hMatch;
+    while ((hMatch = headingRegex.exec(html)) !== null && headings.length < 5) {
+      const text = hMatch[1].trim();
+      if (text.length > 3 && text.length < 200) headings.push(text);
+    }
 
-    return { title, description, category };
+    const ogTypeMatch = html.match(/<meta[^>]*property=["']og:type["'][^>]*content=["']([^"']+)["']/i);
+    const ogSiteMatch = html.match(/<meta[^>]*property=["']og:site_name["'][^>]*content=["']([^"']+)["']/i);
+
+    return {
+      title,
+      description,
+      headings,
+      ogData: { type: ogTypeMatch?.[1], siteName: ogSiteMatch?.[1] },
+    };
   } catch {
-    return { title: "", description: "", category: null };
+    return { title: "", description: "", headings: [], ogData: {} };
   }
 }
 
-// Generate queries that test whether AI knows and recommends the brand.
-// Each query targets a different intent type across platforms:
-//   1. Category discovery — "best X tools" (does AI include you in recommendations?)
-//   2. Brand knowledge — "what is [brand]?" (does AI know what you do?)
-//   3. Recommendation intent — "should I use [brand]?" (does AI recommend you?)
-function generateQueries(domain: string, category: string | null): string[] {
+/**
+ * Use AI to generate the exact queries a potential customer would ask.
+ *
+ * Instead of hardcoded templates like "best [category] tools 2026",
+ * we give Gemini the site's actual content and ask it to generate
+ * realistic queries. Works for any business — SaaS, directory,
+ * restaurant, law firm, anything.
+ */
+async function generateSmartQueries(
+  domain: string,
+  siteContext: { title: string; description: string; headings: string[]; ogData: { type?: string; siteName?: string } },
+): Promise<{ queries: string[]; businessSummary: string }> {
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
   const brand = extractBrandName(domain);
-  const year = new Date().getFullYear();
 
-  if (category) {
-    return [
-      // Perplexity — category discovery: are you in the recommendations?
-      `best ${category} tools ${year}`,
-      // Gemini — brand knowledge: does AI know what you are?
-      `what is ${brand} and what does it do`,
-      // ChatGPT — recommendation intent: would AI recommend you?
-      `tell me about ${brand} for ${category}`,
-    ];
+  const contextParts: string[] = [`Domain: ${domain}`, `Brand name: ${brand}`];
+  if (siteContext.title) contextParts.push(`Page title: ${siteContext.title}`);
+  if (siteContext.description) contextParts.push(`Meta description: ${siteContext.description}`);
+  if (siteContext.ogData.siteName) contextParts.push(`Site name: ${siteContext.ogData.siteName}`);
+  if (siteContext.headings.length > 0) contextParts.push(`Key headings: ${siteContext.headings.join(" | ")}`);
+  const siteInfo = contextParts.join("\n");
+  const hasContext = siteContext.title || siteContext.description;
+
+  if (apiKey && hasContext) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `You are helping test whether AI assistants know about a specific business. Given a website's information below, do two things:
+
+1. Write a one-sentence summary of what this business does (max 20 words).
+2. Generate exactly 3 search queries that a REAL potential customer of this SPECIFIC business would type into an AI assistant (ChatGPT, Perplexity, Google AI).
+
+RULES FOR QUERIES:
+- Query 1 (Discovery): A query someone would ask when looking for this TYPE of product/service — without knowing this brand exists. Be specific to what this business actually does, not a generic category.
+- Query 2 (Brand): A direct query about this specific brand — someone who heard the name and wants to know more.
+- Query 3 (Decision): A query someone would ask when deciding whether to use this specific product/service, or looking for the best option in this exact niche.
+- Each query must be 5-15 words, natural language, like a real person would type.
+- Do NOT use generic categories. Be precise about what the business does.
+
+RESPOND IN EXACTLY THIS FORMAT (no markdown, no extra text):
+SUMMARY: [what the business does]
+Q1: [discovery query]
+Q2: [brand query]
+Q3: [decision query]
+
+Website information:
+${siteInfo}`
+              }]
+            }],
+            generationConfig: { maxOutputTokens: 200, temperature: 0.3 },
+          }),
+          signal: AbortSignal.timeout(8000),
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+
+        const summaryMatch = text.match(/SUMMARY:\s*(.+)/i);
+        const q1Match = text.match(/Q1:\s*(.+)/i);
+        const q2Match = text.match(/Q2:\s*(.+)/i);
+        const q3Match = text.match(/Q3:\s*(.+)/i);
+
+        const queries = [q1Match?.[1]?.trim(), q2Match?.[1]?.trim(), q3Match?.[1]?.trim()]
+          .filter((q): q is string => !!q && q.length > 5 && q.length < 200);
+
+        if (queries.length >= 2) {
+          return {
+            queries,
+            businessSummary: summaryMatch?.[1]?.trim() || `${brand} — ${siteContext.title || domain}`,
+          };
+        }
+      }
+    } catch {
+      // Fall through to fallback
+    }
   }
 
-  return [
-    // Perplexity — brand awareness: does AI know you exist?
-    `what is ${domain} and what does it do`,
-    // Gemini — brand knowledge: can AI describe your product?
-    `tell me about ${brand}`,
-    // ChatGPT — recommendation: would AI suggest you to someone?
-    `is ${brand} good and should I use it`,
-  ];
+  // Fallback: simple direct queries if AI generation fails
+  return {
+    queries: [
+      `what is ${domain}`,
+      `tell me about ${brand}`,
+      `${brand} reviews`,
+    ],
+    businessSummary: siteContext.description?.slice(0, 100) || siteContext.title || domain,
+  };
 }
 
 // Query Perplexity API
@@ -304,7 +347,6 @@ function findMentionPosition(text: string, domain: string): number {
   const regex = new RegExp(`\\b${brandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
   const match = regex.exec(text);
   if (!match) return -1;
-  // Return position as fraction of text length (0 = very start, 1 = very end)
   return match.index / Math.max(text.length, 1);
 }
 
@@ -323,38 +365,24 @@ interface PlatformResult {
   mentionedYou: boolean;
   snippet: string;
   inCitations: boolean;
-  domainFound: boolean; // Full domain (e.g. "snapcommit.dev") found — strong signal
-  mentionPosition: number; // 0-1 (lower = earlier), -1 = not found
+  domainFound: boolean;
+  mentionPosition: number;
   mentionCount: number;
 }
 
 /**
  * Visibility scoring across 5 factors focused on YOUR presence in AI responses.
- *
- * Factors:
- *   - Citation presence (0-40): Your domain cited as a source link
- *   - Domain visibility (0-25): Full domain (e.g. "trustmrr.com") found in text
- *   - Brand recognition (0-15): AI knows your brand name and can describe you
- *   - Mention prominence (0-12): Mentioned early in the response (not buried)
- *   - Mention depth (0-8): Multiple mentions across responses (consistent visibility)
- *
- * Score ranges:
- *   0-15: Invisible — AI doesn't know you
- *   16-39: Low visibility — AI barely recognizes you
- *   40-59: Moderate — AI knows you but doesn't consistently recommend you
- *   60-79: Good — AI regularly mentions and cites you
- *   80-100: Excellent — AI actively recommends you
  */
 function calculateVisibilityScore(
   results: PlatformResult[],
 ): {
   score: number;
   factors: {
-    citationPresence: number;    // 0-40: Domain in citation links
-    domainVisibility: number;    // 0-25: Full domain in response text
-    brandRecognition: number;    // 0-15: AI knows your brand
-    mentionProminence: number;   // 0-12: Mentioned early
-    mentionDepth: number;        // 0-8: Consistent mentions across platforms
+    citationPresence: number;
+    domainVisibility: number;
+    brandRecognition: number;
+    mentionProminence: number;
+    mentionDepth: number;
   };
   explanation: string;
 } {
@@ -375,7 +403,7 @@ function calculateVisibilityScore(
   const domainFoundCount = results.filter(r => r.domainFound).length;
   const domainVisibility = Math.round(25 * (domainFoundCount / platformCount));
 
-  // Factor 3: Brand recognition (0-15) — AI mentions your brand at all (knows you exist)
+  // Factor 3: Brand recognition (0-15) — AI mentions your brand at all
   const knownCount = results.filter(r => r.mentionedYou).length;
   const brandRecognition = Math.round(15 * (knownCount / platformCount));
 
@@ -395,7 +423,6 @@ function calculateVisibilityScore(
 
   const score = Math.min(100, citationPresence + domainVisibility + brandRecognition + mentionProminence + mentionDepth);
 
-  // Build explanation focused on your visibility
   const parts: string[] = [];
   if (citedCount > 0) {
     parts.push(`Cited as a source by ${citedCount} of ${platformCount} platforms`);
@@ -409,7 +436,6 @@ function calculateVisibilityScore(
   if (knownCount === 0) {
     parts.push(`Not recognized by any AI platform tested`);
   }
-  // Add actionable context
   if (score < 15) {
     parts.push(`AI has no knowledge of your brand yet`);
   } else if (score < 40) {
@@ -456,14 +482,16 @@ export async function POST(request: NextRequest) {
 
     const brandName = extractBrandName(cleanDomain);
 
-    // Fetch site context for smarter queries (runs in parallel, 5s timeout)
+    // Step 1: Fetch site to understand what this business actually does
     const siteContext = await fetchSiteContext(cleanDomain);
-    const queries = generateQueries(cleanDomain, siteContext.category);
+
+    // Step 2: AI generates the exact queries a real customer would ask
+    const { queries, businessSummary } = await generateSmartQueries(cleanDomain, siteContext);
 
     const results: PlatformResult[] = [];
     const platformErrors: string[] = [];
 
-    // Run ALL 3 platforms in parallel
+    // Step 3: Run all 3 platforms in parallel with the smart queries
     const [perplexitySettled, geminiSettled, chatgptSettled] = await Promise.allSettled([
       queryPerplexity(queries[0]),
       queryGemini(queries[1]),
@@ -530,7 +558,7 @@ export async function POST(request: NextRequest) {
         aiRecommends: mentioned.filter(d => d !== cleanDomain).slice(0, 5),
         mentionedYou: domainInResponse || isBrandMentioned(r.response, cleanDomain),
         snippet: r.response.slice(0, 300),
-        inCitations: false, // ChatGPT doesn't provide citation sources
+        inCitations: false,
         domainFound: domainInResponse,
         mentionPosition: findMentionPosition(r.response, cleanDomain),
         mentionCount: countMentions(r.response, cleanDomain),
@@ -548,29 +576,27 @@ export async function POST(request: NextRequest) {
       // Non-fatal
     }
 
-    // Calculate visibility score (focused on YOUR presence, not others)
+    // Step 4: Calculate visibility score
     const scoring = calculateVisibilityScore(results);
     const visibilityScore = scoring.score;
 
     const mentionedCount = results.filter(r => r.mentionedYou).length;
     const isInvisible = mentionedCount === 0;
 
-    // Per-platform scores (0-100 each) — how visible are you on each platform
+    // Per-platform scores (0-100 each)
     const platformScores: Record<string, number> = {};
     for (const r of results) {
       let ps = 0;
       if (r.inCitations) {
-        ps += 45;  // Cited as a source — strongest signal
+        ps += 45;
       } else if (r.domainFound) {
-        ps += 30;  // Full domain mentioned — strong signal
+        ps += 30;
       } else if (r.mentionedYou) {
-        ps += 15;  // Brand recognized
+        ps += 15;
       }
-      // Position bonus — mentioned early = more prominent
       if (r.mentionPosition >= 0 && r.mentionedYou) {
         ps += Math.round(25 * (1 - r.mentionPosition));
       }
-      // Depth bonus — mentioned multiple times = strong knowledge
       if (r.mentionedYou) {
         ps += Math.min(15, r.mentionCount * 5);
       }
@@ -585,6 +611,7 @@ export async function POST(request: NextRequest) {
       platformScores,
       scoreBreakdown: scoring.factors,
       scoreExplanation: scoring.explanation,
+      businessSummary,
       message: visibilityScore < 15
         ? "AI doesn't know your brand yet. You need to build your presence."
         : visibilityScore < 40

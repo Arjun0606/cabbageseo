@@ -12,13 +12,12 @@ import { ScanResults, type TeaserData } from "@/components/homepage/scan-results
 import { SocialProofBar } from "@/components/homepage/social-proof-bar";
 
 const SCAN_STEPS = [
-  "Connecting to AI platforms...",
-  "Asking Perplexity who they recommend...",
+  "Reading your site to understand your business...",
+  "Generating queries your customers would ask AI...",
+  "Checking Perplexity for your brand...",
   "Checking Google AI for your brand...",
-  "Asking ChatGPT for recommendations...",
-  "Extracting brand mentions...",
-  "Scoring across 6 visibility factors...",
-  "Generating your custom content preview...",
+  "Checking ChatGPT for your brand...",
+  "Analyzing visibility across all platforms...",
 ];
 
 type ScanState = "idle" | "scanning" | "results" | "error";

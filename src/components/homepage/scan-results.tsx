@@ -48,6 +48,7 @@ export interface TeaserData {
       mentionDepth: number;
     };
     scoreExplanation?: string;
+    businessSummary?: string;
   };
   reportId?: string;
   contentPreview?: ContentPreviewData;
@@ -194,6 +195,9 @@ export function ScanResults({ data }: ScanResultsProps) {
                 AI Visibility Report for
               </p>
               <p className="text-2xl font-bold text-white">{domain}</p>
+              {summary.businessSummary && (
+                <p className="text-zinc-500 text-sm mt-1">{summary.businessSummary}</p>
+              )}
             </div>
 
             {/* Score */}

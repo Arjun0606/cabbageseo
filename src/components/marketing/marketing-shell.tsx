@@ -170,18 +170,19 @@ function Footer() {
     product: [
       { href: "/features", label: "Features" },
       { href: "/pricing", label: "Pricing" },
+      { href: "/", label: "Free AI Scan" },
       { href: "/changelog", label: "Changelog" },
-      { href: "/teaser", label: "Free AI Scan" },
     ],
-    resources: [
+    learn: [
       { href: "/what-is-geo", label: "What is GEO?" },
+      { href: "/about", label: "About CabbageSEO" },
       { href: "/blog", label: "Blog" },
       { href: "/docs", label: "Documentation" },
-      { href: "/leaderboard", label: "AI Leaderboard" },
     ],
-    solutions: [
-      { href: "/about", label: "What is CabbageSEO?" },
-      { href: "/what-is-geo", label: "What is GEO?" },
+    community: [
+      { href: "/leaderboard", label: "AI Leaderboard" },
+      { href: "/feedback", label: "Feedback" },
+      { href: "/vs/manual-tracking", label: "CabbageSEO vs Manual" },
     ],
     legal: [
       { href: "/privacy", label: "Privacy Policy" },
@@ -243,11 +244,11 @@ function Footer() {
             </ul>
           </StaggerItem>
 
-          {/* Resources */}
+          {/* Learn */}
           <StaggerItem>
-            <h3 className="text-white font-semibold mb-4">Resources</h3>
+            <h3 className="text-white font-semibold mb-4">Learn</h3>
             <ul className="space-y-2.5">
-              {footerLinks.resources.map(link => (
+              {footerLinks.learn.map(link => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-zinc-500 hover:text-white text-sm transition-colors">
                     {link.label}
@@ -257,11 +258,11 @@ function Footer() {
             </ul>
           </StaggerItem>
 
-          {/* Solutions */}
+          {/* Community */}
           <StaggerItem>
-            <h3 className="text-white font-semibold mb-4">Solutions</h3>
+            <h3 className="text-white font-semibold mb-4">Community</h3>
             <ul className="space-y-2.5">
-              {footerLinks.solutions.map(link => (
+              {footerLinks.community.map(link => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-zinc-500 hover:text-white text-sm transition-colors">
                     {link.label}
