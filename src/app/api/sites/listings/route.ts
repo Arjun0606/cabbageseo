@@ -54,12 +54,14 @@ export async function GET(request: NextRequest) {
     const db = createServiceClient();
 
     // Verify site belongs to this org
-    const { data: site } = await db
+    const { data: siteRow } = await db
       .from("sites")
-      .select("id, domain")
+      .select("id,domain")
       .eq("id", siteId)
       .eq("organization_id", organizationId)
       .single();
+
+    const site = siteRow as { id: string; domain: string } | null;
 
     if (!site) {
       return NextResponse.json({ error: "Site not found" }, { status: 404 });
