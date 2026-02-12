@@ -133,7 +133,7 @@ export default async function ShareableTeaserPage({
   const summary = (report.summary as TeaserSummary) || { totalQueries: 0, mentionedCount: 0, isInvisible: true, brandsDetected: [], message: "" };
   const results = (report.results as TeaserResult[]) || [];
   const brandCount = (report.competitorsMentioned || []).length;
-  const gapCount = results.filter(r => !r.mentionedYou).length;
+  const gapCount = results.filter(r => !r.inCitations && !r.domainFound && !r.mentionedYou).length;
 
   return (
     <div className="min-h-screen bg-zinc-950">
