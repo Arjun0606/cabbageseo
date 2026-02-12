@@ -69,10 +69,10 @@ const FACTOR_LABELS: Record<string, { label: string; max: number; description: s
 };
 
 function getCtaHeadline(score: number): string {
-  if (score < 15) return "AI doesn't know you yet. Let's change that.";
-  if (score < 40) return "AI barely knows you. Build your presence.";
-  if (score <= 60) return "AI recognizes you. Now get cited consistently.";
-  return "Strong visibility. Keep building on this.";
+  if (score < 15) return "AI doesn't know you yet. Let's fix that and keep it fixed.";
+  if (score < 40) return "AI barely knows you. Start closing gaps automatically.";
+  if (score <= 60) return "AI recognizes you. Stay on top with continuous monitoring.";
+  return "Strong visibility. Don't let it slip — keep monitoring.";
 }
 
 function getScoreColor(score: number): string {
@@ -392,11 +392,66 @@ export function ScanResults({ data }: ScanResultsProps) {
                 {result.snippet && (
                   <p className="text-zinc-500 text-sm line-clamp-4">{result.snippet}</p>
                 )}
+
+                {/* Co-citation: other brands AI mentioned in this context */}
+                {result.aiRecommends && result.aiRecommends.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-zinc-800">
+                    <p className="text-zinc-600 text-xs mb-1.5">Also mentioned in this response:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {result.aiRecommends.map((brand) => (
+                        <span
+                          key={brand}
+                          className="px-2 py-0.5 bg-zinc-800 text-zinc-400 text-xs rounded-md border border-zinc-700/50"
+                        >
+                          {brand}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       </AnimateIn>
+
+      {/* ========== CO-CITATION SUMMARY ========== */}
+      {(() => {
+        const allCoCited = Array.from(new Set(data.results.flatMap(r => r.aiRecommends || [])));
+        if (allCoCited.length === 0) return null;
+        return (
+          <AnimateIn delay={0.12}>
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-8">
+              <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wide mb-1">
+                Your co-citation landscape
+              </h3>
+              <p className="text-zinc-600 text-xs mb-3">
+                Brands AI mentions alongside yours. Being cited in the same context as these brands strengthens your semantic positioning.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {allCoCited.map((brand) => {
+                  const appearsIn = data.results.filter(r => r.aiRecommends?.includes(brand)).length;
+                  return (
+                    <span
+                      key={brand}
+                      className={`px-2.5 py-1 text-xs rounded-lg border ${
+                        appearsIn >= 2
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          : "bg-zinc-800 text-zinc-400 border-zinc-700/50"
+                      }`}
+                    >
+                      {brand}
+                      {appearsIn >= 2 && (
+                        <span className="ml-1 text-emerald-500/60">{appearsIn}x</span>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          </AnimateIn>
+        );
+      })()}
 
       {/* ========== AI CONTENT PREVIEW ========== */}
       {contentPreview && (
@@ -414,22 +469,22 @@ export function ScanResults({ data }: ScanResultsProps) {
             </h2>
             <p className="text-black/70 text-sm mb-5 max-w-md mx-auto">
               Find every query where AI should mention you but doesn&apos;t.
-              Get targeted content pages built to earn citations.
+              Get content, trust source actions, and a clear plan to fix it.
             </p>
 
             {/* What you get */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
               <div className="flex items-center gap-2 px-3 py-1.5 bg-black/10 rounded-lg text-sm text-black font-medium">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Find your visibility gaps
+                Visibility gaps &amp; co-citations
               </div>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-black/10 rounded-lg text-sm text-black font-medium">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Generate fix pages
+                Fix pages &amp; trust source actions
               </div>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-black/10 rounded-lg text-sm text-black font-medium">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Track your progress
+                Automated monitoring
               </div>
             </div>
 
@@ -461,7 +516,7 @@ export function ScanResults({ data }: ScanResultsProps) {
                   />
                 </svg>
               )}
-              Start improving my AI visibility
+              Start monitoring my AI visibility
             </button>
 
             {authError && (
@@ -478,7 +533,7 @@ export function ScanResults({ data }: ScanResultsProps) {
             </div>
 
             <p className="mt-3 text-black/60 text-sm">
-              From $49/mo · Cancel anytime
+              From $49/mo · Scans run automatically · Cancel anytime
             </p>
           </div>
         </div>

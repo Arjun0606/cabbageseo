@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, AlertTriangle, Search, Loader2, Rocket, BarChart3, ShieldCheck } from "lucide-react";
+import { ArrowRight, AlertTriangle, Search, Loader2, Rocket, BarChart3, ShieldCheck, RefreshCw } from "lucide-react";
 import { GridAnimation } from "@/components/backgrounds/grid-animation";
 import { AnimateIn } from "@/components/motion/animate-in";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -17,7 +17,7 @@ const SCAN_STEPS = [
   "Checking Perplexity for your brand...",
   "Checking Google AI for your brand...",
   "Checking ChatGPT for your brand...",
-  "Analyzing visibility across all platforms...",
+  "Scoring your visibility across all platforms...",
 ];
 
 type ScanState = "idle" | "scanning" | "results" | "error";
@@ -288,7 +288,7 @@ function HomeContent() {
               {
                 step: "3",
                 title: "Fix",
-                desc: "Get AI-generated pages and actions tailored to each gap.",
+                desc: "Targeted content pages, trust source gaps, and specific actions for each gap.",
               },
               {
                 step: "4",
@@ -326,59 +326,112 @@ function HomeContent() {
         </div>
       </section>
 
-      {/* ========== WHAT HAPPENS WHEN YOU SUBSCRIBE ========== */}
+      {/* ========== WHY ONGOING ========== */}
       <section className="py-20 border-t border-zinc-900">
         <div className="max-w-7xl mx-auto px-6">
           <AnimateIn>
             <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">
-              What happens when you subscribe
+              AI visibility isn&apos;t a one-time fix
             </h2>
-            <p className="text-zinc-500 text-center mb-12 max-w-xl mx-auto">
-              From day one, CabbageSEO works to get AI recommending you.
+            <p className="text-zinc-500 text-center mb-12 max-w-2xl mx-auto leading-relaxed">
+              AI models retrain, competitors publish new content, and recommendations shift every week.
+              CabbageSEO runs continuously so you don&apos;t fall behind.
             </p>
           </AnimateIn>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {[
-              {
-                icon: <Rocket className="w-6 h-6 text-emerald-400" />,
-                title: "Your 30-day sprint starts",
-                desc: "Week-by-week actions tailored to your gaps. Specific tasks with clear instructions, not a dashboard to stare at.",
-              },
-              {
-                icon: <ShieldCheck className="w-6 h-6 text-blue-400" />,
-                title: "Monitoring activates",
-                desc: "Daily or hourly scans across ChatGPT, Perplexity & Google AI. Instant alerts if your visibility drops.",
-              },
-              {
-                icon: <BarChart3 className="w-6 h-6 text-amber-400" />,
-                title: "Your score improves",
-                desc: "As you execute, your AI visibility score climbs. Track momentum, see which actions moved the needle.",
-              },
-            ].map((card, i) => (
-              <AnimateIn key={i} delay={0.1 * i}>
-                <GlassCard padding="md" className="h-full text-center">
-                  <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
-                    {card.icon}
+          {/* Two-phase explanation */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            {/* Phase 1: First 30 days */}
+            <AnimateIn delay={0.1}>
+              <GlassCard padding="lg" className="h-full">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+                    <Rocket className="w-5 h-5 text-emerald-400" />
                   </div>
-                  <h3 className="text-white font-semibold mb-2">{card.title}</h3>
-                  <p className="text-zinc-500 text-sm leading-relaxed">{card.desc}</p>
-                </GlassCard>
-              </AnimateIn>
-            ))}
+                  <div>
+                    <h3 className="text-white font-semibold">First 30 days</h3>
+                    <p className="text-emerald-400 text-xs font-medium">Your sprint to get visible</p>
+                  </div>
+                </div>
+                <ul className="space-y-3">
+                  {[
+                    "Full scan finds every gap across ChatGPT, Perplexity & Google AI",
+                    "Fix pages auto-generate for your biggest visibility gaps",
+                    "Weekly action plan tells you exactly what to publish and where to get listed",
+                    "Trust source audit shows which review platforms you're missing from",
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-2.5 text-sm text-zinc-400">
+                      <span className="text-emerald-400 mt-0.5">→</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </GlassCard>
+            </AnimateIn>
+
+            {/* Phase 2: Every month after */}
+            <AnimateIn delay={0.2}>
+              <GlassCard padding="lg" className="h-full">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center">
+                    <RefreshCw className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">Every month after</h3>
+                    <p className="text-blue-400 text-xs font-medium">Automated, continuous</p>
+                  </div>
+                </div>
+                <ul className="space-y-3">
+                  {[
+                    "Scans run daily or hourly depending on your plan, catching every shift",
+                    "New fix pages auto-generate whenever new gaps are found",
+                    "Alerts fire instantly if your visibility score drops on any platform",
+                    "Fresh action plans reprioritize based on what changed this week",
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-2.5 text-sm text-zinc-400">
+                      <span className="text-blue-400 mt-0.5">→</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </GlassCard>
+            </AnimateIn>
           </div>
 
+          {/* Why it never stops */}
+          <AnimateIn delay={0.3}>
+            <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 max-w-2xl mx-auto mb-12">
+              <h3 className="text-white font-semibold text-center mb-4">Why this can&apos;t be a one-time thing</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { label: "AI models retrain", detail: "What they recommend shifts with each update" },
+                  { label: "Competitors publish", detail: "New content pushes you down in AI answers" },
+                  { label: "Queries evolve", detail: "People ask AI new questions every week" },
+                  { label: "Trust signals decay", detail: "Stale profiles and old content lose credibility" },
+                ].map((reason) => (
+                  <div key={reason.label} className="flex items-start gap-2">
+                    <span className="text-red-400 text-sm mt-0.5">⚡</span>
+                    <div>
+                      <p className="text-white text-sm font-medium">{reason.label}</p>
+                      <p className="text-zinc-500 text-xs">{reason.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </AnimateIn>
+
           <AnimateIn delay={0.4}>
-            <div className="mt-12 text-center">
+            <div className="text-center">
               <Link
                 href="/signup"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
               >
-                Start fixing my AI visibility
+                Start monitoring my AI visibility
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <p className="mt-3 text-zinc-600 text-sm">
-                From $49/mo · Cancel anytime
+                From $49/mo · Scans run automatically · Cancel anytime
               </p>
             </div>
           </AnimateIn>

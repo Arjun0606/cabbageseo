@@ -77,7 +77,7 @@ const tiers: PricingTier[] = [
       "30-day AI sprint",
       "Weekly reports + email alerts",
     ],
-    promise: "Daily monitoring catches every AI shift. Auto-generated fix pages close your gaps while you sleep.",
+    promise: "Every day: scan runs, gaps found, fix pages generated. You wake up to a dashboard that's already working.",
   },
   {
     name: "Command",
@@ -101,7 +101,7 @@ const tiers: PricingTier[] = [
       "CSV exports + 365-day history",
     ],
     highlight: "MOST POPULAR",
-    promise: "Hourly monitoring + auto-generated fix pages mean gaps get closed before you even notice them.",
+    promise: "Every hour: scan runs, new gaps detected, 5 fix pages auto-generated per scan. Gaps close before you notice them.",
   },
   {
     name: "Dominate",
@@ -122,7 +122,7 @@ const tiers: PricingTier[] = [
       "Unlimited action playbooks",
       "Monthly checkpoint reports + 365-day history",
     ],
-    promise: "Every scan finds gaps and auto-generates fix pages. Unlimited everything. The AI never forgets you.",
+    promise: "Every hour: scan runs, 10 fix pages auto-generated, unlimited manual pages. The system never sleeps.",
   },
 ];
 
@@ -151,6 +151,11 @@ const faqs: FAQItem[] = [
     question: "How does AI citation monitoring work?",
     answer:
       "CabbageSEO queries ChatGPT, Perplexity, and Google AI Overviews with real user prompts about your market, then records exactly what they cite. Scout scans daily (10 queries), Command and Dominate scan hourly (20-30 queries). When your citation score drops, you get an instant email alert. After each scan, fix pages auto-generate for any new gaps found.",
+  },
+  {
+    question: "Why can\u2019t I just fix my visibility once and cancel?",
+    answer:
+      "AI models retrain regularly, competitors publish new content, and the queries people ask AI evolve constantly. A page that gets you cited today might not work next month. CabbageSEO scans continuously (daily or hourly depending on your plan), catches every shift the moment it happens, and auto-generates new fix pages for any new gaps. Without ongoing monitoring, you\u2019re flying blind \u2014 your visibility could drop and you\u2019d have no idea until customers stop finding you.",
   },
   {
     question: "Can I cancel anytime?",
@@ -374,8 +379,8 @@ export default function PricingPage() {
 
           <AnimateIn delay={0.2}>
             <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto mb-10">
-              Every plan monitors real AI citations. Upgrade for more sites,
-              faster monitoring, and full GEO intelligence.
+              AI visibility shifts weekly. Every plan scans, finds gaps, and auto-generates
+              fix pages continuously. Higher tiers scan faster and generate more.
             </p>
           </AnimateIn>
 
@@ -461,6 +466,57 @@ export default function PricingPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          </AnimateIn>
+
+          {/* Every month after */}
+          <AnimateIn delay={0.4}>
+            <div className="mt-12 max-w-3xl mx-auto">
+              <h3 className="text-lg font-semibold text-white text-center mb-2">
+                Every month after that
+              </h3>
+              <p className="text-zinc-500 text-sm text-center mb-6">
+                AI models retrain, competitors publish, and recommendations shift. Here&apos;s what runs automatically:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  {
+                    tier: "Scout",
+                    frequency: "Daily scans",
+                    auto: "2 fix pages per scan",
+                    manual: "5 manual pages/mo",
+                    color: "border-emerald-500/20",
+                  },
+                  {
+                    tier: "Command",
+                    frequency: "Hourly scans",
+                    auto: "5 fix pages per scan",
+                    manual: "25 manual pages/mo",
+                    color: "border-emerald-500/40",
+                  },
+                  {
+                    tier: "Dominate",
+                    frequency: "Hourly scans",
+                    auto: "10 fix pages per scan",
+                    manual: "Unlimited pages",
+                    color: "border-amber-500/30",
+                  },
+                ].map((t) => (
+                  <div key={t.tier} className={`bg-zinc-900/80 border ${t.color} rounded-xl p-4 text-center`}>
+                    <p className="text-white font-semibold text-sm mb-2">{t.tier}</p>
+                    <div className="space-y-1.5 text-xs text-zinc-400">
+                      <p>{t.frequency}</p>
+                      <p>{t.auto}</p>
+                      <p>{t.manual}</p>
+                      <p>Fresh action plan weekly</p>
+                      <p>Alerts on any drop</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-zinc-600 text-xs text-center mt-4">
+                All of this runs automatically. You get emailed when something needs your attention.
+              </p>
             </div>
           </AnimateIn>
         </div>
