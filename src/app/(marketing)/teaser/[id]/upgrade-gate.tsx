@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Lock, ListChecks, TrendingUp, Search, FileText, Bell } from "lucide-react";
+import { ArrowRight, Lock, ListChecks, TrendingUp, Search, FileText, Bell, AlertTriangle } from "lucide-react";
 
 interface UpgradeGateProps {
   domain: string;
   isInvisible: boolean;
   brandCount: number;
+  visibilityScore?: number;
+  gapCount?: number;
 }
 
 const actionPreviews = [
@@ -27,74 +29,84 @@ const actionPreviews = [
   },
   {
     icon: <Bell className="w-4 h-4 text-emerald-400" />,
-    title: "Track progress and detect new opportunities weekly",
+    title: "Track progress and detect new opportunities daily",
     blurred: "Daily auto-checks detect new queries to target. Score drop alerts notify you via email. New content opportunities appear automatically so you never fall behind...",
   },
 ];
 
-export default function UpgradeGate({ domain, isInvisible, brandCount }: UpgradeGateProps) {
+export default function UpgradeGate({ domain, isInvisible, brandCount, visibilityScore, gapCount }: UpgradeGateProps) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-8 relative overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-1">
-        <ListChecks className="w-5 h-5 text-emerald-400" />
-        <h3 className="text-lg font-semibold text-white">
-          Your Action Plan
-        </h3>
+    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden mb-8">
+      {/* Urgency bar */}
+      <div className="bg-amber-500/10 border-b border-amber-500/20 px-5 py-2.5 flex items-center gap-2">
+        <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+        <p className="text-amber-300 text-xs font-medium">
+          AI models retrain weekly. Your visibility can shift any day.
+        </p>
       </div>
-      <p className="text-sm text-zinc-400 mb-5">
-        {isInvisible
-          ? `4 steps to get ${domain} recommended by AI`
-          : brandCount > 0
-            ? `4 steps to boost ${domain}'s AI visibility score`
-            : `4 steps to strengthen ${domain}'s AI visibility`
-        }
-      </p>
 
-      {/* Action items — first one visible, rest blurred */}
-      <div className="space-y-3 mb-6">
-        {actionPreviews.map((action, i) => (
-          <div
-            key={i}
-            className={`rounded-xl p-4 ${
-              i === 0
-                ? "bg-zinc-800/50 border border-zinc-700"
-                : "bg-zinc-800/30 border border-zinc-800"
-            }`}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              {action.icon}
-              <span className={`text-sm font-medium ${i === 0 ? "text-white" : "text-zinc-300"}`}>
-                {i === 0 ? action.title : action.title}
-              </span>
-              {i > 0 && (
-                <Lock className="w-3 h-3 text-zinc-600 ml-auto flex-shrink-0" />
-              )}
-            </div>
-            <p
-              className={`text-xs leading-relaxed ${
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex items-center gap-2 mb-1">
+          <ListChecks className="w-5 h-5 text-emerald-400" />
+          <h3 className="text-lg font-semibold text-white">
+            Your Action Plan
+          </h3>
+        </div>
+        <p className="text-sm text-zinc-400 mb-5">
+          {isInvisible
+            ? `Get ${domain} recommended by AI — here's the roadmap`
+            : gapCount && gapCount > 0
+              ? `${gapCount} visibility gap${gapCount > 1 ? "s" : ""} to close for ${domain}`
+              : `Steps to strengthen ${domain}'s AI visibility`
+          }
+        </p>
+
+        {/* Action items — first one visible, rest blurred */}
+        <div className="space-y-3 mb-6">
+          {actionPreviews.map((action, i) => (
+            <div
+              key={i}
+              className={`rounded-xl p-4 ${
                 i === 0
-                  ? "text-zinc-400"
-                  : "text-zinc-600 select-none blur-[6px]"
+                  ? "bg-zinc-800/50 border border-zinc-700"
+                  : "bg-zinc-800/30 border border-zinc-800"
               }`}
             >
-              {action.blurred}
-            </p>
-          </div>
-        ))}
-      </div>
+              <div className="flex items-center gap-2 mb-2">
+                {action.icon}
+                <span className={`text-sm font-medium ${i === 0 ? "text-white" : "text-zinc-300"}`}>
+                  {action.title}
+                </span>
+                {i > 0 && (
+                  <Lock className="w-3 h-3 text-zinc-600 ml-auto flex-shrink-0" />
+                )}
+              </div>
+              <p
+                className={`text-xs leading-relaxed ${
+                  i === 0
+                    ? "text-zinc-400"
+                    : "text-zinc-600 select-none blur-[6px]"
+                }`}
+              >
+                {action.blurred}
+              </p>
+            </div>
+          ))}
+        </div>
 
-      {/* CTA */}
-      <Link
-        href={`/signup?domain=${encodeURIComponent(domain)}`}
-        className="flex items-center justify-center gap-2 w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors"
-      >
-        Start fixing my AI visibility
-        <ArrowRight className="w-4 h-4" />
-      </Link>
-      <p className="text-xs text-zinc-500 text-center mt-2">
-        From $39/mo &bull; Cancel anytime
-      </p>
+        {/* CTA */}
+        <Link
+          href={`/signup?domain=${encodeURIComponent(domain)}`}
+          className="flex items-center justify-center gap-2 w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors"
+        >
+          Start fixing my AI visibility
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+        <p className="text-xs text-zinc-500 text-center mt-2">
+          From $49/mo · Cancel anytime
+        </p>
+      </div>
     </div>
   );
 }
