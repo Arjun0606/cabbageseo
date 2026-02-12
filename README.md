@@ -1,49 +1,37 @@
-# 🥬 CabbageSEO
+# CabbageSEO
 
-**The Search Optimization OS** — SEO + AIO (AI Optimization) in one unified platform.
+**AI Visibility Intelligence** — Know where you stand. Fix what's missing.
 
-Like Cursor did for coding, CabbageSEO does for search optimization. We orchestrate existing point solutions (keyword tools, AI writers, CMS APIs, analytics) into one seamless system that lets anyone run professional SEO and optimize for AI search engines.
+CabbageSEO is a GEO (Generative Engine Optimization) platform that checks whether AI assistants mention your brand. When someone asks ChatGPT, Perplexity, or Google AI about your space, does your brand come up? We find out, show you where you stand, and help you improve.
 
-## 🚀 Features
+## Features
 
-### SEO Engine
-- **Strategy Engine** — AI-powered keyword research, clustering, and content planning
-- **Content Engine** — SERP-aware article generation with optimization scoring
-- **Publishing Engine** — One-click publish to WordPress, Webflow, Shopify
-- **Monitoring Engine** — Real-time rank tracking and content decay alerts
-- **Optimization Engine** — Continuous content refresh and internal linking
-- **Autopilot Mode** — Set it and forget it. SEO runs automatically.
+- **AI Visibility Scanning** — Runs your key queries through ChatGPT, Perplexity, and Google AI to check if they mention you. Tracks citations over time.
+- **Gap Detection** — Identifies specific queries where AI talks about your space but doesn't mention you.
+- **Fix Pages** — Generates AI-optimized content pages targeting each gap, structured to be cited by AI.
+- **Intelligence & Action Plans** — Gap analysis explains why you're not being cited. Weekly action plans prioritize what to do next.
+- **Trust Source Tracking** — Monitors whether you're listed on the review platforms AI trusts (G2, Capterra, Trustpilot, etc.).
 
-### AIO Engine (AI Optimization)
-- **AI Visibility Scores** — Measure readiness for Google AI Overviews, ChatGPT, Perplexity, Claude, Gemini
-- **Entity Extraction** — Identify and enhance named entities for AI understanding
-- **Quotability Analysis** — Find and create AI-citable snippets
-- **Answer Structure** — Optimize content structure for AI extraction
-- **Citation Tracking** — Monitor when AI platforms cite your content
+## Tech Stack
 
-## 🛠️ Tech Stack
-
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 16 (App Router, React Server Components)
+- **Language**: TypeScript + React 19
 - **Styling**: Tailwind CSS + shadcn/ui
 - **Database**: Supabase (PostgreSQL) + Drizzle ORM
 - **Auth**: Supabase Auth (Email + Google OAuth)
-- **Payments**: Dodo Payments (subscription + usage-based)
-- **AI**: Anthropic Claude Sonnet 4 / OpenAI GPT-4o
-- **SEO Data**: DataForSEO API
-- **Email**: Resend (transactional emails)
-- **Background Jobs**: Inngest
+- **Payments**: Dodo Payments
+- **AI**: Google Gemini (query generation), Perplexity API, OpenAI API
+- **Email**: Resend
+- **State Management**: TanStack Query (React Query)
 
-## 📦 Getting Started
+## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- npm or yarn
+- npm
 - Supabase account
-- Dodo Payments account ([docs.dodopayments.com](https://docs.dodopayments.com/introduction))
-- DataForSEO account
-- Anthropic API key (Claude)
-- Resend account (for emails)
+- Dodo Payments account
 
 ### Installation
 
@@ -62,7 +50,7 @@ Like Cursor did for coding, CabbageSEO does for search optimization. We orchestr
    ```bash
    cp .env.example .env.local
    ```
-   Fill in your API keys and credentials in `.env.local`
+   See `docs/ENV_SETUP.md` for details.
 
 4. **Set up the database**
    ```bash
@@ -76,14 +64,11 @@ Like Cursor did for coding, CabbageSEO does for search optimization. We orchestr
 
 6. Open [http://localhost:3000](http://localhost:3000)
 
-## 🗄️ Database
+## Database
 
 We use Drizzle ORM with Supabase (PostgreSQL).
 
 ```bash
-# Generate migrations
-npm run db:generate
-
 # Push schema to database
 npm run db:push
 
@@ -91,107 +76,45 @@ npm run db:push
 npm run db:studio
 ```
 
-## 💰 Pricing
+## Pricing
 
-| Plan | Price | Articles | Keywords | Sites |
-|------|-------|----------|----------|-------|
-| Starter | $29/mo | 10 | 1,000 | 1 |
-| Pro | $59/mo | 40 | 5,000 | 3 |
-| Pro+ | $129/mo | 120 | 15,000 | 10 |
+| Plan | Price | Scans | Fix Pages | Auto-gen/scan |
+|------|-------|-------|-----------|---------------|
+| Scout | $49/mo | Daily | 5/month | 2 |
+| Command | $149/mo | Hourly | 25/month | 5 |
+| Dominate | $349/mo | Hourly | Unlimited | 10 |
 
-Overages are billed at 90% markup on cost.
+All plans include 1 site. Free scan available on the homepage — no signup required.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 cabbageseo/
 ├── src/
-│   ├── app/                    # Next.js App Router
+│   ├── app/
 │   │   ├── (auth)/             # Auth pages (login, signup)
-│   │   ├── (dashboard)/        # Main app pages
+│   │   ├── (dashboard)/        # Dashboard pages
+│   │   ├── (marketing)/        # Marketing pages (RSC)
 │   │   └── api/                # API routes
 │   ├── components/
-│   │   ├── ui/                 # Base UI components
+│   │   ├── ui/                 # Base UI components (shadcn)
 │   │   ├── dashboard/          # Dashboard components
-│   │   └── marketing/          # Landing page components
+│   │   ├── homepage/           # Homepage scan components
+│   │   └── marketing/          # Marketing shell & layout
 │   ├── lib/
-│   │   ├── db/                 # Database schema & queries
-│   │   ├── integrations/       # External API clients
-│   │   ├── engines/            # Business logic
-│   │   └── billing/            # Stripe integration
-│   ├── hooks/                  # React hooks
-│   ├── types/                  # TypeScript types
-│   └── config/                 # Configuration
+│   │   ├── db/                 # Drizzle schema & queries
+│   │   ├── billing/            # Plan config & billing logic
+│   │   ├── geo/                # Citation intelligence
+│   │   └── api/                # Rate limiting & utilities
+│   ├── hooks/
+│   │   └── api/                # React Query hooks
+│   └── content/
+│       └── blog/               # Blog posts (MDX)
 ├── drizzle/                    # Database migrations
 └── public/                     # Static assets
 ```
 
-## 🔌 Integrations
-
-### SEO Data (DataForSEO)
-- Keyword research & suggestions
-- SERP analysis
-- Competitor keyword analysis
-- Keyword gap analysis
-
-### AI Content (OpenAI/Anthropic)
-- Keyword clustering
-- Content outline generation
-- Full article writing
-- Meta tag generation
-- Internal linking suggestions
-- FAQ schema generation
-
-### Publishing (WordPress)
-- Post creation & updates
-- Category/tag management
-- Media upload
-- SEO meta fields (Yoast/RankMath)
-
-### Billing (Dodo Payments)
-- Subscription management (Starter/Pro/Pro+)
-- Usage-based billing with spending caps
-- Pay-as-you-go overages (90% markup)
-- Customer portal
-- Global merchant of record (handles taxes)
-
-### Required Environment Variables
-
-```bash
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-
-# AI
-ANTHROPIC_API_KEY=
-
-# SEO Data
-DATAFORSEO_LOGIN=
-DATAFORSEO_PASSWORD=
-
-# Dodo Payments
-DODO_API_KEY=
-DODO_WEBHOOK_SECRET=
-DODO_STARTER_MONTHLY_ID=
-DODO_STARTER_YEARLY_ID=
-DODO_PRO_MONTHLY_ID=
-DODO_PRO_YEARLY_ID=
-DODO_PRO_PLUS_MONTHLY_ID=
-DODO_PRO_PLUS_YEARLY_ID=
-DODO_CREDITS_SMALL_ID=
-DODO_CREDITS_MEDIUM_ID=
-DODO_CREDITS_LARGE_ID=
-
-# Email
-RESEND_API_KEY=
-RESEND_FROM_EMAIL=
-
-# Security
-ENCRYPTION_KEY= # 32-character secret for encrypting credentials
-```
-
-## 🚢 Deployment
+## Deployment
 
 ### Vercel (Recommended)
 
@@ -200,23 +123,6 @@ ENCRYPTION_KEY= # 32-character secret for encrypting credentials
 3. Set environment variables
 4. Deploy
 
-### Self-hosted
-
-```bash
-npm run build
-npm start
-```
-
-## 📄 License
-
-MIT License - feel free to use this for your own projects.
-
-## 🤝 Contributing
-
-Contributions welcome! Please read our contributing guidelines first.
-
 ---
-
-Built with 💚 by the CabbageSEO team.
 
 **[cabbageseo.com](https://cabbageseo.com)**

@@ -210,11 +210,10 @@ If you're not listed on the sources AI trusts for your space, you're far less li
       },
       {
         title: "Score ranges",
-        content: `• **0-15**: Invisible — AI doesn't know your brand yet
-• **16-39**: Low visibility — AI barely recognizes you
-• **40-59**: Moderate — AI knows you but doesn't consistently cite you
-• **60-79**: Good — AI regularly mentions and cites you
-• **80-100**: Excellent — AI actively recommends you`,
+        content: `• **0-14**: Invisible — AI doesn't know your brand yet
+• **15-39**: Low visibility — AI has limited awareness of you
+• **40-59**: Moderate — AI recognizes you but doesn't consistently cite you
+• **60-100**: Strong — AI actively recommends and cites you`,
       },
       {
         title: "Tracking progress",
