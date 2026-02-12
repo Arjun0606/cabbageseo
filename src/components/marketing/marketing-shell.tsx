@@ -180,7 +180,6 @@ function Footer() {
       { href: "/docs", label: "Documentation" },
     ],
     community: [
-      { href: "/leaderboard", label: "AI Leaderboard" },
       { href: "/feedback", label: "Feedback" },
       { href: "/vs/manual-tracking", label: "CabbageSEO vs Manual" },
     ],

@@ -4,16 +4,15 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Eye,
-  BarChart3,
+  Search,
   CheckCircle2,
   Globe,
-  Map,
+  ShieldCheck,
   HelpCircle,
-  AlertTriangle,
+  Target,
   FileText,
   TrendingUp,
-  Timer,
-  PenTool,
+  Lightbulb,
   Database,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -28,110 +27,88 @@ const sections = [
     icon: Eye,
     items: [
       {
-        title: "What is AI Visibility Intelligence?",
-        content: `CabbageSEO is a GEO (Generative Engine Optimization) platform that shows you where you stand in AI search. When someone asks ChatGPT "what's the best CRM?" or asks Perplexity for "project management tool alternatives" — AI picks winners. We show you if you're one of them, and where your visibility gaps are.`,
+        title: "What is CabbageSEO?",
+        content: `CabbageSEO is a GEO (Generative Engine Optimization) platform that checks whether AI assistants know about your brand. When someone asks ChatGPT, Perplexity, or Google AI about your space, does your brand come up? We find out, show you where you stand, and help you improve.`,
       },
       {
         title: "How does it work?",
         content: `1. Enter your website domain on the homepage
-2. We query real AI platforms (ChatGPT, Perplexity, Google AI) with relevant questions
-3. We show you whether AI mentions your brand and where your gaps are
-4. You see exactly where your visibility stands and what to improve`,
+2. We read your site to understand what your business does
+3. We generate the exact queries your potential customers would ask AI
+4. We run those queries through ChatGPT, Perplexity, and Google AI
+5. You see your visibility score, what each platform said, and what to improve`,
       },
       {
         title: "Supported AI Platforms",
-        content: `• **Perplexity** — Real API integration with source citation detection
-• **Google AI (Gemini)** — Search grounding for real-time web data
-• **ChatGPT** — OpenAI query analysis
+        content: `• **Perplexity** — Real API with source citation detection
+• **Google AI (Gemini)** — Domain and brand mention extraction
+• **ChatGPT** — Response text analysis for brand mentions
 
-All results come from actual API calls. No fake data or estimates.`,
+All results come from actual API calls to real AI platforms. No fake data or estimates.`,
       },
     ],
   },
   {
-    id: "dashboard",
-    title: "Your War Room Dashboard",
-    icon: BarChart3,
+    id: "visibility-scanning",
+    title: "AI Visibility Scanning",
+    icon: Search,
     items: [
       {
-        title: "Running an AI Check",
-        content: `From your dashboard, click "Run Check" to query AI platforms instantly. We'll show you:
-• Which queries mention your brand (AI recommends you)
-• Which queries don't mention you yet (visibility gaps)
-• Your overall AI visibility across all platforms
+        title: "Free scan (no signup required)",
+        content: `Enter any domain on the homepage and get an instant AI visibility report. The scan:
+• Reads your site to understand what your business does
+• Uses AI to generate queries your real customers would ask
+• Checks Perplexity, Google AI, and ChatGPT for your brand
+• Shows your visibility score (0-100) with per-platform breakdown
 
-The check queries ChatGPT, Perplexity, and Google AI with relevant questions about your product category. Results appear in real-time.`,
+The free scan is available to everyone, no account needed.`,
       },
       {
-        title: "Understanding Your Results",
-        content: `Each check shows:
-• **AI Mentions Found** — How many times AI recommended you across all queries
-• **AI Mention Share** — What % of tracked queries mention your brand
-• **Wins** — Visual breakdown of queries where you were mentioned
+        title: "How queries are generated",
+        content: `Unlike tools that use generic templates like "best [category] tools", CabbageSEO reads your actual site content — title, description, headings — and uses AI to generate the specific queries your customers would ask.
 
-All numbers come from real AI responses. Citations in your dashboard represent actual mentions from AI platforms. If you haven't run any checks yet, you'll see a prompt to run your first check.`,
+For example, if you run a startup directory, we'd generate queries like "best startup directories for founders" — not "best startup tools 2026."
+
+This means your results are accurate and relevant to your actual business.`,
       },
       {
-        title: "Check Limits by Plan",
-        content: `• **Scout ($49/mo)**: Unlimited manual checks + daily automated checks
-• **Command ($149/mo)**: Unlimited manual checks + daily checks + hourly monitoring
-• **Dominate ($349/mo)**: Unlimited manual checks + daily checks + hourly monitoring + unlimited everything
+        title: "Dashboard scanning (paid plans)",
+        content: `On paid plans, scanning goes deeper:
+• **Scout ($49/mo)**: Daily automated scans, 5 fix pages/month
+• **Command ($149/mo)**: Hourly scans, 25 fix pages/month
+• **Dominate ($349/mo)**: Hourly scans, unlimited fix pages
 
-**Note**: Automated checks run in the background and don't count against manual check limits. If your AI visibility drops significantly, you'll get an instant alert via email and Slack (if configured).`,
+Automated scans run in the background and alert you if your visibility changes.`,
       },
     ],
   },
   {
-    id: "trust-map",
-    title: "AI Trust Map",
-    icon: Map,
+    id: "gap-detection",
+    title: "Gap Detection",
+    icon: Target,
     items: [
       {
-        title: "What is the Trust Map?",
-        content: `AI platforms don't just make up recommendations — they pull from trusted sources like G2, Capterra, Product Hunt, and Reddit. The Trust Map shows you which sources AI uses, and highlights where you're not yet listed.`,
+        title: "What are visibility gaps?",
+        content: `A visibility gap is a query where AI talks about your space but doesn't mention you. These are the conversations happening without you — potential customers asking AI for recommendations and not hearing your name.`,
       },
       {
-        title: "How to use it",
-        content: `Navigate to the Trust Map from your dashboard sidebar. You'll see:
-• Critical sources where you must be listed
-• Your listing status on each source
-• Exactly which gaps to fill to improve visibility`,
-      },
-      {
-        title: "Why it matters",
-        content: `If you're not listed on key review sites like G2, AI is far less likely to recommend you. The Trust Map shows you exactly which gaps to fill to start getting AI recommendations.`,
-      },
-    ],
-  },
-  {
-    id: "gap-analysis",
-    title: "Citation Gap Analysis",
-    icon: AlertTriangle,
-    items: [
-      {
-        title: "Understanding your visibility gaps",
-        content: `For any query where AI doesn't mention you, the gap analysis shows:
-• What the AI response included instead
-• Which trusted sources you're missing from
-• Specific content gaps in your online presence
-• Missing elements in your content
-• Authority gaps you need to close
+        title: "How gap detection works",
+        content: `After running a scan, CabbageSEO identifies:
+• Queries where AI should mention you but doesn't
+• Which platforms recognize you and which don't
+• What AI says instead when it doesn't mention you
 
-**Note**: This feature requires running a check first. The analysis uses real AI responses and citation data.`,
+Each gap is an opportunity to improve your visibility.`,
       },
       {
-        title: "Content fix suggestions",
-        content: `Paid users get content fix recommendations:
-• Recommended page title to create
-• Section headings to include
-• Key entities and topics to mention
-• FAQs to answer
+        title: "Understanding your results",
+        content: `For each query, you'll see a status:
+• **Cited** — Your domain appears in AI's source citations (strongest signal)
+• **Domain found** — Your full domain is mentioned in the response
+• **Recognized** — AI knows your brand name
+• **Not found** — AI doesn't mention you for this query
 
-**Scout**: 5 gap analyses per month
-**Command**: Unlimited gap analyses
-**Dominate**: Unlimited gap analyses
-
-This is your blueprint to improve visibility for specific queries.`,
+The raw AI response is always shown so you can verify exactly what was said.`,
       },
     ],
   },
@@ -142,20 +119,18 @@ This is your blueprint to improve visibility for specific queries.`,
     items: [
       {
         title: "What are fix pages?",
-        content: `Fix pages are comparison pages, category explainers, and FAQs designed to reinforce your credibility with AI systems. They work alongside your trust signals — G2 listings, Capterra reviews, Reddit mentions — by giving AI additional context to validate its recommendations.
+        content: `Fix pages are AI-optimized content pages targeting your visibility gaps. Each page is structured specifically to be cited by AI: direct answers in the first paragraph, comparison tables, FAQ sections, entity-rich text, and Schema.org markup.
 
-Pages are generated using your citation data and gap analysis to create deeply relevant content that generic AI tools can't match.
-
-Fix pages reinforce third-party trust signals (reviews, listings, mentions) so AI platforms can confidently cite you — they don't cause recommendations on their own.`,
+They reinforce your existing trust signals (reviews, listings, mentions) so AI platforms can confidently cite you.`,
       },
       {
         title: "How it works",
-        content: `1. Choose a query where you want better AI visibility
-2. Select the page type (comparison page, category explainer, FAQ, etc.)
-3. CabbageSEO generates a full page with headings, content, FAQs, and structured data
-4. Review, edit if needed, and publish to your site
+        content: `1. Pick a query where AI doesn't mention you yet
+2. CabbageSEO generates a full page with headings, content, FAQs, and structured data
+3. Review, edit if needed, and publish to your site
+4. AI platforms pick up the content over time
 
-Each page is tailored to your specific gaps and designed to reinforce the trust signals AI already looks for when recommending products.`,
+Pages use deep GEO knowledge about how each platform decides what to cite.`,
       },
       {
         title: "Fix page limits",
@@ -169,209 +144,143 @@ Each page is tailored to your specific gaps and designed to reinforce the trust 
 • **Command**: 5 pages per scan
 • **Dominate**: 10 pages per scan
 
-After every citation scan, CabbageSEO automatically generates fix pages for newly discovered gaps. Manual pages are counted per calendar month and reset on the 1st. Auto-generated pages count toward your monthly limit.`,
+Pages are counted per calendar month and reset on the 1st.`,
       },
     ],
   },
   {
-    id: "sprint",
-    title: "30-Day Sprint",
-    icon: Timer,
+    id: "intelligence",
+    title: "Intelligence & Action Plans",
+    icon: Lightbulb,
     items: [
       {
-        title: "What is the 30-Day Sprint?",
-        content: `The 30-Day Sprint is a structured 4-week program to improve your AI visibility. Instead of an endless dashboard, you get specific actions each week:
-
-• **Week 1**: Critical sources — get listed where it matters most
-• **Week 2**: Comparison content — create pages that AI loves
-• **Week 3**: Authority building — build trust signals
-• **Week 4**: Review and optimize — measure progress and adjust
-
-Each action includes clear instructions, estimated time, and priority level.`,
+        title: "Gap analysis",
+        content: `For each visibility gap, CabbageSEO explains why AI isn't citing you and what you can do about it:
+• What the AI response included instead of your brand
+• Which trusted sources you're missing from
+• Specific content improvements to make
+• Missing elements in your online presence`,
       },
       {
-        title: "How to start a sprint",
-        content: `From your dashboard, click "Start Sprint" to begin your 30-day program. You'll get:
-• Weekly action items with clear instructions
-• Progress tracking as you complete each action
-• Momentum score updates showing your improvement
+        title: "Weekly action plans",
+        content: `Each week, you get a prioritized list of actions based on your scan data:
+• Which gaps to tackle first (biggest impact)
+• Content to create or update
+• Trust sources to get listed on
+• Progress tracking on completed actions
 
-Sprints are available on Scout, Command, and Dominate plans.`,
+Actions are prioritized by potential impact on your visibility score.`,
       },
     ],
   },
   {
-    id: "momentum",
-    title: "Momentum Scoring",
+    id: "trust-sources",
+    title: "Trust Source Tracking",
+    icon: ShieldCheck,
+    items: [
+      {
+        title: "What are trust sources?",
+        content: `AI platforms don't just make things up — they pull from trusted third-party sources. Depending on your industry, these might include G2, Capterra, Trustpilot, Yelp, Product Hunt, Reddit, and others.
+
+If you're not listed on the sources AI trusts for your space, you're far less likely to be recommended.`,
+      },
+      {
+        title: "How trust source tracking works",
+        content: `CabbageSEO monitors whether you're listed on the review platforms and directories that matter for your industry:
+• Which trust sources are relevant to your business
+• Your listing status on each one
+• Which gaps to fill to improve your credibility with AI`,
+      },
+    ],
+  },
+  {
+    id: "scoring",
+    title: "Visibility Scoring",
     icon: TrendingUp,
     items: [
       {
-        title: "What is your Momentum Score?",
-        content: `Your momentum score is a single number (0-100) that tracks your AI visibility progress. It updates weekly and shows whether you're gaining or losing ground in AI search.
+        title: "How your score is calculated",
+        content: `Your AI visibility score (0-100) is based on 5 factors:
 
-The score combines:
-• AI citation frequency across tracked queries
-• Citation quality (direct recommendation vs mention)
-• Week-over-week change
-• Market position trends`,
+• **Citation Presence (0-40)** — Is your domain cited as a source by AI?
+• **Domain Visibility (0-25)** — Is your full domain mentioned in responses?
+• **Brand Recognition (0-15)** — Does AI recognize your brand name?
+• **Mention Prominence (0-12)** — Are you mentioned early or buried?
+• **Mention Depth (0-8)** — Are you mentioned consistently across platforms?`,
       },
       {
-        title: "Reading your momentum",
-        content: `• **Rising score**: You're gaining AI visibility — keep doing what you're doing
-• **Flat score**: No change — time to take action on your sprint items
-• **Falling score**: Your visibility may need attention — check alerts for what changed
+        title: "Score ranges",
+        content: `• **0-15**: Invisible — AI doesn't know your brand yet
+• **16-39**: Low visibility — AI barely recognizes you
+• **40-59**: Moderate — AI knows you but doesn't consistently cite you
+• **60-79**: Good — AI regularly mentions and cites you
+• **80-100**: Excellent — AI actively recommends you`,
+      },
+      {
+        title: "Tracking progress",
+        content: `Your dashboard shows your visibility score over time. Each automated scan creates a new data point so you can see whether your efforts are working.
 
-The momentum score is available on Scout, Command, and Dominate plans.`,
+If your score drops, you'll receive an alert via email (and Slack if configured).`,
       },
     ],
   },
   {
     id: "notifications",
-    title: "Notifications & Slack",
+    title: "Notifications",
     icon: Globe,
     items: [
       {
         title: "Slack Integration",
-        content: `Connect Slack to get AI visibility alerts directly in your channel. Available on all paid plans.
+        content: `Connect Slack to get AI visibility alerts directly in your channel.
 
 **Setup:**
 1. Go to Settings > Notifications
-2. Create a Slack incoming webhook (link provided in settings)
+2. Create a Slack incoming webhook
 3. Paste the webhook URL and click "Test Connection"
-4. Save — you'll now receive automated alerts
-
-**What you'll get in Slack:**
-• Check results (queries won/lost)
-• Visibility drop alerts (when queries won drops)
-• Weekly summary reports (every Monday)`,
-      },
-      {
-        title: "Visibility Drop Alerts",
-        content: `When your AI visibility drops — meaning you're appearing in fewer queries than before — you'll get an instant alert via:
-• **Email** — includes the change and queries where you're no longer mentioned
-• **Slack** — if configured, sent to your channel automatically
-
-Drops are detected during automated checks. The alert includes specific queries where your visibility has changed, so you can take targeted action.`,
+4. Save — you'll receive alerts automatically`,
       },
       {
         title: "Email Notifications",
         content: `Manage your email preferences in Settings > Notifications:
-• **Citation Alerts** — when new AI citations are found
-• **Visibility Drop Alerts** — when your AI visibility score decreases
-• **Weekly Report** — Monday morning digest with score, wins, and top action
+• **Citation Alerts** — When new AI citations are found
+• **Visibility Drop Alerts** — When your score decreases
+• **Weekly Report** — Monday digest with score and top actions
 
-All email notifications can be toggled on/off individually.`,
-      },
-    ],
-  },
-  {
-    id: "trend-chart",
-    title: "Trend Chart & History",
-    icon: TrendingUp,
-    items: [
-      {
-        title: "Historical Trend Chart",
-        content: `The trend chart on your dashboard shows your AI visibility score over time. Each data point represents a check (manual or automated).
-
-**What's tracked:**
-• Overall visibility score (0-100)
-• Queries won (AI recommends you)
-• Queries missed (AI doesn't mention you yet)
-
-**History limits by plan:**
-• Scout: 30 days
-• Command: 365 days
-• Dominate: 365 days
-
-Hover over any data point to see the full breakdown for that check.`,
-      },
-      {
-        title: "Custom Query Tracking",
-        content: `Monitor your exact buying queries. Instead of relying only on auto-generated queries, add the specific questions your customers ask.
-
-**How to use:**
-1. On the dashboard, find the "Custom Queries" section below "Queries You're Losing"
-2. Type a query and press Enter or click Add
-3. Your custom queries will be included in future checks
-
-**Limits by plan:**
-• Scout: 5 custom queries
-• Command: Unlimited
-• Dominate: Unlimited`,
+All notifications can be toggled on/off individually.`,
       },
     ],
   },
   {
     id: "methodology",
-    title: "Methodology & Data Integrity",
+    title: "Methodology",
     icon: CheckCircle2,
     items: [
       {
-        title: "How we detect AI recommendations",
+        title: "How we detect AI visibility",
         content: `For each query, we call real AI platform APIs:
 
-• **Perplexity**: Returns source URLs directly. We match your domain against these.
-• **Google AI (Gemini)**: Uses search grounding. We extract mentioned domains.
-• **ChatGPT**: We parse response text for domain and brand mentions.
+• **Perplexity**: Returns source URLs directly. We match your domain against these citations.
+• **Google AI (Gemini)**: We extract mentioned domains from the response text.
+• **ChatGPT**: We analyze response text for domain and brand name mentions.
 
-All raw AI responses are stored so you can verify any result.`,
+All raw AI responses are stored so you can verify any result yourself.`,
       },
       {
-        title: "Confidence levels",
-        content: `We label results with confidence tiers:
+        title: "Result labels",
+        content: `Each result is labeled clearly:
 
-• **High**: Your exact domain URL was in the AI's response or citation list
-• **Medium**: Your brand name or product was mentioned in text
-• **Low**: Related content was referenced but not a direct mention
-
-We err on the side of caution — we'd rather under-report than over-report.`,
+• **Cited**: Your domain URL was in the AI's citation links (strongest signal)
+• **Domain found**: Your full domain appeared in the response text
+• **Recognized**: Your brand name was mentioned
+• **Not found**: AI didn't mention you for this query`,
       },
       {
-        title: "AI Mention Share calculation",
-        content: `AI Mention Share = (times you were mentioned) ÷ (total mentions of all products)
-
-This is calculated only for queries you've tracked. It's labeled "AI mention share (tracked queries only)" — not market share, not industry share. Just what we observed in your specific queries.`,
-      },
-      {
-        title: "Data integrity rules",
-        content: `We follow strict rules:
-
-• We only show data from actual API responses
+        title: "Data integrity",
+        content: `• We only show data from actual API responses
 • We never invent, estimate, or extrapolate metrics
-• All percentages come from real observations
-• If we don't have data, we say "Run more checks"
-• Raw AI responses are available for verification`,
-      },
-    ],
-  },
-  {
-    id: "content-preview",
-    title: "AI Content Preview",
-    icon: PenTool,
-    items: [
-      {
-        title: "What is the AI Content Preview?",
-        content: `When you scan a domain with the free teaser tool, CabbageSEO generates a real brand visibility comparison page preview using your scan data. The first paragraph and one FAQ are fully visible; the rest is blurred behind a signup gate.
-
-This shows you the kind of content CabbageSEO creates — before you even sign up.`,
-      },
-      {
-        title: "How is it generated?",
-        content: `The preview is generated in parallel with your scan results using AI. It uses:
-• Your domain and brand name
-• The top alternative brand found during the scan
-• Real visibility data from the scan
-
-The preview runs non-blocking — if generation fails, your scan results still work normally.`,
-      },
-      {
-        title: "Full content on paid plans",
-        content: `On Scout, Command, and Dominate plans, you get full fix pages:
-• **Scout**: 5 pages per month
-• **Command**: 25 pages per month
-• **Dominate**: Unlimited pages
-
-Each page includes headings, body content, FAQ schema, and structured data — ready to publish.`,
+• If we don't have data, we say so
+• Raw AI responses are available for verification
+• Queries are generated fresh for each scan based on your site's actual content`,
       },
     ],
   },
@@ -412,14 +321,13 @@ Each page includes headings, body content, FAQ schema, and structured data — r
       "status": "success",
       "reportId": "abc123",
       "reportUrl": "https://cabbageseo.com/teaser/abc123",
-      "score": 45,
-      "verdict": "Invisible"
+      "score": 45
     }
   ],
   "summary": { "total": 2, "succeeded": 2, "failed": 0 }
 }
 
-Each result includes a shareable report URL and the overall visibility score.`,
+Each result includes a shareable report URL and visibility score.`,
       },
     ],
   },
@@ -429,52 +337,47 @@ Each result includes a shareable report URL and the overall visibility score.`,
     icon: HelpCircle,
     items: [
       {
-        title: "How often are checks run?",
-        content: `• **Scout**: Unlimited manual checks + daily automated checks
-• **Command**: Unlimited manual checks + daily checks + hourly monitoring
-• **Dominate**: Unlimited manual checks + daily checks + hourly monitoring + unlimited everything
+        title: "How often are scans run?",
+        content: `• **Scout ($49/mo)**: Daily automated scans
+• **Command ($149/mo)**: Hourly scans
+• **Dominate ($349/mo)**: Hourly scans + unlimited everything
 
-Automated checks happen in the background. You'll receive email + Slack alerts when new citations are found or when your score drops.`,
+You can also run manual scans anytime from your dashboard.`,
       },
       {
-        title: "Can I check any website?",
-        content: `Yes! You can check any public website. Enter your domain on the homepage to get started (no signup required for the initial check).
+        title: "Can I scan any website?",
+        content: `Yes. Enter any public domain on the homepage to get a free visibility report — no signup required.
 
-After signing up, you can:
-• Add your site and configure your queries
-• Run gap analyses and generate fix pages
-• Set up automated monitoring
-
-Run a free scan on the homepage to see where you stand. Subscribe to unlock the full dashboard, automated monitoring, and fix pages.`,
+After signing up, you can add your site and set up automated monitoring, gap detection, and fix pages.`,
       },
       {
-        title: "What makes AI recommend a product?",
-        content: `AI platforms tend to recommend products that:
-• Are listed on trusted review sites (G2, Capterra, Product Hunt)
-• Have structured comparison content
+        title: "What makes AI mention a brand?",
+        content: `Based on current GEO research, AI platforms tend to cite brands that:
+• Are listed on trusted review sites (G2, Capterra, Trustpilot, etc.)
+• Have well-structured content with clear answers and Schema.org markup
 • Appear in genuine community discussions (Reddit, forums)
-• Have proper Schema.org markup
-• Are frequently mentioned across authoritative sources`,
+• Have authoritative backlinks and third-party coverage
+• Publish fresh, accurate content regularly`,
       },
       {
         title: "How accurate is this?",
-        content: `We show you exactly what AI platforms return — nothing more, nothing less. Perplexity's API returns citations which we display verbatim. For ChatGPT and Gemini, we analyze response text for mentions. We label everything with confidence tiers and always show the raw response so you can verify.`,
+        content: `We show you exactly what AI platforms return. Perplexity returns citations which we display as-is. For ChatGPT and Gemini, we analyze response text for brand and domain mentions. The raw AI response is always available so you can verify any result.`,
       },
       {
-        title: "What if I'm not getting recommended?",
-        content: `That's exactly what we help with.
+        title: "What if AI doesn't know my brand?",
+        content: `That's exactly what CabbageSEO helps with:
 
-1. **Run a check** to see current status
-2. **View the Trust Map** to see which sources you're missing
-3. **Start a 30-Day Sprint** for a structured improvement program
-4. **Use Gap Analysis** to understand specific gaps (Scout+)
-5. **Generate pages** optimized for AI citation (Scout+)
+1. **Run a scan** to see where you stand
+2. **Review your gaps** to understand what's missing
+3. **Generate fix pages** to create AI-optimized content
+4. **Track trust sources** to get listed where it matters
+5. **Monitor progress** with automated scans
 
-Most founders improve their AI visibility within 30 days of consistent action.`,
+Most users see improvement within 30 days of consistent action.`,
       },
       {
         title: "Can I change plans?",
-        content: `Yes. You can upgrade or downgrade at any time from your billing settings. When you upgrade, you get immediate access to the new tier's features. When you downgrade, your current tier remains active until the end of your billing period.`,
+        content: `Yes. Upgrade or downgrade anytime from your billing settings. Upgrades take effect immediately. Downgrades remain active until the end of your billing period. Cancel anytime, no contracts.`,
       },
     ],
   },
