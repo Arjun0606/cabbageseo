@@ -528,10 +528,10 @@ describe("Auto-generation per scan by tier", () => {
     expect(getAutoGenPerScan("dominate")).toBe(10);
   });
 
-  it("pageRefreshDays is 0 for all plans (auto-refresh removed)", () => {
-    expect(CITATION_PLANS.free.intelligenceLimits.pageRefreshDays).toBe(0);
-    expect(CITATION_PLANS.scout.intelligenceLimits.pageRefreshDays).toBe(0);
-    expect(CITATION_PLANS.command.intelligenceLimits.pageRefreshDays).toBe(0);
-    expect(CITATION_PLANS.dominate.intelligenceLimits.pageRefreshDays).toBe(0);
+  it("pagesPerMonth matches plan tier", () => {
+    expect(CITATION_PLANS.free.intelligenceLimits.pagesPerMonth).toBe(0);
+    expect(CITATION_PLANS.scout.intelligenceLimits.pagesPerMonth).toBe(5);
+    expect(CITATION_PLANS.command.intelligenceLimits.pagesPerMonth).toBe(25);
+    expect(CITATION_PLANS.dominate.intelligenceLimits.pagesPerMonth).toBe(50);
   });
 });

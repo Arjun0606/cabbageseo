@@ -756,7 +756,7 @@ export async function analyzeSite(domain: string): Promise<SiteAnalysis> {
     const internalLinks = extractInternalLinks(primaryHtml, domain);
     // Also add common pages
     const commonPages = [`https://${domain}/about`, `https://${domain}/blog`, `https://${domain}/pricing`];
-    const allLinks = [...new Set([...internalLinks, ...commonPages])].slice(0, 8);
+    const allLinks = Array.from(new Set([...internalLinks, ...commonPages])).slice(0, 8);
 
     const subpageResults = await Promise.all(
       allLinks.map(async (url) => {

@@ -94,7 +94,7 @@ Be specific with real names, real numbers, real URLs. No generic statements.`,
     const citations: string[] = data.citations || [];
 
     // Extract structured data from the research
-    const pricingMatches = content.match(/\$\d+[\d,.]*(?:\/(?:mo|month|year|yr|user|seat))?/gi) || [];
+    const pricingMatches: string[] = content.match(/\$\d+[\d,.]*(?:\/(?:mo|month|year|yr|user|seat))?/gi) || [];
     const domainMatches: string[] = content.match(/\b([a-z0-9-]+\.(?:com|io|co|ai|app|org|net))\b/gi) || [];
     const competitorDomains = Array.from(new Set(domainMatches))
       .filter(d => !d.includes(domain.split(".")[0]))
@@ -103,7 +103,7 @@ Be specific with real names, real numbers, real URLs. No generic statements.`,
     return {
       topSources: citations.slice(0, 8),
       keyFacts: content.split("\n").filter((l: string) => l.match(/\d/) && l.length > 20).slice(0, 15),
-      currentPricing: [...new Set(pricingMatches)].slice(0, 10),
+      currentPricing: Array.from(new Set(pricingMatches)).slice(0, 10),
       competitorNames: competitorDomains,
       rawResponse: content.slice(0, 4000),
     };

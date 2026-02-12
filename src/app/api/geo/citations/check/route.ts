@@ -145,7 +145,7 @@ ${contextParts.join("\n")}`,
 
         if (aiQueries.length >= 3) {
           const combined = [...customQueries, ...aiQueries];
-          return [...new Set(combined)].slice(0, maxQueries);
+          return Array.from(new Set(combined)).slice(0, maxQueries);
         }
       }
     } catch {
@@ -167,7 +167,7 @@ ${contextParts.join("\n")}`,
     `${brand} features and pricing overview`,
   ];
   const combined = [...customQueries, ...fallback];
-  return [...new Set(combined)].slice(0, maxQueries);
+  return Array.from(new Set(combined)).slice(0, maxQueries);
 }
 
 interface CheckResult {
@@ -1071,13 +1071,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Collect all sources mentioned across results
-    const allSources = [...new Set(competitiveResults.flatMap(r => r.sources.map(s => s.domain)))];
+    const allSources = Array.from(new Set(competitiveResults.flatMap(r => r.sources.map(s => s.domain))));
     
     // Find distribution gaps (sources mentioned in queries you're losing)
     const sourcesMentioningLosses = competitiveResults
       .filter(r => r.isLoss && !r.error)
       .flatMap(r => r.sources.map(s => s.name));
-    const uniqueLossSources = [...new Set(sourcesMentioningLosses)];
+    const uniqueLossSources = Array.from(new Set(sourcesMentioningLosses));
 
     // Log AI recommendations to data moat (non-blocking, fire-and-forget)
     const recEntries = extractCitationRecommendations(cleanDomain, siteId, results);
