@@ -52,11 +52,7 @@ async function tryLoadUpstash() {
   }
 
   try {
-    // Dynamic imports — @upstash/redis and @upstash/ratelimit are optional deps.
-    // Install them with: npm i @upstash/redis @upstash/ratelimit
-    // @ts-expect-error — optional dependency, resolved at runtime
     const redis = await import("@upstash/redis");
-    // @ts-expect-error — optional dependency, resolved at runtime
     const ratelimit = await import("@upstash/ratelimit");
     RedisClass = redis.Redis;
     RatelimitClass = ratelimit.Ratelimit;
