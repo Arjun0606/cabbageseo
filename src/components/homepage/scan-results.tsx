@@ -12,6 +12,9 @@ import {
   MinusCircle,
   AlertTriangle,
   TrendingDown,
+  Twitter,
+  Copy,
+  Check,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import ContentPreview from "@/app/(marketing)/teaser/[id]/content-preview";
@@ -135,6 +138,7 @@ export function ScanResults({ data }: ScanResultsProps) {
   const [authError, setAuthError] = useState("");
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [showStickyCta, setShowStickyCta] = useState(false);
+  const [tweetCopied, setTweetCopied] = useState(false);
   const scoreCardRef = useRef<HTMLDivElement>(null);
   const mainCtaRef = useRef<HTMLDivElement>(null);
 
@@ -370,6 +374,63 @@ export function ScanResults({ data }: ScanResultsProps) {
             </p>
           </div>
         </div>
+      </AnimateIn>
+
+      {/* ========== SHARE ON X (Desktop-first) ========== */}
+      <AnimateIn delay={0.05}>
+        {(() => {
+          const reportLink = reportId
+            ? `https://cabbageseo.com/teaser/${reportId}`
+            : "https://cabbageseo.com";
+
+          const tweetText = visibilityScore < 20
+            ? `I just checked if AI recommends ${domain}...\n\nAI Visibility Score: ${visibilityScore}/100\n\nChatGPT, Perplexity & Google AI don't know we exist yet.\n\nCheck yours free 👇\n${reportLink}`
+            : visibilityScore < 50
+              ? `I just checked if AI recommends ${domain}...\n\nAI Visibility Score: ${visibilityScore}/100\n\nAI barely knows us. ${gapCount > 0 ? `${gapCount} gap${gapCount > 1 ? "s" : ""} to fix.` : ""}\n\nCheck yours free 👇\n${reportLink}`
+              : `I just checked if AI recommends ${domain}...\n\nAI Visibility Score: ${visibilityScore}/100 ✅\n\n${summary.mentionedCount}/${summary.totalQueries} platforms recognize us.\n\nCheck yours free 👇\n${reportLink}`;
+
+          const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+
+          const handleCopyTweet = () => {
+            navigator.clipboard.writeText(tweetText);
+            setTweetCopied(true);
+            setTimeout(() => setTweetCopied(false), 2500);
+          };
+
+          return (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Twitter className="w-5 h-5 text-white" />
+                <h3 className="text-white font-semibold">Share your score on X</h3>
+              </div>
+
+              {/* Tweet preview */}
+              <div className="bg-black/40 border border-zinc-700/50 rounded-xl p-4 mb-4 font-mono text-sm leading-relaxed whitespace-pre-line text-zinc-300">
+                {tweetText}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3">
+                <a
+                  href={tweetUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-zinc-200 text-black font-bold rounded-lg transition-colors text-sm"
+                >
+                  <Twitter className="w-4 h-4" />
+                  Post to X
+                </a>
+                <button
+                  onClick={handleCopyTweet}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  {tweetCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                  {tweetCopied ? "Copied!" : "Copy text"}
+                </button>
+              </div>
+            </div>
+          );
+        })()}
       </AnimateIn>
 
       {/* ========== GAPS ALERT ========== */}
@@ -617,24 +678,7 @@ export function ScanResults({ data }: ScanResultsProps) {
         </div>
       </AnimateIn>
 
-      {/* ========== SHARE BUTTONS ========== */}
-      {reportId && (
-        <AnimateIn delay={0.25}>
-          <div className="mb-8">
-            <p className="text-center text-zinc-500 text-sm mb-3">
-              Share your report
-            </p>
-            <ShareButtons
-              domain={domain}
-              reportId={reportId}
-              isInvisible={summary.isInvisible}
-              visibilityScore={visibilityScore}
-              brandCount={0}
-              mentionedCount={summary.mentionedCount}
-            />
-          </div>
-        </AnimateIn>
-      )}
+      {/* Share buttons moved to prominent position above gaps alert */}
 
       {/* ========== STICKY BOTTOM CTA BAR ========== */}
       <div
