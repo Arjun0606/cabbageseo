@@ -329,7 +329,7 @@ function DashboardContent() {
       ) : needsFollowUpCheck ? (
         <DoThisNext action={null} needsRecheck onRunCheck={handleCheck} checking={checking} />
       ) : (
-        <DoThisNext action={nextAction ?? null} loading={loading} onComplete={handleActionComplete} onSkip={handleActionSkip} />
+        <DoThisNext action={nextAction ?? null} loading={loading} />
       )}
 
       {/* ═══ ZONE 3: Progress (collapsible) ═══ */}
