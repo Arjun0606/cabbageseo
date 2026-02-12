@@ -95,9 +95,9 @@ Be specific with real names, real numbers, real URLs. No generic statements.`,
 
     // Extract structured data from the research
     const pricingMatches = content.match(/\$\d+[\d,.]*(?:\/(?:mo|month|year|yr|user|seat))?/gi) || [];
-    const domainMatches = content.match(/\b([a-z0-9-]+\.(?:com|io|co|ai|app|org|net))\b/gi) || [];
-    const competitorDomains = [...new Set(domainMatches)]
-      .filter((d: string) => !d.includes(domain.split(".")[0]))
+    const domainMatches: string[] = content.match(/\b([a-z0-9-]+\.(?:com|io|co|ai|app|org|net))\b/gi) || [];
+    const competitorDomains = Array.from(new Set(domainMatches))
+      .filter(d => !d.includes(domain.split(".")[0]))
       .slice(0, 10);
 
     return {
