@@ -161,26 +161,39 @@ describe("canUseGapAnalysis", () => {
     });
   });
 
-  describe("Command (unlimited)", () => {
+  describe("Command (limit: 15/month)", () => {
     it("allows at 0 usage", () => {
       const result = canUseGapAnalysis("command", 0);
       expect(result.allowed).toBe(true);
-      expect(result.remaining).toBe(-1);
+      expect(result.remaining).toBe(15);
     });
-    it("allows at 1000 usage", () => {
-      const result = canUseGapAnalysis("command", 1000);
+    it("allows at 14 usage", () => {
+      const result = canUseGapAnalysis("command", 14);
       expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(1);
+    });
+    it("denies at 15 usage (limit reached)", () => {
+      const result = canUseGapAnalysis("command", 15);
+      expect(result.allowed).toBe(false);
+      expect(result.remaining).toBe(0);
     });
   });
 
-  describe("Dominate (unlimited)", () => {
+  describe("Dominate (limit: 30/month)", () => {
     it("allows at 0 usage", () => {
       const result = canUseGapAnalysis("dominate", 0);
       expect(result.allowed).toBe(true);
-      expect(result.remaining).toBe(-1);
+      expect(result.remaining).toBe(30);
     });
-    it("allows at 1000 usage", () => {
-      expect(canUseGapAnalysis("dominate", 1000).allowed).toBe(true);
+    it("allows at 29 usage", () => {
+      const result = canUseGapAnalysis("dominate", 29);
+      expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(1);
+    });
+    it("denies at 30 usage (limit reached)", () => {
+      const result = canUseGapAnalysis("dominate", 30);
+      expect(result.allowed).toBe(false);
+      expect(result.remaining).toBe(0);
     });
   });
 });
@@ -198,35 +211,47 @@ describe("canUseContentRecommendations", () => {
     });
   });
 
-  describe("Scout (limit: 5/month)", () => {
+  describe("Scout (limit: 3/month)", () => {
     it("allows at 0 usage", () => {
       const result = canUseContentRecommendations("scout", 0);
       expect(result.allowed).toBe(true);
-      expect(result.remaining).toBe(5);
+      expect(result.remaining).toBe(3);
     });
-    it("allows at 4 usage", () => {
-      const result = canUseContentRecommendations("scout", 4);
+    it("allows at 2 usage", () => {
+      const result = canUseContentRecommendations("scout", 2);
       expect(result.allowed).toBe(true);
       expect(result.remaining).toBe(1);
     });
-    it("denies at 5 usage (limit reached)", () => {
-      const result = canUseContentRecommendations("scout", 5);
+    it("denies at 3 usage (limit reached)", () => {
+      const result = canUseContentRecommendations("scout", 3);
       expect(result.allowed).toBe(false);
       expect(result.remaining).toBe(0);
     });
   });
 
-  describe("Command (unlimited)", () => {
-    it("allows at any usage", () => {
-      expect(canUseContentRecommendations("command", 0).allowed).toBe(true);
-      expect(canUseContentRecommendations("command", 1000).allowed).toBe(true);
+  describe("Command (limit: 10/month)", () => {
+    it("allows at 0 usage", () => {
+      const result = canUseContentRecommendations("command", 0);
+      expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(10);
+    });
+    it("denies at 10 usage (limit reached)", () => {
+      const result = canUseContentRecommendations("command", 10);
+      expect(result.allowed).toBe(false);
+      expect(result.remaining).toBe(0);
     });
   });
 
-  describe("Dominate (unlimited)", () => {
-    it("allows at any usage", () => {
-      expect(canUseContentRecommendations("dominate", 0).allowed).toBe(true);
-      expect(canUseContentRecommendations("dominate", 1000).allowed).toBe(true);
+  describe("Dominate (limit: 20/month)", () => {
+    it("allows at 0 usage", () => {
+      const result = canUseContentRecommendations("dominate", 0);
+      expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(20);
+    });
+    it("denies at 20 usage (limit reached)", () => {
+      const result = canUseContentRecommendations("dominate", 20);
+      expect(result.allowed).toBe(false);
+      expect(result.remaining).toBe(0);
     });
   });
 });
@@ -260,10 +285,15 @@ describe("canUseActionPlan", () => {
     expect(canUseActionPlan("command", 4).reason).toContain("Monthly limit");
   });
 
-  it("Dominate: allowed (unlimited)", () => {
+  it("Dominate: allowed (under limit)", () => {
     expect(canUseActionPlan("dominate", 0).allowed).toBe(true);
-    expect(canUseActionPlan("dominate", 999).allowed).toBe(true);
-    expect(canUseActionPlan("dominate", 999).remaining).toBe(-1);
+    expect(canUseActionPlan("dominate", 7).allowed).toBe(true);
+    expect(canUseActionPlan("dominate", 7).remaining).toBe(1);
+  });
+
+  it("Dominate: denied (at limit)", () => {
+    expect(canUseActionPlan("dominate", 8).allowed).toBe(false);
+    expect(canUseActionPlan("dominate", 8).remaining).toBe(0);
   });
 });
 
@@ -337,19 +367,21 @@ describe("canGeneratePage", () => {
     });
   });
 
-  describe("Dominate (unlimited)", () => {
+  describe("Dominate (limit: 50/month)", () => {
     it("allows at 0 usage", () => {
       const result = canGeneratePage("dominate", 0);
       expect(result.allowed).toBe(true);
-      expect(result.remaining).toBe(-1);
+      expect(result.remaining).toBe(50);
     });
-    it("allows at 100 usage", () => {
-      const result = canGeneratePage("dominate", 100);
+    it("allows at 49 usage", () => {
+      const result = canGeneratePage("dominate", 49);
       expect(result.allowed).toBe(true);
-      expect(result.remaining).toBe(-1);
+      expect(result.remaining).toBe(1);
     });
-    it("allows at 999999 usage", () => {
-      expect(canGeneratePage("dominate", 999999).allowed).toBe(true);
+    it("denies at 50 usage (limit reached)", () => {
+      const result = canGeneratePage("dominate", 50);
+      expect(result.allowed).toBe(false);
+      expect(result.remaining).toBe(0);
     });
   });
 });
@@ -375,20 +407,20 @@ describe("Cross-tier: paying customers get what they pay for", () => {
     expect(canAddSite("command", 0).allowed).toBe(true);
     expect(canAddSite("command", 4).allowed).toBe(true);
     expect(canRunManualCheck("command", 100).allowed).toBe(true);
-    expect(canUseGapAnalysis("command", 100).allowed).toBe(true);
-    expect(canUseContentRecommendations("command", 100).allowed).toBe(true);
+    expect(canUseGapAnalysis("command", 0).allowed).toBe(true);
+    expect(canUseContentRecommendations("command", 0).allowed).toBe(true);
     expect(canUseActionPlan("command", 0).allowed).toBe(true);
     expect(canGeneratePage("command", 0).allowed).toBe(true);
     expect(canGeneratePage("command", 14).allowed).toBe(true);
   });
 
-  it("Dominate customers CAN: everything + even more sites + unlimited pages", () => {
+  it("Dominate customers CAN: everything + even more sites + more pages", () => {
     expect(canAddSite("dominate", 24).allowed).toBe(true);
     expect(canRunManualCheck("dominate", 100).allowed).toBe(true);
-    expect(canUseGapAnalysis("dominate", 100).allowed).toBe(true);
-    expect(canUseContentRecommendations("dominate", 100).allowed).toBe(true);
+    expect(canUseGapAnalysis("dominate", 0).allowed).toBe(true);
+    expect(canUseContentRecommendations("dominate", 0).allowed).toBe(true);
     expect(canUseActionPlan("dominate", 0).allowed).toBe(true);
-    expect(canGeneratePage("dominate", 100).allowed).toBe(true);
+    expect(canGeneratePage("dominate", 0).allowed).toBe(true);
   });
 
   it("Free users are properly limited", () => {

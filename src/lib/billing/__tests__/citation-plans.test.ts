@@ -130,40 +130,40 @@ describe("Specific limit values per tier", () => {
     expect(limits.manualChecksPerDay).toBe(3);
   });
 
-  it("Scout: 1 site, unlimited checks, 5 gap analyses, 5 pages", () => {
+  it("Scout: 1 site, unlimited checks, 5 gap analyses, 3 content ideas, 5 pages", () => {
     const limits = CITATION_PLANS.scout.limits;
     const intel = CITATION_PLANS.scout.intelligenceLimits;
     expect(limits.sites).toBe(1);
     expect(limits.manualChecksPerDay).toBe(-1);
     expect(intel.gapAnalysesPerMonth).toBe(5);
-    expect(intel.contentIdeasPerMonth).toBe(5);
+    expect(intel.contentIdeasPerMonth).toBe(3);
     expect(intel.actionPlansPerMonth).toBe(0);
     expect(intel.pagesPerMonth).toBe(5);
     expect(intel.siteAuditsPerMonth).toBe(2);
   });
 
-  it("Command: 5 sites, unlimited checks, unlimited gap analysis, 25 pages", () => {
+  it("Command: 5 sites, unlimited checks, 15 gap analyses, 25 pages", () => {
     const limits = CITATION_PLANS.command.limits;
     const intel = CITATION_PLANS.command.intelligenceLimits;
     expect(limits.sites).toBe(5);
     expect(limits.manualChecksPerDay).toBe(-1);
-    expect(intel.gapAnalysesPerMonth).toBe(-1);
-    expect(intel.contentIdeasPerMonth).toBe(-1);
+    expect(intel.gapAnalysesPerMonth).toBe(15);
+    expect(intel.contentIdeasPerMonth).toBe(10);
     expect(intel.actionPlansPerMonth).toBe(4);
     expect(intel.pagesPerMonth).toBe(25);
-    expect(intel.siteAuditsPerMonth).toBe(-1);
+    expect(intel.siteAuditsPerMonth).toBe(4);
   });
 
-  it("Dominate: 25 sites, unlimited checks, unlimited everything", () => {
+  it("Dominate: 25 sites, unlimited checks, 30 gap analyses, 50 pages", () => {
     const limits = CITATION_PLANS.dominate.limits;
     const intel = CITATION_PLANS.dominate.intelligenceLimits;
     expect(limits.sites).toBe(25);
     expect(limits.manualChecksPerDay).toBe(-1);
-    expect(intel.gapAnalysesPerMonth).toBe(-1);
-    expect(intel.contentIdeasPerMonth).toBe(-1);
-    expect(intel.actionPlansPerMonth).toBe(-1);
-    expect(intel.pagesPerMonth).toBe(-1);
-    expect(intel.siteAuditsPerMonth).toBe(-1);
+    expect(intel.gapAnalysesPerMonth).toBe(30);
+    expect(intel.contentIdeasPerMonth).toBe(20);
+    expect(intel.actionPlansPerMonth).toBe(8);
+    expect(intel.pagesPerMonth).toBe(50);
+    expect(intel.siteAuditsPerMonth).toBe(4);
   });
 });
 
@@ -296,27 +296,27 @@ describe("getIntelligenceFeatureSummary", () => {
     const summary = getIntelligenceFeatureSummary("free");
     expect(summary.gapAnalysis).toBe("Not available");
     expect(summary.contentIdeas).toBe("Not available");
-    expect(summary.actionPlan).toBe("Command only");
+    expect(summary.actionPlan).toBe("Not available");
   });
 
-  it("Scout: limited analyses", () => {
+  it("Scout: limited analyses, no action plans", () => {
     const summary = getIntelligenceFeatureSummary("scout");
     expect(summary.gapAnalysis).toBe("5 analyses/month");
-    expect(summary.contentIdeas).toBe("5 ideas/month");
-    expect(summary.actionPlan).toBe("Command only");
+    expect(summary.contentIdeas).toBe("3 ideas/month");
+    expect(summary.actionPlan).toBe("Not available");
   });
 
-  it("Command: unlimited + full features", () => {
+  it("Command: high limits + action plans", () => {
     const summary = getIntelligenceFeatureSummary("command");
-    expect(summary.gapAnalysis).toBe("Unlimited per-query analysis");
-    expect(summary.contentIdeas).toBe("Unlimited ideas");
-    expect(summary.actionPlan).toBe("Weekly Action Playbook");
+    expect(summary.gapAnalysis).toBe("15 analyses/month");
+    expect(summary.contentIdeas).toBe("10 ideas/month");
+    expect(summary.actionPlan).toBe("4 plans/month");
   });
 
-  it("Dominate: unlimited + full features", () => {
+  it("Dominate: highest limits + action plans", () => {
     const summary = getIntelligenceFeatureSummary("dominate");
-    expect(summary.gapAnalysis).toBe("Unlimited per-query analysis");
-    expect(summary.contentIdeas).toBe("Unlimited ideas");
-    expect(summary.actionPlan).toBe("Weekly Action Playbook");
+    expect(summary.gapAnalysis).toBe("30 analyses/month");
+    expect(summary.contentIdeas).toBe("20 ideas/month");
+    expect(summary.actionPlan).toBe("8 plans/month");
   });
 });

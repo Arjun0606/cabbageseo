@@ -170,7 +170,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     yearlyPrice: 119,
     popular: true,
     limits: {
-      sites: 1,
+      sites: 5,
       manualChecksPerDay: -1,
       historyDays: 365,
       queriesPerCheck: 25,
@@ -212,7 +212,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     monthlyPrice: 349,
     yearlyPrice: 279,
     limits: {
-      sites: 1,
+      sites: 25,
       manualChecksPerDay: -1,
       historyDays: 365,
       queriesPerCheck: 50,
@@ -377,6 +377,10 @@ export function canUseGapAnalysis(
     return { allowed: false, reason: "Gap analysis requires Scout plan or higher." };
   }
 
+  if (limit === -1) {
+    return { allowed: true, remaining: -1 };
+  }
+
   if (usedThisMonth >= limit) {
     const next = getNextPlan(plan.id);
     const tip = next ? ` Upgrade to ${getCitationPlan(next).name} for more.` : "";
@@ -397,6 +401,10 @@ export function canUseContentRecommendations(
     return { allowed: false, reason: "Content ideas require Scout plan or higher." };
   }
 
+  if (limit === -1) {
+    return { allowed: true, remaining: -1 };
+  }
+
   if (usedThisMonth >= limit) {
     return { allowed: false, reason: `Monthly limit reached (${limit} ideas). Upgrade for more.`, remaining: 0 };
   }
@@ -413,6 +421,10 @@ export function canUseActionPlan(
 
   if (limit === 0) {
     return { allowed: false, reason: "Action plans require Command plan or higher." };
+  }
+
+  if (limit === -1) {
+    return { allowed: true, remaining: -1 };
   }
 
   if (usedThisMonth >= limit) {
@@ -434,6 +446,10 @@ export function canGeneratePage(
 
   const limit = plan.intelligenceLimits.pagesPerMonth;
 
+  if (limit === -1) {
+    return { allowed: true, remaining: -1 };
+  }
+
   if (usedThisMonth >= limit) {
     return { allowed: false, reason: `Monthly limit reached (${limit} pages). Upgrade for more.`, remaining: 0 };
   }
@@ -452,6 +468,10 @@ export function canRunSiteAudit(
   }
 
   const limit = plan.intelligenceLimits.siteAuditsPerMonth;
+
+  if (limit === -1) {
+    return { allowed: true, remaining: -1 };
+  }
 
   if (usedThisMonth >= limit) {
     return { allowed: false, reason: `Monthly limit reached (${limit} audits). Upgrade for more.`, remaining: 0 };

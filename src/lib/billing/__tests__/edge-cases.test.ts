@@ -90,9 +90,9 @@ describe("Legacy plan names in gating functions", () => {
     expect(canGeneratePage("pro", 25).allowed).toBe(false);
   });
 
-  it("canGeneratePage('pro_plus', 999) uses dominate (unlimited)", () => {
-    expect(canGeneratePage("pro_plus", 999).allowed).toBe(true);
-    expect(canGeneratePage("pro_plus", 999).remaining).toBe(-1);
+  it("canGeneratePage('pro_plus', 49) uses dominate limits (50)", () => {
+    expect(canGeneratePage("pro_plus", 49).allowed).toBe(true);
+    expect(canGeneratePage("pro_plus", 50).allowed).toBe(false);
   });
 });
 
@@ -173,13 +173,13 @@ describe("Boundary values", () => {
   });
 
   it("canUseContentRecommendations at exactly monthly limit - 1: allowed", () => {
-    const result = canUseContentRecommendations("scout", 4);
+    const result = canUseContentRecommendations("scout", 2);
     expect(result.allowed).toBe(true);
     expect(result.remaining).toBe(1);
   });
 
   it("canUseContentRecommendations at exactly monthly limit: denied", () => {
-    const result = canUseContentRecommendations("scout", 5);
+    const result = canUseContentRecommendations("scout", 3);
     expect(result.allowed).toBe(false);
     expect(result.remaining).toBe(0);
   });
@@ -252,13 +252,13 @@ describe("Custom queries per site limits", () => {
     expect(CITATION_PLANS.scout.features.customQueries).toBe(true);
   });
 
-  it("Command: unlimited custom queries", () => {
-    expect(CITATION_PLANS.command.limits.customQueriesPerSite).toBe(-1);
+  it("Command: 15 custom queries", () => {
+    expect(CITATION_PLANS.command.limits.customQueriesPerSite).toBe(15);
     expect(CITATION_PLANS.command.features.customQueries).toBe(true);
   });
 
-  it("Dominate: unlimited custom queries", () => {
-    expect(CITATION_PLANS.dominate.limits.customQueriesPerSite).toBe(-1);
+  it("Dominate: 30 custom queries", () => {
+    expect(CITATION_PLANS.dominate.limits.customQueriesPerSite).toBe(30);
     expect(CITATION_PLANS.dominate.features.customQueries).toBe(true);
   });
 });
@@ -276,12 +276,12 @@ describe("Queries per check limits", () => {
     expect(CITATION_PLANS.scout.limits.queriesPerCheck).toBe(10);
   });
 
-  it("Command: 20 queries per check", () => {
-    expect(CITATION_PLANS.command.limits.queriesPerCheck).toBe(20);
+  it("Command: 25 queries per check", () => {
+    expect(CITATION_PLANS.command.limits.queriesPerCheck).toBe(25);
   });
 
-  it("Dominate: 30 queries per check", () => {
-    expect(CITATION_PLANS.dominate.limits.queriesPerCheck).toBe(30);
+  it("Dominate: 50 queries per check", () => {
+    expect(CITATION_PLANS.dominate.limits.queriesPerCheck).toBe(50);
   });
 });
 
@@ -391,9 +391,9 @@ describe("Page generation features per tier", () => {
     expect(CITATION_PLANS.command.intelligenceLimits.pagesPerMonth).toBe(25);
   });
 
-  it("Dominate: unlimited page generation", () => {
+  it("Dominate: page generation with 50/month limit", () => {
     expect(CITATION_PLANS.dominate.features.pageGeneration).toBe(true);
-    expect(CITATION_PLANS.dominate.intelligenceLimits.pagesPerMonth).toBe(-1);
+    expect(CITATION_PLANS.dominate.intelligenceLimits.pagesPerMonth).toBe(50);
   });
 });
 
@@ -414,14 +414,14 @@ describe("Site GEO audit features per tier", () => {
     expect(CITATION_PLANS.scout.intelligenceLimits.siteAuditsPerMonth).toBe(2);
   });
 
-  it("Command: full site audit (100 pages), unlimited", () => {
+  it("Command: full site audit (100 pages), 4/month", () => {
     expect(CITATION_PLANS.command.features.siteAudit).toBe(true);
     expect(CITATION_PLANS.command.features.siteAuditFull).toBe(true);
     expect(CITATION_PLANS.command.limits.auditPagesPerSite).toBe(100);
-    expect(CITATION_PLANS.command.intelligenceLimits.siteAuditsPerMonth).toBe(-1);
+    expect(CITATION_PLANS.command.intelligenceLimits.siteAuditsPerMonth).toBe(4);
   });
 
-  it("Dominate: full site audit (500 pages), unlimited", () => {
+  it("Dominate: full site audit (500 pages), 4/month", () => {
     expect(CITATION_PLANS.dominate.features.siteAudit).toBe(true);
     expect(CITATION_PLANS.dominate.features.siteAuditFull).toBe(true);
     expect(CITATION_PLANS.dominate.limits.auditPagesPerSite).toBe(500);
@@ -497,13 +497,25 @@ describe("canRunSiteAudit gating", () => {
     expect(canRunSiteAudit("scout", 2).remaining).toBe(0);
   });
 
-  it("Command: always allowed (unlimited)", () => {
-    expect(canRunSiteAudit("command", 999).allowed).toBe(true);
-    expect(canRunSiteAudit("command", 999).remaining).toBe(-1);
+  it("Command: allowed if under limit (4/month)", () => {
+    expect(canRunSiteAudit("command", 0).allowed).toBe(true);
+    expect(canRunSiteAudit("command", 3).allowed).toBe(true);
+    expect(canRunSiteAudit("command", 3).remaining).toBe(1);
   });
 
-  it("Dominate: always allowed (unlimited)", () => {
-    expect(canRunSiteAudit("dominate", 999).allowed).toBe(true);
+  it("Command: denied at limit", () => {
+    expect(canRunSiteAudit("command", 4).allowed).toBe(false);
+    expect(canRunSiteAudit("command", 4).remaining).toBe(0);
+  });
+
+  it("Dominate: allowed if under limit (4/month)", () => {
+    expect(canRunSiteAudit("dominate", 0).allowed).toBe(true);
+    expect(canRunSiteAudit("dominate", 3).allowed).toBe(true);
+  });
+
+  it("Dominate: denied at limit", () => {
+    expect(canRunSiteAudit("dominate", 4).allowed).toBe(false);
+    expect(canRunSiteAudit("dominate", 4).remaining).toBe(0);
   });
 });
 
