@@ -227,11 +227,16 @@ function OnboardingContent() {
           </div>
 
           {/* Site policy notice */}
-          <div className="mt-4 flex items-start gap-2.5 px-2">
-            <Info className="w-4 h-4 text-zinc-600 mt-0.5 shrink-0" />
-            <p className="text-xs text-zinc-500">
-              Your {planName} plan tracks one site per billing period. Choose carefully — you can change your tracked site when your next billing period starts.
-            </p>
+          <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+              <Info className="w-4 h-4 text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-amber-300 mb-0.5">One site per billing period</p>
+              <p className="text-xs text-zinc-400">
+                Your {planName} plan tracks one site at a time. Once you add a site, you won&rsquo;t be able to switch to a different one until your next billing period starts. Choose the site you want to track carefully.
+              </p>
+            </div>
           </div>
         </div>
       </div>
