@@ -170,6 +170,7 @@ export async function POST(request: NextRequest) {
         dodo_product_id: sub.product_id,
         current_period_start: sub.previous_billing_date,
         current_period_end: sub.next_billing_date,
+        sites_created_this_period: 0, // Reset swap counter for new billing period
       } as never)
       .eq("id", organizationId);
 

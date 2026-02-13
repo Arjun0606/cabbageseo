@@ -193,6 +193,7 @@ export async function POST(request: NextRequest) {
             dodo_product_id: subscriptionData.product_id,
             current_period_start: subscriptionData.previous_billing_date,
             current_period_end: subscriptionData.next_billing_date,
+            sites_created_this_period: 0, // Reset swap counter for new billing period
             ...(customerId && { dodo_customer_id: customerId }),
           } as never)
           .eq("id", organizationId);

@@ -310,7 +310,7 @@ export default function SettingsPage() {
         onConfirm={() => deleteConfirmSite && handleDeleteSite(deleteConfirmSite)}
         onCancel={() => setDeleteConfirmSite(null)}
         title="Delete this site?"
-        description="All citations, history, and generated pages for this site will be permanently lost."
+        description="All citations, history, and generated pages for this site will be permanently lost. You can only change your tracked site once per billing period — you won't be able to add a different site until your next period starts."
         confirmLabel="Delete Site"
         variant="destructive"
       />

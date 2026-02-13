@@ -118,6 +118,9 @@ export const organizations = pgTable(
     currentPeriodEnd: timestamp("current_period_end"),
     cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
 
+    // Site swap tracking — limits site changes per billing period
+    sitesCreatedThisPeriod: integer("sites_created_this_period").default(0),
+
     // Add-ons
     autopilotEnabled: boolean("autopilot_enabled").default(false),
 

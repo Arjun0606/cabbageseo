@@ -139,10 +139,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to create organization" }, { status: 500 });
     }
 
-    // Get plan from DB
+    // Get plan + swap tracking from DB
     const { data: org } = await db
       .from("organizations")
-      .select("plan")
+      .select("plan, sites_created_this_period, current_period_start, current_period_end")
       .eq("id", orgId)
       .single();
 
@@ -170,10 +170,25 @@ export async function POST(request: NextRequest) {
     const canAdd = canAddSite(plan, currentSites);
     
     if (!canAdd.allowed) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: canAdd.reason || `Site limit reached. Upgrade for more.`,
         code: "PLAN_LIMIT_EXCEEDED",
         upgradeRequired: true,
+      }, { status: 403 });
+    }
+
+    // Swap limit: prevent deleting and re-adding a different site within the same billing period
+    const periodStart = org?.current_period_start ? new Date(org.current_period_start) : null;
+    const sitesCreated = org?.sites_created_this_period || 0;
+    const planLimits = getCitationPlanLimits(plan);
+
+    if (periodStart && sitesCreated >= planLimits.sites) {
+      const periodEnd = org?.current_period_end
+        ? new Date(org.current_period_end).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+        : "your next billing period";
+      return NextResponse.json({
+        error: `You've already used your site slot${planLimits.sites > 1 ? "s" : ""} this billing period. You can change your tracked site after ${periodEnd}.`,
+        code: "SITE_SWAP_LIMIT",
       }, { status: 403 });
     }
 
@@ -209,6 +224,12 @@ export async function POST(request: NextRequest) {
       console.error("Site creation error:", error);
       return NextResponse.json({ error: "Failed to create site" }, { status: 500 });
     }
+
+    // Track site creation for swap limit enforcement
+    await db
+      .from("organizations")
+      .update({ sites_created_this_period: sitesCreated + 1 } as never)
+      .eq("id", orgId);
 
     return NextResponse.json({ site });
 
@@ -265,7 +286,23 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Failed to delete site" }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    // Get org info for swap warning
+    const { data: orgInfo } = await db
+      .from("organizations")
+      .select("plan, sites_created_this_period, current_period_end")
+      .eq("id", orgId)
+      .maybeSingle();
+
+    const planLimitsInfo = getCitationPlanLimits(orgInfo?.plan || "free");
+    const createdThisPeriod = orgInfo?.sites_created_this_period || 0;
+    const canSwap = createdThisPeriod < planLimitsInfo.sites;
+
+    return NextResponse.json({
+      success: true,
+      warning: canSwap
+        ? undefined
+        : "You've used all your site slots this billing period. You won't be able to add a new site until your next billing period.",
+    });
 
   } catch (error) {
     console.error("[/api/sites DELETE] Error:", error);
