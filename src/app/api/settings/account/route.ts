@@ -81,7 +81,7 @@ export async function GET() {
             name: `${user.email?.split("@")[0] || "My"}'s Organization`,
             slug: `org-${user.id.slice(0, 8)}-${Date.now()}`,
             plan: "free",
-            subscription_status: "inactive",
+            subscription_status: "trialing",
           } as never)
           .select("id")
           .single();

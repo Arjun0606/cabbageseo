@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
           name: userEmail.split("@")[0] || "My Organization",
           slug,
           plan: "free",
-          subscription_status: "inactive",
+          subscription_status: "trialing",
         })
         .select("id, created_at")
         .single();

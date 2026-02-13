@@ -70,7 +70,7 @@ export async function GET() {
           name: user.user_metadata?.name || user.email?.split("@")[0] || "My Organization",
           slug,
           plan: "free",
-          subscription_status: "inactive",
+          subscription_status: "trialing",
         })
         .select("id, created_at")
         .single();

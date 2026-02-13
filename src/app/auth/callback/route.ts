@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
                   : `${user.email?.split("@")[0] || "My"}'s Organization`,
                 slug: orgSlug,
                 plan: "free",
-                subscription_status: "inactive",
+                subscription_status: "trialing",
               } as never)
               .select("id")
               .single();
