@@ -205,6 +205,101 @@ function BillingContent() {
   const plan = CITATION_PLANS[currentPlan as keyof typeof CITATION_PLANS] || CITATION_PLANS.free;
 
   // ============================================
+  // POST-CHECKOUT — Full-screen activation view
+  // ============================================
+  if (pollingPayment || pollingTimedOut || checkoutSuccess) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="max-w-md w-full text-center">
+          {pollingPayment && (
+            <>
+              <div className="flex justify-center mb-6">
+                <div className="p-5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                  <Loader2 className="w-10 h-10 text-emerald-400 animate-spin" />
+                </div>
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-2">Setting up your account</h1>
+              <p className="text-zinc-400 mb-8">This only takes a moment...</p>
+              <div className="space-y-3 text-left max-w-xs mx-auto">
+                <div className="flex items-center gap-3">
+                  <Check className="w-5 h-5 text-emerald-400" />
+                  <span className="text-zinc-300">Payment received</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
+                  <span className="text-white font-medium">Activating your plan...</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full border-2 border-zinc-700" />
+                  <span className="text-zinc-600">Ready to go</span>
+                </div>
+              </div>
+            </>
+          )}
+          {pollingTimedOut && !checkoutSuccess && (
+            <>
+              <div className="flex justify-center mb-6">
+                <div className="p-5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                  <Check className="w-10 h-10 text-emerald-400" />
+                </div>
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-2">Payment received</h1>
+              <p className="text-zinc-400 mb-6">
+                Your plan is activating. This can take up to a minute.
+              </p>
+              <div className="flex justify-center gap-4">
+                <Button
+                  onClick={async () => {
+                    setPollingTimedOut(false);
+                    setPollingPayment(true);
+                    await refreshData();
+                    if (currentPlan !== "free") {
+                      setPollingPayment(false);
+                      setCheckoutSuccess(true);
+                      if (sites.length === 0) {
+                        router.replace("/onboarding");
+                      } else {
+                        router.replace("/settings/billing", { scroll: false });
+                      }
+                    } else {
+                      setPollingPayment(false);
+                      setPollingTimedOut(true);
+                    }
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                >
+                  Check again
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-zinc-700"
+                  onClick={() => window.location.reload()}
+                >
+                  Refresh page
+                </Button>
+              </div>
+              <p className="text-xs text-zinc-500 mt-6">
+                If this doesn&apos;t resolve, email arjun@cabbageseo.com and we&apos;ll fix it immediately.
+              </p>
+            </>
+          )}
+          {checkoutSuccess && (
+            <>
+              <div className="flex justify-center mb-6">
+                <div className="p-5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                  <Check className="w-10 h-10 text-emerald-400" />
+                </div>
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-2">You&apos;re all set!</h1>
+              <p className="text-zinc-400">Redirecting you now...</p>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================
   // FREE USER VIEW — Pricing page
   // ============================================
   if (subscription.isFreeUser) {
@@ -223,21 +318,25 @@ function BillingContent() {
           </p>
         </div>
 
-        {/* Status banners */}
-        <StatusBanners
-          pollingPayment={pollingPayment}
-          pollingTimedOut={pollingTimedOut}
-          checkoutSuccess={checkoutSuccess}
-          error={error}
-          setError={setError}
-          setPollingTimedOut={setPollingTimedOut}
-          setPollingPayment={setPollingPayment}
-          setCheckoutSuccess={setCheckoutSuccess}
-          sessionId={sessionId}
-          currentPlan={currentPlan}
-          refreshData={refreshData}
-          router={router}
-        />
+        {/* Error banner */}
+        {error && (
+          <Card className="bg-red-500/10 border-red-500/30">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 text-red-400" />
+                <p className="text-red-400">{error}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setError(null)}
+                  className="ml-auto text-red-400 hover:text-red-300"
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Billing toggle */}
         <div className="flex justify-center">
@@ -428,21 +527,25 @@ function BillingContent() {
   // ============================================
   return (
     <div className="space-y-6">
-      {/* Status banners */}
-      <StatusBanners
-        pollingPayment={pollingPayment}
-        pollingTimedOut={pollingTimedOut}
-        checkoutSuccess={checkoutSuccess}
-        error={error}
-        setError={setError}
-        setPollingTimedOut={setPollingTimedOut}
-        setPollingPayment={setPollingPayment}
-        setCheckoutSuccess={setCheckoutSuccess}
-        sessionId={sessionId}
-        currentPlan={currentPlan}
-        refreshData={refreshData}
-        router={router}
-      />
+      {/* Error banner */}
+      {error && (
+        <Card className="bg-red-500/10 border-red-500/30">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+              <p className="text-red-400">{error}</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setError(null)}
+                className="ml-auto text-red-400 hover:text-red-300"
+              >
+                Dismiss
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Current Plan */}
       <Card className="bg-zinc-900/50 border-zinc-800">
@@ -619,158 +722,6 @@ function BillingContent() {
         </Card>
       )}
     </div>
-  );
-}
-
-// ============================================
-// STATUS BANNERS (shared between free/paid views)
-// ============================================
-
-function StatusBanners({
-  pollingPayment,
-  pollingTimedOut,
-  checkoutSuccess,
-  error,
-  setError,
-  setPollingTimedOut,
-  setPollingPayment,
-  setCheckoutSuccess,
-  sessionId,
-  currentPlan,
-  refreshData,
-  router,
-}: {
-  pollingPayment: boolean;
-  pollingTimedOut: boolean;
-  checkoutSuccess: boolean;
-  error: string | null;
-  setError: (e: string | null) => void;
-  setPollingTimedOut: (v: boolean) => void;
-  setPollingPayment: (v: boolean) => void;
-  setCheckoutSuccess: (v: boolean) => void;
-  sessionId: string | null;
-  currentPlan: string;
-  refreshData: () => Promise<void>;
-  router: ReturnType<typeof useRouter>;
-}) {
-  return (
-    <>
-      {pollingPayment && (
-        <Card className="bg-emerald-500/10 border-emerald-500/30">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3 mb-3">
-              <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
-              <p className="text-emerald-400 font-medium">Setting up your account...</p>
-            </div>
-            <div className="space-y-2 ml-8">
-              <div className="flex items-center gap-2 text-sm">
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-300/70">Payment received</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
-                <span className="text-emerald-300">Activating your plan...</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-3.5 h-3.5 rounded-full border border-emerald-500/30" />
-                <span className="text-emerald-300/40">Ready to go</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {pollingTimedOut && !checkoutSuccess && (
-        <Card className="bg-amber-500/10 border-amber-500/30">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5" />
-              <div>
-                <p className="text-amber-400 font-medium">
-                  Your payment was received. Your plan is being activated.
-                </p>
-                <p className="text-amber-300/70 text-sm mt-1">
-                  This usually takes under a minute. If it doesn&apos;t update, contact us at arjun@cabbageseo.com.
-                </p>
-                <div className="flex gap-3 mt-3">
-                  <button
-                    onClick={async () => {
-                      setPollingTimedOut(false);
-                      setPollingPayment(true);
-                      if (sessionId) {
-                        try {
-                          const res = await fetch(`/api/billing/checkout-status?session_id=${sessionId}`);
-                          if (res.ok) {
-                            const data = await res.json();
-                            if (data.activated) {
-                              await refreshData();
-                              setPollingPayment(false);
-                              setCheckoutSuccess(true);
-                              router.replace("/settings/billing", { scroll: false });
-                              return;
-                            }
-                          }
-                        } catch {}
-                      }
-                      await refreshData();
-                      if (currentPlan !== "free") {
-                        setPollingPayment(false);
-                        setCheckoutSuccess(true);
-                        router.replace("/settings/billing", { scroll: false });
-                      } else {
-                        setPollingPayment(false);
-                        setPollingTimedOut(true);
-                      }
-                    }}
-                    className="text-sm text-amber-300 hover:text-amber-200 font-medium underline underline-offset-2"
-                  >
-                    Check status
-                  </button>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="text-sm text-amber-300/70 hover:text-amber-200 underline underline-offset-2"
-                  >
-                    Refresh page
-                  </button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {checkoutSuccess && (
-        <Card className="bg-emerald-500/10 border-emerald-500/30">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Check className="w-5 h-5 text-emerald-400" />
-              <p className="text-emerald-400 font-medium">
-                Payment successful! You&apos;re now on the {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)} plan.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {error && (
-        <Card className="bg-red-500/10 border-red-500/30">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-400" />
-              <p className="text-red-400">{error}</p>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setError(null)}
-                className="ml-auto text-red-400 hover:text-red-300"
-              >
-                Dismiss
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </>
   );
 }
 
