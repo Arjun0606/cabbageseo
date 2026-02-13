@@ -81,6 +81,7 @@ function BillingContent() {
   const currentPlan = organization?.plan || "free";
   const selectedPlan = searchParams.get("plan");
   const sessionId = searchParams.get("session_id");
+  const subscriptionId = searchParams.get("subscription_id");
 
   // Post-checkout polling: when returning from Dodo, poll until plan updates
   useEffect(() => {
@@ -99,14 +100,31 @@ function BillingContent() {
 
     setPollingPayment(true);
     let attempts = 0;
-    const maxAttempts = 30;
+    const maxAttempts = 20;
 
     const pollInterval = setInterval(async () => {
       attempts++;
       try {
+        // Try activating directly with Dodo (doesn't depend on webhook)
+        if (subscriptionId) {
+          const res = await fetch("/api/billing/activate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ subscriptionId }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.activated) {
+              clearInterval(pollInterval);
+              await refreshData();
+              return; // The plan-change detection effect will handle redirect
+            }
+          }
+        }
+        // Fallback: refresh data in case webhook fired
         await refreshData();
       } catch {
-        // ignore refresh errors during polling
+        // ignore errors during polling
       }
 
       if (attempts >= maxAttempts) {
@@ -114,7 +132,7 @@ function BillingContent() {
         setPollingPayment(false);
         setPollingTimedOut(true);
       }
-    }, 2000);
+    }, 3000);
 
     return () => clearInterval(pollInterval);
   }, [sessionId, loading]);
@@ -252,6 +270,30 @@ function BillingContent() {
                   onClick={async () => {
                     setPollingTimedOut(false);
                     setPollingPayment(true);
+                    // Try direct activation with Dodo
+                    if (subscriptionId) {
+                      try {
+                        const res = await fetch("/api/billing/activate", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ subscriptionId }),
+                        });
+                        if (res.ok) {
+                          const data = await res.json();
+                          if (data.activated) {
+                            await refreshData();
+                            setPollingPayment(false);
+                            setCheckoutSuccess(true);
+                            if (sites.length === 0) {
+                              router.replace("/onboarding");
+                            } else {
+                              router.replace("/settings/billing", { scroll: false });
+                            }
+                            return;
+                          }
+                        }
+                      } catch {}
+                    }
                     await refreshData();
                     if (currentPlan !== "free") {
                       setPollingPayment(false);
