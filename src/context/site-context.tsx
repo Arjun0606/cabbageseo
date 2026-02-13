@@ -95,7 +95,7 @@ const defaultUsage: Usage = {
 };
 
 const defaultSubscription: SubscriptionGate = {
-  isFreeUser: false,
+  isFreeUser: true, // Safe default — assume free until /api/me confirms a paid plan
 };
 
 // ============================================
@@ -148,10 +148,9 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       setOrganization(meData.organization);
       
       // Free plan = no dashboard access (subscription required)
-      if (meData.organization) {
-        const isFreeUser = meData.organization.plan === "free";
-        setSubscription({ isFreeUser });
-      }
+      // Treat null/missing org or plan as free (safe direction — blocks dashboard until paid)
+      const isFreeUser = !meData.organization || !meData.organization.plan || meData.organization.plan === "free";
+      setSubscription({ isFreeUser });
       
       // Fetch sites
       const sitesRes = await fetch("/api/sites");
