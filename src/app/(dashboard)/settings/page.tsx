@@ -10,7 +10,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   User,
-  Users,
   CreditCard,
   Shield,
   ChevronRight,
@@ -34,7 +33,6 @@ import { getCitationPlanLimits } from "@/lib/billing/citation-plans";
 const settingsNav = [
   { href: "/settings/billing", label: "Billing", icon: CreditCard, description: "Subscription & invoices" },
   { href: "/settings/notifications", label: "Notifications", icon: Mail, description: "Email & alert preferences" },
-  { href: "/settings/referrals", label: "Referrals", icon: Users, description: "Invite friends, earn rewards" },
 ];
 
 export default function SettingsPage() {
@@ -186,13 +184,19 @@ export default function SettingsPage() {
                   ? "bg-emerald-500/10 text-emerald-400 border-0"
                   : "bg-zinc-800 text-zinc-400 border-0"
               }>
-                {organization?.plan || "free"} {organization?.plan === "free" ? "trial" : "plan"}
+                {!organization?.plan || organization.plan === "free"
+                  ? "No plan"
+                  : `${organization.plan.charAt(0).toUpperCase()}${organization.plan.slice(1)}`}
               </Badge>
-              {organization?.plan !== "dominate" && (
+              {(!organization?.plan || organization.plan === "free") ? (
+                <Link href="/settings/billing" className="text-sm text-emerald-400 hover:underline">
+                  Subscribe
+                </Link>
+              ) : organization.plan !== "dominate" ? (
                 <Link href="/settings/billing" className="text-sm text-emerald-400 hover:underline">
                   Upgrade
                 </Link>
-              )}
+              ) : null}
             </div>
           </div>
         </CardContent>

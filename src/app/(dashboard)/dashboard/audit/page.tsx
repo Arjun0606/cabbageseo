@@ -674,6 +674,9 @@ export default function AuditPage() {
   useEffect(() => {
     if (!siteLoading && currentSite?.id) {
       fetchAudit();
+    } else if (!siteLoading && !currentSite?.id) {
+      // No site available — stop loading so "no site" state renders
+      setLoading(false);
     }
   }, [siteLoading, currentSite?.id, fetchAudit]);
 

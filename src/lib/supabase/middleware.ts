@@ -64,6 +64,7 @@ export async function updateSession(request: NextRequest) {
     "/about",
     "/teaser",         // Teaser results page (no signup required)
     "/blog",           // Blog index
+    "/docs",           // Documentation
     "/what-is-geo",    // GEO landing page
     "/auth/callback",  // OAuth callback must be public
   ];
@@ -73,11 +74,14 @@ export async function updateSession(request: NextRequest) {
     "/api/",  // All API routes handle their own auth - return JSON, not redirects
   ];
 
-  // Public route prefixes (e.g. /teaser/abc, /report/abc)
+  // Public route prefixes (e.g. /teaser/abc, /report/abc, /blog/slug)
   const publicRoutePrefixes = [
     "/teaser/",
     "/report/",
     "/ai-visibility/",  // Programmatic SEO pages
+    "/blog/",           // Blog posts
+    "/for/",            // Landing pages (e.g. /for/agencies)
+    "/vs/",             // Comparison pages
   ];
 
   const isPublicRoute = publicRoutes.some(

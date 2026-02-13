@@ -137,7 +137,10 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       }
 
       if (!meData.authenticated) {
-        router.push("/login");
+        // Don't redirect — middleware handles auth redirects.
+        // If we get here, the session expired mid-browse.
+        setError("Your session has expired. Please log in again.");
+        setLoading(false);
         return;
       }
       
@@ -346,23 +349,37 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   };
 
   if (error && !loading) {
+    const isSessionExpired = error.includes("session");
     return (
       <SiteContext.Provider value={value}>
         <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-6">
           <div className="max-w-sm text-center">
-            <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className={`w-12 h-12 rounded-xl ${isSessionExpired ? "bg-amber-500/10 border border-amber-500/20" : "bg-red-500/10 border border-red-500/20"} flex items-center justify-center mx-auto mb-4`}>
+              <svg className={`w-6 h-6 ${isSessionExpired ? "text-amber-400" : "text-red-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
-            <h2 className="text-white text-lg font-semibold mb-1">Connection error</h2>
+            <h2 className="text-white text-lg font-semibold mb-1">
+              {isSessionExpired ? "Session expired" : "Connection error"}
+            </h2>
             <p className="text-zinc-400 text-sm mb-4">{error}</p>
-            <button
-              onClick={() => { setError(null); setLoading(true); refreshData(); }}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-medium rounded-lg transition-colors text-sm"
-            >
-              Try again
-            </button>
+            <div className="flex items-center justify-center gap-3">
+              {isSessionExpired ? (
+                <a
+                  href="/login"
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-medium rounded-lg transition-colors text-sm"
+                >
+                  Log in
+                </a>
+              ) : (
+                <button
+                  onClick={() => { setError(null); setLoading(true); refreshData(); }}
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-medium rounded-lg transition-colors text-sm"
+                >
+                  Try again
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </SiteContext.Provider>
