@@ -88,6 +88,12 @@ function getScoreColor(score: number): string {
   return "text-emerald-500";
 }
 
+function getScoreGlow(score: number): string {
+  if (score < 40) return "shadow-red-500/20";
+  if (score < 60) return "shadow-amber-500/20";
+  return "shadow-emerald-500/20";
+}
+
 function getScoreBorderColor(score: number): string {
   if (score < 40) return "border-red-500/30";
   if (score < 60) return "border-amber-500/30";
@@ -196,12 +202,15 @@ export function ScanResults({ data }: ScanResultsProps) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
+    <div className="max-w-4xl mx-auto px-6 py-12 relative">
+      {/* Ambient background glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-emerald-500/[0.04] rounded-full blur-[120px] pointer-events-none" />
+
       {/* ========== VISIBILITY SCORE CARD ========== */}
       <AnimateIn>
         <div
           ref={scoreCardRef}
-          className={`relative overflow-hidden rounded-2xl p-8 mb-8 bg-gradient-to-br ${getScoreBg(visibilityScore)} border-2 ${getScoreBorderColor(visibilityScore)}`}
+          className={`relative overflow-hidden rounded-2xl p-8 mb-8 bg-gradient-to-br ${getScoreBg(visibilityScore)} border-2 ${getScoreBorderColor(visibilityScore)} shadow-2xl ${getScoreGlow(visibilityScore)}`}
         >
           {/* Dot pattern */}
           <div className="absolute inset-0 opacity-5">
@@ -242,7 +251,7 @@ export function ScanResults({ data }: ScanResultsProps) {
                   const status = getStatusBadge(r);
                   const StatusIcon = status.icon;
                   return (
-                    <div key={r.platform} className="bg-white/[0.04] rounded-xl p-3 text-center border border-white/[0.06]">
+                    <div key={r.platform} className="bg-white/[0.04] rounded-xl p-3 text-center border border-white/[0.06] hover:border-white/[0.12] transition-colors">
                       <p className={`text-xs font-medium mb-1 ${pl?.color || "text-zinc-400"}`}>
                         {pl?.name || r.platform}
                       </p>
@@ -271,7 +280,7 @@ export function ScanResults({ data }: ScanResultsProps) {
                 </button>
 
                 {showBreakdown && (
-                  <div className="mt-3 bg-black/30 rounded-xl p-4 space-y-3">
+                  <div className="mt-3 bg-black/30 backdrop-blur-sm rounded-xl p-4 space-y-3 border border-white/[0.04]">
                     {Object.entries(scoreBreakdown).map(([key, value]) => {
                       const factor = FACTOR_LABELS[key];
                       if (!factor) return null;
@@ -286,7 +295,7 @@ export function ScanResults({ data }: ScanResultsProps) {
                           </div>
                           <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
                             <div
-                              className={`h-full rounded-full transition-all ${
+                              className={`h-full rounded-full transition-all duration-1000 ${
                                 pct > 60 ? "bg-emerald-500" : pct > 30 ? "bg-amber-500" : "bg-red-500"
                               }`}
                               style={{ width: `${Math.max(pct, 2)}%` }}
@@ -370,13 +379,13 @@ export function ScanResults({ data }: ScanResultsProps) {
             </div>
 
             <p className="text-center text-zinc-600 text-xs">
-              cabbageseo.com · Free AI Visibility Scan
+              cabbageseo.com &middot; Free AI Visibility Scan
             </p>
           </div>
         </div>
       </AnimateIn>
 
-      {/* ========== SHARE ON X (Desktop-first) ========== */}
+      {/* ========== SHARE ON X ========== */}
       <AnimateIn delay={0.05}>
         {(() => {
           const reportLink = reportId
@@ -398,31 +407,29 @@ export function ScanResults({ data }: ScanResultsProps) {
           };
 
           return (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-8">
+            <div className="bg-zinc-900/80 backdrop-blur-sm border border-zinc-800/50 rounded-2xl p-6 mb-8">
               <div className="flex items-center gap-2 mb-4">
                 <Twitter className="w-5 h-5 text-white" />
                 <h3 className="text-white font-semibold">Share your score on X</h3>
               </div>
 
-              {/* Tweet preview */}
               <div className="bg-black/40 border border-zinc-700/50 rounded-xl p-4 mb-4 font-mono text-sm leading-relaxed whitespace-pre-line text-zinc-300">
                 {tweetText}
               </div>
 
-              {/* Actions */}
               <div className="flex items-center gap-3">
                 <a
                   href={tweetUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-zinc-200 text-black font-bold rounded-lg transition-colors text-sm"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-zinc-200 text-black font-bold rounded-lg transition-all duration-200 text-sm hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <Twitter className="w-4 h-4" />
                   Post to X
                 </a>
                 <button
                   onClick={handleCopyTweet}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium rounded-lg transition-all duration-200"
                 >
                   {tweetCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                   {tweetCopied ? "Copied!" : "Copy text"}
@@ -436,47 +443,54 @@ export function ScanResults({ data }: ScanResultsProps) {
       {/* ========== GAPS ALERT ========== */}
       {gapCount > 0 && (
         <AnimateIn delay={0.08}>
-          <div className="bg-red-950/40 border border-red-500/20 rounded-2xl p-6 mb-8">
-            <div className="flex items-start gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center shrink-0">
-                <TrendingDown className="w-5 h-5 text-red-400" />
+          <div className="relative bg-red-950/40 border border-red-500/20 rounded-2xl p-6 mb-8 overflow-hidden">
+            <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-red-500/[0.06] rounded-full blur-[80px] pointer-events-none" />
+
+            <div className="relative">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/20 flex items-center justify-center shrink-0 shadow-lg shadow-red-500/10">
+                  <TrendingDown className="w-5 h-5 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">
+                    {gapCount === data.results.length
+                      ? "You're invisible to AI right now"
+                      : `${gapCount} of ${data.results.length} AI platforms don't mention you`}
+                  </h3>
+                  <p className="text-zinc-400 text-sm mt-1">
+                    When someone asks AI about your space, these platforms recommend others instead of you.
+                    Every day this continues, potential customers go elsewhere.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">
-                  {gapCount === data.results.length
-                    ? "You're invisible to AI right now"
-                    : `${gapCount} of ${data.results.length} AI platforms don't mention you`}
-                </h3>
-                <p className="text-zinc-400 text-sm mt-1">
-                  When someone asks AI about your space, these platforms recommend others instead of you.
-                  Every day this continues, potential customers go elsewhere.
-                </p>
-              </div>
-            </div>
-            <div className="space-y-2 mb-4">
-              {gaps.slice(0, 3).map((gap, i) => {
-                const pl = PLATFORM_LABELS[gap.platform];
-                return (
-                  <div key={i} className="flex items-center gap-3 bg-black/30 rounded-lg px-4 py-2.5">
-                    <XCircle className="w-4 h-4 text-red-400 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">&ldquo;{gap.query}&rdquo;</p>
-                      <p className="text-zinc-500 text-xs">{pl?.name || gap.platform} &mdash; doesn&apos;t mention you</p>
+              <div className="space-y-2 mb-4">
+                {gaps.slice(0, 3).map((gap, i) => {
+                  const pl = PLATFORM_LABELS[gap.platform];
+                  return (
+                    <div key={i} className="flex items-center gap-3 bg-black/30 border border-red-500/10 rounded-lg px-4 py-2.5">
+                      <XCircle className="w-4 h-4 text-red-400 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-medium truncate">&ldquo;{gap.query}&rdquo;</p>
+                        <p className="text-zinc-500 text-xs">{pl?.name || gap.platform} &mdash; doesn&apos;t mention you</p>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+              <Link
+                href={`/signup?domain=${encodeURIComponent(domain)}`}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-400 text-white font-bold rounded-lg transition-all duration-200 text-sm hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-red-500/20"
+              >
+                Start fixing these gaps
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
-            <Link
-              href={`/signup?domain=${encodeURIComponent(domain)}`}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-400 text-white font-bold rounded-lg transition-colors text-sm"
-            >
-              Start fixing these gaps
-              <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
         </AnimateIn>
       )}
+
+      {/* Gradient divider */}
+      <div className="w-2/3 h-px mx-auto bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent mb-8" />
 
       {/* ========== WHAT EACH PLATFORM SAID ========== */}
       <AnimateIn delay={0.1}>
@@ -492,7 +506,7 @@ export function ScanResults({ data }: ScanResultsProps) {
             return (
               <div
                 key={i}
-                className="bg-zinc-900 border border-zinc-800 rounded-xl p-5"
+                className="bg-zinc-900/80 backdrop-blur-sm border border-zinc-800/50 rounded-xl p-5 hover:border-zinc-700/50 transition-all duration-300"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -517,18 +531,17 @@ export function ScanResults({ data }: ScanResultsProps) {
                 </div>
 
                 {result.snippet && (
-                  <p className="text-zinc-500 text-sm line-clamp-4">{result.snippet}</p>
+                  <p className="text-zinc-500 text-sm line-clamp-4 leading-relaxed">{result.snippet}</p>
                 )}
 
-                {/* Co-citation: other brands AI mentioned in this context */}
                 {result.aiRecommends && result.aiRecommends.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-zinc-800">
+                  <div className="mt-3 pt-3 border-t border-zinc-800/50">
                     <p className="text-zinc-600 text-xs mb-1.5">Also mentioned in this response:</p>
                     <div className="flex flex-wrap gap-1.5">
                       {result.aiRecommends.map((brand) => (
                         <span
                           key={brand}
-                          className="px-2 py-0.5 bg-zinc-800 text-zinc-400 text-xs rounded-md border border-zinc-700/50"
+                          className="px-2 py-0.5 bg-zinc-800/80 text-zinc-400 text-xs rounded-md border border-zinc-700/50"
                         >
                           {brand}
                         </span>
@@ -548,7 +561,7 @@ export function ScanResults({ data }: ScanResultsProps) {
         if (allCoCited.length === 0) return null;
         return (
           <AnimateIn delay={0.12}>
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-8">
+            <div className="bg-zinc-900/80 backdrop-blur-sm border border-zinc-800/50 rounded-xl p-5 mb-8">
               <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wide mb-1">
                 Your co-citation landscape
               </h3>
@@ -561,9 +574,9 @@ export function ScanResults({ data }: ScanResultsProps) {
                   return (
                     <span
                       key={brand}
-                      className={`px-2.5 py-1 text-xs rounded-lg border ${
+                      className={`px-2.5 py-1 text-xs rounded-lg border transition-colors ${
                         appearsIn >= 2
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-sm shadow-emerald-500/10"
                           : "bg-zinc-800 text-zinc-400 border-zinc-700/50"
                       }`}
                     >
@@ -580,6 +593,11 @@ export function ScanResults({ data }: ScanResultsProps) {
         );
       })()}
 
+      {/* Gradient divider before content preview */}
+      {contentPreview && (
+        <div className="w-2/3 h-px mx-auto bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent mb-8" />
+      )}
+
       {/* ========== AI CONTENT PREVIEW ========== */}
       {contentPreview && (
         <AnimateIn delay={0.15}>
@@ -589,7 +607,7 @@ export function ScanResults({ data }: ScanResultsProps) {
 
       {/* ========== MAIN CTA ========== */}
       <AnimateIn delay={0.2}>
-        <div ref={mainCtaRef} className="rounded-2xl overflow-hidden mb-8">
+        <div ref={mainCtaRef} className="rounded-2xl overflow-hidden mb-8 shadow-2xl shadow-emerald-500/10">
           {/* Urgency banner */}
           <div className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-3 flex items-center justify-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-400" />
@@ -598,8 +616,19 @@ export function ScanResults({ data }: ScanResultsProps) {
             </p>
           </div>
 
-          <div className="bg-emerald-500 p-8">
-            <div className="text-center">
+          <div className="bg-emerald-500 p-8 relative overflow-hidden">
+            {/* Subtle dot pattern */}
+            <div className="absolute inset-0 opacity-[0.04]">
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage: `radial-gradient(circle at 1px 1px, black 1px, transparent 0)`,
+                  backgroundSize: "20px 20px",
+                }}
+              />
+            </div>
+
+            <div className="text-center relative">
               <h2 className="text-2xl font-bold text-black mb-2">
                 {getCtaHeadline(visibilityScore)}
               </h2>
@@ -610,48 +639,34 @@ export function ScanResults({ data }: ScanResultsProps) {
                 }
               </p>
 
-              {/* What you get — more specific */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 max-w-xl mx-auto">
-                <div className="bg-black/10 rounded-lg px-3 py-2.5 text-left">
+                <div className="bg-black/10 rounded-lg px-3 py-2.5 text-left backdrop-blur-sm">
                   <p className="text-black font-bold text-sm">Daily scans</p>
                   <p className="text-black/60 text-xs">Track shifts across 3 AI platforms</p>
                 </div>
-                <div className="bg-black/10 rounded-lg px-3 py-2.5 text-left">
+                <div className="bg-black/10 rounded-lg px-3 py-2.5 text-left backdrop-blur-sm">
                   <p className="text-black font-bold text-sm">Fix pages</p>
                   <p className="text-black/60 text-xs">AI writes pages that earn citations</p>
                 </div>
-                <div className="bg-black/10 rounded-lg px-3 py-2.5 text-left">
+                <div className="bg-black/10 rounded-lg px-3 py-2.5 text-left backdrop-blur-sm">
                   <p className="text-black font-bold text-sm">Action plans</p>
                   <p className="text-black/60 text-xs">Exact steps to close each gap</p>
                 </div>
               </div>
 
-              {/* Google OAuth CTA */}
               <button
                 onClick={handleGoogleSignup}
                 disabled={authLoading}
-                className="inline-flex items-center gap-3 px-8 py-4 bg-black hover:bg-zinc-900 text-white font-bold rounded-xl transition-colors shadow-lg shadow-black/20 disabled:opacity-50"
+                className="inline-flex items-center gap-3 px-8 py-4 bg-black hover:bg-zinc-900 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-black/20 disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]"
               >
                 {authLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
-                    <path
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
-                      fill="#4285F4"
-                    />
-                    <path
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      fill="#34A853"
-                    />
-                    <path
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                      fill="#FBBC05"
-                    />
-                    <path
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                      fill="#EA4335"
-                    />
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                   </svg>
                 )}
                 Start fixing my AI visibility
@@ -671,14 +686,12 @@ export function ScanResults({ data }: ScanResultsProps) {
               </div>
 
               <p className="mt-3 text-black/60 text-sm">
-                From $49/mo · Scans run automatically · Cancel anytime
+                From $49/mo &middot; Scans run automatically &middot; Cancel anytime
               </p>
             </div>
           </div>
         </div>
       </AnimateIn>
-
-      {/* Share buttons moved to prominent position above gaps alert */}
 
       {/* ========== STICKY BOTTOM CTA BAR ========== */}
       <div
@@ -705,7 +718,7 @@ export function ScanResults({ data }: ScanResultsProps) {
             </div>
             <Link
               href={`/signup?domain=${encodeURIComponent(domain)}`}
-              className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg transition-colors text-sm"
+              className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg transition-all duration-200 text-sm hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-emerald-500/20"
             >
               Start fixing this
               <ArrowRight className="w-4 h-4" />
