@@ -81,6 +81,22 @@ export default function SettingsPage() {
     }
   };
 
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      const res = await fetch("/api/auth/logout", { method: "POST" });
+      if (res.redirected) {
+        window.location.href = res.url;
+      } else {
+        window.location.href = "/";
+      }
+    } catch {
+      window.location.href = "/";
+    }
+  };
+
   const handleDeleteSite = async (siteId: string) => {
     setDeletingSite(siteId);
     await deleteSite(siteId);
@@ -274,12 +290,19 @@ export default function SettingsPage() {
             <p className="text-white font-medium">Sign out</p>
             <p className="text-sm text-zinc-500">Sign out of your account</p>
           </div>
-          <Link href="/api/auth/logout">
-            <Button variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10">
+          <Button
+            variant="outline"
+            className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+            onClick={handleLogout}
+            disabled={loggingOut}
+          >
+            {loggingOut ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
               <LogOut className="w-4 h-4 mr-2" />
-              Sign out
-            </Button>
-          </Link>
+            )}
+            {loggingOut ? "Signing out..." : "Sign out"}
+          </Button>
         </CardContent>
       </Card>
       <ConfirmDialog
