@@ -81,24 +81,22 @@ const planBadgeLabels = {
 function FeatureCard({ feature }: { feature: Feature }) {
   return (
     <GlassCard padding="md" className="h-full">
-      <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0 text-emerald-400">
-          {feature.icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <h3 className="text-base font-semibold text-white">
-              {feature.name}
-            </h3>
-            <Badge
-              variant="outline"
-              className={`text-xs ${planBadgeColors[feature.plan]}`}
-            >
-              {planBadgeLabels[feature.plan]}
-            </Badge>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0 text-emerald-400">
+            {feature.icon}
           </div>
-          <p className="text-sm text-zinc-400">{feature.description}</p>
+          <h3 className="text-base font-semibold text-white">
+            {feature.name}
+          </h3>
+          <Badge
+            variant="outline"
+            className={`text-xs ${planBadgeColors[feature.plan]}`}
+          >
+            {planBadgeLabels[feature.plan]}
+          </Badge>
         </div>
+        <p className="text-sm text-zinc-400 leading-relaxed">{feature.description}</p>
       </div>
     </GlassCard>
   );
@@ -146,9 +144,9 @@ export default function FeaturesPage() {
               gaps, fix them, and track the results.
             </p>
           </AnimateIn>
-          <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+          <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
             {capabilities.map((f, i) => (
-              <StaggerItem key={f.name} className={`lg:col-span-2${i === 3 ? " lg:col-start-2" : ""}`}>
+              <StaggerItem key={f.name} className={i < 3 ? "lg:col-span-2" : "lg:col-span-3"}>
                 <FeatureCard feature={f} />
               </StaggerItem>
             ))}
