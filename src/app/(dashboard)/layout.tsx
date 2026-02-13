@@ -10,9 +10,9 @@
  * - Back to home
  */
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Zap,
@@ -31,8 +31,6 @@ import {
 import { SiteProvider, useSite } from "@/context/site-context";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import { SubscriptionRequired } from "@/components/paywall/subscription-required";
 import { useCheckout } from "@/hooks/use-checkout";
 import { CITATION_PLANS, getNextPlan } from "@/lib/billing/citation-plans";
 
@@ -307,17 +305,24 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
 function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { subscription, loading } = useSite();
 
-  // Show paywall for free (unpaid) users (allow billing/settings for upgrade)
-  // Onboarding has its own plan guard — free users get redirected to billing from there
-  const exemptRoutes = ["/settings/billing", "/settings", "/onboarding"];
+  // Only billing & settings pages are accessible to free users (so they can upgrade)
+  const exemptRoutes = ["/settings/billing", "/settings"];
   const isExemptRoute = exemptRoutes.some((r) => pathname?.startsWith(r));
-  const showPaywall = !loading && subscription.isFreeUser && !isExemptRoute;
 
-  // While loading, don't render dashboard content — show a spinner instead.
-  // This prevents free users from seeing the dashboard before the paywall kicks in.
-  const showLoading = loading && !isExemptRoute;
+  // Redirect free users to pricing page — don't show an inline paywall
+  const shouldRedirect = !loading && subscription.isFreeUser && !isExemptRoute;
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      router.replace("/settings/billing");
+    }
+  }, [shouldRedirect, router]);
+
+  // Show spinner while loading OR while redirect is pending
+  const showSpinner = (loading || shouldRedirect) && !isExemptRoute;
 
   return (
     <div className="min-h-screen bg-zinc-950 flex">
@@ -344,12 +349,10 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         <Header onMenuClick={() => setMobileMenuOpen(true)} />
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
-            {showLoading ? (
+            {showSpinner ? (
               <div className="flex items-center justify-center py-32">
                 <Loader2 className="w-8 h-8 text-zinc-400 animate-spin" />
               </div>
-            ) : showPaywall ? (
-              <SubscriptionRequired />
             ) : (
               children
             )}
