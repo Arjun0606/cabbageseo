@@ -199,7 +199,7 @@ The `.env.local` file exists locally with a connection string but the hostname w
 
 - **Project name**: cabbageSEO
 - **Project ID**: `bfndwetkrexwtlwthslz`
-- **Database password**: `xyzABC@2001`
+- **Database password**: (redacted — stored in .env.local)
 - **Status**: PRODUCTION, main branch
 
 ---

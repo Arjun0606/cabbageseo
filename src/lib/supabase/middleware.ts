@@ -39,6 +39,16 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
+  // Forward stray auth codes to the callback handler BEFORE getUser().
+  // Supabase PKCE flow redirects ?code= to the Site URL. getUser() silently
+  // consumes the PKCE code, so we must redirect before it runs.
+  const code = request.nextUrl.searchParams.get("code");
+  if (code && request.nextUrl.pathname !== "/auth/callback") {
+    const callbackUrl = request.nextUrl.clone();
+    callbackUrl.pathname = "/auth/callback";
+    return NextResponse.redirect(callbackUrl);
+  }
+
   // IMPORTANT: Avoid writing any logic between createServerClient and
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
@@ -46,15 +56,6 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  // Forward stray auth codes to the callback handler.
-  // Supabase PKCE flow may redirect ?code= to the Site URL instead of /auth/callback
-  const code = request.nextUrl.searchParams.get("code");
-  if (code && request.nextUrl.pathname !== "/auth/callback") {
-    const callbackUrl = request.nextUrl.clone();
-    callbackUrl.pathname = "/auth/callback";
-    return NextResponse.redirect(callbackUrl);
-  }
 
   // Define public routes that don't require auth
   const publicRoutes = [

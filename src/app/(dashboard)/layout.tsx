@@ -315,6 +315,10 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const isExemptRoute = exemptRoutes.some((r) => pathname?.startsWith(r));
   const showPaywall = !loading && subscription.isFreeUser && !isExemptRoute;
 
+  // While loading, don't render dashboard content — show a spinner instead.
+  // This prevents free users from seeing the dashboard before the paywall kicks in.
+  const showLoading = loading && !isExemptRoute;
+
   return (
     <div className="min-h-screen bg-zinc-950 flex">
       {/* Desktop sidebar */}
@@ -340,7 +344,15 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         <Header onMenuClick={() => setMobileMenuOpen(true)} />
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
-            {showPaywall ? <SubscriptionRequired /> : children}
+            {showLoading ? (
+              <div className="flex items-center justify-center py-32">
+                <Loader2 className="w-8 h-8 text-zinc-400 animate-spin" />
+              </div>
+            ) : showPaywall ? (
+              <SubscriptionRequired />
+            ) : (
+              children
+            )}
           </div>
         </main>
       </div>
