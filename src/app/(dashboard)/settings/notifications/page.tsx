@@ -67,21 +67,14 @@ export default function NotificationsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="flex items-center justify-center py-24">
         <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white mb-2">Notifications</h1>
-          <p className="text-zinc-400">Manage how you receive updates and alerts</p>
-        </div>
-
-        <div className="space-y-6">
+    <div className="space-y-6">
           {/* Email Notifications */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
             <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -177,8 +170,6 @@ export default function NotificationsPage() {
               "Save Preferences"
             )}
           </button>
-        </div>
-      </div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { User, CreditCard, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSite } from "@/context/site-context";
 
 const settingsNav = [
   { href: "/settings", label: "Account", icon: User, exact: true },
@@ -17,6 +18,12 @@ export default function SettingsLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { subscription } = useSite();
+
+  // Free users on billing page get a clean pricing experience — no settings chrome
+  if (subscription.isFreeUser && pathname === "/settings/billing") {
+    return <>{children}</>;
+  }
 
   return (
     <div className="space-y-6">

@@ -89,8 +89,8 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
+      <div className="flex items-center justify-center py-24">
+        <div className="text-center">
           <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
           <p className="text-zinc-400">Loading settings...</p>
         </div>
@@ -99,14 +99,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-          <p className="text-xl text-zinc-400">Manage your account and preferences</p>
-        </div>
-
+    <div className="space-y-6">
       {/* Quick Nav */}
       <div className="grid sm:grid-cols-2 gap-4">
         {settingsNav.map((item) => {
@@ -298,7 +291,6 @@ export default function SettingsPage() {
         confirmLabel="Delete Site"
         variant="destructive"
       />
-      </div>
     </div>
   );
 }

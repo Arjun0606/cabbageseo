@@ -315,6 +315,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const { subscription, loading } = useSite();
 
   // Show paywall for free (unpaid) users (allow billing/settings for upgrade)
+  // Onboarding has its own plan guard — free users get redirected to billing from there
   const exemptRoutes = ["/settings/billing", "/settings", "/onboarding"];
   const isExemptRoute = exemptRoutes.some((r) => pathname?.startsWith(r));
   const showPaywall = !loading && subscription.isFreeUser && !isExemptRoute;

@@ -2,13 +2,15 @@
 
 /**
  * ============================================
- * BILLING SETTINGS - Subscription Management
+ * BILLING PAGE - Subscription & Pricing
  * ============================================
+ *
+ * For free users: clean pricing page with feature walkthrough
+ * For paid users: plan management + usage stats + upgrade options
  */
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import {
   CreditCard,
   Check,
@@ -17,8 +19,13 @@ import {
   Building2,
   Loader2,
   ExternalLink,
-  ChevronLeft,
   AlertTriangle,
+  Search,
+  FileText,
+  BarChart3,
+  Shield,
+  Eye,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -27,10 +34,41 @@ import { Progress } from "@/components/ui/progress";
 import { useSite } from "@/context/site-context";
 import { CITATION_PLANS } from "@/lib/billing/citation-plans";
 
+// Feature rows for plan comparison
+const PLAN_FEATURES = [
+  { label: "Sites tracked", key: "sites" },
+  { label: "AI queries tracked", key: "queries" },
+  { label: "Scan frequency", key: "scans" },
+  { label: "Fix pages / month", key: "pages" },
+  { label: "Site GEO audit", key: "audit" },
+  { label: "Gap analysis", key: "gaps" },
+  { label: "Weekly action plan", key: "actionPlan" },
+  { label: "History retention", key: "history" },
+  { label: "Email alerts", key: "alerts" },
+  { label: "CSV export", key: "csv" },
+] as const;
+
+function getPlanFeatureValue(planId: "scout" | "command" | "dominate", key: string): string {
+  const p = CITATION_PLANS[planId];
+  switch (key) {
+    case "sites": return `${p.limits.sites} site${p.limits.sites > 1 ? "s" : ""}`;
+    case "queries": return `${p.limits.queriesPerCheck} queries`;
+    case "scans": return p.features.twiceDailyAutoCheck ? "2x daily" : "Daily";
+    case "pages": return `${p.intelligenceLimits.pagesPerMonth}/mo`;
+    case "audit": return p.features.siteAuditFull ? "Full crawl" : p.features.siteAudit ? "Top 10 pages" : "\u2014";
+    case "gaps": return `${p.intelligenceLimits.gapAnalysesPerMonth}/mo`;
+    case "actionPlan": return p.features.weeklyActionPlan ? `${p.intelligenceLimits.actionPlansPerMonth}/mo` : "\u2014";
+    case "history": return `${p.limits.historyDays} days`;
+    case "alerts": return p.features.emailAlerts ? "Yes" : "\u2014";
+    case "csv": return p.features.csvExport ? "Yes" : "\u2014";
+    default: return "\u2014";
+  }
+}
+
 function BillingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { organization, usage, subscription, loading, refreshData } = useSite();
+  const { organization, sites, usage, subscription, loading, refreshData } = useSite();
 
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
@@ -48,17 +86,20 @@ function BillingContent() {
   useEffect(() => {
     if (!sessionId || loading || pollingPayment || checkoutSuccess) return;
 
-    // Only poll if still on free plan (payment not yet processed by webhook)
+    // Plan already updated (webhook was fast) — redirect appropriately
     if (currentPlan !== "free") {
       setCheckoutSuccess(true);
-      // Clean session_id from URL
-      router.replace("/settings/billing", { scroll: false });
+      if (sites.length === 0) {
+        router.replace("/onboarding");
+      } else {
+        router.replace("/settings/billing", { scroll: false });
+      }
       return;
     }
 
     setPollingPayment(true);
     let attempts = 0;
-    const maxAttempts = 30; // 30 x 2s = 60 seconds max
+    const maxAttempts = 30;
 
     const pollInterval = setInterval(async () => {
       attempts++;
@@ -84,11 +125,15 @@ function BillingContent() {
       setPollingPayment(false);
       setPollingTimedOut(false);
       setCheckoutSuccess(true);
-      router.replace("/settings/billing", { scroll: false });
+      if (sites.length === 0) {
+        router.replace("/onboarding");
+      } else {
+        router.replace("/settings/billing", { scroll: false });
+      }
     }
-  }, [currentPlan, pollingPayment]);
+  }, [currentPlan, pollingPayment, sites.length]);
 
-  // Show which plan was pre-selected from URL (don't auto-redirect to checkout)
+  // Pre-select plan from URL param
   const [highlightedPlan, setHighlightedPlan] = useState<string | null>(null);
   useEffect(() => {
     if (selectedPlan && selectedPlan !== currentPlan) {
@@ -99,22 +144,17 @@ function BillingContent() {
   const handleUpgrade = async (planId: string) => {
     setUpgrading(planId);
     setError(null);
-    
+
     try {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          planId, 
-          interval: billingInterval,
-        }),
+        body: JSON.stringify({ planId, interval: billingInterval }),
       });
-      
+
       const data = await res.json();
-      
-      // Handle both response formats
       const checkoutUrl = data.data?.checkoutUrl || data.url || data.checkoutUrl;
-      
+
       if (checkoutUrl) {
         window.location.href = checkoutUrl;
       } else if (data.error) {
@@ -124,7 +164,7 @@ function BillingContent() {
         setError("Failed to create checkout session. Please try again.");
         setUpgrading(null);
       }
-    } catch (err) {
+    } catch {
       setError("Network error. Please check your connection and try again.");
       setUpgrading(null);
     }
@@ -133,18 +173,18 @@ function BillingContent() {
   const handleManageBilling = async () => {
     setPortalLoading(true);
     setError(null);
-    
+
     try {
       const res = await fetch("/api/billing/portal", { method: "POST" });
       const data = await res.json();
-      
+
       const portalUrl = data.data?.portalUrl || data.url;
       if (portalUrl) {
         window.location.href = portalUrl;
       } else if (data.error) {
         setError(data.error);
       }
-    } catch (err) {
+    } catch {
       setError("Failed to access billing portal.");
     } finally {
       setPortalLoading(false);
@@ -153,10 +193,10 @@ function BillingContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
+      <div className="flex items-center justify-center py-24">
+        <div className="text-center">
           <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
-          <p className="text-zinc-400">Loading billing information...</p>
+          <p className="text-zinc-400">Loading...</p>
         </div>
       </div>
     );
@@ -164,148 +204,240 @@ function BillingContent() {
 
   const plan = CITATION_PLANS[currentPlan as keyof typeof CITATION_PLANS] || CITATION_PLANS.free;
 
-  return (
-    <div className="min-h-screen bg-zinc-950 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Back link */}
-        <Link
-          href="/settings"
-          className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-6"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back to settings
-        </Link>
-
+  // ============================================
+  // FREE USER VIEW — Pricing page
+  // ============================================
+  if (subscription.isFreeUser) {
+    return (
+      <div className="space-y-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Billing</h1>
-          <p className="text-xl text-zinc-400">Manage your subscription</p>
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-white mb-2">Choose your plan</h1>
+          <p className="text-lg text-zinc-400 max-w-xl mx-auto">
+            Track how AI platforms cite your brand. Fix gaps before competitors do.
+          </p>
         </div>
 
-      {/* Post-checkout: Processing payment */}
-      {pollingPayment && (
-        <Card className="bg-emerald-500/10 border-emerald-500/30">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
-              <p className="text-emerald-400 font-medium">Processing your payment... This may take a few seconds.</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* Status banners */}
+        <StatusBanners
+          pollingPayment={pollingPayment}
+          pollingTimedOut={pollingTimedOut}
+          checkoutSuccess={checkoutSuccess}
+          error={error}
+          setError={setError}
+          setPollingTimedOut={setPollingTimedOut}
+          setPollingPayment={setPollingPayment}
+          setCheckoutSuccess={setCheckoutSuccess}
+          sessionId={sessionId}
+          currentPlan={currentPlan}
+          refreshData={refreshData}
+          router={router}
+        />
 
-      {/* Post-checkout: Polling timed out */}
-      {pollingTimedOut && !checkoutSuccess && (
-        <Card className="bg-amber-500/10 border-amber-500/30">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5" />
-              <div>
-                <p className="text-amber-400 font-medium">
-                  Your payment was received. Your plan is being activated.
-                </p>
-                <p className="text-amber-300/70 text-sm mt-1">
-                  This usually takes under a minute. If it doesn&apos;t update, contact us at arjun@cabbageseo.com with your email.
-                </p>
-                <div className="flex gap-3 mt-3">
-                  <button
-                    onClick={async () => {
-                      setPollingTimedOut(false);
-                      setPollingPayment(true);
-                      // Try checking status directly
-                      if (sessionId) {
-                        try {
-                          const res = await fetch(`/api/billing/checkout-status?session_id=${sessionId}`);
-                          if (res.ok) {
-                            const data = await res.json();
-                            if (data.activated) {
-                              await refreshData();
-                              setPollingPayment(false);
-                              setCheckoutSuccess(true);
-                              router.replace("/settings/billing", { scroll: false });
-                              return;
-                            }
-                          }
-                        } catch {}
-                      }
-                      // Fallback: poll again
-                      await refreshData();
-                      if (currentPlan !== "free") {
-                        setPollingPayment(false);
-                        setCheckoutSuccess(true);
-                        router.replace("/settings/billing", { scroll: false });
-                      } else {
-                        setPollingPayment(false);
-                        setPollingTimedOut(true);
-                      }
-                    }}
-                    className="text-sm text-amber-300 hover:text-amber-200 font-medium underline underline-offset-2"
-                  >
-                    Check status
-                  </button>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="text-sm text-amber-300/70 hover:text-amber-200 underline underline-offset-2"
-                  >
-                    Refresh page
-                  </button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* Billing toggle */}
+        <div className="flex justify-center">
+          <div className="flex items-center gap-2 bg-zinc-800 rounded-lg p-1">
+            <button
+              onClick={() => setBillingInterval("monthly")}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                billingInterval === "monthly"
+                  ? "bg-emerald-500 text-black"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingInterval("yearly")}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                billingInterval === "yearly"
+                  ? "bg-emerald-500 text-black"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              Yearly
+              <span className="ml-1.5 text-xs opacity-75">Save 20%</span>
+            </button>
+          </div>
+        </div>
 
-      {/* Post-checkout: Success */}
-      {checkoutSuccess && (
-        <Card className="bg-emerald-500/10 border-emerald-500/30">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Check className="w-5 h-5 text-emerald-400" />
-              <p className="text-emerald-400 font-medium">Payment successful! You&apos;re now on the {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)} plan.</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* Plan cards */}
+        <div className="grid md:grid-cols-3 gap-6">
+          {(["scout", "command", "dominate"] as const).map((planId) => {
+            const planData = CITATION_PLANS[planId];
+            const price = billingInterval === "yearly" ? planData.yearlyPrice : planData.monthlyPrice;
+            const isHighlighted = planId === highlightedPlan || planId === "command";
+            const isPopular = planId === "command";
 
-      {/* Error Message */}
-      {error && (
-        <Card className="bg-red-500/10 border-red-500/30">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-400" />
-              <p className="text-red-400">{error}</p>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setError(null)}
-                className="ml-auto text-red-400 hover:text-red-300"
+            return (
+              <div
+                key={planId}
+                className={`relative rounded-2xl border p-6 flex flex-col ${
+                  isHighlighted
+                    ? "bg-emerald-500/5 border-emerald-500/30 ring-1 ring-emerald-500/20"
+                    : "bg-zinc-900/50 border-zinc-800"
+                }`}
               >
-                Dismiss
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                {isPopular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-emerald-500 text-white text-xs px-3">Most popular</Badge>
+                  </div>
+                )}
 
-      {/* No subscription */}
-      {subscription.isFreeUser && (
-        <Card className="border-2 bg-emerald-500/5 border-emerald-500/30">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/20">
-                <Zap className="w-6 h-6 text-emerald-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-white">No active subscription</h3>
-                <p className="text-sm text-zinc-400 mt-1">
-                  Choose a plan below to start tracking your AI visibility.
+                {/* Plan header */}
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    {planId === "scout" && <Crown className="w-5 h-5 text-emerald-400" />}
+                    {planId === "command" && <Zap className="w-5 h-5 text-violet-400" />}
+                    {planId === "dominate" && <Building2 className="w-5 h-5 text-amber-400" />}
+                    <h3 className="text-xl font-bold text-white">{planData.name}</h3>
+                  </div>
+                  <p className="text-sm text-zinc-400">{planData.tagline}</p>
+                </div>
+
+                {/* Price */}
+                <div className="mb-5">
+                  <span className="text-4xl font-bold text-white">${price}</span>
+                  <span className="text-zinc-500 ml-1">/mo</span>
+                  {billingInterval === "yearly" && (
+                    <p className="text-xs text-emerald-400 mt-1">Billed yearly (${price * 12}/yr)</p>
+                  )}
+                </div>
+
+                {/* Who is this for */}
+                <p className="text-xs text-zinc-500 mb-5 pb-5 border-b border-zinc-800">
+                  {planData.whoIsThisFor}
                 </p>
+
+                {/* Features */}
+                <ul className="space-y-3 mb-6 flex-1">
+                  <li className="flex items-start gap-2.5 text-sm">
+                    <Eye className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                    <span className="text-zinc-300">
+                      <strong className="text-white">{planData.limits.queriesPerCheck} queries</strong> tracked across ChatGPT, Perplexity, Google AI
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2.5 text-sm">
+                    <Search className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                    <span className="text-zinc-300">
+                      {planData.features.twiceDailyAutoCheck ? "2x daily" : "Daily"} automated scans
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2.5 text-sm">
+                    <FileText className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                    <span className="text-zinc-300">
+                      <strong className="text-white">{planData.intelligenceLimits.pagesPerMonth} fix pages</strong>/month with schema markup
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2.5 text-sm">
+                    <Shield className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                    <span className="text-zinc-300">
+                      Site GEO audit {"\u2014"} {planData.features.siteAuditFull ? "full crawl" : "top 10 pages"}
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2.5 text-sm">
+                    <BarChart3 className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                    <span className="text-zinc-300">
+                      {planData.intelligenceLimits.gapAnalysesPerMonth} gap analyses/month
+                    </span>
+                  </li>
+                  {planData.features.weeklyActionPlan && (
+                    <li className="flex items-start gap-2.5 text-sm">
+                      <Sparkles className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                      <span className="text-zinc-300">Weekly AI action plans</span>
+                    </li>
+                  )}
+                  <li className="flex items-start gap-2.5 text-sm">
+                    <Check className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                    <span className="text-zinc-300">
+                      {planData.limits.sites} site{planData.limits.sites > 1 ? "s" : ""}, {planData.limits.historyDays}-day history
+                    </span>
+                  </li>
+                  {planData.features.csvExport && (
+                    <li className="flex items-start gap-2.5 text-sm">
+                      <Check className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                      <span className="text-zinc-300">CSV export + email alerts</span>
+                    </li>
+                  )}
+                </ul>
+
+                {/* CTA */}
+                <Button
+                  onClick={() => handleUpgrade(planId)}
+                  disabled={!!upgrading}
+                  className={`w-full h-11 font-semibold ${
+                    isHighlighted
+                      ? "bg-emerald-500 hover:bg-emerald-400 text-black"
+                      : "bg-zinc-700 hover:bg-zinc-600 text-white"
+                  }`}
+                >
+                  {upgrading === planId ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    `Get ${planData.name} \u2014 $${price}/mo`
+                  )}
+                </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            );
+          })}
+        </div>
+
+        {/* Feature comparison table */}
+        <div className="rounded-xl border border-zinc-800 overflow-hidden">
+          <div className="bg-zinc-900/50 px-6 py-4 border-b border-zinc-800">
+            <h3 className="text-white font-semibold">Compare plans</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-800">
+                  <th className="text-left text-zinc-400 font-medium px-6 py-3 w-1/4"></th>
+                  <th className="text-center text-white font-semibold px-4 py-3">Scout</th>
+                  <th className="text-center text-white font-semibold px-4 py-3">Command</th>
+                  <th className="text-center text-white font-semibold px-4 py-3">Dominate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {PLAN_FEATURES.map((feat, i) => (
+                  <tr key={feat.key} className={i < PLAN_FEATURES.length - 1 ? "border-b border-zinc-800/50" : ""}>
+                    <td className="px-6 py-3 text-zinc-400">{feat.label}</td>
+                    <td className="px-4 py-3 text-center text-zinc-300">{getPlanFeatureValue("scout", feat.key)}</td>
+                    <td className="px-4 py-3 text-center text-zinc-300">{getPlanFeatureValue("command", feat.key)}</td>
+                    <td className="px-4 py-3 text-center text-zinc-300">{getPlanFeatureValue("dominate", feat.key)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <p className="text-center text-xs text-zinc-500">
+          Cancel anytime. No contracts. All plans include a 7-day money-back guarantee.
+        </p>
+      </div>
+    );
+  }
+
+  // ============================================
+  // PAID USER VIEW — Plan management
+  // ============================================
+  return (
+    <div className="space-y-6">
+      {/* Status banners */}
+      <StatusBanners
+        pollingPayment={pollingPayment}
+        pollingTimedOut={pollingTimedOut}
+        checkoutSuccess={checkoutSuccess}
+        error={error}
+        setError={setError}
+        setPollingTimedOut={setPollingTimedOut}
+        setPollingPayment={setPollingPayment}
+        setCheckoutSuccess={setCheckoutSuccess}
+        sessionId={sessionId}
+        currentPlan={currentPlan}
+        refreshData={refreshData}
+        router={router}
+      />
 
       {/* Current Plan */}
       <Card className="bg-zinc-900/50 border-zinc-800">
@@ -321,35 +453,29 @@ function BillingContent() {
               <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
                 currentPlan === "dominate" ? "bg-amber-500/10" :
                 currentPlan === "command" ? "bg-violet-500/10" :
-                currentPlan === "scout" ? "bg-emerald-500/10" :
-                "bg-zinc-800"
+                "bg-emerald-500/10"
               }`}>
                 {currentPlan === "dominate" ? <Building2 className="w-7 h-7 text-amber-400" /> :
                  currentPlan === "command" ? <Zap className="w-7 h-7 text-violet-400" /> :
-                 currentPlan === "scout" ? <Crown className="w-7 h-7 text-emerald-400" /> :
-                 <CreditCard className="w-7 h-7 text-zinc-500" />}
+                 <Crown className="w-7 h-7 text-emerald-400" />}
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white">
-                  {plan.name} {currentPlan !== "free" ? "Plan" : ""}
-                </h3>
+                <h3 className="text-xl font-bold text-white">{plan.name} Plan</h3>
                 <p className="text-sm text-zinc-500">{plan.description}</p>
               </div>
             </div>
-            {currentPlan !== "free" && (
-              <Button
-                onClick={handleManageBilling}
-                disabled={portalLoading}
-                variant="outline"
-                className="border-zinc-700"
-              >
-                {portalLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>Manage <ExternalLink className="w-3 h-3 ml-2" /></>
-                )}
-              </Button>
-            )}
+            <Button
+              onClick={handleManageBilling}
+              disabled={portalLoading}
+              variant="outline"
+              className="border-zinc-700"
+            >
+              {portalLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>Manage <ExternalLink className="w-3 h-3 ml-2" /></>
+              )}
+            </Button>
           </div>
 
           {/* Usage Stats */}
@@ -363,12 +489,11 @@ function BillingContent() {
               </div>
               <Progress value={(usage.sitesUsed / usage.sitesLimit) * 100} className="h-2 bg-zinc-700" />
             </div>
-
             <div className="p-4 rounded-xl bg-zinc-800/50">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-zinc-400">Checks</span>
                 <span className="text-sm font-medium text-white">
-                  {usage.checksUsed}/{usage.checksLimit === 999999 ? "∞" : usage.checksLimit}
+                  {usage.checksUsed}/{usage.checksLimit === 999999 ? "\u221E" : usage.checksLimit}
                 </span>
               </div>
               <Progress value={usage.checksLimit === 999999 ? 0 : (usage.checksUsed / usage.checksLimit) * 100} className="h-2 bg-zinc-700" />
@@ -386,7 +511,6 @@ function BillingContent() {
                 <CardTitle className="text-white">Upgrade</CardTitle>
                 <CardDescription>Get more features and limits</CardDescription>
               </div>
-              {/* Monthly/Yearly Toggle */}
               <div className="flex items-center gap-2 bg-zinc-800 rounded-lg p-1">
                 <button
                   onClick={() => setBillingInterval("monthly")}
@@ -450,18 +574,22 @@ function BillingContent() {
                       <ul className="space-y-2 text-sm text-zinc-400 mb-4">
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400" />
-                          {planData.limits.sites} site{planData.limits.sites > 1 ? "s" : ""}
+                          {planData.limits.sites} site{planData.limits.sites > 1 ? "s" : ""}, {planData.limits.queriesPerCheck} queries
                         </li>
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400" />
-                          {planData.id === "dominate"
-                            ? "2x daily auto-checks"
-                            : planData.id === "command"
-                            ? "Daily monitoring"
-                            : planData.id === "scout"
-                            ? "Daily auto-checks"
-                            : "Manual checks only"}
+                          {planData.intelligenceLimits.pagesPerMonth} fix pages/mo
                         </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="w-4 h-4 text-emerald-400" />
+                          {planData.features.twiceDailyAutoCheck ? "2x daily scans" : "Daily auto-scans"}
+                        </li>
+                        {planData.features.weeklyActionPlan && (
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-emerald-400" />
+                            Weekly action plans
+                          </li>
+                        )}
                       </ul>
                       <Button
                         onClick={() => handleUpgrade(planId)}
@@ -485,9 +613,145 @@ function BillingContent() {
           </CardContent>
         </Card>
       )}
-
-      </div>
     </div>
+  );
+}
+
+// ============================================
+// STATUS BANNERS (shared between free/paid views)
+// ============================================
+
+function StatusBanners({
+  pollingPayment,
+  pollingTimedOut,
+  checkoutSuccess,
+  error,
+  setError,
+  setPollingTimedOut,
+  setPollingPayment,
+  setCheckoutSuccess,
+  sessionId,
+  currentPlan,
+  refreshData,
+  router,
+}: {
+  pollingPayment: boolean;
+  pollingTimedOut: boolean;
+  checkoutSuccess: boolean;
+  error: string | null;
+  setError: (e: string | null) => void;
+  setPollingTimedOut: (v: boolean) => void;
+  setPollingPayment: (v: boolean) => void;
+  setCheckoutSuccess: (v: boolean) => void;
+  sessionId: string | null;
+  currentPlan: string;
+  refreshData: () => Promise<void>;
+  router: ReturnType<typeof useRouter>;
+}) {
+  return (
+    <>
+      {pollingPayment && (
+        <Card className="bg-emerald-500/10 border-emerald-500/30">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
+              <p className="text-emerald-400 font-medium">Processing your payment... This may take a few seconds.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {pollingTimedOut && !checkoutSuccess && (
+        <Card className="bg-amber-500/10 border-amber-500/30">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5" />
+              <div>
+                <p className="text-amber-400 font-medium">
+                  Your payment was received. Your plan is being activated.
+                </p>
+                <p className="text-amber-300/70 text-sm mt-1">
+                  This usually takes under a minute. If it doesn&apos;t update, contact us at arjun@cabbageseo.com.
+                </p>
+                <div className="flex gap-3 mt-3">
+                  <button
+                    onClick={async () => {
+                      setPollingTimedOut(false);
+                      setPollingPayment(true);
+                      if (sessionId) {
+                        try {
+                          const res = await fetch(`/api/billing/checkout-status?session_id=${sessionId}`);
+                          if (res.ok) {
+                            const data = await res.json();
+                            if (data.activated) {
+                              await refreshData();
+                              setPollingPayment(false);
+                              setCheckoutSuccess(true);
+                              router.replace("/settings/billing", { scroll: false });
+                              return;
+                            }
+                          }
+                        } catch {}
+                      }
+                      await refreshData();
+                      if (currentPlan !== "free") {
+                        setPollingPayment(false);
+                        setCheckoutSuccess(true);
+                        router.replace("/settings/billing", { scroll: false });
+                      } else {
+                        setPollingPayment(false);
+                        setPollingTimedOut(true);
+                      }
+                    }}
+                    className="text-sm text-amber-300 hover:text-amber-200 font-medium underline underline-offset-2"
+                  >
+                    Check status
+                  </button>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="text-sm text-amber-300/70 hover:text-amber-200 underline underline-offset-2"
+                  >
+                    Refresh page
+                  </button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {checkoutSuccess && (
+        <Card className="bg-emerald-500/10 border-emerald-500/30">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Check className="w-5 h-5 text-emerald-400" />
+              <p className="text-emerald-400 font-medium">
+                Payment successful! You&apos;re now on the {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)} plan.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {error && (
+        <Card className="bg-red-500/10 border-red-500/30">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+              <p className="text-red-400">{error}</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setError(null)}
+                className="ml-auto text-red-400 hover:text-red-300"
+              >
+                Dismiss
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </>
   );
 }
 
@@ -495,10 +759,10 @@ function BillingContent() {
 export default function BillingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
+      <div className="flex items-center justify-center py-24">
+        <div className="text-center">
           <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-4" />
-          <p className="text-zinc-400">Loading billing information...</p>
+          <p className="text-zinc-400">Loading...</p>
         </div>
       </div>
     }>

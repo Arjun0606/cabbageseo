@@ -9,11 +9,20 @@
 import { useEffect, useState, Suspense, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, AlertTriangle, ArrowRight, Check } from "lucide-react";
+import { useSite } from "@/context/site-context";
 
 function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const domainFromUrl = searchParams.get("domain");
+  const { subscription, loading: siteLoading } = useSite();
+
+  // Free users must subscribe before onboarding
+  useEffect(() => {
+    if (!siteLoading && subscription.isFreeUser) {
+      router.replace("/settings/billing");
+    }
+  }, [siteLoading, subscription.isFreeUser, router]);
 
   const [step, setStep] = useState<"domain" | "scanning">(
     domainFromUrl ? "scanning" : "domain"

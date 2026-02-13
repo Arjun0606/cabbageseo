@@ -108,32 +108,37 @@ export async function GET(request: NextRequest) {
                 );
               }
 
-              // Redirect to onboarding for new users
-              // Check if there's a domain param to pass along
-              const domainParam = searchParams.get("domain");
-              const onboardingUrl = domainParam 
-                ? `/onboarding?domain=${encodeURIComponent(domainParam)}`
-                : `/onboarding`;
-              return NextResponse.redirect(`${redirectBase}${onboardingUrl}`);
+              // New users must subscribe before accessing dashboard
+              return NextResponse.redirect(`${redirectBase}/settings/billing`);
             }
           } else {
-            // User exists, check if they have any sites (for onboarding check)
+            // User exists — route based on plan and site status
             const orgId = (profile as { organization_id: string }).organization_id;
-            
+
             if (orgId) {
+              // Check their plan
+              const { data: org } = await serviceClient
+                .from("organizations")
+                .select("plan")
+                .eq("id", orgId)
+                .single();
+
+              const plan = (org as { plan: string } | null)?.plan || "free";
+
+              // Free (unpaid) users go to billing to subscribe
+              if (plan === "free") {
+                return NextResponse.redirect(`${redirectBase}/settings/billing`);
+              }
+
+              // Paid users without sites go to onboarding
               const { data: sites } = await serviceClient
                 .from("sites")
                 .select("id")
                 .eq("organization_id", orgId)
                 .limit(1);
-              
-              // If no sites, redirect to onboarding
+
               if (!sites || sites.length === 0) {
-                const domainParam = searchParams.get("domain");
-                const onboardingUrl = domainParam 
-                  ? `/onboarding?domain=${encodeURIComponent(domainParam)}`
-                  : `/onboarding`;
-                return NextResponse.redirect(`${redirectBase}${onboardingUrl}`);
+                return NextResponse.redirect(`${redirectBase}/onboarding`);
               }
             }
           }
