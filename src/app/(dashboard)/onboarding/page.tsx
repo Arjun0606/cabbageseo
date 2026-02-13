@@ -17,13 +17,6 @@ function OnboardingContent() {
   const domainFromUrl = searchParams.get("domain");
   const { subscription, loading: siteLoading } = useSite();
 
-  // Free users must subscribe before onboarding
-  useEffect(() => {
-    if (!siteLoading && subscription.isFreeUser) {
-      router.replace("/settings/billing");
-    }
-  }, [siteLoading, subscription.isFreeUser, router]);
-
   const [step, setStep] = useState<"domain" | "scanning">(
     domainFromUrl ? "scanning" : "domain"
   );
@@ -31,6 +24,22 @@ function OnboardingContent() {
   const [error, setError] = useState("");
   const [scanPhase, setScanPhase] = useState<"creating" | "chatgpt" | "perplexity" | "google" | "done">("creating");
   const scanStarted = useRef(false);
+
+  // Free users must subscribe before onboarding
+  useEffect(() => {
+    if (!siteLoading && subscription.isFreeUser) {
+      router.replace("/settings/billing");
+    }
+  }, [siteLoading, subscription.isFreeUser, router]);
+
+  // Show loading spinner while checking auth/subscription status
+  if (siteLoading || subscription.isFreeUser) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-zinc-400 animate-spin" />
+      </div>
+    );
+  }
 
   const handleDomainSubmit = (e: React.FormEvent) => {
     e.preventDefault();

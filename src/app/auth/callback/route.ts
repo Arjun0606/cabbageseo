@@ -14,6 +14,7 @@ import { emailService } from "@/lib/email";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
+  console.log("[Auth Callback] URL:", request.url);
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const rawNext = searchParams.get("next") ?? "/dashboard";
@@ -151,6 +152,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${redirectBase}${next}`);
     } else {
       console.error("[Auth Callback] Session exchange error:", error);
+    }
+  }
+
+  // No code param — if user is already authenticated, send them to dashboard
+  const supabaseCheck = await createClient();
+  if (supabaseCheck) {
+    const { data: { user: existingUser } } = await supabaseCheck.auth.getUser();
+    if (existingUser) {
+      return NextResponse.redirect(`${origin}/dashboard`);
     }
   }
 

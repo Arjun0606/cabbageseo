@@ -95,6 +95,14 @@ function DashboardContent() {
   const [generatingPages, setGeneratingPages] = useState(justScanned);
   const [generationTimedOut, setGenerationTimedOut] = useState(false);
 
+  // Auto-dismiss welcome banner
+  const [showWelcome, setShowWelcome] = useState(searchParams.get("welcome") === "true");
+  useEffect(() => {
+    if (!showWelcome) return;
+    const t = setTimeout(() => setShowWelcome(false), 8000);
+    return () => clearTimeout(t);
+  }, [showWelcome]);
+
   // Poll for auto-generated pages after first scan
   useEffect(() => {
     if (!justScanned || !siteId || !generatingPages) return;
@@ -264,12 +272,15 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* Welcome banner */}
-      {searchParams.get("welcome") === "true" && (
-        <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3">
+      {/* Welcome banner (auto-dismisses after 8s) */}
+      {showWelcome && (
+        <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 flex items-center justify-between">
           <p className="text-emerald-300 text-sm font-medium">
             Your first AI visibility check is complete. Here&apos;s where you stand.
           </p>
+          <button onClick={() => setShowWelcome(false)} className="text-emerald-400/60 hover:text-emerald-300 text-sm ml-4">
+            Dismiss
+          </button>
         </div>
       )}
 

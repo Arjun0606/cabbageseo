@@ -47,6 +47,15 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Forward stray auth codes to the callback handler.
+  // Supabase PKCE flow may redirect ?code= to the Site URL instead of /auth/callback
+  const code = request.nextUrl.searchParams.get("code");
+  if (code && request.nextUrl.pathname !== "/auth/callback") {
+    const callbackUrl = request.nextUrl.clone();
+    callbackUrl.pathname = "/auth/callback";
+    return NextResponse.redirect(callbackUrl);
+  }
+
   // Define public routes that don't require auth
   const publicRoutes = [
     "/",

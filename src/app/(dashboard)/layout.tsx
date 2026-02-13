@@ -29,7 +29,6 @@ import {
   Shield,
 } from "lucide-react";
 import { SiteProvider, useSite } from "@/context/site-context";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -262,14 +261,23 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
 
 // Header component
 function Header({ onMenuClick }: { onMenuClick: () => void }) {
-  const { currentSite, runCheck } = useSite();
-  const [checking, setChecking] = useState(false);
+  const { currentSite } = useSite();
 
-  const handleCheck = async () => {
-    if (!currentSite) return;
-    setChecking(true);
-    await runCheck(currentSite.id);
-    setChecking(false);
+  const lastChecked = currentSite?.lastCheckedAt
+    ? new Date(currentSite.lastCheckedAt)
+    : null;
+
+  const formatLastChecked = () => {
+    if (!lastChecked) return "No checks yet";
+    const now = new Date();
+    const diffMs = now.getTime() - lastChecked.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHrs = Math.floor(diffMins / 60);
+    if (diffHrs < 24) return `${diffHrs}h ago`;
+    const diffDays = Math.floor(diffHrs / 24);
+    return `${diffDays}d ago`;
   };
 
   return (
@@ -286,22 +294,9 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
           <div className="hidden sm:block">
             <h1 className="text-white font-medium">{currentSite.domain}</h1>
             <p className="text-xs text-zinc-500">
-              AI Revenue Tracking
+              Last checked {formatLastChecked()}
             </p>
           </div>
-        )}
-      </div>
-
-      <div className="flex items-center gap-3">
-        {currentSite && (
-          <Button
-            onClick={handleCheck}
-            disabled={checking}
-            size="sm"
-            className="bg-emerald-500 hover:bg-emerald-400 text-black"
-          >
-            {checking ? "Checking..." : "Check Now"}
-          </Button>
         )}
       </div>
     </header>

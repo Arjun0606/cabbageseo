@@ -212,6 +212,11 @@ function BillingContent() {
       <div className="space-y-8">
         {/* Header */}
         <div className="text-center">
+          {sites.length === 0 && (
+            <p className="text-sm text-emerald-400 font-medium mb-3">
+              Welcome to CabbageSEO! Choose a plan to get started.
+            </p>
+          )}
           <h1 className="text-3xl font-bold text-white mb-2">Choose your plan</h1>
           <p className="text-lg text-zinc-400 max-w-xl mx-auto">
             Track how AI platforms cite your brand. Fix gaps before competitors do.
@@ -653,9 +658,23 @@ function StatusBanners({
       {pollingPayment && (
         <Card className="bg-emerald-500/10 border-emerald-500/30">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-3">
               <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
-              <p className="text-emerald-400 font-medium">Processing your payment... This may take a few seconds.</p>
+              <p className="text-emerald-400 font-medium">Setting up your account...</p>
+            </div>
+            <div className="space-y-2 ml-8">
+              <div className="flex items-center gap-2 text-sm">
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-emerald-300/70">Payment received</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
+                <span className="text-emerald-300">Activating your plan...</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-3.5 h-3.5 rounded-full border border-emerald-500/30" />
+                <span className="text-emerald-300/40">Ready to go</span>
+              </div>
             </div>
           </CardContent>
         </Card>
