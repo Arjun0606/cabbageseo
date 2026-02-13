@@ -3,19 +3,20 @@
 /**
  * ONBOARDING — Domain → Scan → Dashboard
  *
- * Radically simplified: one field, one scan, done.
+ * Clean, centered card inside the dashboard layout.
+ * Warns about the one-site-per-billing-period policy.
  */
 
 import { useEffect, useState, Suspense, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, AlertTriangle, ArrowRight, Check } from "lucide-react";
+import { Loader2, AlertTriangle, ArrowRight, Check, Globe, Search, Info } from "lucide-react";
 import { useSite } from "@/context/site-context";
 
 function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const domainFromUrl = searchParams.get("domain");
-  const { subscription, loading: siteLoading } = useSite();
+  const { subscription, loading: siteLoading, organization } = useSite();
 
   const [step, setStep] = useState<"domain" | "scanning">(
     domainFromUrl ? "scanning" : "domain"
@@ -35,11 +36,15 @@ function OnboardingContent() {
   // Show loading spinner while checking auth/subscription status
   if (siteLoading || subscription.isFreeUser) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="flex items-center justify-center py-32">
         <Loader2 className="w-8 h-8 text-zinc-400 animate-spin" />
       </div>
     );
   }
+
+  const planName = organization?.plan
+    ? organization.plan.charAt(0).toUpperCase() + organization.plan.slice(1)
+    : "Scout";
 
   const handleDomainSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,57 +148,91 @@ function OnboardingContent() {
   // ========== DOMAIN INPUT ==========
   if (step === "domain") {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="max-w-md w-full mx-auto px-6">
-          <div className="text-center mb-8">
-            <img
-              src="/apple-touch-icon.png"
-              alt="CabbageSEO"
-              className="w-16 h-16 rounded-2xl mx-auto mb-4"
-            />
-            <h1 className="text-3xl font-bold text-white mb-2">
-              Let&rsquo;s check your AI visibility
-            </h1>
-            <p className="text-zinc-400">
-              We&rsquo;ll scan ChatGPT, Perplexity, and Google AI in under a minute.
-            </p>
-          </div>
-
-          <form onSubmit={handleDomainSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">
-                What&rsquo;s your website?
-              </label>
-              <input
-                type="text"
-                value={domain}
-                onChange={(e) => setDomain(e.target.value)}
-                placeholder="yoursaas.com"
-                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                autoFocus
-              />
+      <div className="flex items-center justify-center py-16 md:py-24">
+        <div className="max-w-lg w-full mx-auto px-4">
+          {/* Card */}
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-8 md:p-10">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-5">
+                <Globe className="w-7 h-7 text-emerald-400" />
+              </div>
+              <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                Add your website
+              </h1>
+              <p className="text-zinc-400 text-sm md:text-base">
+                We&rsquo;ll scan ChatGPT, Perplexity, and Google AI to see if they recommend you.
+              </p>
             </div>
 
-            {error && (
-              <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
-                <AlertTriangle className="w-4 h-4" />
-                {error}
+            {/* Form */}
+            <form onSubmit={handleDomainSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                  Your domain
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                  <input
+                    type="text"
+                    value={domain}
+                    onChange={(e) => setDomain(e.target.value)}
+                    placeholder="yoursaas.com"
+                    className="w-full pl-10 pr-4 py-3.5 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-base"
+                    autoFocus
+                  />
+                </div>
               </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={!domain.trim()}
-              className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
-            >
-              Start scanning
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          </form>
+              {error && (
+                <div className="flex items-start gap-2.5 p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+                  <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
 
-          <p className="mt-6 text-center text-zinc-500 text-sm">
-            Real AI responses, not estimates.
-          </p>
+              <button
+                type="submit"
+                disabled={!domain.trim()}
+                className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-700 disabled:cursor-not-allowed text-black font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors text-base"
+              >
+                Start scanning
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </form>
+
+            {/* What happens next */}
+            <div className="mt-6 pt-6 border-t border-zinc-800">
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center mx-auto mb-2">
+                    <span className="text-sm">🤖</span>
+                  </div>
+                  <p className="text-xs text-zinc-500">ChatGPT</p>
+                </div>
+                <div>
+                  <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center mx-auto mb-2">
+                    <span className="text-sm">🔍</span>
+                  </div>
+                  <p className="text-xs text-zinc-500">Perplexity</p>
+                </div>
+                <div>
+                  <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center mx-auto mb-2">
+                    <span className="text-sm">✨</span>
+                  </div>
+                  <p className="text-xs text-zinc-500">Google AI</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Site policy notice */}
+          <div className="mt-4 flex items-start gap-2.5 px-2">
+            <Info className="w-4 h-4 text-zinc-600 mt-0.5 shrink-0" />
+            <p className="text-xs text-zinc-500">
+              Your {planName} plan tracks one site per billing period. Choose carefully — you can change your tracked site when your next billing period starts.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -210,44 +249,54 @@ function OnboardingContent() {
   const currentPhaseIndex = scanSteps.findIndex(s => s.id === scanPhase);
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-      <div className="max-w-md w-full mx-auto px-6 text-center">
-        <Loader2 className="w-12 h-12 text-emerald-400 animate-spin mx-auto" />
-        <h2 className="text-2xl font-bold text-white mt-6 mb-2">
-          Scanning AI platforms...
-        </h2>
-        <p className="text-zinc-400 mb-8">
-          Checking if AI recommends{" "}
-          <span className="text-white font-medium">{domain}</span>
-        </p>
+    <div className="flex items-center justify-center py-16 md:py-24">
+      <div className="max-w-lg w-full mx-auto px-4">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-8 md:p-10 text-center">
+          <div className="flex justify-center mb-6">
+            <div className="p-4 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+              <Loader2 className="w-10 h-10 text-emerald-400 animate-spin" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Scanning AI platforms...
+          </h2>
+          <p className="text-zinc-400 mb-8">
+            Checking if AI recommends{" "}
+            <span className="text-emerald-400 font-medium">{domain}</span>
+          </p>
 
-        {/* Step progress */}
-        <div className="space-y-2 text-left max-w-xs mx-auto">
-          {scanSteps.map((s, i) => {
-            const isComplete = i < currentPhaseIndex;
-            const isCurrent = i === currentPhaseIndex;
-            return (
-              <div key={s.id} className="flex items-center gap-3">
-                {isComplete ? (
-                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                ) : isCurrent ? (
-                  <Loader2 className="w-4 h-4 text-emerald-400 animate-spin shrink-0" />
-                ) : (
-                  <div className="w-4 h-4 rounded-full border border-zinc-700 shrink-0" />
-                )}
-                <span className={`text-sm ${
-                  isComplete ? "text-zinc-500" : isCurrent ? "text-white font-medium" : "text-zinc-600"
-                }`}>
-                  {s.label}
-                </span>
-              </div>
-            );
-          })}
+          {/* Step progress */}
+          <div className="space-y-3 text-left max-w-xs mx-auto">
+            {scanSteps.map((s, i) => {
+              const isComplete = i < currentPhaseIndex;
+              const isCurrent = i === currentPhaseIndex;
+              return (
+                <div key={s.id} className="flex items-center gap-3">
+                  {isComplete ? (
+                    <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    </div>
+                  ) : isCurrent ? (
+                    <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                      <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
+                    </div>
+                  ) : (
+                    <div className="w-6 h-6 rounded-full border border-zinc-700 shrink-0" />
+                  )}
+                  <span className={`text-sm ${
+                    isComplete ? "text-zinc-500" : isCurrent ? "text-white font-medium" : "text-zinc-600"
+                  }`}>
+                    {s.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="mt-8 text-zinc-600 text-xs">
+            Usually takes 20–40 seconds
+          </p>
         </div>
-
-        <p className="mt-8 text-zinc-600 text-sm">
-          Usually takes 20-40 seconds
-        </p>
       </div>
     </div>
   );
@@ -257,7 +306,7 @@ export default function OnboardingPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="flex items-center justify-center py-32">
           <Loader2 className="w-8 h-8 text-zinc-400 animate-spin" />
         </div>
       }
