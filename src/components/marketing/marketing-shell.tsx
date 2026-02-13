@@ -34,12 +34,21 @@ const navLinks = [
 function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Check auth status for header buttons
+  useEffect(() => {
+    fetch("/api/me")
+      .then(r => r.json())
+      .then(d => { if (d.authenticated) setIsLoggedIn(true); })
+      .catch(() => {});
   }, []);
 
   return (
@@ -88,19 +97,32 @@ function Header() {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="ghost" className="text-zinc-400 hover:text-white">
-                Log in
-              </Button>
-            </Link>
-            <Link href="/signup">
-              <Button className="relative bg-emerald-500 hover:bg-emerald-400 text-black font-medium group overflow-hidden">
-                <span className="relative z-10 flex items-center">
-                  Get Started
-                  <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </Button>
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/dashboard">
+                <Button className="relative bg-emerald-500 hover:bg-emerald-400 text-black font-medium group overflow-hidden">
+                  <span className="relative z-10 flex items-center">
+                    Dashboard
+                    <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" className="text-zinc-400 hover:text-white">
+                    Log in
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button className="relative bg-emerald-500 hover:bg-emerald-400 text-black font-medium group overflow-hidden">
+                    <span className="relative z-10 flex items-center">
+                      Get Started
+                      <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
+                    </span>
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -135,20 +157,32 @@ function Header() {
                     </Link>
                   ))}
                   <hr className="border-white/[0.06] my-2" />
-                  <Link
-                    href="/login"
-                    className="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-white/[0.03] rounded-lg transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Log in
-                  </Link>
-                  <Link
-                    href="/signup"
-                    className="px-4 py-2.5 text-emerald-400 hover:bg-emerald-500/10 rounded-lg font-medium transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Get Started →
-                  </Link>
+                  {isLoggedIn ? (
+                    <Link
+                      href="/dashboard"
+                      className="px-4 py-2.5 text-emerald-400 hover:bg-emerald-500/10 rounded-lg font-medium transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Dashboard →
+                    </Link>
+                  ) : (
+                    <>
+                      <Link
+                        href="/login"
+                        className="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-white/[0.03] rounded-lg transition-colors"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Log in
+                      </Link>
+                      <Link
+                        href="/signup"
+                        className="px-4 py-2.5 text-emerald-400 hover:bg-emerald-500/10 rounded-lg font-medium transition-colors"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Get Started →
+                      </Link>
+                    </>
+                  )}
                 </nav>
               </div>
             </motion.div>
