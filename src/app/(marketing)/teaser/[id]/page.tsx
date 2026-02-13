@@ -15,6 +15,7 @@ import CopyBadgeCode from "./copy-badge";
 import UpgradeGate from "./upgrade-gate";
 import ScoreAlertSignup from "./score-alert-signup";
 import ContentPreview from "./content-preview";
+import FixPageFallback from "./fix-page-fallback";
 import type { ContentPreviewData } from "@/lib/db/schema";
 
 // ============================================
@@ -369,11 +370,13 @@ export default async function ShareableTeaserPage({
         </div>
 
         {/* AI Content Preview — the conversion driver */}
-        {report.contentPreview && (
+        {report.contentPreview ? (
           <ContentPreview
             domain={report.domain}
             preview={report.contentPreview as ContentPreviewData}
           />
+        ) : (
+          <FixPageFallback domain={report.domain} gapCount={gapCount} />
         )}
 
         {/* Upgrade Gate — blurred action plan */}
