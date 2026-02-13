@@ -10,6 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { lookup } from "dns/promises";
 import { db, teaserReports } from "@/lib/db";
 import { generateTeaserPreview, type ContentPreviewData } from "@/lib/geo/teaser-preview-generator";
 import { logRecommendations, extractTeaserRecommendations } from "@/lib/geo/recommendation-logger";
@@ -435,6 +436,25 @@ export async function POST(request: NextRequest) {
     cleanDomain = cleanDomain.replace(/^https?:\/\//, "");
     cleanDomain = cleanDomain.replace(/^www\./, "");
     cleanDomain = cleanDomain.split("/")[0];
+
+    // Validate domain format
+    const domainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
+    if (!domainRegex.test(cleanDomain) || cleanDomain.length > 253) {
+      return NextResponse.json(
+        { error: "Please enter a valid domain (e.g., yourdomain.com)" },
+        { status: 400 }
+      );
+    }
+
+    // Verify domain actually exists (DNS resolution)
+    try {
+      await lookup(cleanDomain);
+    } catch {
+      return NextResponse.json(
+        { error: "We couldn't find this domain. Please check the URL and try again." },
+        { status: 400 }
+      );
+    }
 
     const brandName = extractBrandName(cleanDomain);
 
