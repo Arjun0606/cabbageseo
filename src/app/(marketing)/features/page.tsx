@@ -146,9 +146,9 @@ export default function FeaturesPage() {
               gaps, fix them, and track the results.
             </p>
           </AnimateIn>
-          <StaggerGroup className="flex flex-wrap justify-center gap-4">
-            {capabilities.map((f) => (
-              <StaggerItem key={f.name} className="w-full md:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.72rem)]">
+          <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            {capabilities.map((f, i) => (
+              <StaggerItem key={f.name} className={`lg:col-span-2${i === 3 ? " lg:col-start-2" : ""}`}>
                 <FeatureCard feature={f} />
               </StaggerItem>
             ))}
