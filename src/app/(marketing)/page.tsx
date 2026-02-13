@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, AlertTriangle, Search, Loader2, Rocket, BarChart3, ShieldCheck, RefreshCw } from "lucide-react";
+import { ArrowRight, AlertTriangle, Search, Loader2, Rocket, RefreshCw } from "lucide-react";
 import { GridAnimation } from "@/components/backgrounds/grid-animation";
+import { GradientOrbs } from "@/components/backgrounds/gradient-orbs";
 import { AnimateIn } from "@/components/motion/animate-in";
 import { GlassCard } from "@/components/ui/glass-card";
 import { ScanProgress } from "@/components/homepage/scan-progress";
@@ -137,22 +138,28 @@ function HomeContent() {
     <div className="min-h-screen bg-zinc-950">
       {/* ========== HERO ========== */}
       <section className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden py-20">
-        <GridAnimation className="opacity-60" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-zinc-950 pointer-events-none" />
+        <GridAnimation className="opacity-40" />
+        <GradientOrbs variant="emerald" className="opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-zinc-950/40 to-zinc-950 pointer-events-none" />
+
+        {/* Radial spotlight behind hero */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-emerald-500/[0.07] rounded-full blur-[120px] pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-6 text-center w-full">
-          {/* Platform badges */}
+          {/* Platform badges — floating */}
           <AnimateIn delay={0.2} direction="up">
             <div className="flex justify-center gap-3 mb-10">
               {[
-                { name: "ChatGPT", color: "border-emerald-500/20 text-emerald-400" },
-                { name: "Perplexity", color: "border-blue-500/20 text-blue-400" },
-                { name: "Google AI", color: "border-purple-500/20 text-purple-400" },
-              ].map((p) => (
+                { name: "ChatGPT", color: "border-emerald-500/30 text-emerald-400 shadow-emerald-500/10" },
+                { name: "Perplexity", color: "border-blue-500/30 text-blue-400 shadow-blue-500/10" },
+                { name: "Google AI", color: "border-purple-500/30 text-purple-400 shadow-purple-500/10" },
+              ].map((p, i) => (
                 <span
                   key={p.name}
-                  className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium border bg-white/[0.03] backdrop-blur-sm ${p.color}`}
+                  className={`inline-flex items-center px-4 py-2 rounded-full text-xs font-medium border bg-white/[0.04] backdrop-blur-md shadow-lg animate-float ${p.color}`}
+                  style={{ animationDelay: `${i * 300}ms`, animationDuration: `${5 + i}s` }}
                 >
+                  <span className="w-1.5 h-1.5 rounded-full bg-current mr-2 animate-pulse" />
                   {p.name}
                 </span>
               ))}
@@ -162,8 +169,11 @@ function HomeContent() {
           <AnimateIn delay={0.4} direction="up">
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-white mb-8 leading-[1.1] tracking-tight">
               When buyers ask AI<br className="hidden sm:block" />
-              who to use, <span className="text-emerald-400">are you<br className="hidden sm:block" />
-              the answer?</span>
+              who to use,{" "}
+              <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-teal-400 bg-clip-text text-transparent animate-shimmer-text">
+                are you<br className="hidden sm:block" />
+                the answer?
+              </span>
             </h1>
           </AnimateIn>
 
@@ -176,46 +186,72 @@ function HomeContent() {
             </p>
           </AnimateIn>
 
-          {/* Domain input */}
+          {/* ===== SCANNER SEARCH BAR ===== */}
           <AnimateIn delay={0.8} direction="up">
             <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-6">
-              <GlassCard padding="sm" hover={false} className="!p-2">
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    type="text"
-                    value={domain}
-                    onChange={(e) => setDomain(e.target.value)}
-                    placeholder="yourdomain.com"
-                    className="flex-1 px-5 py-4 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white text-lg placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 transition-all"
-                    disabled={scanState === "scanning"}
-                    autoFocus={!domainParam}
+              <div className="relative group">
+                {/* Ambient glow behind the bar */}
+                <div className="absolute -inset-4 rounded-3xl bg-emerald-500/15 blur-2xl animate-breathe-glow pointer-events-none" />
+
+                {/* Rotating scanner sweep border */}
+                <div className="absolute -inset-px rounded-2xl overflow-hidden pointer-events-none">
+                  <div
+                    className="absolute w-[200%] h-[200%] top-[-50%] left-[-50%] animate-scanner-sweep"
+                    style={{
+                      background: "conic-gradient(from 0deg, transparent 0%, rgba(34, 197, 94, 0.4) 8%, transparent 25%, transparent 100%)",
+                    }}
                   />
-                  <button
-                    type="submit"
-                    disabled={scanState === "scanning" || !domain.trim()}
-                    className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-700 disabled:cursor-not-allowed text-black font-bold rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
-                  >
-                    {scanState === "scanning" ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-black" />
-                    ) : (
-                      <>
-                        <Search className="w-5 h-5" />
-                        Check now
-                      </>
-                    )}
-                  </button>
                 </div>
-              </GlassCard>
+
+                {/* Static gradient border */}
+                <div className="absolute -inset-px rounded-2xl bg-gradient-to-r from-emerald-500/20 via-white/[0.06] to-emerald-500/20 pointer-events-none" />
+
+                {/* Inner bar */}
+                <div className="relative bg-zinc-950/95 backdrop-blur-xl rounded-2xl p-2.5">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      value={domain}
+                      onChange={(e) => setDomain(e.target.value)}
+                      placeholder="yourdomain.com"
+                      className="flex-1 px-6 py-4 bg-transparent text-white text-lg placeholder:text-zinc-600 focus:outline-none transition-all"
+                      disabled={scanState === "scanning"}
+                      autoFocus={!domainParam}
+                    />
+                    <button
+                      type="submit"
+                      disabled={scanState === "scanning" || !domain.trim()}
+                      className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:cursor-not-allowed text-black font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      {scanState === "scanning" ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-black" />
+                      ) : (
+                        <>
+                          <Search className="w-5 h-5" />
+                          Check now
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </form>
           </AnimateIn>
 
           <AnimateIn delay={1.0} direction="up">
             <div className="flex items-center justify-center gap-6 text-sm text-zinc-500">
-              <span>Takes 10 seconds</span>
-              <span className="text-zinc-700">·</span>
-              <span>No signup required</span>
-              <span className="text-zinc-700">·</span>
-              <span>Real AI responses</span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-emerald-500/60" />
+                Takes 10 seconds
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-emerald-500/60" />
+                No signup required
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-emerald-500/60" />
+                Real AI responses
+              </span>
             </div>
           </AnimateIn>
 
@@ -262,18 +298,24 @@ function HomeContent() {
       </section>
 
       {/* ========== HOW IT WORKS — CORE LOOP ========== */}
-      <section className="py-20 border-t border-zinc-900">
+      <section className="py-24 relative">
+        {/* Gradient divider */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-emerald-500/25 to-transparent" />
+
         <div className="max-w-7xl mx-auto px-6">
           <AnimateIn>
             <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">
               How it works
             </h2>
-            <p className="text-zinc-500 text-center mb-12 max-w-xl mx-auto leading-relaxed">
+            <p className="text-zinc-500 text-center mb-14 max-w-xl mx-auto leading-relaxed">
               The GEO loop: scan, find gaps, fix, verify, monitor. Repeat until AI recommends you.
             </p>
           </AnimateIn>
 
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-6 sm:gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-6 sm:gap-3 relative">
+            {/* Connecting line behind cards (desktop) */}
+            <div className="hidden sm:block absolute top-6 left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent pointer-events-none" />
+
             {[
               {
                 step: "1",
@@ -302,8 +344,8 @@ function HomeContent() {
               },
             ].map((item, i) => (
               <AnimateIn key={item.step} delay={0.1 * i}>
-                <GlassCard padding="md" className="text-center h-full">
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-3">
+                <GlassCard padding="md" className="text-center h-full relative">
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/10">
                     <span className="text-emerald-400 text-sm font-bold">{item.step}</span>
                   </div>
                   <h3 className="text-white font-semibold mb-1.5">{item.title}</h3>
@@ -327,13 +369,20 @@ function HomeContent() {
       </section>
 
       {/* ========== WHY ONGOING ========== */}
-      <section className="py-20 border-t border-zinc-900">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="py-24 relative overflow-hidden">
+        {/* Gradient divider */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent" />
+
+        {/* Subtle background orbs */}
+        <div className="absolute top-1/2 right-0 w-[400px] h-[400px] bg-emerald-500/[0.03] rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-blue-500/[0.03] rounded-full blur-[80px] pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-6 relative">
           <AnimateIn>
             <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">
               AI visibility isn&apos;t a one-time fix
             </h2>
-            <p className="text-zinc-500 text-center mb-12 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-zinc-500 text-center mb-14 max-w-2xl mx-auto leading-relaxed">
               AI models retrain, competitors publish new content, and recommendations shift every week.
               CabbageSEO runs continuously so you don&apos;t fall behind.
             </p>
@@ -345,7 +394,7 @@ function HomeContent() {
             <AnimateIn delay={0.1}>
               <GlassCard padding="lg" className="h-full">
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center shadow-lg shadow-emerald-500/10">
                     <Rocket className="w-5 h-5 text-emerald-400" />
                   </div>
                   <div>
@@ -361,7 +410,7 @@ function HomeContent() {
                     "Trust source audit shows which review platforms you're missing from",
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-2.5 text-sm text-zinc-400">
-                      <span className="text-emerald-400 mt-0.5">→</span>
+                      <span className="text-emerald-400 mt-0.5">&rarr;</span>
                       {item}
                     </li>
                   ))}
@@ -373,7 +422,7 @@ function HomeContent() {
             <AnimateIn delay={0.2}>
               <GlassCard padding="lg" className="h-full">
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center shadow-lg shadow-blue-500/10">
                     <RefreshCw className="w-5 h-5 text-blue-400" />
                   </div>
                   <div>
@@ -389,7 +438,7 @@ function HomeContent() {
                     "Fresh action plans reprioritize based on what changed this week",
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-2.5 text-sm text-zinc-400">
-                      <span className="text-blue-400 mt-0.5">→</span>
+                      <span className="text-blue-400 mt-0.5">&rarr;</span>
                       {item}
                     </li>
                   ))}
@@ -400,17 +449,19 @@ function HomeContent() {
 
           {/* Why it never stops */}
           <AnimateIn delay={0.3}>
-            <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 max-w-2xl mx-auto mb-12">
+            <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-6 max-w-2xl mx-auto mb-12 backdrop-blur-sm">
               <h3 className="text-white font-semibold text-center mb-4">Why this can&apos;t be a one-time thing</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
                   { label: "AI models retrain", detail: "What they recommend shifts with each update" },
                   { label: "Competitors publish", detail: "New content pushes you down in AI answers" },
                   { label: "Queries evolve", detail: "People ask AI new questions every week" },
                   { label: "Trust signals decay", detail: "Stale profiles and old content lose credibility" },
                 ].map((reason) => (
-                  <div key={reason.label} className="flex items-start gap-2">
-                    <span className="text-red-400 text-sm mt-0.5">⚡</span>
+                  <div key={reason.label} className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-white/[0.02] transition-colors">
+                    <span className="w-5 h-5 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                    </span>
                     <div>
                       <p className="text-white text-sm font-medium">{reason.label}</p>
                       <p className="text-zinc-500 text-xs">{reason.detail}</p>
@@ -425,13 +476,13 @@ function HomeContent() {
             <div className="text-center">
               <Link
                 href="/signup"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
+                className="group inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Start monitoring my AI visibility
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
               </Link>
-              <p className="mt-3 text-zinc-600 text-sm">
-                From $49/mo · Scans run automatically · Cancel anytime
+              <p className="mt-4 text-zinc-600 text-sm">
+                From $49/mo &middot; Scans run automatically &middot; Cancel anytime
               </p>
             </div>
           </AnimateIn>
