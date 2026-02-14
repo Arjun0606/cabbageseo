@@ -23,7 +23,7 @@ import { TrendChart } from "@/components/dashboard/trend-chart";
 import { FixPagesReady } from "@/components/dashboard/fix-pages-ready";
 import { RecheckResult } from "@/components/dashboard/recheck-result";
 import { CustomQueries } from "@/components/dashboard/custom-queries";
-import { getCitationPlanLimits } from "@/lib/billing/citation-plans";
+import { getCitationPlanLimits, getCitationPlanFeatures } from "@/lib/billing/citation-plans";
 import {
   useMomentum,
   useNextAction,
@@ -200,6 +200,7 @@ function DashboardContent() {
   const plan = organization?.plan || "free";
   const isPaid = plan !== "free";
   const planLimits = getCitationPlanLimits(plan);
+  const planFeatures = getCitationPlanFeatures(plan);
   const totalCitations = currentSite?.totalCitations || 0;
   const showFirstCitationGoal = totalCitations === 0;
 
@@ -259,7 +260,7 @@ function DashboardContent() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {isPaid && currentSite?.id && (
+          {planFeatures.csvExport && currentSite?.id && (
             <a
               href={`/api/geo/citations/export?siteId=${currentSite.id}`}
               download
@@ -418,7 +419,7 @@ function DashboardContent() {
                       <h3 className="text-white font-semibold text-sm">Site GEO Audit</h3>
                       <p className="text-zinc-400 text-xs">
                         {auditData.hasAudit
-                          ? `Score: ${auditData.score}/100 (${auditData.grade}) · ${auditData.tipsCount} tips`
+                          ? `Score: ${auditData.score ?? 0}/100${auditData.grade ? ` (${auditData.grade})` : ""} · ${auditData.tipsCount} tip${auditData.tipsCount !== 1 ? "s" : ""}`
                           : "Analyze your pages for AI-citability"}
                       </p>
                     </div>

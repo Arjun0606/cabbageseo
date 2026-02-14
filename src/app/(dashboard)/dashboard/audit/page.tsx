@@ -500,11 +500,11 @@ function RawDataSection({ rawData }: { rawData: AuditRawData }) {
   const [open, setOpen] = useState(false);
 
   const items = [
-    { label: "Pages Analyzed", value: rawData.pagesAnalyzed },
-    { label: "Total Word Count", value: rawData.wordCount.toLocaleString() },
-    { label: "Headings Found", value: rawData.headingsCount },
-    { label: "Lists Found", value: rawData.listsCount },
-    { label: "External Links", value: rawData.externalLinksCount },
+    { label: "Pages Analyzed", value: rawData.pagesAnalyzed ?? 0 },
+    { label: "Total Word Count", value: (rawData.wordCount ?? 0).toLocaleString() },
+    { label: "Headings Found", value: rawData.headingsCount ?? 0 },
+    { label: "Lists Found", value: rawData.listsCount ?? 0 },
+    { label: "External Links", value: rawData.externalLinksCount ?? 0 },
     { label: "Author Info", value: rawData.hasAuthorInfo ? "Found" : "Not found" },
     { label: "Publication Dates", value: rawData.hasDates ? "Found" : "Not found" },
   ];
@@ -609,7 +609,14 @@ export default function AuditPage() {
       const json = await res.json();
 
       if (json.success && json.data?.hasAudit && json.data.audit) {
-        setAudit(json.data.audit);
+        const a = json.data.audit;
+        // Validate the audit has the expected shape (score with grade + breakdown)
+        if (a.score && a.score.grade && a.score.breakdown) {
+          setAudit(a);
+        } else {
+          // Not a real audit (e.g. citation check record) — treat as no audit
+          setAudit(null);
+        }
       } else {
         setAudit(null);
       }

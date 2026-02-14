@@ -6,6 +6,9 @@
  * to produce comparison pages, explainers, and FAQs that reinforce authority.
  */
 
+// Allow up to 120s for GPT-5.2 page generation
+export const maxDuration = 120;
+
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/api/get-user";

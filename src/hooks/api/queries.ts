@@ -246,11 +246,15 @@ export function useAudit(siteId: string | undefined) {
       const json = await res.json();
       if (json.data?.hasAudit) {
         const audit = json.data.audit;
+        // Only treat as audit if it has grade + breakdown (not a citation check)
+        if (!audit?.score?.grade || !audit?.score?.breakdown) {
+          return { hasAudit: false };
+        }
         return {
           hasAudit: true,
-          score: audit.score?.overall,
-          grade: audit.score?.grade,
-          breakdown: audit.score?.breakdown,
+          score: audit.score.overall,
+          grade: audit.score.grade,
+          breakdown: audit.score.breakdown,
           tipsCount: Array.isArray(audit.tips) ? audit.tips.length : 0,
           createdAt: audit.createdAt,
         };

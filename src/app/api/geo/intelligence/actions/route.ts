@@ -9,6 +9,9 @@
  * - action-plan: Weekly GEO playbook
  */
 
+// Allow up to 120s for AI intelligence calls (GPT-5.2 + Perplexity research)
+export const maxDuration = 120;
+
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/api/get-user";

@@ -10,6 +10,9 @@
  * - What do you need to fix?
  */
 
+// Allow up to 120s for multi-platform citation checking
+export const maxDuration = 120;
+
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";

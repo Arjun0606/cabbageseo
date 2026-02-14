@@ -9,6 +9,9 @@
  * No signup required - this is the free scan that converts visitors.
  */
 
+// Allow up to 120s for multi-platform AI scanning
+export const maxDuration = 120;
+
 import { NextRequest, NextResponse } from "next/server";
 import { lookup } from "dns/promises";
 import { db, teaserReports } from "@/lib/db";

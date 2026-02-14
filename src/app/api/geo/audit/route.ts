@@ -12,6 +12,9 @@
  * Returns the most recent audit for a site (from geo_analyses table).
  */
 
+// Allow up to 120s for site audit (crawl + GPT-5.2 analysis)
+export const maxDuration = 120;
+
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/api/get-user";
@@ -57,14 +60,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Site not found" }, { status: 404 });
     }
 
-    // Fetch most recent audit
-    const { data: audit } = await db
+    // Fetch most recent site audit (not citation checks).
+    // Audits have score.grade; citation checks don't.
+    const { data: audits } = await db
       .from("geo_analyses")
       .select("id, score, tips, queries, opportunities, raw_data, created_at")
       .eq("site_id", siteId)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(10);
+
+    // Filter to records that have audit-shaped score (with grade + breakdown)
+    const audit = (audits || []).find(
+      (a: { score: Record<string, unknown> }) =>
+        a.score && typeof a.score === "object" && "grade" in a.score && "breakdown" in a.score
+    ) || null;
 
     if (!audit) {
       return NextResponse.json({

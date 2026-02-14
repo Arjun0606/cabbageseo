@@ -7,6 +7,9 @@
  * Auth: Service role key only (internal calls).
  */
 
+// Allow up to 120s for auto page generation
+export const maxDuration = 120;
+
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getCitationPlan, canGeneratePage } from "@/lib/billing/citation-plans";
