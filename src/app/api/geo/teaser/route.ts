@@ -500,14 +500,15 @@ export async function POST(request: NextRequest) {
           return h === cleanDomain || h.endsWith("." + cleanDomain);
         } catch { return false; }
       });
+      const brandMentioned = isBrandMentioned(r.response, cleanDomain);
       results.push({
         query: queries[0],
         platform: "perplexity",
         aiRecommends: mentioned.filter(d => d !== cleanDomain).slice(0, 5),
-        mentionedYou: domainInResponse || inCitations || isBrandMentioned(r.response, cleanDomain),
+        mentionedYou: domainInResponse || inCitations || brandMentioned,
         snippet: r.response.slice(0, 300),
         inCitations,
-        domainFound: domainInResponse || inCitations,
+        domainFound: domainInResponse || inCitations || brandMentioned,
         mentionPosition: findMentionPosition(r.response, cleanDomain),
         mentionCount: countMentions(r.response, cleanDomain),
       });
@@ -522,14 +523,15 @@ export async function POST(request: NextRequest) {
       const mentioned = extractMentionedDomains(r.response, r.mentions);
       const domainInResponse = mentioned.includes(cleanDomain);
       const domainInMentions = r.mentions.some(m => m === cleanDomain || m.endsWith("." + cleanDomain));
+      const brandMentioned = isBrandMentioned(r.response, cleanDomain);
       results.push({
         query: queries[1],
         platform: "gemini",
         aiRecommends: mentioned.filter(d => d !== cleanDomain).slice(0, 5),
-        mentionedYou: domainInResponse || domainInMentions || isBrandMentioned(r.response, cleanDomain),
+        mentionedYou: domainInResponse || domainInMentions || brandMentioned,
         snippet: r.response.slice(0, 300),
         inCitations: domainInMentions,
-        domainFound: domainInResponse || domainInMentions,
+        domainFound: domainInResponse || domainInMentions || brandMentioned,
         mentionPosition: findMentionPosition(r.response, cleanDomain),
         mentionCount: countMentions(r.response, cleanDomain),
       });
@@ -543,14 +545,15 @@ export async function POST(request: NextRequest) {
       const r = chatgptSettled.value;
       const mentioned = extractMentionedDomains(r.response);
       const domainInResponse = mentioned.includes(cleanDomain);
+      const brandMentioned = isBrandMentioned(r.response, cleanDomain);
       results.push({
         query: queries[2],
         platform: "chatgpt",
         aiRecommends: mentioned.filter(d => d !== cleanDomain).slice(0, 5),
-        mentionedYou: domainInResponse || isBrandMentioned(r.response, cleanDomain),
+        mentionedYou: domainInResponse || brandMentioned,
         snippet: r.response.slice(0, 300),
         inCitations: false,
-        domainFound: domainInResponse,
+        domainFound: domainInResponse || brandMentioned,
         mentionPosition: findMentionPosition(r.response, cleanDomain),
         mentionCount: countMentions(r.response, cleanDomain),
       });
