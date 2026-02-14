@@ -296,15 +296,28 @@ function extractMentionedDomains(text: string, citations: string[] = []): string
 function isBrandMentioned(text: string, domain: string): boolean {
   const brandName = domain.split(".")[0];
   if (!brandName || brandName.length < 2) return false;
-  const regex = new RegExp(`\\b${brandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
-  return regex.test(text);
+  const escaped = brandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Exact match (e.g., "hubspot")
+  if (new RegExp(`\\b${escaped}\\b`, "i").test(text)) return true;
+  // Flexible match: allow optional spaces/hyphens between characters
+  // to catch "Product Hunt" for "producthunt", "Stack Overflow" for "stackoverflow"
+  const flexible = escaped.split("").join("[\\s\\-]?");
+  return new RegExp(`\\b${flexible}\\b`, "i").test(text);
+}
+
+// Build flexible brand regex that matches "producthunt", "Product Hunt", "product-hunt"
+function buildBrandRegex(domain: string, flags: string): RegExp | null {
+  const brandName = domain.split(".")[0];
+  if (!brandName || brandName.length < 2) return null;
+  const escaped = brandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const flexible = escaped.split("").join("[\\s\\-]?");
+  return new RegExp(`\\b${flexible}\\b`, flags);
 }
 
 // Find position of brand mention in text (0 = first, higher = later, -1 = not found)
 function findMentionPosition(text: string, domain: string): number {
-  const brandName = domain.split(".")[0];
-  if (!brandName || brandName.length < 2) return -1;
-  const regex = new RegExp(`\\b${brandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+  const regex = buildBrandRegex(domain, "i");
+  if (!regex) return -1;
   const match = regex.exec(text);
   if (!match) return -1;
   return match.index / Math.max(text.length, 1);
@@ -312,9 +325,8 @@ function findMentionPosition(text: string, domain: string): number {
 
 // Count how many times domain/brand appears in text
 function countMentions(text: string, domain: string): number {
-  const brandName = domain.split(".")[0];
-  if (!brandName || brandName.length < 2) return 0;
-  const regex = new RegExp(`\\b${brandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "gi");
+  const regex = buildBrandRegex(domain, "gi");
+  if (!regex) return 0;
   return (text.match(regex) || []).length;
 }
 

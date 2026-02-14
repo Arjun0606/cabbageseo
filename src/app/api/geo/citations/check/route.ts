@@ -309,6 +309,22 @@ PLATFORM_NAME: YES|NO [URL if found]`,
 }
 
 // ============================================
+// BRAND NAME DETECTION
+// Matches "Product Hunt" for "producthunt.com", "Stack Overflow" for "stackoverflow.com", etc.
+// ============================================
+function isBrandInContent(content: string, domain: string): boolean {
+  const brandName = domain.split(".")[0].toLowerCase();
+  if (!brandName || brandName.length < 2) return false;
+  const contentLower = content.toLowerCase();
+  // Exact match (single-word brands like "hubspot")
+  if (contentLower.includes(brandName)) return true;
+  // Flexible match: allow spaces/hyphens between characters for compound names
+  const escaped = brandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const flexible = escaped.split("").join("[\\s\\-]?");
+  return new RegExp(flexible, "i").test(content);
+}
+
+// ============================================
 // PERPLEXITY - Real API with Citations
 // ============================================
 async function checkPerplexity(domain: string, query: string): Promise<CheckResult> {
@@ -376,7 +392,8 @@ async function checkPerplexity(domain: string, query: string): Promise<CheckResu
       }
     });
     const citedInContent = contentLower.includes(domainLower);
-    const cited = citedInCitations || citedInContent;
+    const brandInContent = !citedInContent && isBrandInContent(content, domain);
+    const cited = citedInCitations || citedInContent || brandInContent;
 
     // Granular confidence based on signal strength
     let confidence = 0;
@@ -385,13 +402,16 @@ async function checkPerplexity(domain: string, query: string): Promise<CheckResu
       const citationCount = citations.filter((c: string) => c.toLowerCase().includes(domainLower)).length;
       confidence = 0.88 + Math.min(0.09, citationCount * 0.03); // 0.88-0.97
       // Bonus if also mentioned in text body
-      if (citedInContent) confidence = Math.min(0.98, confidence + 0.02);
+      if (citedInContent || brandInContent) confidence = Math.min(0.98, confidence + 0.02);
     } else if (citedInContent) {
-      // Mentioned in text but not in citation links
+      // Domain mentioned in text but not in citation links
       const mentionCount = contentLower.split(domainLower).length - 1;
       const earlyMention = contentLower.indexOf(domainLower) < 500;
       confidence = 0.62 + Math.min(0.14, mentionCount * 0.04); // 0.62-0.76
       if (earlyMention) confidence += 0.03; // mentioned early = more prominent
+    } else if (brandInContent) {
+      // Brand name mentioned (e.g., "Product Hunt" for producthunt.com)
+      confidence = 0.52;
     }
 
     return {
@@ -493,7 +513,8 @@ async function checkGoogleAI(domain: string, query: string): Promise<CheckResult
       }
     });
     const citedInContent = contentLower.includes(domainLower);
-    const cited = citedInGrounding || citedInContent;
+    const brandInContent = !citedInContent && isBrandInContent(content, domain);
+    const cited = citedInGrounding || citedInContent || brandInContent;
 
     // Granular confidence based on grounding evidence
     let confidence = 0;
@@ -507,10 +528,12 @@ async function checkGoogleAI(domain: string, query: string): Promise<CheckResult
         }
       ).length;
       confidence = 0.82 + Math.min(0.13, groundingCount * 0.04); // 0.82-0.95
-      if (citedInContent) confidence = Math.min(0.97, confidence + 0.02);
+      if (citedInContent || brandInContent) confidence = Math.min(0.97, confidence + 0.02);
     } else if (citedInContent) {
       const mentionCount = contentLower.split(domainLower).length - 1;
       confidence = 0.58 + Math.min(0.17, mentionCount * 0.05); // 0.58-0.75
+    } else if (brandInContent) {
+      confidence = 0.48;
     }
 
     return {
@@ -589,10 +612,12 @@ async function checkChatGPT(domain: string, query: string): Promise<CheckResult>
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
     
-    // Check if domain is mentioned and response shows knowledge
+    // Check if domain or brand name is mentioned and response shows knowledge
     const domainLower = domain.toLowerCase();
-    const domainMentioned = content.toLowerCase().includes(domainLower);
-    
+    const contentLower = content.toLowerCase();
+    const domainMentioned = contentLower.includes(domainLower);
+    const brandMentioned = !domainMentioned && isBrandInContent(content, domain);
+
     // Check for "I don't know" patterns
     const unknownPatterns = [
       "i don't have information",
@@ -602,19 +627,20 @@ async function checkChatGPT(domain: string, query: string): Promise<CheckResult>
       "no information available",
       "not aware of",
     ];
-    const isUnknown = unknownPatterns.some(p => content.toLowerCase().includes(p));
-    
-    const cited = domainMentioned && !isUnknown;
+    const isUnknown = unknownPatterns.some(p => contentLower.includes(p));
+
+    const cited = (domainMentioned || brandMentioned) && !isUnknown;
 
     // Granular confidence — lower base for ChatGPT (training data, not live web)
     let confidence = 0;
-    if (cited) {
-      const contentLower = content.toLowerCase();
+    if (cited && domainMentioned) {
       const mentionCount = contentLower.split(domainLower).length - 1;
       const earlyMention = contentLower.indexOf(domainLower) < 300;
       confidence = 0.42 + Math.min(0.22, mentionCount * 0.06); // 0.42-0.64
       if (earlyMention) confidence += 0.04; // mentioned early = more prominent
       if (mentionCount >= 3) confidence += 0.03; // heavily referenced
+    } else if (cited && brandMentioned) {
+      confidence = 0.38;
     }
 
     return {
