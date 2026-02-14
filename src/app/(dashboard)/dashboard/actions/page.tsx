@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useSite } from "@/context/site-context";
 import { useCheckout } from "@/hooks/use-checkout";
 import { CITATION_PLANS, type CitationPlanId } from "@/lib/billing/citation-plans";
@@ -27,6 +28,7 @@ import {
   Lock,
   AlertCircle,
   ArrowRight,
+  Sparkles,
 } from "lucide-react";
 
 const PREVIEW_DATA: Record<string, string> = {
@@ -144,6 +146,7 @@ function AIToolRow({
   hasInput,
   inputPlaceholder,
   buttonLabel,
+  renderResult,
 }: {
   title: string;
   description: string;
@@ -155,6 +158,7 @@ function AIToolRow({
   hasInput?: boolean;
   inputPlaceholder?: string;
   buttonLabel: string;
+  renderResult?: (result: Record<string, unknown>) => React.ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [input, setInput] = useState("");
@@ -295,19 +299,112 @@ function AIToolRow({
           )}
 
           {state.result && (
-            <div className="mt-4 bg-zinc-800/30 border border-zinc-700/30 rounded-xl p-4 space-y-3">
-              {Object.entries(state.result).map(([key, value]) => (
-                <div key={key}>
-                  <h3 className="text-white text-sm font-semibold uppercase tracking-wider mb-2">
-                    {key.replace(/([A-Z])/g, " $1").replace(/_/g, " ").trim()}
-                  </h3>
-                  {renderValue(value)}
-                </div>
-              ))}
-            </div>
+            renderResult ? renderResult(state.result) : (
+              <div className="mt-4 bg-zinc-800/30 border border-zinc-700/30 rounded-xl p-4 space-y-3">
+                {Object.entries(state.result).map(([key, value]) => (
+                  <div key={key}>
+                    <h3 className="text-white text-sm font-semibold uppercase tracking-wider mb-2">
+                      {key.replace(/([A-Z])/g, " $1").replace(/_/g, " ").trim()}
+                    </h3>
+                    {renderValue(value)}
+                  </div>
+                ))}
+              </div>
+            )
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ============================================
+// CONTENT IDEAS RESULT RENDERER
+// ============================================
+
+interface ContentRecommendation {
+  title: string;
+  description: string;
+  targetQueries: string[];
+  entities: string[];
+  suggestedHeadings: string[];
+  faqQuestions: string[];
+  priority: "high" | "medium" | "low";
+  rationale: string;
+}
+
+const PRIORITY_STYLES = {
+  high: "bg-red-500/10 text-red-400 border-red-500/20",
+  medium: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  low: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+};
+
+function ContentIdeasResult({ result }: { result: Record<string, unknown> }) {
+  const router = useRouter();
+  const recs = (Array.isArray(result) ? result : []) as ContentRecommendation[];
+
+  if (recs.length === 0) {
+    return (
+      <div className="mt-4 text-center py-6 text-zinc-500 text-sm">
+        No recommendations generated. Try running a citation check first to gather more data.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 space-y-3">
+      <p className="text-zinc-400 text-xs">
+        {recs.length} ideas found — pick one to generate a full page
+      </p>
+      {recs.map((rec, i) => (
+        <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className={`text-[10px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded border ${PRIORITY_STYLES[rec.priority]}`}>
+                  {rec.priority}
+                </span>
+              </div>
+              <h4 className="text-white font-medium text-sm mb-1">{rec.title}</h4>
+              <p className="text-zinc-400 text-xs mb-2">{rec.description}</p>
+              {rec.targetQueries?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {rec.targetQueries.slice(0, 3).map((q, qi) => (
+                    <span key={qi} className="text-[10px] px-2 py-0.5 bg-zinc-800 text-zinc-400 rounded-full">
+                      {q}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {rec.rationale && (
+                <p className="text-zinc-500 text-[11px] italic">{rec.rationale}</p>
+              )}
+            </div>
+            <button
+              onClick={() => {
+                const query = rec.targetQueries?.[0] || rec.title;
+                router.push(`/dashboard/pages?generate=${encodeURIComponent(query)}`);
+              }}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold rounded-lg transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Generate page
+            </button>
+          </div>
+          {rec.suggestedHeadings?.length > 0 && (
+            <details className="mt-2">
+              <summary className="text-zinc-500 text-[11px] cursor-pointer hover:text-zinc-400">
+                Suggested structure ({rec.suggestedHeadings.length} headings)
+              </summary>
+              <ul className="mt-1.5 space-y-0.5 ml-3">
+                {rec.suggestedHeadings.map((h, hi) => (
+                  <li key={hi} className="text-zinc-500 text-[11px]">{h}</li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
@@ -604,7 +701,7 @@ export default function ActionsPage() {
         <div className="space-y-2">
           <AIToolRow
             title="Citation Gap Analysis"
-            description="Find visibility gaps where you're not being cited"
+            description="Enter a query to see why AI isn't citing you — and what to do about it"
             icon={Search}
             isLocked={!features?.gapAnalysis?.available}
             requiredPlan="scout"
@@ -617,13 +714,14 @@ export default function ActionsPage() {
 
           <AIToolRow
             title="Content Ideas"
-            description="AI-powered content recommendations to boost citations"
+            description="Get 5 research-backed content ideas — pick one to generate a full page"
             icon={FileText}
             isLocked={!features?.contentRecommendations?.available}
             requiredPlan="scout"
             siteId={currentSite?.id || ""}
             actionKey="content-recommendations"
-            buttonLabel="Generate"
+            buttonLabel="Get Ideas"
+            renderResult={(result) => <ContentIdeasResult result={result} />}
           />
 
           <AIToolRow

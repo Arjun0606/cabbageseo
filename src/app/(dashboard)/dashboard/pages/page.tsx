@@ -155,7 +155,7 @@ function ContentEngineContent() {
         <div>
           <h1 className="text-2xl font-bold text-white">Fix Pages</h1>
           <p className="text-zinc-500 text-sm mt-1">
-            Targeted pages for every query you&apos;re losing
+            Auto-detected gaps in your AI visibility — one-click fix
           </p>
         </div>
 
@@ -165,8 +165,8 @@ function ContentEngineContent() {
           </div>
           <h2 className="text-xl font-semibold text-white mb-2">Fix Your AI Visibility</h2>
           <p className="text-zinc-400 max-w-md mx-auto mb-3">
-            We detect queries where you&apos;re not getting cited by AI,
-            then generate targeted pages to address those gaps.
+            We scan AI platforms for queries where you&apos;re missing,
+            then let you generate a targeted page with one click.
           </p>
           <div className="flex flex-col items-center gap-2 mb-6">
             <div className="flex items-center gap-2 text-sm text-zinc-400">
@@ -205,7 +205,7 @@ function ContentEngineContent() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Fix Pages</h1>
-          <p className="text-zinc-500 text-sm mt-1">Targeted pages for every query you&apos;re losing</p>
+          <p className="text-zinc-500 text-sm mt-1">Auto-detected gaps in your AI visibility — one-click fix</p>
         </div>
         <div className="text-right">
           {canGenerate && (
