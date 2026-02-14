@@ -309,6 +309,35 @@ PLATFORM_NAME: YES|NO [URL if found]`,
 }
 
 // ============================================
+// NEGATIVE MENTION DETECTION
+// AI says "I don't know X" — mentioning the name while disclaiming knowledge is NOT a citation
+// ============================================
+function isNegativeMention(textLower: string): boolean {
+  const negativePatterns = [
+    "i don't recognize",
+    "i don't have information",
+    "not familiar with",
+    "i'm not aware of",
+    "i am not aware of",
+    "no information available",
+    "i cannot find",
+    "i can't find",
+    "don't have specific",
+    "not widely known",
+    "not a widely-known",
+    "i don't have details",
+    "unable to find",
+    "couldn't find information",
+    "no results for",
+    "i don't know about",
+    "i have no information",
+    "not in my training",
+    "not in my knowledge",
+  ];
+  return negativePatterns.some(p => textLower.includes(p));
+}
+
+// ============================================
 // BRAND NAME DETECTION
 // Matches "Product Hunt" for "producthunt.com", "Stack Overflow" for "stackoverflow.com", etc.
 // ============================================
@@ -318,10 +347,55 @@ function isBrandInContent(content: string, domain: string): boolean {
   const contentLower = content.toLowerCase();
   // Exact match (single-word brands like "hubspot")
   if (contentLower.includes(brandName)) return true;
-  // Flexible match: allow spaces/hyphens between characters for compound names
-  const escaped = brandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const flexible = escaped.split("").join("[\\s\\-]?");
-  return new RegExp(flexible, "i").test(content);
+  // Split brand name into word parts at likely boundaries:
+  // camelCase, digits→letters, common compound separators
+  // "producthunt" → ["product", "hunt"], "stackoverflow" → ["stack", "overflow"]
+  const parts = splitBrandIntoParts(brandName);
+  if (parts.length >= 2) {
+    // Match parts joined by optional space/hyphen: "product hunt", "product-hunt"
+    const pattern = parts.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("[\\s\\-]");
+    return new RegExp(pattern, "i").test(content);
+  }
+  return false;
+}
+
+// Split a concatenated brand name into likely word parts
+// Uses a dictionary of common words to find natural split points
+function splitBrandIntoParts(brand: string): string[] {
+  const commonWords = [
+    "stack", "over", "flow", "product", "hunt", "hub", "spot", "trust",
+    "pilot", "base", "camp", "click", "up", "cloud", "fire", "sale",
+    "force", "mail", "chimp", "send", "grid", "drop", "box", "bit",
+    "bucket", "craft", "snap", "chat", "work", "team", "book", "face",
+    "linked", "mind", "map", "air", "table", "notion", "pipe", "drive",
+    "shop", "pay", "pal", "strip", "wise", "fresh", "desk", "help",
+    "scout", "inter", "com", "fast", "quick", "smart", "data", "dog",
+    "new", "relic", "post", "mark", "git", "lab", "source", "code",
+    "dev", "ops", "api", "web", "app", "net", "tech", "soft", "ware",
+    "cloud", "host", "page", "site", "link", "doc", "sign", "log",
+    "auth", "key", "lock", "safe", "guard", "shield", "vault",
+    "zen", "meta", "super", "mega", "micro", "mini", "max",
+  ];
+  // Try to split brand into 2 known word parts
+  for (let i = 2; i < brand.length - 1; i++) {
+    const left = brand.slice(0, i);
+    const right = brand.slice(i);
+    if (commonWords.includes(left) && (commonWords.includes(right) || right.length >= 3)) {
+      return [left, right];
+    }
+  }
+  // Try 3-part split for longer names
+  for (let i = 2; i < brand.length - 3; i++) {
+    for (let j = i + 2; j < brand.length - 1; j++) {
+      const a = brand.slice(0, i);
+      const b = brand.slice(i, j);
+      const c = brand.slice(j);
+      if (commonWords.includes(a) && commonWords.includes(b) && c.length >= 2) {
+        return [a, b, c];
+      }
+    }
+  }
+  return []; // Can't split — single word brand
 }
 
 // ============================================
@@ -391,8 +465,11 @@ async function checkPerplexity(domain: string, query: string): Promise<CheckResu
         return c.toLowerCase().includes(domainLower);
       }
     });
-    const citedInContent = contentLower.includes(domainLower);
-    const brandInContent = !citedInContent && isBrandInContent(content, domain);
+    // Check for negative mentions ("I don't know about X")
+    const isNegative = isNegativeMention(contentLower);
+    const citedInContent = !isNegative && contentLower.includes(domainLower);
+    const brandInContent = !citedInContent && !isNegative && isBrandInContent(content, domain);
+    // Citation links are authoritative even if text is hedging
     const cited = citedInCitations || citedInContent || brandInContent;
 
     // Granular confidence based on signal strength
@@ -512,8 +589,11 @@ async function checkGoogleAI(domain: string, query: string): Promise<CheckResult
         return (chunk.web?.uri || "").toLowerCase().includes(domainLower);
       }
     });
-    const citedInContent = contentLower.includes(domainLower);
-    const brandInContent = !citedInContent && isBrandInContent(content, domain);
+    // Check for negative mentions ("I don't know about X")
+    const isNegative = isNegativeMention(contentLower);
+    const citedInContent = !isNegative && contentLower.includes(domainLower);
+    const brandInContent = !citedInContent && !isNegative && isBrandInContent(content, domain);
+    // Grounding chunks are authoritative even if text is hedging
     const cited = citedInGrounding || citedInContent || brandInContent;
 
     // Granular confidence based on grounding evidence

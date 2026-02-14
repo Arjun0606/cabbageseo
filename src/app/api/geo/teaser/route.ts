@@ -293,25 +293,62 @@ function extractMentionedDomains(text: string, citations: string[] = []): string
 }
 
 // Check if brand name is mentioned in text (case insensitive, word boundary)
+// Split a concatenated brand name into likely word parts
+const COMMON_BRAND_WORDS = [
+  "stack", "over", "flow", "product", "hunt", "hub", "spot", "trust",
+  "pilot", "base", "camp", "click", "up", "cloud", "fire", "sale",
+  "force", "mail", "chimp", "send", "grid", "drop", "box", "bit",
+  "bucket", "craft", "snap", "chat", "work", "team", "book", "face",
+  "linked", "mind", "map", "air", "table", "notion", "pipe", "drive",
+  "shop", "pay", "pal", "strip", "wise", "fresh", "desk", "help",
+  "scout", "inter", "com", "fast", "quick", "smart", "data", "dog",
+  "new", "relic", "post", "mark", "git", "lab", "source", "code",
+  "dev", "ops", "api", "web", "app", "net", "tech", "soft", "ware",
+  "cloud", "host", "page", "site", "link", "doc", "sign", "log",
+  "auth", "key", "lock", "safe", "guard", "shield", "vault",
+  "zen", "meta", "super", "mega", "micro", "mini", "max",
+];
+
+function splitBrandIntoParts(brand: string): string[] {
+  for (let i = 2; i < brand.length - 1; i++) {
+    const left = brand.slice(0, i);
+    const right = brand.slice(i);
+    if (COMMON_BRAND_WORDS.includes(left) && (COMMON_BRAND_WORDS.includes(right) || right.length >= 3)) {
+      return [left, right];
+    }
+  }
+  return [];
+}
+
 function isBrandMentioned(text: string, domain: string): boolean {
   const brandName = domain.split(".")[0];
   if (!brandName || brandName.length < 2) return false;
   const escaped = brandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   // Exact match (e.g., "hubspot")
   if (new RegExp(`\\b${escaped}\\b`, "i").test(text)) return true;
-  // Flexible match: allow optional spaces/hyphens between characters
-  // to catch "Product Hunt" for "producthunt", "Stack Overflow" for "stackoverflow"
-  const flexible = escaped.split("").join("[\\s\\-]?");
-  return new RegExp(`\\b${flexible}\\b`, "i").test(text);
+  // Word-part match: split brand into known words, match with space/hyphen
+  // "producthunt" → "product hunt" or "product-hunt"
+  const parts = splitBrandIntoParts(brandName.toLowerCase());
+  if (parts.length >= 2) {
+    const pattern = parts.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("[\\s\\-]");
+    return new RegExp(`\\b${pattern}\\b`, "i").test(text);
+  }
+  return false;
 }
 
-// Build flexible brand regex that matches "producthunt", "Product Hunt", "product-hunt"
+// Build brand regex for position/count searches
 function buildBrandRegex(domain: string, flags: string): RegExp | null {
   const brandName = domain.split(".")[0];
   if (!brandName || brandName.length < 2) return null;
   const escaped = brandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const flexible = escaped.split("").join("[\\s\\-]?");
-  return new RegExp(`\\b${flexible}\\b`, flags);
+  // Try word-part pattern first
+  const parts = splitBrandIntoParts(brandName.toLowerCase());
+  if (parts.length >= 2) {
+    const pattern = parts.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("[\\s\\-]?");
+    return new RegExp(`\\b${pattern}\\b`, flags);
+  }
+  // Fall back to exact brand name
+  return new RegExp(`\\b${escaped}\\b`, flags);
 }
 
 // Find position of brand mention in text (0 = first, higher = later, -1 = not found)
@@ -347,6 +384,7 @@ interface PlatformResult {
  */
 function calculateVisibilityScore(
   results: PlatformResult[],
+  platformsAttempted: number = 3,
 ): {
   score: number;
   factors: {
@@ -358,8 +396,9 @@ function calculateVisibilityScore(
   };
   explanation: string;
 } {
-  const platformCount = results.length;
-  if (platformCount === 0) {
+  // Use attempted count (always 3) to prevent score inflation when a platform fails
+  const denominator = Math.max(platformsAttempted, results.length);
+  if (results.length === 0) {
     return {
       score: 0,
       factors: { citationPresence: 0, domainVisibility: 0, brandRecognition: 0, mentionProminence: 0, mentionDepth: 0 },
@@ -369,15 +408,15 @@ function calculateVisibilityScore(
 
   // Factor 1: Citation presence (0-40) — domain in actual source citations/links
   const citedCount = results.filter(r => r.inCitations).length;
-  const citationPresence = Math.round(40 * (citedCount / platformCount));
+  const citationPresence = Math.round(40 * (citedCount / denominator));
 
   // Factor 2: Domain visibility (0-25) — full domain found in response text
   const domainFoundCount = results.filter(r => r.domainFound).length;
-  const domainVisibility = Math.round(25 * (domainFoundCount / platformCount));
+  const domainVisibility = Math.round(25 * (domainFoundCount / denominator));
 
   // Factor 3: Brand recognition (0-15) — AI mentions your brand at all
   const knownCount = results.filter(r => r.mentionedYou).length;
-  const brandRecognition = Math.round(15 * (knownCount / platformCount));
+  const brandRecognition = Math.round(15 * (knownCount / denominator));
 
   // Factor 4: Mention prominence (0-12) — mentioned early in the response
   let mentionProminence = 0;
@@ -397,13 +436,13 @@ function calculateVisibilityScore(
 
   const parts: string[] = [];
   if (citedCount > 0) {
-    parts.push(`Cited as a source by ${citedCount} of ${platformCount} platforms`);
+    parts.push(`Cited as a source by ${citedCount} of ${denominator} platforms`);
   }
   if (domainFoundCount > 0) {
-    parts.push(`Domain referenced in ${domainFoundCount} of ${platformCount} responses`);
+    parts.push(`Domain referenced in ${domainFoundCount} of ${denominator} responses`);
   }
   if (knownCount > 0 && citedCount === 0 && domainFoundCount === 0) {
-    parts.push(`Brand recognized by ${knownCount} of ${platformCount} platforms`);
+    parts.push(`Brand recognized by ${knownCount} of ${denominator} platforms`);
   }
   if (knownCount === 0) {
     parts.push(`Not recognized by any AI platform tested`);
@@ -664,28 +703,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 4: Calculate visibility score
-    const scoring = calculateVisibilityScore(results);
+    const scoring = calculateVisibilityScore(results, 3); // Always normalize by 3 platforms attempted
     const visibilityScore = scoring.score;
 
     const mentionedCount = results.filter(r => r.mentionedYou).length;
     const isInvisible = mentionedCount === 0;
 
-    // Per-platform scores (0-100 each)
+    // Per-platform scores (0-100 each) — aligned with overall scoring weights
     const platformScores: Record<string, number> = {};
     for (const r of results) {
       let ps = 0;
-      if (r.inCitations) {
-        ps += 45;
-      } else if (r.domainFound) {
-        ps += 30;
-      } else if (r.mentionedYou) {
-        ps += 15;
-      }
+      // Citation presence (0-40): matches overall Factor 1
+      if (r.inCitations) ps += 40;
+      // Domain visibility (0-25): matches overall Factor 2
+      if (r.domainFound) ps += 25;
+      // Brand recognition (0-15): matches overall Factor 3
+      else if (r.mentionedYou) ps += 15;
+      // Mention prominence (0-12): matches overall Factor 4
       if (r.mentionPosition >= 0 && r.mentionedYou) {
-        ps += Math.round(25 * (1 - r.mentionPosition));
+        ps += Math.round(12 * (1 - r.mentionPosition));
       }
+      // Mention depth (0-8): matches overall Factor 5
       if (r.mentionedYou) {
-        ps += Math.min(15, r.mentionCount * 5);
+        ps += Math.min(8, Math.round(8 * (1 - Math.exp(-r.mentionCount / 3))));
       }
       platformScores[r.platform] = Math.min(100, ps);
     }
