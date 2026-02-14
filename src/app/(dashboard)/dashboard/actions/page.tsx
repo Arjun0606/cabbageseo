@@ -175,7 +175,10 @@ function AIToolRow({
       });
       const data = await res.json();
       if (!res.ok) {
-        setState({ generating: false, result: null, error: data.error || "Something went wrong." });
+        const errorMsg = data.details
+          ? `${data.error}: ${data.details}`
+          : data.error || "Something went wrong.";
+        setState({ generating: false, result: null, error: errorMsg });
         return;
       }
       setState({ generating: false, result: data.data || {}, error: null });

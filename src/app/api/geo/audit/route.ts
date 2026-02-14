@@ -143,18 +143,22 @@ export async function POST(request: NextRequest) {
 
     const plan = org?.plan || "free";
 
-    // Count audits this month
+    // Count actual audits this month (not citation checks).
+    // Audits have score.grade; citation checks don't.
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const { count } = await db
+    const { data: monthRecords } = await db
       .from("geo_analyses")
-      .select("id", { count: "exact", head: true })
+      .select("score")
       .eq("site_id", siteId)
       .gte("created_at", startOfMonth.toISOString());
 
-    const usedThisMonth = count || 0;
+    const usedThisMonth = (monthRecords || []).filter(
+      (r: { score: Record<string, unknown> }) =>
+        r.score && typeof r.score === "object" && "grade" in r.score && "breakdown" in r.score
+    ).length;
     const gating = canRunSiteAudit(plan, usedThisMonth);
 
     if (!gating.allowed) {
