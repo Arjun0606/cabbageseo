@@ -111,7 +111,6 @@ async function askLLM(prompt: string, maxTokens: number = 4096): Promise<string>
         { role: "user", content: prompt },
       ],
       max_completion_tokens: maxTokens,
-      reasoning: { effort: "high" },
     }),
     signal: AbortSignal.timeout(90000),
   });
