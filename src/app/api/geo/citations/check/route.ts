@@ -618,7 +618,8 @@ async function checkChatGPT(domain: string, query: string): Promise<CheckResult>
     const domainMentioned = contentLower.includes(domainLower);
     const brandMentioned = !domainMentioned && isBrandInContent(content, domain);
 
-    // Check for "I don't know" patterns
+    // Check for "I don't know" patterns — AI mentioning the name while saying
+    // it doesn't recognize it is NOT a citation
     const unknownPatterns = [
       "i don't have information",
       "i'm not familiar",
@@ -626,6 +627,13 @@ async function checkChatGPT(domain: string, query: string): Promise<CheckResult>
       "i couldn't find",
       "no information available",
       "not aware of",
+      "i don't recognize",
+      "not widely known",
+      "not a widely-known",
+      "unable to find",
+      "i can't find",
+      "don't have specific",
+      "couldn't find information",
     ];
     const isUnknown = unknownPatterns.some(p => contentLower.includes(p));
 

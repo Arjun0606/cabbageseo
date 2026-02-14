@@ -502,6 +502,29 @@ export async function POST(request: NextRequest) {
       queryChatGPT(decisionQuery),
     ]);
 
+    // Detect negative mentions: AI says "I don't know X" — that's NOT a citation
+    function isNegativeMention(text: string): boolean {
+      const lower = text.toLowerCase();
+      const negativePatterns = [
+        "i don't recognize",
+        "i don't have information",
+        "not familiar with",
+        "i'm not aware of",
+        "i am not aware of",
+        "no information available",
+        "i cannot find",
+        "i can't find",
+        "don't have specific",
+        "not widely known",
+        "not a widely-known",
+        "i don't have details",
+        "unable to find",
+        "couldn't find information",
+        "no results for",
+      ];
+      return negativePatterns.some(p => lower.includes(p));
+    }
+
     // Helper: process a Perplexity response into detection signals
     function processPerplexity(r: { response: string; citations: string[] }) {
       const mentioned = extractMentionedDomains(r.response, r.citations);
@@ -512,8 +535,9 @@ export async function POST(request: NextRequest) {
           return h === cleanDomain || h.endsWith("." + cleanDomain);
         } catch { return false; }
       });
-      const brandMentioned = isBrandMentioned(r.response, cleanDomain);
-      return { mentioned, domainInResponse, inCitations, brandMentioned, response: r.response };
+      const negative = isNegativeMention(r.response);
+      const brandMentioned = !negative && isBrandMentioned(r.response, cleanDomain);
+      return { mentioned, domainInResponse: domainInResponse && !negative, inCitations, brandMentioned, response: r.response };
     }
 
     // Helper: process a Gemini response into detection signals
@@ -521,37 +545,42 @@ export async function POST(request: NextRequest) {
       const mentioned = extractMentionedDomains(r.response, r.mentions);
       const domainInResponse = mentioned.includes(cleanDomain);
       const domainInMentions = r.mentions.some(m => m === cleanDomain || m.endsWith("." + cleanDomain));
-      const brandMentioned = isBrandMentioned(r.response, cleanDomain);
-      return { mentioned, domainInResponse, domainInMentions, brandMentioned, response: r.response };
+      const negative = isNegativeMention(r.response);
+      const brandMentioned = !negative && isBrandMentioned(r.response, cleanDomain);
+      return { mentioned, domainInResponse: domainInResponse && !negative, domainInMentions, brandMentioned, response: r.response };
     }
 
     // Helper: process a ChatGPT response into detection signals
     function processChatGPT(r: { response: string }) {
       const mentioned = extractMentionedDomains(r.response);
       const domainInResponse = mentioned.includes(cleanDomain);
-      const brandMentioned = isBrandMentioned(r.response, cleanDomain);
-      return { mentioned, domainInResponse, brandMentioned, response: r.response };
+      const negative = isNegativeMention(r.response);
+      const brandMentioned = !negative && isBrandMentioned(r.response, cleanDomain);
+      return { mentioned, domainInResponse: domainInResponse && !negative, brandMentioned, response: r.response };
     }
 
     // Process Perplexity: merge brand + discovery queries
+    // Display the DISCOVERY query (realistic customer scenario), use brand query as backup signal
     {
-      const pxResults = [pxBrandSettled, pxDiscoverySettled]
-        .filter((s): s is PromiseFulfilledResult<{ response: string; citations: string[] }> => s.status === "fulfilled")
-        .map(s => processPerplexity(s.value));
+      const pxBrand = pxBrandSettled.status === "fulfilled" ? processPerplexity(pxBrandSettled.value) : null;
+      const pxDiscovery = pxDiscoverySettled.status === "fulfilled" ? processPerplexity(pxDiscoverySettled.value) : null;
+      const pxResults = [pxBrand, pxDiscovery].filter((r): r is NonNullable<typeof r> => r !== null);
 
       if (pxResults.length > 0) {
-        // Pick the best result (prefer the one that found the brand)
-        const best = pxResults.find(r => r.inCitations || r.domainInResponse || r.brandMentioned) || pxResults[0];
         const anyFound = pxResults.some(r => r.domainInResponse || r.inCitations || r.brandMentioned);
         const anyCited = pxResults.some(r => r.inCitations);
         const allMentioned = new Set(pxResults.flatMap(r => r.mentioned));
         const positions = pxResults.map(r => findMentionPosition(r.response, cleanDomain)).filter(p => p >= 0);
+        // Prefer showing the discovery query (more realistic); fall back to brand query
+        const discoveryFound = pxDiscovery && (pxDiscovery.domainInResponse || pxDiscovery.inCitations || pxDiscovery.brandMentioned);
+        const showResult = discoveryFound ? pxDiscovery : (pxBrand || pxResults[0]);
+        const showQuery = discoveryFound ? discoveryQuery : brandQuery;
         results.push({
-          query: anyFound && best === pxResults[0] ? brandQuery : discoveryQuery,
+          query: showQuery,
           platform: "perplexity",
           aiRecommends: [...allMentioned].filter(d => d !== cleanDomain).slice(0, 5),
           mentionedYou: anyFound,
-          snippet: best.response.slice(0, 300),
+          snippet: showResult.response.slice(0, 300),
           inCitations: anyCited,
           domainFound: pxResults.some(r => r.domainInResponse || r.inCitations) || anyFound,
           mentionPosition: positions.length > 0 ? Math.min(...positions) : -1,
@@ -564,23 +593,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Process Gemini: merge brand + decision queries
+    // Display the DECISION query; fall back to brand query
     {
-      const gemResults = [gemBrandSettled, gemDecisionSettled]
-        .filter((s): s is PromiseFulfilledResult<{ response: string; mentions: string[] }> => s.status === "fulfilled")
-        .map(s => processGemini(s.value));
+      const gemBrand = gemBrandSettled.status === "fulfilled" ? processGemini(gemBrandSettled.value) : null;
+      const gemDecision = gemDecisionSettled.status === "fulfilled" ? processGemini(gemDecisionSettled.value) : null;
+      const gemResults = [gemBrand, gemDecision].filter((r): r is NonNullable<typeof r> => r !== null);
 
       if (gemResults.length > 0) {
-        const best = gemResults.find(r => r.domainInMentions || r.domainInResponse || r.brandMentioned) || gemResults[0];
         const anyFound = gemResults.some(r => r.domainInResponse || r.domainInMentions || r.brandMentioned);
         const anyCited = gemResults.some(r => r.domainInMentions);
         const allMentioned = new Set(gemResults.flatMap(r => r.mentioned));
         const positions = gemResults.map(r => findMentionPosition(r.response, cleanDomain)).filter(p => p >= 0);
+        const decisionFound = gemDecision && (gemDecision.domainInResponse || gemDecision.domainInMentions || gemDecision.brandMentioned);
+        const showResult = decisionFound ? gemDecision : (gemBrand || gemResults[0]);
+        const showQuery = decisionFound ? decisionQuery : brandQuery;
         results.push({
-          query: anyFound && best === gemResults[0] ? brandQuery : decisionQuery,
+          query: showQuery,
           platform: "gemini",
           aiRecommends: [...allMentioned].filter(d => d !== cleanDomain).slice(0, 5),
           mentionedYou: anyFound,
-          snippet: best.response.slice(0, 300),
+          snippet: showResult.response.slice(0, 300),
           inCitations: anyCited,
           domainFound: gemResults.some(r => r.domainInResponse || r.domainInMentions) || anyFound,
           mentionPosition: positions.length > 0 ? Math.min(...positions) : -1,
@@ -593,22 +625,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Process ChatGPT: merge brand + decision queries
+    // Display the DECISION query; fall back to brand query
     {
-      const gptResults = [gptBrandSettled, gptDecisionSettled]
-        .filter((s): s is PromiseFulfilledResult<{ response: string }> => s.status === "fulfilled")
-        .map(s => processChatGPT(s.value));
+      const gptBrand = gptBrandSettled.status === "fulfilled" ? processChatGPT(gptBrandSettled.value) : null;
+      const gptDecision = gptDecisionSettled.status === "fulfilled" ? processChatGPT(gptDecisionSettled.value) : null;
+      const gptResults = [gptBrand, gptDecision].filter((r): r is NonNullable<typeof r> => r !== null);
 
       if (gptResults.length > 0) {
-        const best = gptResults.find(r => r.domainInResponse || r.brandMentioned) || gptResults[0];
         const anyFound = gptResults.some(r => r.domainInResponse || r.brandMentioned);
         const allMentioned = new Set(gptResults.flatMap(r => r.mentioned));
         const positions = gptResults.map(r => findMentionPosition(r.response, cleanDomain)).filter(p => p >= 0);
+        const decisionFound = gptDecision && (gptDecision.domainInResponse || gptDecision.brandMentioned);
+        const showResult = decisionFound ? gptDecision : (gptBrand || gptResults[0]);
+        const showQuery = decisionFound ? decisionQuery : brandQuery;
         results.push({
-          query: anyFound && best === gptResults[0] ? brandQuery : decisionQuery,
+          query: showQuery,
           platform: "chatgpt",
           aiRecommends: [...allMentioned].filter(d => d !== cleanDomain).slice(0, 5),
           mentionedYou: anyFound,
-          snippet: best.response.slice(0, 300),
+          snippet: showResult.response.slice(0, 300),
           inCitations: false,
           domainFound: anyFound,
           mentionPosition: positions.length > 0 ? Math.min(...positions) : -1,
