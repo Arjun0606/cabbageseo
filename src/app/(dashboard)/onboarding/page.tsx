@@ -16,7 +16,7 @@ function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const domainFromUrl = searchParams.get("domain");
-  const { subscription, loading: siteLoading, organization } = useSite();
+  const { subscription, loading: siteLoading, organization, sites } = useSite();
 
   const [step, setStep] = useState<"domain" | "scanning">(
     domainFromUrl ? "scanning" : "domain"
@@ -33,8 +33,15 @@ function OnboardingContent() {
     }
   }, [siteLoading, subscription.isFreeUser, router]);
 
+  // Already has sites — go to dashboard
+  useEffect(() => {
+    if (!siteLoading && sites.length > 0 && step !== "scanning") {
+      router.replace("/dashboard");
+    }
+  }, [siteLoading, sites.length, step, router]);
+
   // Show loading spinner while checking auth/subscription status
-  if (siteLoading || subscription.isFreeUser) {
+  if (siteLoading || subscription.isFreeUser || (sites.length > 0 && step !== "scanning")) {
     return (
       <div className="flex items-center justify-center py-32">
         <Loader2 className="w-8 h-8 text-zinc-400 animate-spin" />
