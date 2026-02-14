@@ -231,6 +231,12 @@ export async function GET(request: NextRequest) {
     const publishedPages = pages.filter(p => p.status === "published").length;
     const highImpactOpen = opportunities.filter(o => !o.hasPage && o.impact === "high").length;
 
+    // Count pages generated THIS month (for plan limit display)
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const pagesThisMonth = pages.filter(p => new Date(p.created_at) >= monthStart).length;
+
     return NextResponse.json({
       success: true,
       data: {
@@ -240,7 +246,7 @@ export async function GET(request: NextRequest) {
           open: openOpportunities,
           addressed: addressedOpportunities,
           highImpactOpen,
-          pagesGenerated: pages.length,
+          pagesGenerated: pagesThisMonth,
           pagesPublished: publishedPages,
         },
         analyzedAt,

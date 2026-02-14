@@ -29,6 +29,7 @@ import {
   canRunManualCheck,
   canAccessProduct,
   getAutoGenPerScan,
+  getCitationPlan,
 } from "@/lib/billing/citation-plans";
 import { getUser } from "@/lib/api/get-user";
 import { logRecommendations, extractCitationRecommendations } from "@/lib/geo/recommendation-logger";
@@ -87,10 +88,8 @@ async function generateSmartQueriesForScan(
   plan: string,
   siteContext: { title: string; description: string; headings: string[] },
 ): Promise<string[]> {
-  let maxQueries = 3;
-  if (plan === "scout") maxQueries = 10;
-  if (plan === "command") maxQueries = 20;
-  if (plan === "dominate") maxQueries = 30;
+  const citationPlan = getCitationPlan(plan);
+  const maxQueries = citationPlan.limits.queriesPerCheck;
 
   const brand = extractBrandNameFromDomain(domain);
   const aiQueryCount = Math.max(3, maxQueries - customQueries.length);

@@ -49,9 +49,9 @@ const capabilities: Feature[] = [
     plan: "scout",
   },
   {
-    name: "Intelligence & Action Plans",
+    name: "Gap Analysis & Content Ideas",
     description:
-      "Gap analysis explains why you're not being cited for specific queries. Content recommendations and weekly action plans prioritize what to do next based on your data.",
+      "Gap analysis explains why you're not being cited for specific queries. Content recommendations help you prioritize what to publish next based on your data.",
     icon: <Lightbulb className="w-5 h-5" />,
     plan: "scout",
   },

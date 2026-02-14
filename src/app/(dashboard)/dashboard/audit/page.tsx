@@ -14,6 +14,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSite } from "@/context/site-context";
 import { useCheckout } from "@/hooks/use-checkout";
+import { CITATION_PLANS, getNextPlan } from "@/lib/billing/citation-plans";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -337,6 +338,23 @@ function EmptyState({ onRunAudit, running }: { onRunAudit: () => void; running: 
 
 function UpgradeCTA({ message }: { message: string }) {
   const { checkout, loading } = useCheckout();
+  const { organization } = useSite();
+  const currentPlan = organization?.plan || "free";
+  const nextPlanId = getNextPlan(currentPlan);
+  const nextPlan = nextPlanId ? CITATION_PLANS[nextPlanId] : null;
+
+  // If already on highest plan, just show the message
+  if (!nextPlan || !nextPlanId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center px-4">
+        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-5">
+          <Lock className="w-8 h-8 text-amber-400" />
+        </div>
+        <h2 className="text-xl font-semibold text-white mb-2">Limit Reached</h2>
+        <p className="text-zinc-400 text-sm max-w-sm">{message}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] text-center px-4">
@@ -348,7 +366,7 @@ function UpgradeCTA({ message }: { message: string }) {
       </h2>
       <p className="text-zinc-400 text-sm max-w-sm mb-6">{message}</p>
       <button
-        onClick={() => checkout("scout", "yearly")}
+        onClick={() => checkout(nextPlanId, "yearly")}
         disabled={loading}
         className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold rounded-lg transition-colors disabled:opacity-50"
       >
@@ -356,7 +374,7 @@ function UpgradeCTA({ message }: { message: string }) {
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
           <>
-            Upgrade to Scout — $39/mo
+            Upgrade to {nextPlan.name} — ${nextPlan.yearlyPrice}/mo
             <ArrowRight className="w-4 h-4" />
           </>
         )}

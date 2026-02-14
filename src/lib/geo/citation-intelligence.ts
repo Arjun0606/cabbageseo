@@ -441,6 +441,7 @@ export async function generateWeeklyActionPlan(
   siteId: string,
   organizationId: string
 ): Promise<WeeklyActionPlan> {
+  const startTime = Date.now();
   const supabase = createClient(supabaseUrl, serviceKey);
 
   const { data: site } = await supabase
@@ -540,7 +541,17 @@ Return JSON:
 
   try {
     const parsed = JSON.parse(response);
-    const contentRecs = await generateContentRecommendations(siteId, organizationId, 3);
+
+    // Only fetch content recommendations if we have time budget remaining (avoid 120s timeout)
+    const elapsedMs = Date.now() - startTime;
+    let contentRecs: ContentRecommendation[] = [];
+    if (elapsedMs < 50000) {
+      try {
+        contentRecs = await generateContentRecommendations(siteId, organizationId, 3);
+      } catch {
+        // Swallow — content recs are supplementary, don't fail the whole action plan
+      }
+    }
 
     return {
       weekOf: new Date().toISOString().split("T")[0],

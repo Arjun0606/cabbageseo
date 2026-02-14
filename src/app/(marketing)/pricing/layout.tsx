@@ -34,7 +34,7 @@ const pricingJsonLd = {
       availability: "https://schema.org/InStock",
       priceValidUntil: "2027-12-31",
       url: "https://cabbageseo.com/pricing",
-      description: "Daily AI monitoring, gap analysis, fix pages, action plan",
+      description: "Daily AI monitoring, gap analysis, fix pages, content ideas",
     },
     {
       "@type": "Offer",
