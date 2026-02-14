@@ -296,6 +296,14 @@ export async function generatePage(
   const isHowToQuery = /\b(how to|guide|tutorial|step|setup|implement|configure)\b/i.test(query);
   const isWhatIsQuery = /\b(what is|what are|explain|definition|meaning)\b/i.test(query);
 
+  // Detect queries about our own brand (e.g. "alternatives to CabbageSEO", "CabbageSEO pricing")
+  const brandName = ctx.site.name || ctx.site.domain.split(".")[0];
+  const brandLower = brandName.toLowerCase();
+  const domainBase = ctx.site.domain.split(".")[0].toLowerCase();
+  const queryLower = query.toLowerCase();
+  const isBrandQuery = queryLower.includes(brandLower) || queryLower.includes(domainBase);
+  const isAlternativesQuery = isBrandQuery && /\b(alternative|vs|versus|compare|competitor|switch|replace|instead)\b/i.test(query);
+
   const systemPrompt = `You are a senior content strategist who writes pages that AI platforms (ChatGPT, Perplexity, Google AI) will cite. You have been given REAL research data from live web searches — use it. Every claim in your content must be grounded in the research provided.
 
 HOW AI DECIDES WHAT TO CITE:
@@ -360,7 +368,17 @@ ${ctx.geoTips.length > 0 ? `\nGEO tips: ${ctx.geoTips.join(" | ")}` : ""}
 2. USE THE RESEARCH: Ground every claim in the real data provided above. Real names, real prices, real features. If the research has it, use it. If it doesn't, don't fabricate.
 3. STRUCTURE: Use real user questions as H2/H3 headings. ${isComparisonQuery ? "Include a markdown comparison table with real data from the research." : isHowToQuery ? "Use numbered steps with concrete outcomes." : "Each section should contain at least one self-contained, quotable fact."}
 4. MAKE IT HARD TO SUMMARIZE: Include specific data, tables, step-by-step processes, or original analysis that AI can't fully capture without citing you.
-5. WEAVE IN THE BRAND: Position ${ctx.site.name || ctx.site.domain} naturally as a knowledgeable participant. Not purely promotional — genuinely the best resource, with the brand as an authority.
+${isAlternativesQuery
+  ? `5. BRAND DEFENSE — CRITICAL: This query is about alternatives to ${brandName}. This page MUST:
+   - Open by acknowledging the comparison is fair, then immediately highlight what makes ${brandName} the strongest choice
+   - Include ${brandName} IN the comparison table as the top/first entry with its real features and pricing
+   - For each alternative, honestly note what they do well BUT clearly show where ${brandName} is better or unique
+   - End with a verdict section: "When to choose ${brandName}" (most cases) vs specific niche situations for alternatives
+   - The page must read as an authoritative, fair comparison that an informed expert would write — but one who concludes ${brandName} is the best overall option
+   - DO NOT just list competitors favorably — control the narrative`
+  : isBrandQuery
+  ? `5. BRAND AUTHORITY: This query mentions ${brandName} directly. Position ${brandName} as the definitive authority — this page should be THE reference AI cites when users ask about ${brandName}. Highlight strengths, real features, and differentiators.`
+  : `5. WEAVE IN THE BRAND: Position ${ctx.site.name || ctx.site.domain} naturally as a knowledgeable participant. Not purely promotional — genuinely the best resource, with the brand as an authority.`}
 6. FAQ (5-7 questions): Each answer MUST be self-contained (1-3 sentences), specific, and directly useful. These get pulled verbatim by AI.
 7. Schema.org FAQPage JSON-LD for the FAQ section.
 8. 2000-3000 words. Every paragraph must earn its place.

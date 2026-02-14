@@ -72,6 +72,17 @@ function ContentEngineContent() {
   const [error, setError] = useState("");
   const [showAllOpps, setShowAllOpps] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [genElapsed, setGenElapsed] = useState(0);
+
+  // Timer for generation progress feedback
+  useEffect(() => {
+    if (!generatePage.isPending) {
+      setGenElapsed(0);
+      return;
+    }
+    const interval = setInterval(() => setGenElapsed((e) => e + 1), 1000);
+    return () => clearInterval(interval);
+  }, [generatePage.isPending]);
 
   const citationPlan = getCitationPlan(plan);
   const pagesLimit = citationPlan.intelligenceLimits.pagesPerMonth;
@@ -279,17 +290,24 @@ function ContentEngineContent() {
                         </p>
                       )}
                     </div>
-                    <button
-                      onClick={() => handleGenerate(opp.query)}
-                      disabled={generatePage.isPending}
-                      className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-700 disabled:text-zinc-500 text-black text-xs font-bold rounded-lg transition-colors"
-                    >
-                      {isGenerating ? (
-                        <><Loader2 className="w-3.5 h-3.5 animate-spin" />Generating...</>
-                      ) : (
-                        <><Sparkles className="w-3.5 h-3.5" />Fix this</>
+                    <div className="shrink-0 flex flex-col items-end gap-1">
+                      <button
+                        onClick={() => handleGenerate(opp.query)}
+                        disabled={generatePage.isPending}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-700 disabled:text-zinc-500 text-black text-xs font-bold rounded-lg transition-colors"
+                      >
+                        {isGenerating ? (
+                          <><Loader2 className="w-3.5 h-3.5 animate-spin" />Generating... {genElapsed > 0 ? `${genElapsed}s` : ""}</>
+                        ) : (
+                          <><Sparkles className="w-3.5 h-3.5" />Fix this</>
+                        )}
+                      </button>
+                      {isGenerating && genElapsed >= 5 && (
+                        <span className="text-[10px] text-zinc-500">
+                          {genElapsed < 20 ? "Researching..." : genElapsed < 45 ? "Writing content..." : "Almost done..."}
+                        </span>
                       )}
-                    </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -353,9 +371,14 @@ function ContentEngineContent() {
             className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-700 disabled:text-zinc-500 text-black text-sm font-bold rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
           >
             {generatePage.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            Generate
+            {generatePage.isPending ? `Generating... ${genElapsed > 0 ? `${genElapsed}s` : ""}` : "Generate"}
           </button>
         </div>
+        {generatePage.isPending && genElapsed >= 5 && (
+          <p className="mt-2 text-zinc-500 text-xs">
+            {genElapsed < 20 ? "Researching your topic..." : genElapsed < 45 ? "Writing 2,000-3,000 word page..." : "Almost done — finalizing content..."}
+          </p>
+        )}
         {error && <p className="mt-2 text-red-400 text-xs">{error}</p>}
       </div>
 
