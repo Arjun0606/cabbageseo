@@ -482,16 +482,28 @@ export async function POST(request: NextRequest) {
     const results: PlatformResult[] = [];
     const platformErrors: string[] = [];
 
-    // Step 3: Run all 3 platforms in parallel with the smart queries
-    const [perplexitySettled, geminiSettled, chatgptSettled] = await Promise.allSettled([
-      queryPerplexity(queries[0]),
-      queryGemini(queries[1]),
-      queryChatGPT(queries[2]),
+    // Step 3: Run 2 queries per platform in parallel
+    // Each platform gets: brand query (Q2) + one unique query
+    // This ensures every platform gets a fair shot at recognizing the brand
+    const brandQuery = queries[1]; // "What is [brand]?" — always tests brand awareness
+    const discoveryQuery = queries[0]; // Problem-based, no brand name
+    const decisionQuery = queries[2] || queries[0]; // Comparison query
+
+    const [
+      pxBrandSettled, pxDiscoverySettled,
+      gemBrandSettled, gemDecisionSettled,
+      gptBrandSettled, gptDecisionSettled,
+    ] = await Promise.allSettled([
+      queryPerplexity(brandQuery),
+      queryPerplexity(discoveryQuery),
+      queryGemini(brandQuery),
+      queryGemini(decisionQuery),
+      queryChatGPT(brandQuery),
+      queryChatGPT(decisionQuery),
     ]);
 
-    // Process Perplexity result
-    if (perplexitySettled.status === "fulfilled") {
-      const r = perplexitySettled.value;
+    // Helper: process a Perplexity response into detection signals
+    function processPerplexity(r: { response: string; citations: string[] }) {
       const mentioned = extractMentionedDomains(r.response, r.citations);
       const domainInResponse = mentioned.includes(cleanDomain);
       const inCitations = r.citations.some(c => {
@@ -501,65 +513,111 @@ export async function POST(request: NextRequest) {
         } catch { return false; }
       });
       const brandMentioned = isBrandMentioned(r.response, cleanDomain);
-      results.push({
-        query: queries[0],
-        platform: "perplexity",
-        aiRecommends: mentioned.filter(d => d !== cleanDomain).slice(0, 5),
-        mentionedYou: domainInResponse || inCitations || brandMentioned,
-        snippet: r.response.slice(0, 300),
-        inCitations,
-        domainFound: domainInResponse || inCitations || brandMentioned,
-        mentionPosition: findMentionPosition(r.response, cleanDomain),
-        mentionCount: countMentions(r.response, cleanDomain),
-      });
-    } else {
-      console.error("[Teaser] Perplexity failed");
-      platformErrors.push("perplexity");
+      return { mentioned, domainInResponse, inCitations, brandMentioned, response: r.response };
     }
 
-    // Process Gemini result
-    if (geminiSettled.status === "fulfilled") {
-      const r = geminiSettled.value;
+    // Helper: process a Gemini response into detection signals
+    function processGemini(r: { response: string; mentions: string[] }) {
       const mentioned = extractMentionedDomains(r.response, r.mentions);
       const domainInResponse = mentioned.includes(cleanDomain);
       const domainInMentions = r.mentions.some(m => m === cleanDomain || m.endsWith("." + cleanDomain));
       const brandMentioned = isBrandMentioned(r.response, cleanDomain);
-      results.push({
-        query: queries[1],
-        platform: "gemini",
-        aiRecommends: mentioned.filter(d => d !== cleanDomain).slice(0, 5),
-        mentionedYou: domainInResponse || domainInMentions || brandMentioned,
-        snippet: r.response.slice(0, 300),
-        inCitations: domainInMentions,
-        domainFound: domainInResponse || domainInMentions || brandMentioned,
-        mentionPosition: findMentionPosition(r.response, cleanDomain),
-        mentionCount: countMentions(r.response, cleanDomain),
-      });
-    } else {
-      console.error("[Teaser] Gemini failed");
-      platformErrors.push("gemini");
+      return { mentioned, domainInResponse, domainInMentions, brandMentioned, response: r.response };
     }
 
-    // Process ChatGPT result
-    if (chatgptSettled.status === "fulfilled") {
-      const r = chatgptSettled.value;
+    // Helper: process a ChatGPT response into detection signals
+    function processChatGPT(r: { response: string }) {
       const mentioned = extractMentionedDomains(r.response);
       const domainInResponse = mentioned.includes(cleanDomain);
       const brandMentioned = isBrandMentioned(r.response, cleanDomain);
-      results.push({
-        query: queries[2],
-        platform: "chatgpt",
-        aiRecommends: mentioned.filter(d => d !== cleanDomain).slice(0, 5),
-        mentionedYou: domainInResponse || brandMentioned,
-        snippet: r.response.slice(0, 300),
-        inCitations: false,
-        domainFound: domainInResponse || brandMentioned,
-        mentionPosition: findMentionPosition(r.response, cleanDomain),
-        mentionCount: countMentions(r.response, cleanDomain),
-      });
-    } else {
-      console.error("[Teaser] ChatGPT failed");
-      platformErrors.push("chatgpt");
+      return { mentioned, domainInResponse, brandMentioned, response: r.response };
+    }
+
+    // Process Perplexity: merge brand + discovery queries
+    {
+      const pxResults = [pxBrandSettled, pxDiscoverySettled]
+        .filter((s): s is PromiseFulfilledResult<{ response: string; citations: string[] }> => s.status === "fulfilled")
+        .map(s => processPerplexity(s.value));
+
+      if (pxResults.length > 0) {
+        // Pick the best result (prefer the one that found the brand)
+        const best = pxResults.find(r => r.inCitations || r.domainInResponse || r.brandMentioned) || pxResults[0];
+        const anyFound = pxResults.some(r => r.domainInResponse || r.inCitations || r.brandMentioned);
+        const anyCited = pxResults.some(r => r.inCitations);
+        const allMentioned = new Set(pxResults.flatMap(r => r.mentioned));
+        const positions = pxResults.map(r => findMentionPosition(r.response, cleanDomain)).filter(p => p >= 0);
+        results.push({
+          query: anyFound && best === pxResults[0] ? brandQuery : discoveryQuery,
+          platform: "perplexity",
+          aiRecommends: [...allMentioned].filter(d => d !== cleanDomain).slice(0, 5),
+          mentionedYou: anyFound,
+          snippet: best.response.slice(0, 300),
+          inCitations: anyCited,
+          domainFound: pxResults.some(r => r.domainInResponse || r.inCitations) || anyFound,
+          mentionPosition: positions.length > 0 ? Math.min(...positions) : -1,
+          mentionCount: Math.max(...pxResults.map(r => countMentions(r.response, cleanDomain))),
+        });
+      } else {
+        console.error("[Teaser] Perplexity failed");
+        platformErrors.push("perplexity");
+      }
+    }
+
+    // Process Gemini: merge brand + decision queries
+    {
+      const gemResults = [gemBrandSettled, gemDecisionSettled]
+        .filter((s): s is PromiseFulfilledResult<{ response: string; mentions: string[] }> => s.status === "fulfilled")
+        .map(s => processGemini(s.value));
+
+      if (gemResults.length > 0) {
+        const best = gemResults.find(r => r.domainInMentions || r.domainInResponse || r.brandMentioned) || gemResults[0];
+        const anyFound = gemResults.some(r => r.domainInResponse || r.domainInMentions || r.brandMentioned);
+        const anyCited = gemResults.some(r => r.domainInMentions);
+        const allMentioned = new Set(gemResults.flatMap(r => r.mentioned));
+        const positions = gemResults.map(r => findMentionPosition(r.response, cleanDomain)).filter(p => p >= 0);
+        results.push({
+          query: anyFound && best === gemResults[0] ? brandQuery : decisionQuery,
+          platform: "gemini",
+          aiRecommends: [...allMentioned].filter(d => d !== cleanDomain).slice(0, 5),
+          mentionedYou: anyFound,
+          snippet: best.response.slice(0, 300),
+          inCitations: anyCited,
+          domainFound: gemResults.some(r => r.domainInResponse || r.domainInMentions) || anyFound,
+          mentionPosition: positions.length > 0 ? Math.min(...positions) : -1,
+          mentionCount: Math.max(...gemResults.map(r => countMentions(r.response, cleanDomain))),
+        });
+      } else {
+        console.error("[Teaser] Gemini failed");
+        platformErrors.push("gemini");
+      }
+    }
+
+    // Process ChatGPT: merge brand + decision queries
+    {
+      const gptResults = [gptBrandSettled, gptDecisionSettled]
+        .filter((s): s is PromiseFulfilledResult<{ response: string }> => s.status === "fulfilled")
+        .map(s => processChatGPT(s.value));
+
+      if (gptResults.length > 0) {
+        const best = gptResults.find(r => r.domainInResponse || r.brandMentioned) || gptResults[0];
+        const anyFound = gptResults.some(r => r.domainInResponse || r.brandMentioned);
+        const allMentioned = new Set(gptResults.flatMap(r => r.mentioned));
+        const positions = gptResults.map(r => findMentionPosition(r.response, cleanDomain)).filter(p => p >= 0);
+        results.push({
+          query: anyFound && best === gptResults[0] ? brandQuery : decisionQuery,
+          platform: "chatgpt",
+          aiRecommends: [...allMentioned].filter(d => d !== cleanDomain).slice(0, 5),
+          mentionedYou: anyFound,
+          snippet: best.response.slice(0, 300),
+          inCitations: false,
+          domainFound: anyFound,
+          mentionPosition: positions.length > 0 ? Math.min(...positions) : -1,
+          mentionCount: Math.max(...gptResults.map(r => countMentions(r.response, cleanDomain))),
+        });
+      } else {
+        console.error("[Teaser] ChatGPT failed");
+        platformErrors.push("chatgpt");
+      }
     }
 
     // Generate content preview if we have results
