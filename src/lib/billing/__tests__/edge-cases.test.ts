@@ -53,14 +53,14 @@ describe("Legacy plan names in gating functions", () => {
     expect(canAddSite("starter", 1).allowed).toBe(false);
   });
 
-  it("canAddSite('pro', 4) uses command limits (5 sites)", () => {
-    expect(canAddSite("pro", 4).allowed).toBe(true);
-    expect(canAddSite("pro", 5).allowed).toBe(false);
+  it("canAddSite('pro', 0) uses command limits (1 site)", () => {
+    expect(canAddSite("pro", 0).allowed).toBe(true);
+    expect(canAddSite("pro", 1).allowed).toBe(false);
   });
 
-  it("canAddSite('pro_plus', 24) uses dominate limits (25 sites)", () => {
-    expect(canAddSite("pro_plus", 24).allowed).toBe(true);
-    expect(canAddSite("pro_plus", 25).allowed).toBe(false);
+  it("canAddSite('pro_plus', 0) uses dominate limits (1 site)", () => {
+    expect(canAddSite("pro_plus", 0).allowed).toBe(true);
+    expect(canAddSite("pro_plus", 1).allowed).toBe(false);
   });
 
   it("canRunManualCheck('starter', 999) is unlimited (scout)", () => {
@@ -138,13 +138,13 @@ describe("Unknown plan names fall back to free", () => {
 
 describe("Boundary values", () => {
   it("canAddSite at exactly limit - 1: allowed", () => {
-    expect(canAddSite("command", 4).allowed).toBe(true);
-    expect(canAddSite("dominate", 24).allowed).toBe(true);
+    expect(canAddSite("command", 0).allowed).toBe(true);
+    expect(canAddSite("dominate", 0).allowed).toBe(true);
   });
 
   it("canAddSite at exactly limit: denied", () => {
-    expect(canAddSite("command", 5).allowed).toBe(false);
-    expect(canAddSite("dominate", 25).allowed).toBe(false);
+    expect(canAddSite("command", 1).allowed).toBe(false);
+    expect(canAddSite("dominate", 1).allowed).toBe(false);
   });
 
   it("canAddSite way over limit: still denied", () => {
@@ -312,10 +312,9 @@ describe("History days limits", () => {
 // ============================================
 
 describe("Denial messages are user-friendly", () => {
-  it("canAddSite denial mentions limit number", () => {
+  it("canAddSite denial mentions 1 site limit", () => {
     const result = canAddSite("scout", 1);
-    expect(result.reason).toContain("1");
-    expect(result.reason).toContain("Upgrade");
+    expect(result.reason).toContain("1 site");
   });
 
   it("canRunManualCheck denial mentions daily limit", () => {

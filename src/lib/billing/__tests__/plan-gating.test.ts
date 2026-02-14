@@ -38,32 +38,23 @@ describe("canAddSite", () => {
     });
   });
 
-  describe("Command (limit: 5)", () => {
+  describe("Command (limit: 1)", () => {
     it("allows at 0 sites", () => {
       expect(canAddSite("command", 0).allowed).toBe(true);
     });
-    it("allows at 4 sites", () => {
-      expect(canAddSite("command", 4).allowed).toBe(true);
-    });
-    it("denies at 5 sites (limit reached)", () => {
-      const result = canAddSite("command", 5);
+    it("denies at 1 site (limit reached)", () => {
+      const result = canAddSite("command", 1);
       expect(result.allowed).toBe(false);
       expect(result.reason).toBeDefined();
     });
-    it("denies at 10 sites", () => {
-      expect(canAddSite("command", 10).allowed).toBe(false);
-    });
   });
 
-  describe("Dominate (limit: 25)", () => {
+  describe("Dominate (limit: 1)", () => {
     it("allows at 0 sites", () => {
       expect(canAddSite("dominate", 0).allowed).toBe(true);
     });
-    it("allows at 24 sites", () => {
-      expect(canAddSite("dominate", 24).allowed).toBe(true);
-    });
-    it("denies at 25 sites (limit reached)", () => {
-      const result = canAddSite("dominate", 25);
+    it("denies at 1 site (limit reached)", () => {
+      const result = canAddSite("dominate", 1);
       expect(result.allowed).toBe(false);
       expect(result.reason).toBeDefined();
     });
@@ -403,9 +394,9 @@ describe("Cross-tier: paying customers get what they pay for", () => {
     expect(canUseActionPlan("scout", 0).allowed).toBe(false);
   });
 
-  it("Command customers CAN: everything Scout can + action plans + more sites + more pages", () => {
+  it("Command customers CAN: everything Scout can + action plans + more pages", () => {
     expect(canAddSite("command", 0).allowed).toBe(true);
-    expect(canAddSite("command", 4).allowed).toBe(true);
+    expect(canAddSite("command", 1).allowed).toBe(false); // 1 site limit
     expect(canRunManualCheck("command", 100).allowed).toBe(true);
     expect(canUseGapAnalysis("command", 0).allowed).toBe(true);
     expect(canUseContentRecommendations("command", 0).allowed).toBe(true);
@@ -414,8 +405,9 @@ describe("Cross-tier: paying customers get what they pay for", () => {
     expect(canGeneratePage("command", 14).allowed).toBe(true);
   });
 
-  it("Dominate customers CAN: everything + even more sites + more pages", () => {
-    expect(canAddSite("dominate", 24).allowed).toBe(true);
+  it("Dominate customers CAN: everything + highest limits", () => {
+    expect(canAddSite("dominate", 0).allowed).toBe(true);
+    expect(canAddSite("dominate", 1).allowed).toBe(false); // 1 site limit
     expect(canRunManualCheck("dominate", 100).allowed).toBe(true);
     expect(canUseGapAnalysis("dominate", 0).allowed).toBe(true);
     expect(canUseContentRecommendations("dominate", 0).allowed).toBe(true);

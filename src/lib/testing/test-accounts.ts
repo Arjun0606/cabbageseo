@@ -38,7 +38,7 @@ export const TEST_ACCOUNTS: TestAccount[] = [
     email: "test-pro@cabbageseo.test",
     password: "TestPro123!",
     plan: "command",
-    description: "Command tier test account - Unlimited checks, 5 sites",
+    description: "Command tier test account - Unlimited checks, 1 site",
   },
 ];
 

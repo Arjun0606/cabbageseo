@@ -21,9 +21,7 @@ import {
   Menu,
   X,
   Home,
-  ChevronDown,
   LogOut,
-  Plus,
   Loader2,
   ArrowRight,
   Shield,
@@ -46,8 +44,7 @@ const navItems = [
 function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { organization, currentSite, sites, setCurrentSite } = useSite();
-  const [sitesOpen, setSitesOpen] = useState(false);
+  const { organization, currentSite } = useSite();
   const { checkout, loading: checkoutLoading } = useCheckout();
 
   const plan = organization?.plan || "free";
@@ -86,50 +83,15 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
         </div>
       </div>
 
-      {/* Site selector */}
+      {/* Current site */}
       {currentSite && (
         <div className="p-4 border-b border-zinc-800">
-          <button
-            onClick={() => setSitesOpen(!sitesOpen)}
-            className="w-full flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg hover:bg-zinc-800 transition-colors"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-white text-sm font-medium truncate">
-                {currentSite.domain}
-              </span>
-            </div>
-            <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${sitesOpen ? "rotate-180" : ""}`} />
-          </button>
-
-          {sitesOpen && (
-            <div className="mt-2 space-y-1">
-              {sites.filter(s => s.id !== currentSite.id).map(site => (
-                <button
-                  key={site.id}
-                  onClick={() => {
-                    setCurrentSite(site);
-                    setSitesOpen(false);
-                    if (onClose) onClose();
-                  }}
-                  className="block w-full text-left p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg"
-                >
-                  {site.domain}
-                </button>
-              ))}
-              <Link
-                href="/onboarding"
-                onClick={() => {
-                  setSitesOpen(false);
-                  if (onClose) onClose();
-                }}
-                className="flex items-center gap-2 p-2 text-sm text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg"
-              >
-                <Plus className="w-4 h-4" />
-                Add site
-              </Link>
-            </div>
-          )}
+          <div className="flex items-center gap-2 p-3 bg-zinc-800/50 rounded-lg">
+            <div className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-white text-sm font-medium truncate">
+              {currentSite.domain}
+            </span>
+          </div>
         </div>
       )}
 

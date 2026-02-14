@@ -170,7 +170,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     yearlyPrice: 119,
     popular: true,
     limits: {
-      sites: 5,
+      sites: 1,
       manualChecksPerDay: -1,
       historyDays: 365,
       queriesPerCheck: 25,
@@ -212,7 +212,7 @@ export const CITATION_PLANS: Record<CitationPlanId, CitationPlan> = {
     monthlyPrice: 349,
     yearlyPrice: 279,
     limits: {
-      sites: 25,
+      sites: 1,
       manualChecksPerDay: -1,
       historyDays: 365,
       queriesPerCheck: 50,
@@ -359,7 +359,7 @@ export function canAddSite(
   if (currentSites >= plan.limits.sites) {
     return {
       allowed: false,
-      reason: `Site limit reached (${plan.limits.sites}). Upgrade for more.`,
+      reason: "You can track 1 site per subscription. To switch sites, update your site in Settings.",
     };
   }
 

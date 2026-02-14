@@ -142,10 +142,10 @@ describe("Specific limit values per tier", () => {
     expect(intel.siteAuditsPerMonth).toBe(2);
   });
 
-  it("Command: 5 sites, unlimited checks, 15 gap analyses, 25 pages", () => {
+  it("Command: 1 site, unlimited checks, 15 gap analyses, 25 pages", () => {
     const limits = CITATION_PLANS.command.limits;
     const intel = CITATION_PLANS.command.intelligenceLimits;
-    expect(limits.sites).toBe(5);
+    expect(limits.sites).toBe(1);
     expect(limits.manualChecksPerDay).toBe(-1);
     expect(intel.gapAnalysesPerMonth).toBe(15);
     expect(intel.contentIdeasPerMonth).toBe(10);
@@ -154,10 +154,10 @@ describe("Specific limit values per tier", () => {
     expect(intel.siteAuditsPerMonth).toBe(4);
   });
 
-  it("Dominate: 25 sites, unlimited checks, 30 gap analyses, 50 pages", () => {
+  it("Dominate: 1 site, unlimited checks, 30 gap analyses, 50 pages", () => {
     const limits = CITATION_PLANS.dominate.limits;
     const intel = CITATION_PLANS.dominate.intelligenceLimits;
-    expect(limits.sites).toBe(25);
+    expect(limits.sites).toBe(1);
     expect(limits.manualChecksPerDay).toBe(-1);
     expect(intel.gapAnalysesPerMonth).toBe(30);
     expect(intel.contentIdeasPerMonth).toBe(20);
