@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     if (!features.csvExport) {
       return NextResponse.json(
-        { error: "CSV export requires Scout plan or higher." },
+        { error: "CSV export requires Command plan or higher." },
         { status: 403 },
       );
     }

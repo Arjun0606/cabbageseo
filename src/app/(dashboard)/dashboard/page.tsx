@@ -22,6 +22,8 @@ import { ROISummary } from "@/components/dashboard/roi-summary";
 import { TrendChart } from "@/components/dashboard/trend-chart";
 import { FixPagesReady } from "@/components/dashboard/fix-pages-ready";
 import { RecheckResult } from "@/components/dashboard/recheck-result";
+import { CustomQueries } from "@/components/dashboard/custom-queries";
+import { getCitationPlanLimits } from "@/lib/billing/citation-plans";
 import {
   useMomentum,
   useNextAction,
@@ -185,9 +187,19 @@ function DashboardContent() {
     return null;
   }
 
+  const [customQueries, setCustomQueries] = useState<string[]>(currentSite?.customQueries || []);
+
+  // Sync custom queries when site changes
+  useEffect(() => {
+    if (currentSite) {
+      setCustomQueries(currentSite.customQueries || []);
+    }
+  }, [currentSite]);
+
   const loading = momentumLoading || pagesLoading;
   const plan = organization?.plan || "free";
   const isPaid = plan !== "free";
+  const planLimits = getCitationPlanLimits(plan);
   const totalCitations = currentSite?.totalCitations || 0;
   const showFirstCitationGoal = totalCitations === 0;
 
@@ -294,6 +306,16 @@ function DashboardContent() {
         loading={loading}
         breakdown={momentum?.breakdown}
       />
+
+      {/* ═══ CUSTOM QUERIES ═══ */}
+      {isPaid && currentSite && planLimits.customQueriesPerSite > 0 && (
+        <CustomQueries
+          siteId={currentSite.id}
+          queries={customQueries}
+          maxQueries={planLimits.customQueriesPerSite}
+          onUpdate={setCustomQueries}
+        />
+      )}
 
       {/* ═══ RECHECK RESULT BANNER ═══ */}
       {showRecheckResult && recheckDelta && (

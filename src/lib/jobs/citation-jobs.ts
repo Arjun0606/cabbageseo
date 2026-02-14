@@ -13,6 +13,7 @@
 
 import { inngest } from "./inngest-client";
 import { createServiceClient } from "@/lib/supabase/server";
+import { getCitationPlanFeatures } from "@/lib/billing/citation-plans";
 
 // ============================================
 // HELPER: Resolve legacy plan names to current
@@ -291,8 +292,23 @@ export const sendCitationAlert = inngest.createFunction(
   { event: "citation/new.detected" },
   async ({ event, step }) => {
     const { siteId, domain, organizationId, newCitations, platforms } = event.data;
-    
+
     const supabase = createServiceClient();
+
+    // Check if plan includes email alerts
+    const orgPlan = await step.run("check-plan", async () => {
+      const { data } = await supabase
+        .from("organizations")
+        .select("plan")
+        .eq("id", organizationId)
+        .maybeSingle();
+      return resolvePlan((data as { plan: string } | null)?.plan || "free");
+    });
+
+    const features = getCitationPlanFeatures(orgPlan);
+    if (!features.emailAlerts) {
+      return { sent: false, reason: "Email alerts not included in plan" };
+    }
 
     // Get user email
     const userEmail = await step.run("get-user-email", async () => {
@@ -407,8 +423,11 @@ export const weeklyReport = inngest.createFunction(
 
     let reportsSent = 0;
 
-    // Skip free-tier orgs — they don't get weekly reports
-    const paidOrgs = orgs.filter((o) => resolvePlan(o.plan) !== "free");
+    // Only send to orgs whose plan includes weekly reports
+    const paidOrgs = orgs.filter((o) => {
+      const plan = resolvePlan(o.plan);
+      return getCitationPlanFeatures(plan).weeklyReport;
+    });
 
     for (const org of paidOrgs) {
       await step.run(`report-${org.id}`, async () => {
@@ -715,6 +734,20 @@ export const sendVisibilityDropAlert = inngest.createFunction(
     const { siteId, domain, organizationId, previousScore, newScore, drop } = event.data;
 
     const supabase = createServiceClient();
+
+    // Check if plan includes email alerts
+    const orgPlan = await step.run("check-plan", async () => {
+      const { data } = await supabase
+        .from("organizations")
+        .select("plan")
+        .eq("id", organizationId)
+        .maybeSingle();
+      return resolvePlan((data as { plan: string } | null)?.plan || "free");
+    });
+
+    if (!getCitationPlanFeatures(orgPlan).emailAlerts) {
+      return { sent: false, reason: "Email alerts not included in plan" };
+    }
 
     // Get user email
     const userData = await step.run("get-user-email", async () => {
