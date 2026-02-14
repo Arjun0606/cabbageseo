@@ -1017,8 +1017,8 @@ export async function POST(request: NextRequest) {
     const totalMentions = competitiveResults.filter(r => !r.error).length;
     const yourMentions = competitiveResults.filter(r => r.cited).length;
 
-    // Record visibility snapshot with real query counts
-    if (db && siteId && totalMentions > 0) {
+    // Record visibility snapshot (always save, even 0 results = valid history)
+    if (db && siteId) {
       const today = new Date().toISOString().split("T")[0];
       await db
         .from("market_share_snapshots")

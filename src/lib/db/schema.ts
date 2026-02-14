@@ -1208,6 +1208,7 @@ export const marketShareSnapshots = pgTable(
   (table) => [
     index("market_share_site_idx").on(table.siteId),
     index("market_share_date_idx").on(table.snapshotDate),
+    uniqueIndex("market_share_site_date_unique").on(table.siteId, table.snapshotDate),
   ]
 );
 
