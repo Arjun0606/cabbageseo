@@ -25,6 +25,7 @@ import {
   Loader2,
   ArrowRight,
   Shield,
+  Clock,
 } from "lucide-react";
 import { SiteProvider, useSite } from "@/context/site-context";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +39,7 @@ const navItems = [
   { href: "/dashboard/audit", label: "Site Audit", icon: Shield },
   { href: "/dashboard/pages", label: "Fix Pages", icon: Sparkles },
   { href: "/dashboard/actions", label: "Actions", icon: Zap },
+  { href: "/dashboard/history", label: "History", icon: Clock },
 ];
 
 // Sidebar component

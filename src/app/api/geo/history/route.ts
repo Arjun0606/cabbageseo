@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     const { data: snapshots } = await db
       .from("market_share_snapshots")
       .select(
-        "queries_won, queries_lost, total_queries, snapshot_date",
+        "queries_won, queries_lost, total_queries, market_share, snapshot_date",
       )
       .eq("site_id", siteId)
       .gte("snapshot_date", cutoffDate.toISOString().split("T")[0])
@@ -79,6 +79,7 @@ export async function GET(request: NextRequest) {
             queries_won: number | null;
             queries_lost: number | null;
             total_queries: number | null;
+            market_share: number | null;
             snapshot_date: string;
           }>) || []
         ).map((s) => ({
@@ -86,6 +87,7 @@ export async function GET(request: NextRequest) {
           queriesWon: s.queries_won || 0,
           queriesLost: s.queries_lost || 0,
           totalQueries: s.total_queries || 0,
+          marketShare: s.market_share || 0,
         })),
       },
     });

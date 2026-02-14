@@ -45,6 +45,7 @@ export interface Snapshot {
   queriesWon: number;
   queriesLost: number;
   totalQueries: number;
+  marketShare?: number;
 }
 
 export interface CheckSnapshot {
@@ -176,11 +177,13 @@ export function useListings(siteId: string | undefined) {
   });
 }
 
-export function useHistory(siteId: string | undefined) {
+export function useHistory(siteId: string | undefined, days?: number) {
   return useQuery({
-    queryKey: ["history", siteId],
+    queryKey: ["history", siteId, days],
     queryFn: async (): Promise<Snapshot[]> => {
-      const res = await fetch(`/api/geo/history?siteId=${siteId}`);
+      const params = new URLSearchParams({ siteId: siteId! });
+      if (days) params.set("days", String(days));
+      const res = await fetch(`/api/geo/history?${params}`);
       if (!res.ok) return [];
       const json = await res.json();
       return json.data?.snapshots || [];
