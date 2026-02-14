@@ -60,6 +60,8 @@ function OnboardingContent() {
   };
 
   const startScan = useCallback(async () => {
+    let siteId: string | null = null;
+
     try {
       setScanPhase("creating");
 
@@ -86,7 +88,7 @@ function OnboardingContent() {
       } catch {
         throw new Error("Server returned an unexpected response. Please try again.");
       }
-      const siteId = siteData.site?.id || siteData.id;
+      siteId = siteData.site?.id || siteData.id;
 
       if (!siteId) {
         throw new Error("Failed to create site — no ID returned");
@@ -97,35 +99,44 @@ function OnboardingContent() {
       const phaseTimer1 = setTimeout(() => setScanPhase("perplexity"), 8000);
       const phaseTimer2 = setTimeout(() => setScanPhase("google"), 16000);
 
-      // Start the check
-      const checkResponse = await fetch("/api/geo/citations/check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteId, domain }),
-      });
+      // Start the check — if it fails, we still go to dashboard
+      try {
+        const checkResponse = await fetch("/api/geo/citations/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ siteId, domain }),
+        });
+
+        if (!checkResponse.ok) {
+          console.error(
+            "Check failed but continuing:",
+            await checkResponse.text()
+          );
+        }
+      } catch (checkErr) {
+        console.error("Citation check error (continuing to dashboard):", checkErr);
+      }
 
       clearTimeout(phaseTimer1);
       clearTimeout(phaseTimer2);
 
-      if (!checkResponse.ok) {
-        console.error(
-          "Check failed but continuing:",
-          await checkResponse.text()
-        );
-      }
-
       setScanPhase("done");
-
-      // Brief pause to show "done" state
       await new Promise(r => setTimeout(r, 500));
 
-      // Go straight to dashboard
+      // Always go to dashboard once site is created
       router.push(
         `/dashboard?welcome=true&siteId=${siteId}&justScanned=true`
       );
     } catch (err) {
       console.error("Onboarding error:", err);
       const message = err instanceof Error ? err.message : "Something went wrong";
+
+      // Site was already created — go to dashboard anyway
+      if (siteId) {
+        router.push(`/dashboard?welcome=true&siteId=${siteId}&justScanned=true`);
+        return;
+      }
+
       // Show user-friendly error messages
       if (message.includes("already exists") || message.includes("duplicate")) {
         setError("This site is already in your account. Redirecting to dashboard...");
