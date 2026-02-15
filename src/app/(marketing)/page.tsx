@@ -225,7 +225,7 @@ function HomeContent() {
                     <button
                       type="submit"
                       disabled={scanState === "scanning" || !domain.trim()}
-                      className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:cursor-not-allowed text-black font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                      className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/20 disabled:text-emerald-400/60 disabled:cursor-not-allowed disabled:shadow-none text-black font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98]"
                     >
                       {scanState === "scanning" ? (
                         <Loader2 className="w-5 h-5 animate-spin text-black" />
