@@ -172,10 +172,12 @@ function HomeContent() {
 
           <AnimateIn delay={0.4} direction="up">
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-white mb-8 leading-[1.1] tracking-tight">
-              When buyers ask AI<br className="hidden sm:block" />
+              When buyers ask AI{" "}
+              <br className="hidden sm:block" />
               who to use,{" "}
               <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-teal-400 bg-clip-text text-transparent animate-shimmer-text">
-                are you<br className="hidden sm:block" />
+                are you{" "}
+                <br className="hidden sm:block" />
                 the answer?
               </span>
             </h1>
