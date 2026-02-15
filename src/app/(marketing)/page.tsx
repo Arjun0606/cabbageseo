@@ -185,7 +185,7 @@ function HomeContent() {
 
           <AnimateIn delay={0.6} direction="up">
             <p className="text-xl text-zinc-400 mb-4 max-w-2xl mx-auto leading-relaxed">
-              ChatGPT, Perplexity, and Google AI are answering buyer questions right now. See if they mention you or someone else.
+              Scan ChatGPT, Perplexity, and Google AI to see who they recommend. Then get the exact pages, trust signals, and actions to make them recommend you.
             </p>
             <p className="text-sm text-red-400/80 font-medium mb-10 max-w-xl mx-auto">
               These answers change every week. You might be visible today and gone tomorrow.
@@ -246,7 +246,7 @@ function HomeContent() {
 
           <AnimateIn delay={1.0} direction="up">
             <p className="text-zinc-600 text-xs mb-4 max-w-md mx-auto">
-              This is not about gaming AI. It just shows whether AI knows you exist.
+              Not about gaming AI. We show you where you&apos;re invisible, then help you fix it.
             </p>
             <div className="flex items-center justify-center gap-6 text-sm text-zinc-500 mb-5">
               <span className="flex items-center gap-1.5">
@@ -503,7 +503,7 @@ function HomeContent() {
                 href="/signup"
                 className="group inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98]"
               >
-                See if AI knows I exist
+                Start fixing my AI visibility
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <p className="mt-4 text-zinc-600 text-sm">
