@@ -260,6 +260,20 @@ function Footer() {
                 <Mail className="w-4 h-4" />
               </a>
             </div>
+            <a
+              href="https://www.producthunt.com/products/cabbageseo?utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-cabbageseo"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 block"
+            >
+              <img
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1079774&theme=dark&t=1771177147094"
+                alt="CabbageSEO - Track where AI recommends you and where it doesn't yet | Product Hunt"
+                width={250}
+                height={54}
+                className="w-[200px] h-auto"
+              />
+            </a>
           </StaggerItem>
 
           {/* Product */}
