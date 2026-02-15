@@ -17,6 +17,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { getCitationPlan } from "@/lib/billing/citation-plans";
 import { useOpportunities, useGeneratedPages, useAudit } from "@/hooks/api/queries";
 import type { AuditData } from "@/hooks/api/queries";
+import { trackEvent } from "@/lib/analytics/posthog";
 import { useGeneratePage, useDeletePage } from "@/hooks/api/mutations";
 import {
   Sparkles,
@@ -228,6 +229,7 @@ function ContentEngineContent() {
 
     setError("");
     try {
+      trackEvent("page_generation_started", { query: q });
       const data = await generatePage.mutateAsync({ query: q });
       if (data.data?.page?.id) {
         router.push(`/dashboard/pages/${data.data.page.id}`);

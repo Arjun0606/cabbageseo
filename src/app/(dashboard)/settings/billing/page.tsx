@@ -33,6 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useSite } from "@/context/site-context";
 import { CITATION_PLANS } from "@/lib/billing/citation-plans";
+import { trackEvent } from "@/lib/analytics/posthog";
 
 // Feature rows for plan comparison
 const PLAN_FEATURES = [
@@ -164,6 +165,7 @@ function BillingContent() {
     setError(null);
 
     try {
+      trackEvent("checkout_initiated", { plan: planId, interval: billingInterval });
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

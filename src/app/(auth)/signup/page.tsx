@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { trackEvent } from "@/lib/analytics/posthog";
 
 const AUTH_ERRORS: Record<string, string> = {
   auth_callback_error: "Authentication failed. Please try again.",
@@ -49,6 +50,7 @@ function SignupPageContent() {
       callbackUrl += `?domain=${encodeURIComponent(domainParam)}`;
     }
 
+    trackEvent("signup_initiated", { method: "google" });
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -103,6 +105,7 @@ function SignupPageContent() {
       return;
     }
 
+    trackEvent("signup_completed", { method: "email" });
     setSuccess(true);
   };
 

@@ -12,6 +12,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { identifyUser } from "@/lib/analytics/posthog";
 // canAccessProduct no longer needed — trial logic removed, paywall checks plan directly
 
 // ============================================
@@ -146,6 +147,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       
       setUser(meData.user);
       setOrganization(meData.organization);
+      identifyUser(meData.user.id, { email: meData.user.email, plan: meData.organization?.plan });
       
       // Free plan = no dashboard access (subscription required)
       // Treat null/missing org or plan as free (safe direction — blocks dashboard until paid)

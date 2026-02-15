@@ -11,6 +11,8 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { ScanProgress } from "@/components/homepage/scan-progress";
 import { ScanResults, type TeaserData } from "@/components/homepage/scan-results";
 import { SocialProofBar } from "@/components/homepage/social-proof-bar";
+import { VisitorCounter } from "@/components/homepage/visitor-counter";
+import { trackEvent } from "@/lib/analytics/posthog";
 
 const SCAN_STEPS = [
   "Reading your site to understand your business...",
@@ -53,6 +55,7 @@ function HomeContent() {
       }, 900);
 
       try {
+        trackEvent("scan_initiated", { domain: scanDomain });
         const response = await fetch("/api/geo/teaser", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -82,6 +85,7 @@ function HomeContent() {
         await new Promise((resolve) => setTimeout(resolve, 400));
 
         setScanData({ ...result, domain: scanDomain });
+        trackEvent("scan_completed", { domain: scanDomain, score: result.score });
 
         // Show results directly — no email gate
         setScanState("results");
@@ -266,6 +270,9 @@ function HomeContent() {
                   height={54}
                 />
               </a>
+            </div>
+            <div className="mt-6">
+              <VisitorCounter />
             </div>
           </AnimateIn>
 

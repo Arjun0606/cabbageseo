@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useCheckout } from "@/hooks/use-checkout";
+import { trackEvent } from "@/lib/analytics/posthog";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -141,6 +142,7 @@ function DashboardContent() {
     setChecking(true);
     setShowRecheckResult(false);
     try {
+      trackEvent("citation_check_run", { site_id: siteId });
       await runCheck();
       invalidateDashboard();
 
