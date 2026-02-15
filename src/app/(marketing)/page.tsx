@@ -172,20 +172,20 @@ function HomeContent() {
 
           <AnimateIn delay={0.4} direction="up">
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-white mb-8 leading-[1.1] tracking-tight">
-              Is AI sending{" "}
+              When buyers ask AI{" "}
               <br className="hidden sm:block" />
-              customers to{" "}
+              who to use,{" "}
               <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-teal-400 bg-clip-text text-transparent animate-shimmer-text">
-                your competitors{" "}
+                do they{" "}
                 <br className="hidden sm:block" />
-                instead of you?
+                find you?
               </span>
             </h1>
           </AnimateIn>
 
           <AnimateIn delay={0.6} direction="up">
             <p className="text-xl text-zinc-400 mb-4 max-w-2xl mx-auto leading-relaxed">
-              Scan ChatGPT, Perplexity, and Google AI to see who they recommend. Then get the exact pages, trust signals, and actions to make them recommend you.
+              Scan ChatGPT, Perplexity, and Google AI to see if they mention you. Then get the exact pages, trust signals, and actions to make sure they do.
             </p>
             <p className="text-sm text-red-400/80 font-medium mb-10 max-w-xl mx-auto">
               These answers change every week. You might be visible today and gone tomorrow.
@@ -351,7 +351,7 @@ function HomeContent() {
               {
                 step: "2",
                 title: "See Gaps",
-                desc: "Discover which questions should mention you but recommend competitors instead.",
+                desc: "Discover which buyer questions should mention you but don\u2019t yet.",
               },
               {
                 step: "3",
@@ -429,7 +429,7 @@ function HomeContent() {
                 </div>
                 <ul className="space-y-3">
                   {[
-                    "Find every conversation where AI recommends competitors but not you",
+                    "Find every conversation where AI should mention you but doesn't yet",
                     "Get ready-to-publish pages structured so AI can actually cite you",
                     "Know exactly what to do this week — which content to write, where to get listed",
                     "See which trust platforms (G2, Capterra, etc.) you're missing from",
@@ -479,7 +479,7 @@ function HomeContent() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
                   { label: "AI models retrain", detail: "You could disappear from answers after any update" },
-                  { label: "Competitors publish", detail: "Their new content can push you out of AI answers" },
+                  { label: "New content appears", detail: "AI picks up fresh sources and can drop older ones" },
                   { label: "Queries evolve", detail: "Buyers ask AI different questions every week" },
                   { label: "Trust signals decay", detail: "Outdated profiles make AI trust you less over time" },
                 ].map((reason) => (

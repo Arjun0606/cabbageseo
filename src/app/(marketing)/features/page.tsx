@@ -30,14 +30,14 @@ const capabilities: Feature[] = [
   {
     name: "AI Visibility Scanning",
     description:
-      "See exactly what ChatGPT, Perplexity, and Google AI say when someone asks about your space. Know whether they mention you, your competitors, or neither — and track how that changes over time.",
+      "See exactly what ChatGPT, Perplexity, and Google AI say when someone asks about your space. Know whether they mention you or not — and track how that changes over time.",
     icon: <Search className="w-5 h-5" />,
     plan: "all",
   },
   {
     name: "Gap Detection",
     description:
-      "Find the specific buyer questions where AI recommends competitors but not you. These are real conversations happening right now where you're being left out.",
+      "Find the specific buyer questions where AI should mention you but doesn't yet. These are real conversations happening right now without you in them.",
     icon: <Target className="w-5 h-5" />,
     plan: "scout",
   },
