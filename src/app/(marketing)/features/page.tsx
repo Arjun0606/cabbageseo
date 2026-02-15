@@ -16,7 +16,7 @@ import { GradientOrbs } from "@/components/backgrounds/gradient-orbs";
 
 export const metadata: Metadata = {
   title: "Features | CabbageSEO",
-  description: "AI Visibility Scanning, Gap Detection, Fix Pages, Intelligence & Action Plans, and Trust Source Tracking. See what CabbageSEO can do for your AI visibility.",
+  description: "See if AI recommends you or your competitors. Find gaps, get fix pages, and track your visibility across ChatGPT, Perplexity, and Google AI.",
 };
 
 interface Feature {
@@ -30,35 +30,35 @@ const capabilities: Feature[] = [
   {
     name: "AI Visibility Scanning",
     description:
-      "Runs your key queries through ChatGPT, Perplexity, and Google AI to check if they mention you. Tracks citations over time so you can see whether you're gaining or losing visibility.",
+      "See exactly what ChatGPT, Perplexity, and Google AI say when someone asks about your space. Know whether they mention you, your competitors, or neither — and track how that changes over time.",
     icon: <Search className="w-5 h-5" />,
     plan: "all",
   },
   {
     name: "Gap Detection",
     description:
-      "Identifies specific queries where AI talks about your space but doesn't mention you. These are your visibility gaps, the conversations happening without you.",
+      "Find the specific buyer questions where AI recommends competitors but not you. These are real conversations happening right now where you're being left out.",
     icon: <Target className="w-5 h-5" />,
     plan: "scout",
   },
   {
     name: "Fix Pages",
     description:
-      "Automatically generates expert-level content pages targeting each gap. Structured to be cited by AI with direct answers, comparison tables, FAQ sections, entity-rich text, and Schema.org markup.",
+      "Get ready-to-publish content pages structured so AI can actually understand and cite you — direct answers, comparison tables, FAQ sections, and Schema.org markup included.",
     icon: <FileText className="w-5 h-5" />,
     plan: "scout",
   },
   {
     name: "Gap Analysis & Content Ideas",
     description:
-      "Gap analysis explains why you're not being cited for specific queries. Content recommendations help you prioritize what to publish next based on your data.",
+      "Understand why AI isn't citing you for specific queries and know exactly what to publish next. Prioritized by impact so you fix the highest-value gaps first.",
     icon: <Lightbulb className="w-5 h-5" />,
     plan: "scout",
   },
   {
     name: "Trust Source Tracking",
     description:
-      "Monitors whether you're listed on the review platforms AI trusts like G2, Capterra, Trustpilot, and Yelp. These third-party profiles are signals AI uses to decide if you're credible enough to recommend.",
+      "AI decides whether to recommend you based on third-party signals — G2, Capterra, Trustpilot, Yelp. See which ones you're missing from and where to get listed.",
     icon: <ShieldCheck className="w-5 h-5" />,
     plan: "scout",
   },
@@ -109,11 +109,11 @@ export default function FeaturesPage() {
       <section className="pt-20 pb-16">
         <AnimateIn className="max-w-7xl mx-auto px-6 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            One loop. Five steps. Real results.
+            Know if AI ignores you. Then fix it.
           </h1>
           <p className="text-lg text-zinc-400 max-w-2xl mx-auto mb-8">
-            CabbageSEO runs the GEO (Generative Engine Optimization) cycle:
-            scan, find gaps, fix, verify, repeat. Here&apos;s what powers each step.
+            Scan what AI actually says about your space. Find where you&apos;re missing.
+            Get the content and signals to start showing up. Here&apos;s what powers it.
           </p>
           <Link
             href="/"
@@ -137,11 +137,11 @@ export default function FeaturesPage() {
               Core capabilities
             </Badge>
             <h2 className="text-3xl font-bold text-white mb-3">
-              Everything that powers the loop
+              What you get
             </h2>
             <p className="text-zinc-400 max-w-2xl">
-              Five GEO capabilities that work together: scan AI engines, find your
-              gaps, fix them, and track the results.
+              Five capabilities that work together: see what AI says, find where you&apos;re missing,
+              fix it, and make sure you stay visible.
             </p>
           </AnimateIn>
           <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
@@ -169,10 +169,10 @@ export default function FeaturesPage() {
         <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
           <AnimateIn>
             <h2 className="text-2xl font-bold text-white mb-3">
-              See which plan fits
+              See where you stand in 10 seconds
             </h2>
             <p className="text-zinc-400 mb-6">
-              Run a free scan to see where you stand. Subscribe when you&apos;re ready.
+              Free scan. No signup. See if AI even knows you exist.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link

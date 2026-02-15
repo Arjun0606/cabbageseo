@@ -172,23 +172,23 @@ function HomeContent() {
 
           <AnimateIn delay={0.4} direction="up">
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-white mb-8 leading-[1.1] tracking-tight">
-              When buyers ask AI{" "}
+              Is AI sending{" "}
               <br className="hidden sm:block" />
-              who to use,{" "}
+              customers to{" "}
               <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-teal-400 bg-clip-text text-transparent animate-shimmer-text">
-                are you{" "}
+                your competitors{" "}
                 <br className="hidden sm:block" />
-                the answer?
+                instead of you?
               </span>
             </h1>
           </AnimateIn>
 
           <AnimateIn delay={0.6} direction="up">
             <p className="text-xl text-zinc-400 mb-4 max-w-2xl mx-auto leading-relaxed">
-              Find out in 10 seconds. Most businesses are invisible to AI and don&apos;t know it.
+              ChatGPT, Perplexity, and Google AI are answering buyer questions right now. See if they mention you or someone else.
             </p>
             <p className="text-sm text-red-400/80 font-medium mb-10 max-w-xl mx-auto">
-              AI recommendations shift weekly. Make sure you&apos;re still visible.
+              These answers change every week. You might be visible today and gone tomorrow.
             </p>
           </AnimateIn>
 
@@ -245,6 +245,9 @@ function HomeContent() {
           </AnimateIn>
 
           <AnimateIn delay={1.0} direction="up">
+            <p className="text-zinc-600 text-xs mb-4 max-w-md mx-auto">
+              This is not about gaming AI. It just shows whether AI knows you exist.
+            </p>
             <div className="flex items-center justify-center gap-6 text-sm text-zinc-500 mb-5">
               <span className="flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-emerald-500/60" />
@@ -328,10 +331,10 @@ function HomeContent() {
         <div className="max-w-7xl mx-auto px-6">
           <AnimateIn>
             <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">
-              How it works
+              From invisible to recommended
             </h2>
             <p className="text-zinc-500 text-center mb-14 max-w-xl mx-auto leading-relaxed">
-              The GEO loop: scan, find gaps, fix, verify, monitor. Repeat until AI recommends you.
+              Five steps. Each one moves you closer to showing up when buyers ask AI who to use.
             </p>
           </AnimateIn>
 
@@ -343,27 +346,27 @@ function HomeContent() {
               {
                 step: "1",
                 title: "Scan",
-                desc: "We query ChatGPT, Perplexity & Google AI with real buyer questions.",
+                desc: "See exactly what ChatGPT, Perplexity & Google AI say when buyers ask about your space.",
               },
               {
                 step: "2",
                 title: "See Gaps",
-                desc: "Find which queries should mention you but don\u2019t yet.",
+                desc: "Discover which questions should mention you but recommend competitors instead.",
               },
               {
                 step: "3",
                 title: "Fix",
-                desc: "Targeted content pages, trust source gaps, and specific actions for each gap.",
+                desc: "Get pages, actions, and trust signals designed to make AI start citing you.",
               },
               {
                 step: "4",
                 title: "Verify",
-                desc: "Re-scan to confirm AI now recommends you.",
+                desc: "Re-scan and see your name appear where it wasn\u2019t before.",
               },
               {
                 step: "5",
                 title: "Monitor",
-                desc: "Automated checks catch changes. Alerts if you drop.",
+                desc: "Know immediately if you disappear from an AI answer you were in last week.",
               },
             ].map((item, i) => (
               <AnimateIn key={item.step} delay={0.1 * i}>
@@ -403,11 +406,10 @@ function HomeContent() {
         <div className="max-w-7xl mx-auto px-6 relative">
           <AnimateIn>
             <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">
-              AI visibility isn&apos;t a one-time fix
+              You could be visible today and gone next week
             </h2>
             <p className="text-zinc-500 text-center mb-14 max-w-2xl mx-auto leading-relaxed">
-              AI models retrain, competitors publish new content, and recommendations shift every week.
-              CabbageSEO runs continuously so you don&apos;t fall behind.
+              AI answers aren&apos;t static. Models retrain, competitors publish, and the recommendations you earned last month can vanish overnight. CabbageSEO watches so you don&apos;t have to.
             </p>
           </AnimateIn>
 
@@ -427,10 +429,10 @@ function HomeContent() {
                 </div>
                 <ul className="space-y-3">
                   {[
-                    "Full scan finds every gap across ChatGPT, Perplexity & Google AI",
-                    "Fix pages auto-generate for your biggest visibility gaps",
-                    "Weekly action plan tells you exactly what to publish and where to get listed",
-                    "Trust source audit shows which review platforms you're missing from",
+                    "Find every conversation where AI recommends competitors but not you",
+                    "Get ready-to-publish pages structured so AI can actually cite you",
+                    "Know exactly what to do this week — which content to write, where to get listed",
+                    "See which trust platforms (G2, Capterra, etc.) you're missing from",
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-2.5 text-sm text-zinc-400">
                       <span className="text-emerald-400 mt-0.5">&rarr;</span>
@@ -455,10 +457,10 @@ function HomeContent() {
                 </div>
                 <ul className="space-y-3">
                   {[
-                    "Scans run daily or 2x daily depending on your plan, catching every shift",
-                    "New fix pages auto-generate whenever new gaps are found",
-                    "Alerts fire instantly if your visibility score drops on any platform",
-                    "Fresh action plans reprioritize based on what changed this week",
+                    "Daily scans catch the moment AI stops mentioning you",
+                    "New fix pages appear automatically when new gaps are found",
+                    "Instant alerts if your visibility drops on any platform",
+                    "Updated action plans reprioritize based on what actually changed",
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-2.5 text-sm text-zinc-400">
                       <span className="text-blue-400 mt-0.5">&rarr;</span>
@@ -473,13 +475,13 @@ function HomeContent() {
           {/* Why it never stops */}
           <AnimateIn delay={0.3}>
             <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-6 max-w-2xl mx-auto mb-12 backdrop-blur-sm">
-              <h3 className="text-white font-semibold text-center mb-4">Why this can&apos;t be a one-time thing</h3>
+              <h3 className="text-white font-semibold text-center mb-4">Why checking once isn&apos;t enough</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { label: "AI models retrain", detail: "What they recommend shifts with each update" },
-                  { label: "Competitors publish", detail: "New content pushes you down in AI answers" },
-                  { label: "Queries evolve", detail: "People ask AI new questions every week" },
-                  { label: "Trust signals decay", detail: "Stale profiles and old content lose credibility" },
+                  { label: "AI models retrain", detail: "You could disappear from answers after any update" },
+                  { label: "Competitors publish", detail: "Their new content can push you out of AI answers" },
+                  { label: "Queries evolve", detail: "Buyers ask AI different questions every week" },
+                  { label: "Trust signals decay", detail: "Outdated profiles make AI trust you less over time" },
                 ].map((reason) => (
                   <div key={reason.label} className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-white/[0.02] transition-colors">
                     <span className="w-5 h-5 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -501,7 +503,7 @@ function HomeContent() {
                 href="/signup"
                 className="group inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98]"
               >
-                Start monitoring my AI visibility
+                See if AI knows I exist
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <p className="mt-4 text-zinc-600 text-sm">
