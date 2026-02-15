@@ -239,7 +239,7 @@ function HomeContent() {
           </AnimateIn>
 
           <AnimateIn delay={1.0} direction="up">
-            <div className="flex items-center justify-center gap-6 text-sm text-zinc-500">
+            <div className="flex items-center justify-center gap-6 text-sm text-zinc-500 mb-5">
               <span className="flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-emerald-500/60" />
                 Takes 10 seconds
@@ -252,6 +252,20 @@ function HomeContent() {
                 <span className="w-1 h-1 rounded-full bg-emerald-500/60" />
                 Real AI responses
               </span>
+            </div>
+            <div className="flex justify-center">
+              <a
+                href="https://www.producthunt.com/products/cabbageseo?utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-cabbageseo"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1079774&theme=dark&t=1771177147094"
+                  alt="CabbageSEO on Product Hunt"
+                  width={250}
+                  height={54}
+                />
+              </a>
             </div>
           </AnimateIn>
 
