@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState, useEffect, type ReactNode } from "react";
+import { Suspense, useState, useEffect, type ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { PostHogProvider as PHProvider } from "posthog-js/react";
@@ -68,7 +68,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <PHProvider client={posthog}>
       <QueryClientProvider client={queryClient}>
-        <PostHogPageView />
+        <Suspense fallback={null}><PostHogPageView /></Suspense>
         {children}
       </QueryClientProvider>
     </PHProvider>
