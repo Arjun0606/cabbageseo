@@ -15,7 +15,8 @@ import Link from "next/link";
 import { useSite } from "@/context/site-context";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { getCitationPlan } from "@/lib/billing/citation-plans";
-import { useOpportunities, useGeneratedPages } from "@/hooks/api/queries";
+import { useOpportunities, useGeneratedPages, useAudit } from "@/hooks/api/queries";
+import type { AuditData } from "@/hooks/api/queries";
 import { useGeneratePage, useDeletePage } from "@/hooks/api/mutations";
 import {
   Sparkles,
@@ -33,6 +34,14 @@ import {
   ChevronDown,
   ChevronUp,
   RefreshCw,
+  Shield,
+  Code,
+  HelpCircle,
+  User,
+  List,
+  Quote,
+  CheckCircle2,
+  ExternalLink,
 } from "lucide-react";
 
 const IMPACT_STYLES = {
@@ -47,6 +56,117 @@ const PLATFORM_LABELS: Record<string, string> = {
   chatgpt: "ChatGPT",
 };
 
+// ── Site Health Issue Detection ──
+
+interface SiteHealthIssue {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  severity: "red" | "amber";
+  score: number; // for sorting by severity
+}
+
+function detectHealthIssues(audit: AuditData): SiteHealthIssue[] {
+  if (!audit.hasAudit || !audit.breakdown) return [];
+
+  const issues: SiteHealthIssue[] = [];
+  const b = audit.breakdown;
+  const raw = audit.rawData;
+
+  // Score-based issues
+  if (b.structuredData < 50) {
+    issues.push({
+      icon: Code,
+      label: "Missing structured data — add FAQPage or Article schema",
+      severity: b.structuredData < 30 ? "red" : "amber",
+      score: b.structuredData,
+    });
+  } else if (raw && !raw.structuredDataFound.includes("FAQPage")) {
+    issues.push({
+      icon: HelpCircle,
+      label: "No FAQ schema — AI extracts Q&A pairs from FAQPage markup",
+      severity: "amber",
+      score: 55,
+    });
+  }
+
+  if (raw && !raw.hasAuthorInfo) {
+    issues.push({
+      icon: User,
+      label: "No author bios found — AI trusts content with named experts",
+      severity: b.authoritySignals < 40 ? "red" : "amber",
+      score: b.authoritySignals,
+    });
+  } else if (b.authoritySignals < 50) {
+    issues.push({
+      icon: Shield,
+      label: "Weak authority signals — link to authoritative sources (.edu, .gov)",
+      severity: b.authoritySignals < 30 ? "red" : "amber",
+      score: b.authoritySignals,
+    });
+  }
+
+  if (b.contentClarity < 50) {
+    issues.push({
+      icon: List,
+      label: "Poor heading structure — use clear H1 → H2 → H3 hierarchy",
+      severity: b.contentClarity < 30 ? "red" : "amber",
+      score: b.contentClarity,
+    });
+  }
+
+  if (b.freshness < 40) {
+    issues.push({
+      icon: Clock,
+      label: "Content appears outdated — add or update publication dates",
+      severity: b.freshness < 25 ? "red" : "amber",
+      score: b.freshness,
+    });
+  }
+
+  if (b.citability < 50) {
+    issues.push({
+      icon: Quote,
+      label: "Low citability — add specific stats, numbers, and quotable statements",
+      severity: b.citability < 30 ? "red" : "amber",
+      score: b.citability,
+    });
+  }
+
+  if (raw && raw.pagesAnalyzed > 0 && raw.wordCount / raw.pagesAnalyzed < 800) {
+    issues.push({
+      icon: FileText,
+      label: "Thin content — aim for 1,500+ words on key topic pages",
+      severity: "amber",
+      score: b.topicalDepth,
+    });
+  }
+
+  // Sort by severity (lowest score first)
+  issues.sort((a, b) => a.score - b.score);
+  return issues.slice(0, 5);
+}
+
+const DIMENSION_LABELS: { key: keyof NonNullable<AuditData["breakdown"]>; label: string }[] = [
+  { key: "contentClarity", label: "Content" },
+  { key: "authoritySignals", label: "Authority" },
+  { key: "structuredData", label: "Schema" },
+  { key: "citability", label: "Citability" },
+  { key: "freshness", label: "Freshness" },
+  { key: "topicalDepth", label: "Depth" },
+];
+
+function scoreColor(score: number) {
+  if (score >= 70) return "bg-emerald-500";
+  if (score >= 40) return "bg-amber-500";
+  return "bg-red-500";
+}
+
+function scoreTextColor(score: number) {
+  if (score >= 70) return "text-emerald-400";
+  if (score >= 40) return "text-amber-400";
+  return "text-red-400";
+}
+
 function ContentEngineContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -59,6 +179,7 @@ function ContentEngineContent() {
   // ── React Query hooks ──
   const { data: oppsData, isLoading: oppsLoading } = useOpportunities(siteId);
   const { data: pages = [], isLoading: pagesLoading } = useGeneratedPages(siteId);
+  const { data: auditData } = useAudit(siteId);
   const generatePage = useGeneratePage(siteId);
   const deletePage = useDeletePage(siteId);
 
@@ -249,6 +370,110 @@ function ContentEngineContent() {
           </div>
         </div>
       )}
+
+      {/* ═══ SITE HEALTH ═══ */}
+      {auditData?.hasAudit && auditData.breakdown ? (() => {
+        const issues = detectHealthIssues(auditData);
+        const daysAgo = auditData.createdAt
+          ? Math.floor((Date.now() - new Date(auditData.createdAt).getTime()) / 86400000)
+          : null;
+
+        return (
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-emerald-400" />
+                <h2 className="text-white font-semibold text-sm">Site Health</h2>
+              </div>
+              <div className="flex items-center gap-3">
+                {daysAgo !== null && (
+                  <span className="text-zinc-600 text-xs">
+                    Audited {daysAgo === 0 ? "today" : daysAgo === 1 ? "yesterday" : `${daysAgo}d ago`}
+                  </span>
+                )}
+                <Link
+                  href="/dashboard/audit"
+                  className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+                >
+                  Full audit <ExternalLink className="w-3 h-3" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Score overview row */}
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                  (auditData.score ?? 0) >= 70 ? "border-emerald-500 text-emerald-400" :
+                  (auditData.score ?? 0) >= 40 ? "border-amber-500 text-amber-400" :
+                  "border-red-500 text-red-400"
+                }`}>
+                  <span className="text-sm font-bold">{auditData.grade}</span>
+                </div>
+                <div>
+                  <p className={`text-lg font-bold ${scoreTextColor(auditData.score ?? 0)}`}>{auditData.score}</p>
+                  <p className="text-zinc-600 text-[10px] -mt-0.5">/ 100</p>
+                </div>
+              </div>
+
+              <div className="flex-1 grid grid-cols-6 gap-2">
+                {DIMENSION_LABELS.map(({ key, label }) => {
+                  const val = auditData.breakdown![key];
+                  return (
+                    <div key={key} className="text-center">
+                      <p className="text-[10px] text-zinc-500 mb-1">{label}</p>
+                      <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${scoreColor(val)} transition-all`}
+                          style={{ width: `${val}%` }}
+                        />
+                      </div>
+                      <p className={`text-[10px] mt-0.5 ${scoreTextColor(val)}`}>{val}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Issues checklist */}
+            {issues.length > 0 ? (
+              <div className="space-y-1.5 border-t border-zinc-800 pt-3">
+                <p className="text-zinc-500 text-xs font-medium mb-2">Issues to fix</p>
+                {issues.map((issue, i) => (
+                  <div key={i} className="flex items-center gap-2.5 py-1">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      issue.severity === "red" ? "bg-red-400" : "bg-amber-400"
+                    }`} />
+                    <issue.icon className={`w-3.5 h-3.5 shrink-0 ${
+                      issue.severity === "red" ? "text-red-400" : "text-amber-400"
+                    }`} />
+                    <span className="text-zinc-300 text-xs">{issue.label}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 border-t border-zinc-800 pt-3">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span className="text-emerald-400 text-xs">Your site structure looks good for AI citation</span>
+              </div>
+            )}
+          </div>
+        );
+      })() : !auditData?.hasAudit && auditData !== undefined && auditData !== null ? (
+        <div className="bg-zinc-900/50 border border-zinc-800/50 border-dashed rounded-xl p-5 text-center">
+          <Shield className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
+          <p className="text-zinc-400 text-sm mb-1">Run a Site Audit</p>
+          <p className="text-zinc-600 text-xs mb-3">
+            Check your heading structure, schema markup, author signals, and more
+          </p>
+          <Link
+            href="/dashboard/audit"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-medium rounded-lg transition-colors"
+          >
+            <Shield className="w-3.5 h-3.5" />Run audit
+          </Link>
+        </div>
+      ) : null}
 
       {/* ═══ OPPORTUNITIES ═══ */}
       {openOpps.length > 0 && (

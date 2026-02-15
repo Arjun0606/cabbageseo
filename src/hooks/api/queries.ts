@@ -61,6 +61,17 @@ export interface ImprovementData {
   checksCount: number;
 }
 
+export interface AuditRawData {
+  pagesAnalyzed: number;
+  structuredDataFound: string[];
+  headingsCount: number;
+  listsCount: number;
+  hasAuthorInfo: boolean;
+  hasDates: boolean;
+  wordCount: number;
+  externalLinksCount: number;
+}
+
 export interface AuditData {
   hasAudit: boolean;
   score?: number;
@@ -73,6 +84,7 @@ export interface AuditData {
     freshness: number;
     topicalDepth: number;
   };
+  rawData?: AuditRawData;
   tipsCount?: number;
   createdAt?: string;
 }
@@ -258,6 +270,7 @@ export function useAudit(siteId: string | undefined) {
           score: audit.score.overall,
           grade: audit.score.grade,
           breakdown: audit.score.breakdown,
+          rawData: audit.rawData || undefined,
           tipsCount: Array.isArray(audit.tips) ? audit.tips.length : 0,
           createdAt: audit.createdAt,
         };
