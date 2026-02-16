@@ -262,7 +262,7 @@ function HomeContent() {
                 Real AI responses
               </span>
             </div>
-            <div className="flex justify-center">
+            <div className="flex items-center justify-center gap-4">
               <a
                 href="https://www.producthunt.com/products/cabbageseo?utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-cabbageseo"
                 target="_blank"
@@ -273,6 +273,19 @@ function HomeContent() {
                   alt="CabbageSEO on Product Hunt"
                   width={250}
                   height={54}
+                />
+              </a>
+              <a
+                href="https://peerlist.io/potatoramen/project/cabbageseo"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="https://peerlist.io/api/v1/projects/embed/PRJHNN7N79L9DE6JE3N6DJRKLEG8QD?showUpvote=false&theme=dark"
+                  alt="CabbageSEO on Peerlist"
+                  width={200}
+                  height={54}
+                  className="h-[45px] w-auto"
                 />
               </a>
             </div>
