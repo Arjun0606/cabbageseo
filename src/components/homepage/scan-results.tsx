@@ -20,6 +20,7 @@ import {
   HelpCircle,
   Search,
   Lock,
+  ShieldCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import ContentPreview from "@/app/(marketing)/teaser/[id]/content-preview";
@@ -722,9 +723,9 @@ export function ScanResults({ data }: ScanResultsProps) {
       <AnimateIn delay={0.2}>
         <div ref={mainCtaRef} className="rounded-2xl overflow-hidden mb-8 shadow-2xl shadow-emerald-500/10">
           {/* Urgency banner */}
-          <div className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-3 flex items-center justify-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
-            <p className="text-amber-300 text-sm font-medium">
+          <div className="bg-red-500/10 border-b border-red-500/20 px-6 py-3 flex items-center justify-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-400" />
+            <p className="text-red-300 text-sm font-medium">
               AI models retrain weekly. Your visibility can shift any day.
             </p>
           </div>
@@ -799,7 +800,7 @@ export function ScanResults({ data }: ScanResultsProps) {
               </div>
 
               <p className="mt-3 text-black/60 text-sm">
-                From $39/mo &middot; Scans run automatically &middot; Cancel anytime
+                From $39/mo &middot; 14-day money-back guarantee &middot; Cancel anytime
               </p>
             </div>
           </div>

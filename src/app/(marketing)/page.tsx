@@ -44,6 +44,133 @@ const SCAN_STEPS = [
 
 type ScanState = "idle" | "scanning" | "results" | "error";
 
+interface CompareResult {
+  domain1: { domain: string; score: number; platformScores: Record<string, number> };
+  domain2: { domain: string; score: number; platformScores: Record<string, number> };
+  comparison: { winner: string; scoreDelta: number; platformWinners: Record<string, string>; verdict: string };
+}
+
+function CompareForm() {
+  const [d1, setD1] = useState("");
+  const [d2, setD2] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<CompareResult | null>(null);
+  const [error, setError] = useState("");
+
+  const handleCompare = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!d1.trim() || !d2.trim() || loading) return;
+
+    const clean = (s: string) => s.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
+    setLoading(true);
+    setError("");
+    setResult(null);
+
+    try {
+      const res = await fetch("/api/geo/teaser/compare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain1: clean(d1), domain2: clean(d2) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Compare failed");
+      setResult(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <form onSubmit={handleCompare} className="flex flex-col sm:flex-row items-center gap-3 mb-4">
+        <input
+          type="text"
+          value={d1}
+          onChange={(e) => setD1(e.target.value)}
+          placeholder="yourdomain.com"
+          className="flex-1 w-full px-4 py-3 bg-zinc-950/80 border border-zinc-700/60 rounded-xl text-white placeholder:text-zinc-600 text-sm focus:outline-none focus:border-red-500/40"
+          disabled={loading}
+        />
+        <span className="text-red-400 font-bold text-sm shrink-0">VS</span>
+        <input
+          type="text"
+          value={d2}
+          onChange={(e) => setD2(e.target.value)}
+          placeholder="competitor.com"
+          className="flex-1 w-full px-4 py-3 bg-zinc-950/80 border border-zinc-700/60 rounded-xl text-white placeholder:text-zinc-600 text-sm focus:outline-none focus:border-red-500/40"
+          disabled={loading}
+        />
+        <button
+          type="submit"
+          disabled={loading || !d1.trim() || !d2.trim()}
+          className="px-6 py-3 bg-red-500 hover:bg-red-400 disabled:bg-red-500/20 disabled:text-red-400/60 text-white font-bold rounded-xl text-sm transition-all shrink-0 disabled:cursor-not-allowed"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Compare"}
+        </button>
+      </form>
+
+      {error && (
+        <p className="text-red-400 text-sm text-center">{error}</p>
+      )}
+
+      {result && (
+        <div className="mt-6 space-y-4">
+          {/* Score comparison */}
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <div className="text-center">
+              <p className="text-white font-semibold text-sm truncate mb-1">{result.domain1.domain}</p>
+              <div className={`text-4xl font-black tabular-nums ${result.comparison.winner === result.domain1.domain ? "text-emerald-400" : "text-red-400"}`}>
+                {result.domain1.score}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-zinc-500 text-xs uppercase tracking-wide mb-1">Delta</div>
+              <div className="text-2xl font-bold text-amber-400">
+                {result.comparison.scoreDelta}
+              </div>
+              <div className="text-zinc-600 text-xs">points</div>
+            </div>
+            <div className="text-center">
+              <p className="text-white font-semibold text-sm truncate mb-1">{result.domain2.domain}</p>
+              <div className={`text-4xl font-black tabular-nums ${result.comparison.winner === result.domain2.domain ? "text-emerald-400" : "text-red-400"}`}>
+                {result.domain2.score}
+              </div>
+            </div>
+          </div>
+
+          {/* Platform winners */}
+          <div className="grid grid-cols-3 gap-2">
+            {Object.entries(result.comparison.platformWinners).map(([platform, winner]) => (
+              <div key={platform} className="bg-zinc-950/60 border border-zinc-800/60 rounded-lg p-2 text-center">
+                <p className="text-zinc-500 text-[10px] uppercase tracking-wide">{platform}</p>
+                <p className="text-white text-xs font-semibold truncate">{winner}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Verdict */}
+          <div className="bg-zinc-950/60 border border-zinc-800/60 rounded-xl p-4 text-center">
+            <p className="text-zinc-300 text-sm">{result.comparison.verdict}</p>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center">
+            <Link
+              href={`/signup?domain=${encodeURIComponent(result.comparison.winner === result.domain1.domain ? result.domain2.domain : result.domain1.domain)}&score=${result.comparison.winner === result.domain1.domain ? result.domain2.score : result.domain1.score}`}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl text-sm transition-all"
+            >
+              Close the gap — start fixing now
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HomeContent() {
   const searchParams = useSearchParams();
   const domainParam = searchParams.get("domain");
@@ -161,25 +288,6 @@ function HomeContent() {
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      {/* ========== WAVE BANNER — above everything ========== */}
-      <div className="relative bg-gradient-to-r from-emerald-500/[0.08] via-emerald-500/[0.15] to-emerald-500/[0.08] border-b border-emerald-500/20">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-center gap-3 text-sm">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-          </span>
-          <span className="text-emerald-300 font-medium">
-            AI is replacing Google for buying decisions.
-          </span>
-          <span className="text-zinc-400 hidden sm:inline">
-            Are you showing up when buyers ask ChatGPT, Perplexity & Google AI?
-          </span>
-          <Link href="/signup" className="ml-2 px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold rounded-full transition-colors whitespace-nowrap">
-            Fix it now
-          </Link>
-        </div>
-      </div>
-
       {/* ========== HERO ========== */}
       <section className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden py-20">
         <GridAnimation className="opacity-40" />
@@ -430,6 +538,34 @@ function HomeContent() {
       <section className="pb-16">
         <div className="max-w-7xl mx-auto px-6">
           <SocialProofBar />
+        </div>
+      </section>
+
+      {/* ========== COMPARE — COMPETITIVE HOOK ========== */}
+      <section className="py-16 relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-red-500/20 to-transparent" />
+
+        <div className="max-w-4xl mx-auto px-6">
+          <AnimateIn>
+            <div className="relative bg-gradient-to-br from-red-500/[0.06] via-zinc-900/80 to-zinc-900/80 border border-red-500/20 rounded-2xl p-8 overflow-hidden shadow-xl">
+              <div className="absolute -top-20 right-1/4 w-[300px] h-[200px] bg-red-500/[0.05] rounded-full blur-[80px] pointer-events-none" />
+
+              <div className="relative text-center mb-6">
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full text-red-400 text-xs font-bold mb-4 uppercase tracking-wide">
+                  <Target className="w-3 h-3" />
+                  Head-to-Head Compare
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                  Who does AI prefer — you or your competitor?
+                </h2>
+                <p className="text-zinc-400 text-sm max-w-lg mx-auto">
+                  Enter two domains and see who AI recommends more. Per-platform winner, score delta, and a verdict. Free, instant.
+                </p>
+              </div>
+
+              <CompareForm />
+            </div>
+          </AnimateIn>
         </div>
       </section>
 
@@ -709,7 +845,7 @@ function HomeContent() {
           </AnimateIn>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
-            {[
+            {([
               {
                 name: "Scout",
                 price: "$39",
@@ -737,7 +873,7 @@ function HomeContent() {
                 cta: "Go Dominate",
                 popular: false,
               },
-            ].map((plan, i) => (
+            ]).map((plan, i) => (
               <AnimateIn key={plan.name} delay={0.1 * i}>
                 <div
                   className={`relative rounded-2xl p-6 h-full flex flex-col ${
@@ -906,7 +1042,7 @@ function HomeContent() {
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <p className="mt-4 text-zinc-600 text-sm">
-                From $39/mo &middot; Scans run automatically &middot; Cancel anytime
+                From $39/mo &middot; 14-day money-back guarantee &middot; Cancel anytime
               </p>
             </div>
           </AnimateIn>

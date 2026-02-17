@@ -3,9 +3,8 @@
 /**
  * PRICING PAGE - CabbageSEO
  *
- * Simple, lean pricing page.
- * Monthly/yearly toggle with 20% savings on annual.
- * FAQ section at bottom.
+ * Premium confidence-based pricing. No discounts, no gimmicks.
+ * The product sells itself.
  */
 
 import { useState, useRef } from "react";
@@ -18,6 +17,7 @@ import {
   Crown,
   ChevronDown,
   Sparkles,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence, useInView } from "framer-motion";
@@ -33,6 +33,7 @@ import { GradientOrbs } from "@/components/backgrounds/gradient-orbs";
 
 interface PricingTier {
   name: string;
+  planKey: "scout" | "command" | "dominate";
   tagline: string;
   monthlyPrice: number;
   annualPrice: number;
@@ -59,6 +60,7 @@ interface FAQItem {
 const tiers: PricingTier[] = [
   {
     name: "Scout",
+    planKey: "scout",
     tagline: "See your blind spots and start fixing them",
     monthlyPrice: 49,
     annualPrice: 39,
@@ -83,6 +85,7 @@ const tiers: PricingTier[] = [
   },
   {
     name: "Command",
+    planKey: "command",
     tagline: "Full GEO intelligence + developer API",
     monthlyPrice: 149,
     annualPrice: 119,
@@ -111,6 +114,7 @@ const tiers: PricingTier[] = [
   },
   {
     name: "Dominate",
+    planKey: "dominate",
     tagline: "Maximum AI visibility + highest API limits",
     monthlyPrice: 349,
     annualPrice: 279,
@@ -238,12 +242,7 @@ function PricingCard({
   tier: PricingTier;
   annual: boolean;
 }) {
-  const price = tier.monthlyPrice === 0
-    ? 0
-    : annual
-      ? tier.annualPrice
-      : tier.monthlyPrice;
-
+  const displayPrice = annual ? tier.annualPrice : tier.monthlyPrice;
   const isPopular = tier.popular;
 
   const featuresRef = useRef(null);
@@ -292,26 +291,20 @@ function PricingCard({
           </div>
 
           {/* Price */}
-          <div className="flex items-baseline gap-1 mb-1 mt-4">
-            {price === 0 ? (
-              <span className="text-4xl font-bold text-white">$0</span>
-            ) : (
-              <>
-                <span className="text-4xl font-bold text-white">
-                  $<Counter value={price} duration={0.8} />
-                </span>
-                <span className="text-zinc-500">{tier.period}</span>
-              </>
-            )}
+          <div className="flex items-baseline gap-2 mb-1 mt-4">
+            <span className="text-4xl font-bold text-white">
+              $<Counter value={displayPrice} duration={0.8} />
+            </span>
+            <span className="text-zinc-500">{tier.period}</span>
           </div>
-          {price === 0 ? (
-            <p className="text-sm text-zinc-500">{tier.period}</p>
-          ) : annual ? (
+          {annual ? (
             <p className="text-sm text-emerald-400">
-              Billed annually (${price * 12}/yr)
+              Billed annually (${displayPrice * 12}/yr)
             </p>
           ) : (
-            <p className="text-sm text-zinc-500">Billed monthly</p>
+            <p className="text-sm text-zinc-500">
+              Billed monthly
+            </p>
           )}
 
           {/* Description */}
@@ -326,9 +319,7 @@ function PricingCard({
             className={`w-full ${
               isPopular
                 ? "bg-emerald-500 hover:bg-emerald-400 text-black font-semibold shadow-lg shadow-emerald-500/20"
-                : tier.monthlyPrice === 0
-                  ? "border-zinc-600 text-white hover:bg-zinc-800 hover:text-white"
-                  : "bg-white/[0.06] hover:bg-white/[0.1] text-white border border-white/[0.06]"
+                : "bg-white/[0.06] hover:bg-white/[0.1] text-white border border-white/[0.06]"
             }`}
             variant={isPopular ? "default" : "outline"}
             size="lg"
@@ -458,16 +449,23 @@ export default function PricingPage() {
 
           {/* Trust line + guarantee */}
           <AnimateIn delay={0.2}>
-            <div className="mt-10 text-center space-y-3">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30">
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span className="text-emerald-400 text-sm font-medium">
-                  Cancel anytime, no contracts
-                </span>
+            <div className="mt-10 text-center space-y-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span className="text-emerald-400 text-sm font-medium">
+                    14-day money-back guarantee
+                  </span>
+                </div>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.08]">
+                  <Check className="w-4 h-4 text-zinc-400" />
+                  <span className="text-zinc-400 text-sm font-medium">
+                    Cancel anytime, no contracts
+                  </span>
+                </div>
               </div>
               <p className="text-sm text-zinc-600">
-                All plans include SSL encryption. Data stored on Supabase
-                (US-based servers).
+                If you don&apos;t see improvements in AI visibility within 14 days, email us for a full refund. No questions asked.
               </p>
             </div>
           </AnimateIn>
@@ -601,25 +599,28 @@ export default function PricingPage() {
           </AnimateIn>
           <AnimateIn delay={0.2}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/">
+              <Link href="/signup">
                 <Button
                   size="lg"
-                  className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-8 shadow-lg shadow-emerald-500/20"
+                  className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-8 shadow-lg"
                 >
-                  Run a Free Scan
+                  Get Started
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Link href="/signup">
+              <Link href="/">
                 <Button
                   size="lg"
                   variant="outline"
                   className="border-white/[0.1] text-zinc-300 hover:text-white hover:bg-white/[0.06] hover:border-white/[0.15] px-8"
                 >
-                  Sign Up
+                  Run a Free Scan First
                 </Button>
               </Link>
             </div>
+            <p className="mt-4 text-zinc-600 text-sm">
+              14-day money-back guarantee &middot; Cancel anytime
+            </p>
           </AnimateIn>
         </div>
       </section>

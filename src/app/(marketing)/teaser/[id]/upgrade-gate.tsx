@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Lock, ListChecks, TrendingUp, Search, FileText, Bell, AlertTriangle, Zap } from "lucide-react";
+import { ArrowRight, Lock, ListChecks, TrendingUp, Search, FileText, Bell, AlertTriangle, Zap, ShieldCheck } from "lucide-react";
 
 interface UpgradeGateProps {
   domain: string;
@@ -46,15 +46,18 @@ export default function UpgradeGate({ domain, isInvisible, brandCount, visibilit
   return (
     <div className="relative bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden mb-8 shadow-xl">
       {/* Ambient glow */}
-      <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-[300px] h-[150px] bg-amber-500/[0.04] rounded-full blur-[80px] pointer-events-none" />
+      <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-[300px] h-[150px] bg-emerald-500/[0.04] rounded-full blur-[80px] pointer-events-none" />
 
       {/* Urgency bar */}
-      <div className="relative bg-amber-500/10 border-b border-amber-500/20 px-5 py-3 flex items-center gap-2.5">
-        <div className="w-6 h-6 rounded-md bg-amber-500/15 border border-amber-500/25 flex items-center justify-center shrink-0">
-          <AlertTriangle className="w-3 h-3 text-amber-400" />
+      <div className="relative bg-red-500/10 border-b border-red-500/20 px-5 py-3 flex items-center gap-2.5">
+        <div className="w-6 h-6 rounded-md bg-red-500/15 border border-red-500/25 flex items-center justify-center shrink-0">
+          <AlertTriangle className="w-3 h-3 text-red-400" />
         </div>
-        <p className="text-amber-300 text-xs font-medium">
-          AI models retrain weekly. Your visibility can shift any day.
+        <p className="text-red-300 text-xs font-medium">
+          {isInvisible
+            ? `${domain} is invisible to AI right now. Every day this continues, buyers go to competitors.`
+            : "AI models retrain weekly. Your visibility can shift any day."
+          }
         </p>
       </div>
 
@@ -132,15 +135,22 @@ export default function UpgradeGate({ domain, isInvisible, brandCount, visibilit
         {/* CTA */}
         <Link
           href={`/signup?domain=${encodeURIComponent(domain)}${visibilityScore !== undefined ? `&score=${visibilityScore}` : ""}`}
-          className="group flex items-center justify-center gap-2 w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98]"
+          className="group flex items-center justify-center gap-2 w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all duration-200 shadow-lg hover:scale-[1.02] active:scale-[0.98]"
         >
           <Zap className="w-4 h-4" />
           Start fixing my AI visibility
           <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
         </Link>
-        <p className="text-xs text-zinc-500 text-center mt-2">
-          From $39/mo &middot; Cancel anytime
-        </p>
+
+        {/* Trust signals */}
+        <div className="flex items-center justify-center gap-4 mt-3">
+          <span className="flex items-center gap-1 text-xs text-zinc-500">
+            <ShieldCheck className="w-3 h-3" />
+            14-day money-back guarantee
+          </span>
+          <span className="text-xs text-zinc-600">&middot;</span>
+          <span className="text-xs text-zinc-500">Cancel anytime</span>
+        </div>
       </div>
     </div>
   );
