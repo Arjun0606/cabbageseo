@@ -7,6 +7,9 @@ import {
   FileText,
   Lightbulb,
   ShieldCheck,
+  Share2,
+  Bot,
+  Trophy,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AnimateIn } from "@/components/motion/animate-in";
@@ -61,6 +64,27 @@ const capabilities: Feature[] = [
       "AI decides whether to recommend you based on third-party signals — G2, Capterra, Trustpilot, Yelp. See which ones you're missing from and where to get listed.",
     icon: <ShieldCheck className="w-5 h-5" />,
     plan: "scout",
+  },
+  {
+    name: "Shareable Report Pages",
+    description:
+      "Every scan creates a public report at cabbageseo.com/r/yourdomain.com — share it on Twitter, embed it in your README, or send it to your team. Complete with OG images and badge embeds.",
+    icon: <Share2 className="w-5 h-5" />,
+    plan: "all",
+  },
+  {
+    name: "Moltbot Integration",
+    description:
+      'Check AI visibility from your Moltbot agent. Just say "scan example.com" and get a full report. Set up weekly cron jobs for automated monitoring. Free on ClawHub.',
+    icon: <Bot className="w-5 h-5" />,
+    plan: "all",
+  },
+  {
+    name: "Public Leaderboard",
+    description:
+      "See how your AI visibility score compares against other domains. Top scores, most scanned, and trending brands — all public and updated in real-time.",
+    icon: <Trophy className="w-5 h-5" />,
+    plan: "all",
   },
 ];
 
@@ -140,13 +164,13 @@ export default function FeaturesPage() {
               What you get
             </h2>
             <p className="text-zinc-400 max-w-2xl">
-              Five capabilities that work together: see what AI says, find where you&apos;re missing,
-              fix it, and make sure you stay visible.
+              Eight capabilities that work together: scan AI, find gaps, fix them, share your progress,
+              and stay visible with automated monitoring.
             </p>
           </AnimateIn>
-          <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
-            {capabilities.map((f, i) => (
-              <StaggerItem key={f.name} className={i < 3 ? "lg:col-span-2" : "lg:col-span-3"}>
+          <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {capabilities.map((f) => (
+              <StaggerItem key={f.name}>
                 <FeatureCard feature={f} />
               </StaggerItem>
             ))}

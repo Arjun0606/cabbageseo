@@ -248,7 +248,7 @@ function HomeContent() {
             <p className="text-zinc-600 text-xs mb-4 max-w-md mx-auto">
               Not about gaming AI. We show you where you&apos;re invisible, then help you fix it.
             </p>
-            <div className="flex items-center justify-center gap-6 text-sm text-zinc-500 mb-5">
+            <div className="flex items-center justify-center gap-6 text-sm text-zinc-500 mb-3">
               <span className="flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-emerald-500/60" />
                 Takes 10 seconds
@@ -259,8 +259,16 @@ function HomeContent() {
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-emerald-500/60" />
-                Real AI responses
+                Shareable report
               </span>
+            </div>
+            <div className="mb-5">
+              <Link
+                href="/leaderboard"
+                className="text-xs text-zinc-600 hover:text-emerald-400 transition-colors"
+              >
+                See the AI Visibility Leaderboard &rarr;
+              </Link>
             </div>
             <div className="flex items-center justify-center gap-4">
               <a

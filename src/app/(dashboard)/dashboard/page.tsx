@@ -47,6 +47,8 @@ import {
   Sparkles,
   Target,
   Shield,
+  Share2,
+  ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 import { useCheckout } from "@/hooks/use-checkout";
@@ -309,6 +311,25 @@ function DashboardContent() {
         loading={loading}
         breakdown={momentum?.breakdown}
       />
+
+      {/* ═══ SHARE YOUR SCORE ═══ */}
+      {currentSite && momentum?.score != null && (
+        <div className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
+          <Share2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <p className="text-sm text-zinc-400 flex-1">
+            Share your AI visibility report
+          </p>
+          <a
+            href={`/r/${currentSite.domain}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-sm font-medium rounded-lg transition-colors"
+          >
+            cabbageseo.com/r/{currentSite.domain}
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
+      )}
 
       {/* ═══ CUSTOM QUERIES ═══ */}
       {isPaid && currentSite && planLimits.customQueriesPerSite > 0 && (
