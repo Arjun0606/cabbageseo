@@ -655,14 +655,29 @@ function BadgeSection({ domain }: { domain: string }) {
         </div>
       </div>
 
-      {/* Preview */}
+      {/* Preview — inline SVG so it never errors */}
       <div className="flex items-center justify-center p-4 bg-zinc-950 border border-zinc-800 rounded-xl mb-4">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={`/api/badge/score?domain=${domain}`}
-          alt="AI Visibility Badge"
-          className="h-5"
-        />
+        <svg xmlns="http://www.w3.org/2000/svg" width="138" height="20" role="img" aria-label="AI Visibility: score">
+          <linearGradient id="s" x2="0" y2="100%">
+            <stop offset="0" stopColor="#bbb" stopOpacity=".1"/>
+            <stop offset="1" stopOpacity=".1"/>
+          </linearGradient>
+          <clipPath id="r">
+            <rect width="138" height="20" rx="3" fill="#fff"/>
+          </clipPath>
+          <g clipPath="url(#r)">
+            <rect width="90" height="20" fill="#555"/>
+            <rect x="90" width="48" height="20" fill="#4c1"/>
+            <rect width="138" height="20" fill="url(#s)"/>
+          </g>
+          <g fill="#fff" textAnchor="middle" fontFamily="Verdana,Geneva,DejaVu Sans,sans-serif" fontSize="11">
+            <text x="45" y="15" fill="#010101" fillOpacity=".3">AI Visibility</text>
+            <text x="45" y="14" fill="#fff">AI Visibility</text>
+            <text x="114" y="15" fill="#010101" fillOpacity=".3">42/100</text>
+            <text x="114" y="14" fill="#fff">42/100</text>
+          </g>
+        </svg>
+        <span className="ml-2 text-[10px] text-zinc-600">Preview</span>
       </div>
 
       {/* Embed codes */}
