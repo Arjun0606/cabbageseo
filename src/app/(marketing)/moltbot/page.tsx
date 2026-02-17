@@ -14,10 +14,14 @@ import {
   BarChart3,
   Clock,
   Zap,
-  Copy,
   CheckCircle2,
   Globe,
   Bot,
+  FileText,
+  Target,
+  ShieldCheck,
+  Check,
+  AlertTriangle,
 } from "lucide-react";
 import { GradientOrbs } from "@/components/backgrounds/gradient-orbs";
 
@@ -39,20 +43,24 @@ export default function MoltbotPage() {
       <section className="pt-20 pb-16 relative overflow-hidden">
         <GradientOrbs variant="emerald" />
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-400 text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-sm font-medium mb-6">
             <Bot className="w-4 h-4" />
-            Moltbot Skill
+            Free Moltbot Skill on ClawHub
           </div>
 
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
-            Check if AI recommends
+            Does AI recommend
             <br />
-            <span className="text-emerald-400">any brand</span>
+            <span className="text-emerald-400">your brand?</span>
           </h1>
 
-          <p className="text-lg text-zinc-400 max-w-2xl mx-auto mb-8">
+          <p className="text-lg text-zinc-400 max-w-2xl mx-auto mb-4">
             Scan any domain across ChatGPT, Perplexity &amp; Google AI — right
-            from your Moltbot. Free, no API key needed.
+            from your Moltbot. See your score. Find what&apos;s missing. Fix it.
+          </p>
+
+          <p className="text-sm text-amber-400/80 font-medium mb-8 max-w-lg mx-auto">
+            Most brands score under 30/100. AI is recommending your competitors instead.
           </p>
 
           {/* Install command */}
@@ -75,10 +83,11 @@ export default function MoltbotPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href="/"
+              href="/?ref=moltbot"
               className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
             >
-              Try the web scanner
+              <Search className="w-5 h-5" />
+              Scan your domain now
               <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
@@ -150,18 +159,89 @@ export default function MoltbotPage() {
         </div>
       </section>
 
-      {/* Features */}
+      {/* Free vs Paid — conversion section */}
+      <section className="pb-16">
+        <div className="max-w-5xl mx-auto px-6">
+          <h2 className="text-2xl font-bold text-white text-center mb-3">
+            The free skill scans. The platform fixes.
+          </h2>
+          <p className="text-zinc-500 text-center mb-10 max-w-2xl mx-auto">
+            Scanning shows you the problem. CabbageSEO solves it.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Free column */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Bot className="w-5 h-5 text-blue-400" />
+                <h3 className="text-white font-bold text-lg">Free Moltbot Skill</h3>
+              </div>
+              <p className="text-zinc-400 text-sm mb-5">What you get for free:</p>
+              <ul className="space-y-3">
+                {[
+                  "Scan any domain's AI visibility",
+                  "See score across ChatGPT, Perplexity & Google AI",
+                  "Compare two domains side by side",
+                  "Get a shareable report link",
+                  "5 scans per hour, no API key",
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2.5 text-sm text-zinc-300">
+                    <Check className="w-4 h-4 text-blue-400 shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Paid column */}
+            <div className="bg-emerald-500/[0.06] border-2 border-emerald-500/30 rounded-2xl p-6 relative">
+              <span className="absolute -top-3 left-6 px-3 py-1 bg-emerald-500 text-black text-xs font-bold rounded-full">
+                What you&apos;re missing
+              </span>
+              <div className="flex items-center gap-2 mb-4">
+                <Zap className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-white font-bold text-lg">CabbageSEO Platform</h3>
+              </div>
+              <p className="text-zinc-400 text-sm mb-5">Everything above, plus:</p>
+              <ul className="space-y-3">
+                {[
+                  { text: "Daily automated scans — never miss a visibility drop", icon: Clock },
+                  { text: "AI-generated fix pages — content built to earn citations", icon: FileText },
+                  { text: "Gap detection — find which buyer questions exclude you", icon: Target },
+                  { text: "Trust source tracking — G2, Capterra, Trustpilot signals", icon: ShieldCheck },
+                  { text: "Weekly action plans — exactly what to do each week", icon: Zap },
+                  { text: "Email alerts when your visibility drops", icon: AlertTriangle },
+                ].map(({ text, icon: Icon }) => (
+                  <li key={text} className="flex items-center gap-2.5 text-sm text-zinc-200">
+                    <Icon className="w-4 h-4 text-emerald-400 shrink-0" />
+                    {text}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/signup"
+                className="mt-6 flex items-center justify-center gap-2 w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors"
+              >
+                Start fixing — $39/mo
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features grid */}
       <section className="pb-16">
         <div className="max-w-5xl mx-auto px-6">
           <h2 className="text-2xl font-bold text-white text-center mb-10">
-            What you can do
+            What the skill does
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
                 icon: Search,
                 title: "Scan any domain",
-                desc: 'Just say "check AI visibility for example.com" — get a score in seconds.',
+                desc: '"check AI visibility for example.com" — get a score in seconds.',
               },
               {
                 icon: Globe,
@@ -181,12 +261,12 @@ export default function MoltbotPage() {
               {
                 icon: Zap,
                 title: "No API key needed",
-                desc: "The free tier gives you 5 scans per hour. Just install and go.",
+                desc: "Just install and go. No configuration, no setup, no accounts needed.",
               },
               {
                 icon: CheckCircle2,
                 title: "Shareable reports",
-                desc: "Every scan creates a public report page you can share or embed.",
+                desc: "Every scan creates a public report page at cabbageseo.com/r/domain.com.",
               },
             ].map(({ icon: Icon, title, desc }) => (
               <div
@@ -253,23 +333,34 @@ export default function MoltbotPage() {
       <section className="relative overflow-hidden py-16 bg-emerald-950/30 border-t border-emerald-900/30">
         <GradientOrbs variant="emerald" />
         <div className="relative z-10 max-w-2xl mx-auto px-6 text-center">
-          <h2 className="text-2xl font-bold text-white mb-3">
-            Go beyond scanning
+          <h2 className="text-3xl font-bold text-white mb-3">
+            Your score is just the start
           </h2>
-          <p className="text-zinc-400 mb-6 max-w-lg mx-auto">
-            The free skill shows your score. A CabbageSEO account unlocks daily
-            monitoring, AI-generated fix pages, competitor tracking, and a
-            step-by-step action plan to get recommended.
+          <p className="text-zinc-400 mb-3 max-w-lg mx-auto">
+            Knowing your score doesn&apos;t fix it. CabbageSEO gives you the
+            daily monitoring, AI-generated fix pages, and action plans to
+            actually get recommended.
           </p>
-          <Link
-            href="/signup"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
-          >
-            Start fixing my AI visibility
-            <ArrowRight className="w-5 h-5" />
-          </Link>
+          <p className="text-amber-400/80 text-sm font-medium mb-6">
+            AI models retrain weekly. Every day you wait, competitors get ahead.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/signup"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
+            >
+              Start fixing my AI visibility
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-xl transition-colors"
+            >
+              See pricing
+            </Link>
+          </div>
           <p className="text-xs text-zinc-600 mt-3">
-            From $49/mo &bull; 7-day free trial &bull; Cancel anytime
+            From $39/mo &bull; Cancel anytime
           </p>
         </div>
       </section>

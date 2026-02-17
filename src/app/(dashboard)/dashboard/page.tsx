@@ -312,22 +312,59 @@ function DashboardContent() {
         breakdown={momentum?.breakdown}
       />
 
-      {/* ═══ SHARE YOUR SCORE ═══ */}
+      {/* ═══ SHARE & GROW ═══ */}
       {currentSite && momentum?.score != null && (
-        <div className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
-          <Share2 className="w-4 h-4 text-emerald-400 shrink-0" />
-          <p className="text-sm text-zinc-400 flex-1">
-            Share your AI visibility report
-          </p>
-          <a
-            href={`/r/${currentSite.domain}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-sm font-medium rounded-lg transition-colors"
-          >
-            cabbageseo.com/r/{currentSite.domain}
-            <ExternalLink className="w-3 h-3" />
-          </a>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-zinc-800/50 flex items-center gap-2">
+            <Share2 className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-white font-semibold text-sm">Share your score</h3>
+          </div>
+          <div className="p-5 space-y-4">
+            {/* Report link */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 bg-zinc-800/50 border border-zinc-700/50 rounded-lg px-4 py-2.5">
+                <p className="text-sm text-zinc-300 font-mono truncate">
+                  cabbageseo.com/r/{currentSite.domain}
+                </p>
+              </div>
+              <a
+                href={`/r/${currentSite.domain}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-bold rounded-lg transition-colors"
+              >
+                View report
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+            {/* Quick share buttons */}
+            <div className="flex items-center gap-2">
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`I just checked if AI recommends ${currentSite.domain}...\n\nAI Visibility Score: ${momentum.score}/100\n\nCheck yours free 👇\nhttps://cabbageseo.com/r/${currentSite.domain}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium rounded-lg transition-colors border border-zinc-700"
+              >
+                Share on X
+              </a>
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://cabbageseo.com/r/${currentSite.domain}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium rounded-lg transition-colors border border-zinc-700"
+              >
+                Share on LinkedIn
+              </a>
+              <Link
+                href="/leaderboard"
+                target="_blank"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium rounded-lg transition-colors border border-zinc-700 ml-auto"
+              >
+                <span className="text-amber-400">🏆</span>
+                Leaderboard
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 

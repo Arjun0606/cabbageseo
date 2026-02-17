@@ -3,7 +3,25 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, AlertTriangle, Search, Loader2, Rocket, RefreshCw } from "lucide-react";
+import {
+  ArrowRight,
+  AlertTriangle,
+  Search,
+  Loader2,
+  Rocket,
+  RefreshCw,
+  Target,
+  FileText,
+  Lightbulb,
+  ShieldCheck,
+  Share2,
+  Bot,
+  Trophy,
+  BarChart3,
+  Zap,
+  Eye,
+  Check,
+} from "lucide-react";
 import { GridAnimation } from "@/components/backgrounds/grid-animation";
 import { GradientOrbs } from "@/components/backgrounds/gradient-orbs";
 import { AnimateIn } from "@/components/motion/animate-in";
@@ -28,6 +46,8 @@ type ScanState = "idle" | "scanning" | "results" | "error";
 function HomeContent() {
   const searchParams = useSearchParams();
   const domainParam = searchParams.get("domain");
+  const refParam = searchParams.get("ref");
+  const isFromMoltbot = refParam === "moltbot" || refParam === "clawbot";
 
   const [domain, setDomain] = useState(domainParam || "");
   const [scanState, setScanState] = useState<ScanState>("idle");
@@ -150,6 +170,16 @@ function HomeContent() {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-emerald-500/[0.07] rounded-full blur-[120px] pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-6 text-center w-full">
+          {/* Moltbot referral banner */}
+          {isFromMoltbot && (
+            <AnimateIn delay={0.1} direction="up">
+              <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-sm font-medium mb-6">
+                <Bot className="w-4 h-4" />
+                You came from Moltbot — scan any domain below for a full AI visibility report
+              </div>
+            </AnimateIn>
+          )}
+
           {/* Platform badges — floating */}
           <AnimateIn delay={0.2} direction="up">
             <div className="flex justify-center gap-3 mb-10">
@@ -415,6 +445,324 @@ function HomeContent() {
         </div>
       </section>
 
+      {/* ========== WHAT YOU GET — CAPABILITIES ========== */}
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-emerald-500/25 to-transparent" />
+        <div className="absolute top-1/3 left-0 w-[400px] h-[400px] bg-emerald-500/[0.03] rounded-full blur-[100px] pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-6 relative">
+          <AnimateIn>
+            <div className="text-center mb-14">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium border bg-emerald-500/10 border-emerald-500/20 text-emerald-400 mb-6">
+                <Eye className="w-3.5 h-3.5" />
+                What you get
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                Everything you need to get AI to recommend you
+              </h2>
+              <p className="text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                Scan, find gaps, fix them, share your progress, and stay visible — all from one dashboard.
+              </p>
+            </div>
+          </AnimateIn>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              {
+                icon: <Search className="w-5 h-5" />,
+                title: "3-Platform AI Scanning",
+                desc: "See exactly what ChatGPT, Perplexity, and Google AI say when someone asks about your space. Real responses, not estimates.",
+                color: "emerald",
+              },
+              {
+                icon: <Target className="w-5 h-5" />,
+                title: "Gap Detection",
+                desc: "Find the specific buyer questions where AI should mention you but doesn't. These are real conversations happening without you.",
+                color: "blue",
+              },
+              {
+                icon: <FileText className="w-5 h-5" />,
+                title: "AI-Optimized Fix Pages",
+                desc: "Get ready-to-publish content pages structured so AI can cite you — direct answers, comparison tables, FAQ sections, Schema.org markup.",
+                color: "purple",
+              },
+              {
+                icon: <Lightbulb className="w-5 h-5" />,
+                title: "Content Ideas & Gap Analysis",
+                desc: "Understand why AI isn't citing you for specific queries and know exactly what to publish next. Prioritized by impact.",
+                color: "amber",
+              },
+              {
+                icon: <ShieldCheck className="w-5 h-5" />,
+                title: "Trust Source Tracking",
+                desc: "AI decides to recommend you based on third-party signals — G2, Capterra, Trustpilot. See which ones you're missing.",
+                color: "rose",
+              },
+              {
+                icon: <Zap className="w-5 h-5" />,
+                title: "Weekly Action Plans",
+                desc: "Every week you get a prioritized list: which content to write, where to get listed, what to fix first. No guesswork.",
+                color: "orange",
+              },
+            ].map((feature, i) => {
+              const colorMap: Record<string, string> = {
+                emerald: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                blue: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+                purple: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+                amber: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+                rose: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+                orange: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+              };
+              return (
+                <AnimateIn key={feature.title} delay={0.08 * i}>
+                  <div className="group h-full bg-zinc-900/60 border border-zinc-800/60 rounded-2xl p-6 hover:border-zinc-700/60 hover:bg-zinc-900/80 transition-all duration-300">
+                    <div className={`w-11 h-11 rounded-xl border flex items-center justify-center mb-4 ${colorMap[feature.color]}`}>
+                      {feature.icon}
+                    </div>
+                    <h3 className="text-white font-semibold mb-2">{feature.title}</h3>
+                    <p className="text-zinc-500 text-sm leading-relaxed">{feature.desc}</p>
+                  </div>
+                </AnimateIn>
+              );
+            })}
+          </div>
+
+          <AnimateIn delay={0.5}>
+            <div className="mt-10 text-center">
+              <Link
+                href="/features"
+                className="text-sm text-zinc-400 hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5"
+              >
+                See all features in detail <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </AnimateIn>
+        </div>
+      </section>
+
+      {/* ========== SHARE YOUR SCORE — VIRAL ========== */}
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent" />
+
+        <div className="max-w-7xl mx-auto px-6 relative">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left: content */}
+            <AnimateIn>
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium border bg-blue-500/10 border-blue-500/20 text-blue-400 mb-6">
+                <Share2 className="w-3.5 h-3.5" />
+                Built to share
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                Every scan creates a shareable report
+              </h2>
+              <p className="text-zinc-400 mb-6 leading-relaxed">
+                Your AI visibility score lives at <span className="text-white font-medium">cabbageseo.com/r/yourdomain.com</span> — share it on Twitter, embed it in your README, or send it to your team. Complete with OG images and badge embeds.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  "Public report page with your score and AI responses",
+                  "Embeddable badge for your README or website",
+                  "Compare against any competitor's report",
+                  "Updates automatically when you rescan",
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2.5 text-sm text-zinc-300">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href="/leaderboard"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-xl transition-colors border border-zinc-700"
+                >
+                  <Trophy className="w-4 h-4 text-amber-400" />
+                  View Leaderboard
+                </Link>
+              </div>
+            </AnimateIn>
+
+            {/* Right: mock report card */}
+            <AnimateIn delay={0.2}>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl shadow-black/40">
+                <div className="px-5 py-4 border-b border-zinc-800 flex items-center gap-3">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500/60" />
+                    <div className="w-3 h-3 rounded-full bg-amber-500/60" />
+                    <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
+                  </div>
+                  <span className="text-xs text-zinc-500 font-mono">cabbageseo.com/r/yourdomain.com</span>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-white font-semibold text-lg">yourdomain.com</p>
+                      <p className="text-zinc-500 text-sm">AI Visibility Report</p>
+                    </div>
+                    <div className="w-16 h-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center">
+                      <span className="text-2xl font-bold text-emerald-400">72</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { name: "ChatGPT", score: 8, color: "emerald" },
+                      { name: "Perplexity", score: 6, color: "blue" },
+                      { name: "Google AI", score: 7, color: "purple" },
+                    ].map((p) => (
+                      <div key={p.name} className="bg-zinc-800/50 rounded-lg p-3 text-center">
+                        <p className="text-xs text-zinc-500 mb-1">{p.name}</p>
+                        <p className={`text-lg font-bold text-${p.color}-400`}>{p.score}/10</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-1 h-2 rounded-full bg-emerald-500/20">
+                      <div className="h-full w-[72%] rounded-full bg-emerald-500" />
+                    </div>
+                  </div>
+                  <p className="text-xs text-zinc-600 text-center">Scanned across 5 buyer queries • Updated 2 hours ago</p>
+                </div>
+              </div>
+            </AnimateIn>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== PRICING TEASER ========== */}
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-emerald-500/25 to-transparent" />
+        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-emerald-500/[0.03] rounded-full blur-[120px] pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-6 relative">
+          <AnimateIn>
+            <div className="text-center mb-14">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium border bg-amber-500/10 border-amber-500/20 text-amber-400 mb-6">
+                <BarChart3 className="w-3.5 h-3.5" />
+                Simple pricing
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                Start free, scale when ready
+              </h2>
+              <p className="text-zinc-400 max-w-xl mx-auto">
+                Every plan includes the AI scanner. Upgrade for fix pages, action plans, and automated monitoring.
+              </p>
+            </div>
+          </AnimateIn>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
+            {[
+              {
+                name: "Scout",
+                price: "$39",
+                period: "/mo billed yearly",
+                desc: "For founders validating their AI visibility",
+                features: ["1 site", "3 competitors", "Fix pages", "Gap detection", "Weekly action plans"],
+                cta: "Start with Scout",
+                popular: false,
+              },
+              {
+                name: "Command",
+                price: "$119",
+                period: "/mo billed yearly",
+                desc: "For teams actively fixing their visibility",
+                features: ["5 sites", "10 competitors", "Premium intelligence", "Content ideas", "Priority scanning"],
+                cta: "Go Command",
+                popular: true,
+              },
+              {
+                name: "Dominate",
+                price: "$279",
+                period: "/mo billed yearly",
+                desc: "For agencies managing multiple brands",
+                features: ["25 sites", "25 competitors", "Full API access", "White-label reports", "Dedicated support"],
+                cta: "Go Dominate",
+                popular: false,
+              },
+            ].map((plan, i) => (
+              <AnimateIn key={plan.name} delay={0.1 * i}>
+                <div
+                  className={`relative rounded-2xl p-6 h-full flex flex-col ${
+                    plan.popular
+                      ? "bg-emerald-500/[0.08] border-2 border-emerald-500/30 shadow-lg shadow-emerald-500/10"
+                      : "bg-zinc-900/60 border border-zinc-800/60"
+                  }`}
+                >
+                  {plan.popular && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-black text-xs font-bold rounded-full">
+                      Most Popular
+                    </span>
+                  )}
+                  <h3 className="text-white font-bold text-lg mb-1">{plan.name}</h3>
+                  <p className="text-zinc-500 text-sm mb-4">{plan.desc}</p>
+                  <div className="mb-5">
+                    <span className="text-3xl font-bold text-white">{plan.price}</span>
+                    <span className="text-zinc-500 text-sm">{plan.period}</span>
+                  </div>
+                  <ul className="space-y-2.5 mb-6 flex-1">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-sm text-zinc-300">
+                        <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/signup"
+                    className={`block text-center py-3 rounded-xl font-semibold text-sm transition-colors ${
+                      plan.popular
+                        ? "bg-emerald-500 hover:bg-emerald-400 text-black"
+                        : "bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700"
+                    }`}
+                  >
+                    {plan.cta}
+                  </Link>
+                </div>
+              </AnimateIn>
+            ))}
+          </div>
+
+          <AnimateIn delay={0.4}>
+            <div className="mt-8 text-center">
+              <Link
+                href="/pricing"
+                className="text-sm text-zinc-400 hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5"
+              >
+                Compare all plans in detail <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </AnimateIn>
+        </div>
+      </section>
+
+      {/* ========== MOLTBOT INTEGRATION ========== */}
+      <section className="py-20 relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent" />
+
+        <div className="max-w-4xl mx-auto px-6">
+          <AnimateIn>
+            <div className="bg-zinc-900/60 border border-zinc-800/60 rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center gap-8">
+              <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                <Bot className="w-8 h-8 text-blue-400" />
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-xl font-bold text-white mb-2">
+                  Works with your AI agent too
+                </h3>
+                <p className="text-zinc-400 text-sm mb-4 leading-relaxed">
+                  Install the CabbageSEO skill on Moltbot and check AI visibility from your agent. Just say &ldquo;scan example.com&rdquo; and get a full report. Set up weekly cron jobs for automated monitoring.
+                </p>
+                <Link
+                  href="/moltbot"
+                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-1.5"
+                >
+                  Learn about the Moltbot integration <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+          </AnimateIn>
+        </div>
+      </section>
+
       {/* ========== WHY ONGOING ========== */}
       <section className="py-24 relative overflow-hidden">
         {/* Gradient divider */}
@@ -528,9 +876,51 @@ function HomeContent() {
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <p className="mt-4 text-zinc-600 text-sm">
-                From $49/mo &middot; Scans run automatically &middot; Cancel anytime
+                From $39/mo &middot; Scans run automatically &middot; Cancel anytime
               </p>
             </div>
+          </AnimateIn>
+        </div>
+      </section>
+
+      {/* ========== FINAL CTA ========== */}
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
+        <GradientOrbs variant="emerald" className="opacity-20" />
+
+        <div className="max-w-3xl mx-auto px-6 text-center relative z-10">
+          <AnimateIn>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Are buyers finding you, or your competitors?
+            </h2>
+            <p className="text-zinc-400 mb-8 text-lg leading-relaxed">
+              The free scan takes 10 seconds. No signup. No credit card. See exactly what AI says about your brand — then decide what to do about it.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button
+                onClick={() => {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  setTimeout(() => {
+                    const input = document.querySelector<HTMLInputElement>('input[placeholder="yourdomain.com"]');
+                    input?.focus();
+                  }, 500);
+                }}
+                className="group inline-flex items-center gap-2 px-10 py-5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-lg rounded-xl transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Search className="w-5 h-5" />
+                Scan my domain free
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
+              </button>
+              <Link
+                href="/pricing"
+                className="inline-flex items-center gap-2 px-8 py-5 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 font-medium rounded-xl transition-colors"
+              >
+                See pricing
+              </Link>
+            </div>
+            <p className="mt-6 text-zinc-600 text-sm">
+              Trusted by founders, agencies, and marketing teams
+            </p>
           </AnimateIn>
         </div>
       </section>

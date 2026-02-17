@@ -139,7 +139,7 @@ export default function UpgradeGate({ domain, isInvisible, brandCount, visibilit
           <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
         </Link>
         <p className="text-xs text-zinc-500 text-center mt-2">
-          From $49/mo &middot; Cancel anytime
+          From $39/mo &middot; Cancel anytime
         </p>
       </div>
     </div>

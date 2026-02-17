@@ -503,9 +503,7 @@ export function ScanResults({ data }: ScanResultsProps) {
       {/* ========== SHARE ON X ========== */}
       <AnimateIn delay={0.05}>
         {(() => {
-          const reportLink = reportId
-            ? `https://cabbageseo.com/teaser/${reportId}`
-            : "https://cabbageseo.com";
+          const reportLink = `https://cabbageseo.com/r/${domain}`;
 
           const tweetText = visibilityScore < 20
             ? `I just checked if AI recommends ${domain}...\n\nAI Visibility Score: ${visibilityScore}/100\n\nChatGPT, Perplexity & Google AI don't know we exist yet.\n\nCheck yours free 👇\n${reportLink}`
@@ -801,7 +799,7 @@ export function ScanResults({ data }: ScanResultsProps) {
               </div>
 
               <p className="mt-3 text-black/60 text-sm">
-                From $49/mo &middot; Scans run automatically &middot; Cancel anytime
+                From $39/mo &middot; Scans run automatically &middot; Cancel anytime
               </p>
             </div>
           </div>
