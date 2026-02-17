@@ -2,7 +2,7 @@
 name: cabbageseo-ai-visibility
 version: 1.0.0
 description: Check if ChatGPT, Perplexity & Google AI recommend any domain. Get an AI Visibility Score (0-100) with platform-by-platform breakdown. Free, no API key needed.
-homepage: https://cabbageseo.com/clawbot
+homepage: https://cabbageseo.com/openclaw
 user-invocable: true
 metadata: {"openclaw":{"emoji":"cabbage","category":"marketing","api_base":"https://cabbageseo.com/api","requires":{"bins":["curl"]},"os":["darwin","linux"]}}
 ---

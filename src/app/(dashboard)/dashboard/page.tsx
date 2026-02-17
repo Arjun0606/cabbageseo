@@ -370,7 +370,7 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* ═══ CLAWBOT SKILL ═══ */}
+      {/* ═══ OPENCLAW SKILL ═══ */}
       {currentSite && (
         <div className="bg-gradient-to-r from-blue-500/[0.06] via-zinc-900 to-blue-500/[0.06] border border-blue-500/20 rounded-2xl overflow-hidden">
           <div className="p-5 flex flex-col sm:flex-row items-center gap-4">
@@ -379,7 +379,7 @@ function DashboardContent() {
             </div>
             <div className="flex-1 text-center sm:text-left">
               <h3 className="text-white font-semibold text-sm mb-0.5">
-                Scan from ClawBot
+                Scan from OpenClaw
               </h3>
               <p className="text-zinc-400 text-xs">
                 Free skill on ClawHub — check AI visibility from your agent
@@ -390,7 +390,7 @@ function DashboardContent() {
               openclaw skills install cabbageseo-ai-visibility
             </div>
             <a
-              href="/clawbot"
+              href="/openclaw"
               target="_blank"
               rel="noopener noreferrer"
               className="shrink-0 flex items-center gap-1.5 px-4 py-2 bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 text-xs font-bold rounded-lg transition-colors border border-blue-500/25"

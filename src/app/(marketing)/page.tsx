@@ -48,7 +48,7 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const domainParam = searchParams.get("domain");
   const refParam = searchParams.get("ref");
-  const isFromClawBot = refParam === "moltbot" || refParam === "clawbot";
+  const isFromOpenClaw = refParam === "moltbot" || refParam === "clawbot" || refParam === "openclaw";
 
   const [domain, setDomain] = useState(domainParam || "");
   const [scanState, setScanState] = useState<ScanState>("idle");
@@ -190,12 +190,12 @@ function HomeContent() {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-emerald-500/[0.07] rounded-full blur-[120px] pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-6 text-center w-full">
-          {/* ClawBot referral banner */}
-          {isFromClawBot && (
+          {/* OpenClaw referral banner */}
+          {isFromOpenClaw && (
             <AnimateIn delay={0.1} direction="up">
               <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-sm font-medium mb-6">
                 <Bot className="w-4 h-4" />
-                You came from ClawBot — scan any domain below for a full AI visibility report
+                You came from OpenClaw — scan any domain below for a full AI visibility report
               </div>
             </AnimateIn>
           )}
@@ -387,7 +387,7 @@ function HomeContent() {
         </section>
       )}
 
-      {/* ========== CLAWBOT — HERO LEVEL ========== */}
+      {/* ========== OPENCLAW — HERO LEVEL ========== */}
       <section className="py-10 relative">
         <div className="max-w-4xl mx-auto px-6">
           <AnimateIn delay={0.1}>
@@ -405,10 +405,10 @@ function HomeContent() {
                     Free on ClawHub
                   </div>
                   <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
-                    Also available as a free ClawBot skill
+                    Also available as a free OpenClaw skill
                   </h3>
                   <p className="text-zinc-400 text-sm mb-4">
-                    Install the CabbageSEO skill and check AI visibility from your ClawBot. Just say &ldquo;scan example.com&rdquo; &mdash; no API key needed.
+                    Install the CabbageSEO skill and check AI visibility from OpenClaw. Just say &ldquo;scan example.com&rdquo; &mdash; no API key needed.
                   </p>
                   <div className="bg-zinc-950/80 border border-zinc-800 rounded-xl overflow-hidden mb-4 max-w-lg mx-auto md:mx-0">
                     <div className="px-4 py-2.5 font-mono text-sm">
@@ -416,8 +416,8 @@ function HomeContent() {
                       <span className="text-blue-400">openclaw skills install cabbageseo-ai-visibility</span>
                     </div>
                   </div>
-                  <Link href="/clawbot" className="text-sm text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-1.5 font-medium">
-                    Learn more about the ClawBot skill <ArrowRight className="w-3.5 h-3.5" />
+                  <Link href="/openclaw" className="text-sm text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-1.5 font-medium">
+                    Learn more about the OpenClaw skill <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>
