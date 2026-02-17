@@ -75,7 +75,7 @@ const capabilities: Feature[] = [
   {
     name: "OpenClaw Skill",
     description:
-      'Check AI visibility from OpenClaw. Just say "scan example.com" and get a full report. Set up weekly cron jobs for automated monitoring. Free on ClawHub.',
+      'Check AI visibility from OpenClaw. Just say "scan example.com" and get a full report. Set up weekly cron jobs for automated monitoring. Free on OpenClaw.',
     icon: <Bot className="w-5 h-5" />,
     plan: "all",
   },

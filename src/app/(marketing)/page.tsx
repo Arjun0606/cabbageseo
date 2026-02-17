@@ -402,7 +402,7 @@ function HomeContent() {
                 <div className="flex-1 text-center md:text-left">
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-xs font-bold mb-3 uppercase tracking-wide">
                     <Terminal className="w-3 h-3" />
-                    Free on ClawHub
+                    Free OpenClaw Skill
                   </div>
                   <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
                     Also available as a free OpenClaw skill

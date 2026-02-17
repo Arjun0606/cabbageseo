@@ -382,7 +382,7 @@ function DashboardContent() {
                 Scan from OpenClaw
               </h3>
               <p className="text-zinc-400 text-xs">
-                Free skill on ClawHub — check AI visibility from your agent
+                Free OpenClaw skill — check AI visibility from your agent
               </p>
             </div>
             <div className="hidden md:flex items-center bg-zinc-950/60 border border-zinc-800 rounded-lg px-3 py-1.5 font-mono text-xs text-blue-400 shrink-0">

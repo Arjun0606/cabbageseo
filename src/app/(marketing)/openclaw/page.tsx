@@ -1,7 +1,7 @@
 /**
  * /openclaw — Landing page for the CabbageSEO OpenClaw skill
  *
- * Targeted at OpenClaw users discovering us through ClawHub.
+ * Targeted at OpenClaw users discovering us through the OpenClaw skill registry.
  * Shows how to install the skill, what it does, and upsells to paid plans.
  */
 
@@ -28,7 +28,7 @@ import { GradientOrbs } from "@/components/backgrounds/gradient-orbs";
 export const metadata: Metadata = {
   title: "CabbageSEO for OpenClaw — Free AI Visibility Scanner Skill",
   description:
-    "Check if ChatGPT, Perplexity & Google AI recommend any brand, right from OpenClaw. Free skill on ClawHub, no API key needed.",
+    "Check if ChatGPT, Perplexity & Google AI recommend any brand, right from OpenClaw. Free OpenClaw skill, no API key needed.",
   openGraph: {
     title: "CabbageSEO for OpenClaw",
     description:
@@ -45,7 +45,7 @@ export default function OpenClawPage() {
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-sm font-medium mb-6">
             <Bot className="w-4 h-4" />
-            Free OpenClaw Skill on ClawHub
+            Free OpenClaw Skill
           </div>
 
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
@@ -76,7 +76,7 @@ export default function OpenClawPage() {
               <div className="flex items-center gap-2 px-4 py-2 bg-zinc-800/50 border-b border-zinc-800">
                 <Terminal className="w-3.5 h-3.5 text-zinc-500" />
                 <span className="text-xs text-zinc-500 font-mono">
-                  Install via ClawHub
+                  Install via OpenClaw
                 </span>
               </div>
               <div className="px-4 py-3 font-mono text-sm">
