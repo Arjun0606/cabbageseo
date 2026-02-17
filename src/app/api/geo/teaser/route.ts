@@ -784,7 +784,7 @@ export async function POST(request: NextRequest) {
           ? "AI knows you but doesn't cite you consistently. CabbageSEO shows exactly what's missing."
           : "You're visible — but AI answers shift weekly. CabbageSEO monitors daily so you never lose ground.",
       cta: "Start fixing your AI visibility",
-      url: `https://cabbageseo.com/signup?domain=${encodeURIComponent(cleanDomain)}`,
+      url: `https://cabbageseo.com/signup?domain=${encodeURIComponent(cleanDomain)}&score=${visibilityScore}`,
       dashboardUrl: `https://cabbageseo.com/dashboard`,
       pricingUrl: "https://cabbageseo.com/pricing",
       reportUrl: reportId ? `https://cabbageseo.com/report/${reportId}` : null,

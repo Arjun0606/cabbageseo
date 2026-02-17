@@ -70,9 +70,14 @@ function timeAgo(date: string | Date): string {
 }
 
 export default async function LeaderboardPage() {
-  // Fetch all data server-side
-  const [topScoresRaw, mostScannedRaw, recentScansRaw, statsRaw] =
-    await Promise.all([
+  // Fetch all data server-side — wrapped in try-catch so the page never crashes
+  let topScoresRaw: { domain: string; visibilityScore: number; scanCount: number }[] = [];
+  let mostScannedRaw: { domain: string; scanCount: number; latestScore: number }[] = [];
+  let recentScansRaw: { domain: string; visibilityScore: number; isInvisible: boolean | null; createdAt: Date }[] = [];
+  let stats = { totalScans: 0, uniqueDomains: 0, avgScore: 0 };
+
+  try {
+    const [topRes, mostRes, recentRes, statsRes] = await Promise.all([
       db
         .select({
           domain: teaserReports.domain,
@@ -125,11 +130,20 @@ export default async function LeaderboardPage() {
         .from(teaserReports),
     ]);
 
-  const stats = statsRaw[0] || {
-    totalScans: 0,
-    uniqueDomains: 0,
-    avgScore: 0,
-  };
+    topScoresRaw = topRes;
+    mostScannedRaw = mostRes;
+    recentScansRaw = recentRes;
+
+    const raw = statsRes[0];
+    stats = {
+      totalScans: Number(raw?.totalScans) || 0,
+      uniqueDomains: Number(raw?.uniqueDomains) || 0,
+      avgScore: Number(raw?.avgScore) || 0,
+    };
+  } catch (e) {
+    console.error("Leaderboard DB error:", e);
+    // stats/arrays stay at defaults — page renders with "No scans yet" empty states
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -212,7 +226,7 @@ export default async function LeaderboardPage() {
                           {row.scanCount !== 1 ? "s" : ""}
                         </p>
                       </div>
-                      <ScoreBadge score={row.visibilityScore} />
+                      <ScoreBadge score={row.visibilityScore ?? 0} />
                     </Link>
                   ))
                 )}
@@ -251,7 +265,7 @@ export default async function LeaderboardPage() {
                           {row.domain}
                         </p>
                         <p className="text-xs text-zinc-600">
-                          Score: {row.latestScore}
+                          Score: {row.latestScore ?? 0}
                         </p>
                       </div>
                       <span className="text-sm text-zinc-400 font-medium tabular-nums">
@@ -285,7 +299,7 @@ export default async function LeaderboardPage() {
                         className={`w-2 h-2 rounded-full shrink-0 ${
                           row.isInvisible
                             ? "bg-red-500"
-                            : row.visibilityScore < 40
+                            : (row.visibilityScore ?? 0) < 40
                               ? "bg-amber-500"
                               : "bg-emerald-500"
                         }`}
@@ -298,7 +312,7 @@ export default async function LeaderboardPage() {
                           {timeAgo(row.createdAt)}
                         </p>
                       </div>
-                      <ScoreBadge score={row.visibilityScore} />
+                      <ScoreBadge score={row.visibilityScore ?? 0} />
                     </Link>
                   ))
                 )}

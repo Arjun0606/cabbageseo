@@ -8,43 +8,69 @@ interface RecentScan {
   timeAgo: string;
 }
 
+interface Counts {
+  totalScans: number;
+  totalDomains: number;
+  scansToday: number;
+}
+
 interface SocialProofData {
-  scanCount: number;
   recentScans: RecentScan[];
+  counts: Counts;
 }
 
 export function SocialProofBar() {
   const [data, setData] = useState<SocialProofData | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/stats/scans").then((r) => r.json()).catch(() => ({ count: 0 })),
-      fetch("/api/stats/recent").then((r) => r.json()).catch(() => ({ scans: [] })),
-    ]).then(([scansData, recentData]) => {
-      setData({
-        scanCount: scansData.count || 0,
-        recentScans: recentData.scans || [],
-      });
-    });
+    fetch("/api/stats/recent")
+      .then((r) => r.json())
+      .then((res) => {
+        setData({
+          recentScans: res.scans || [],
+          counts: res.counts || { totalScans: 0, totalDomains: 0, scansToday: 0 },
+        });
+      })
+      .catch(() => {});
   }, []);
 
-  if (!data || (data.scanCount === 0 && data.recentScans.length === 0)) return null;
+  if (!data || data.counts.totalScans === 0) return null;
 
   return (
     <div className="mt-16 space-y-6">
-      {/* Scan counter */}
-      {data.scanCount > 0 && (
+      {/* Stats row */}
+      <div className="flex items-center justify-center gap-6 sm:gap-10">
         <div className="text-center">
-          <p className="text-zinc-500 text-sm">
-            <Counter
-              value={data.scanCount}
-              className="text-white font-semibold"
-              suffix=""
-            />{" "}
-            sites scanned so far
-          </p>
+          <div className="text-white font-bold text-lg tabular-nums">
+            <Counter value={data.counts.totalDomains} suffix="" />
+          </div>
+          <p className="text-zinc-500 text-xs">Domains scanned</p>
         </div>
-      )}
+        <div className="w-px h-8 bg-zinc-800" />
+        <div className="text-center">
+          <div className="text-white font-bold text-lg tabular-nums">
+            <Counter value={data.counts.totalScans} suffix="" />
+          </div>
+          <p className="text-zinc-500 text-xs">Total scans</p>
+        </div>
+        {data.counts.scansToday > 0 && (
+          <>
+            <div className="w-px h-8 bg-zinc-800" />
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                </span>
+                <span className="text-emerald-400 font-bold text-lg tabular-nums">
+                  <Counter value={data.counts.scansToday} suffix="" />
+                </span>
+              </div>
+              <p className="text-zinc-500 text-xs">Scans today</p>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Recently scanned ticker */}
       {data.recentScans.length > 0 && (

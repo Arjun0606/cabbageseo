@@ -8,7 +8,7 @@
  */
 
 import { db, teaserReports } from "@/lib/db";
-import { desc } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 
 function anonymize(domain: string): string {
   const parts = domain.split(".");
@@ -31,22 +31,42 @@ function timeAgo(date: Date): string {
 
 export async function GET() {
   try {
-    const recent = await db
-      .select({
-        domain: teaserReports.domain,
-        createdAt: teaserReports.createdAt,
-      })
-      .from(teaserReports)
-      .orderBy(desc(teaserReports.createdAt))
-      .limit(10);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const [recent, countsRes] = await Promise.all([
+      db
+        .select({
+          domain: teaserReports.domain,
+          createdAt: teaserReports.createdAt,
+        })
+        .from(teaserReports)
+        .orderBy(desc(teaserReports.createdAt))
+        .limit(10),
+
+      db
+        .select({
+          totalScans: sql<number>`COUNT(*)`.as("total_scans"),
+          totalDomains: sql<number>`COUNT(DISTINCT ${teaserReports.domain})`.as("total_domains"),
+          scansToday: sql<number>`COUNT(*) FILTER (WHERE ${teaserReports.createdAt} >= ${today.toISOString()})`.as("scans_today"),
+        })
+        .from(teaserReports),
+    ]);
 
     const scans = recent.map((r) => ({
       domain: anonymize(r.domain),
       timeAgo: timeAgo(new Date(r.createdAt)),
     }));
 
+    const raw = countsRes[0];
+    const counts = {
+      totalScans: Number(raw?.totalScans) || 0,
+      totalDomains: Number(raw?.totalDomains) || 0,
+      scansToday: Number(raw?.scansToday) || 0,
+    };
+
     return Response.json(
-      { scans },
+      { scans, counts },
       {
         headers: {
           "Cache-Control": "public, s-maxage=60, max-age=30",
@@ -55,6 +75,6 @@ export async function GET() {
     );
   } catch (error) {
     console.error("[/api/stats/recent] Error:", error);
-    return Response.json({ scans: [] });
+    return Response.json({ scans: [], counts: { totalScans: 0, totalDomains: 0, scansToday: 0 } });
   }
 }

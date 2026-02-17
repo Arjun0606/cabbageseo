@@ -131,7 +131,7 @@ export default function UpgradeGate({ domain, isInvisible, brandCount, visibilit
 
         {/* CTA */}
         <Link
-          href={`/signup?domain=${encodeURIComponent(domain)}`}
+          href={`/signup?domain=${encodeURIComponent(domain)}${visibilityScore !== undefined ? `&score=${visibilityScore}` : ""}`}
           className="group flex items-center justify-center gap-2 w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98]"
         >
           <Zap className="w-4 h-4" />

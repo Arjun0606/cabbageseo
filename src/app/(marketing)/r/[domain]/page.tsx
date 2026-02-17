@@ -11,6 +11,7 @@
 
 import { Metadata } from "next";
 import Link from "next/link";
+import { ArrowRight, Zap } from "lucide-react";
 import { db, teaserReports } from "@/lib/db";
 import { eq, desc } from "drizzle-orm";
 import { ReportShareButtons, ReportBadgeEmbed, ReportScoreAlert } from "./report-actions";
@@ -346,6 +347,33 @@ export default async function DomainReportPage({ params }: PageProps) {
             </p>
           </div>
         </div>
+
+        {/* Inline conversion CTA — right after emotional score reveal */}
+        {report.visibilityScore < 60 && (
+          <div className="mb-8 p-6 bg-gradient-to-r from-emerald-950/40 via-zinc-900 to-emerald-950/40 border border-emerald-500/20 rounded-2xl text-center">
+            <p className="text-white font-bold text-lg mb-1">
+              {report.visibilityScore < 20
+                ? "AI doesn't know you exist. That's fixable."
+                : report.visibilityScore < 40
+                  ? "You're barely visible. Let's change that."
+                  : "You're close — a few fixes will push you over."}
+            </p>
+            <p className="text-zinc-400 text-sm mb-4">
+              CabbageSEO scans daily, finds gaps, and generates fix pages automatically.
+            </p>
+            <Link
+              href={`/signup?domain=${encodeURIComponent(domain)}&score=${report.visibilityScore}`}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <Zap className="w-4 h-4" />
+              Start fixing this
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <p className="text-xs text-zinc-500 mt-2">
+              From $39/mo &middot; Cancel anytime
+            </p>
+          </div>
+        )}
 
         {/* Raw AI Responses */}
         <div className="space-y-4 mb-8">

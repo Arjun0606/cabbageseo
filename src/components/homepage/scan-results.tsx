@@ -140,7 +140,7 @@ function getStatusBadge(result: TeaserResult) {
   };
 }
 
-function FixPageTeaser({ domain, gapCount }: { domain: string; gapCount: number }) {
+function FixPageTeaser({ domain, gapCount, visibilityScore }: { domain: string; gapCount: number; visibilityScore: number }) {
   return (
     <div className="relative bg-zinc-900 border border-emerald-500/20 rounded-2xl overflow-hidden mb-8 shadow-2xl shadow-emerald-500/[0.06]">
       {/* Ambient glow */}
@@ -236,7 +236,7 @@ function FixPageTeaser({ domain, gapCount }: { domain: string; gapCount: number 
 
         {/* CTA */}
         <Link
-          href={`/signup?domain=${encodeURIComponent(domain)}`}
+          href={`/signup?domain=${encodeURIComponent(domain)}&score=${visibilityScore}`}
           className="group flex items-center justify-center gap-2 w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98]"
         >
           Get your fix pages + full action plan
@@ -591,7 +591,7 @@ export function ScanResults({ data }: ScanResultsProps) {
                 })}
               </div>
               <Link
-                href={`/signup?domain=${encodeURIComponent(domain)}`}
+                href={`/signup?domain=${encodeURIComponent(domain)}&score=${visibilityScore}`}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-400 text-white font-bold rounded-lg transition-all duration-200 text-sm hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-red-500/20"
               >
                 Start fixing these gaps
@@ -714,7 +714,7 @@ export function ScanResults({ data }: ScanResultsProps) {
         {contentPreview ? (
           <ContentPreview domain={domain} preview={contentPreview} />
         ) : (
-          <FixPageTeaser domain={domain} gapCount={gapCount} />
+          <FixPageTeaser domain={domain} gapCount={gapCount} visibilityScore={visibilityScore} />
         )}
       </AnimateIn>
 
@@ -791,7 +791,7 @@ export function ScanResults({ data }: ScanResultsProps) {
 
               <div className="mt-4">
                 <Link
-                  href={`/signup?domain=${encodeURIComponent(domain)}`}
+                  href={`/signup?domain=${encodeURIComponent(domain)}&score=${visibilityScore}`}
                   className="text-sm text-black/70 hover:text-black font-medium underline underline-offset-2 transition-colors"
                 >
                   or sign up with email
@@ -830,7 +830,7 @@ export function ScanResults({ data }: ScanResultsProps) {
               </p>
             </div>
             <Link
-              href={`/signup?domain=${encodeURIComponent(domain)}`}
+              href={`/signup?domain=${encodeURIComponent(domain)}&score=${visibilityScore}`}
               className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg transition-all duration-200 text-sm hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-emerald-500/20"
             >
               Start fixing this

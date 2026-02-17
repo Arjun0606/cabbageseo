@@ -66,8 +66,8 @@ function day0Email(report: SubscriberReport, email: string): { subject: string; 
 
   return {
     subject: report.isInvisible
-      ? `${report.domain} is invisible to AI — here's what that means`
-      : `${report.domain}: AI visibility score ${report.visibilityScore}/100`,
+      ? `AI doesn't recommend ${report.domain}. Here's why.`
+      : `${report.domain} scored ${report.visibilityScore}/100 — what AI actually says`,
     html: emailLayout(`
       <div style="text-align: center; margin-bottom: 20px;">
         <h1 style="font-size: 22px; margin: 0; color: #fff;">Your AI Visibility Report</h1>
@@ -106,7 +106,7 @@ function day0Email(report: SubscriberReport, email: string): { subject: string; 
         We'll rescan ${report.domain} every week and email you when your score changes. Want to actively improve it?
       </p>
 
-      ${ctaButton("Start fixing your AI visibility →", `${APP_URL}/signup?domain=${encodeURIComponent(report.domain)}`)}
+      ${ctaButton("Start fixing your AI visibility →", `${APP_URL}/signup?domain=${encodeURIComponent(report.domain)}&score=${report.visibilityScore}`)}
 
       <p style="text-align: center; color: #52525b; font-size: 12px;">
         Cancel anytime &bull; No contracts
@@ -119,7 +119,7 @@ function day2Email(report: SubscriberReport, email: string): { subject: string; 
   const competitorList = (report.competitorsMentioned || []).slice(0, 3);
 
   return {
-    subject: `While you wait, ${report.domain}'s visibility window is closing`,
+    subject: `Someone just asked ChatGPT about your market. ${report.domain} wasn't mentioned.`,
     html: emailLayout(`
       <div style="text-align: center; margin-bottom: 20px;">
         <h1 style="font-size: 22px; margin: 0; color: #fff;">The AI landscape is shifting</h1>
@@ -154,7 +154,7 @@ function day2Email(report: SubscriberReport, email: string): { subject: string; 
         The good news? Most companies haven't started optimizing for AI visibility yet. <strong style="color: #fff;">If you start now, you'll have a massive head start.</strong>
       </p>
 
-      ${ctaButton("Start improving your visibility →", `${APP_URL}/signup?domain=${encodeURIComponent(report.domain)}`)}
+      ${ctaButton("Start improving your visibility →", `${APP_URL}/signup?domain=${encodeURIComponent(report.domain)}&score=${report.visibilityScore}`)}
 
       <p style="text-align: center; color: #52525b; font-size: 12px;">
         We build the action plan for you &bull; Cancel anytime
@@ -165,7 +165,7 @@ function day2Email(report: SubscriberReport, email: string): { subject: string; 
 
 function day5Email(report: SubscriberReport, email: string): { subject: string; html: string } {
   return {
-    subject: `Here's exactly what we'd do for ${report.domain}`,
+    subject: `Your ${report.domain} action plan is ready — 4 steps to get cited by AI`,
     html: emailLayout(`
       <div style="text-align: center; margin-bottom: 20px;">
         <h1 style="font-size: 22px; margin: 0; color: #fff;">Your custom action plan is ready</h1>
@@ -222,7 +222,7 @@ function day5Email(report: SubscriberReport, email: string): { subject: string; 
         This isn't a checklist you do yourself. <strong style="color: #fff;">We generate the content, build the action plan, and track your progress automatically.</strong>
       </p>
 
-      ${ctaButton("Get your full action plan →", `${APP_URL}/signup?domain=${encodeURIComponent(report.domain)}`)}
+      ${ctaButton("Get your full action plan →", `${APP_URL}/signup?domain=${encodeURIComponent(report.domain)}&score=${report.visibilityScore}`)}
 
       <p style="text-align: center; color: #52525b; font-size: 12px;">
         Cancel anytime &bull; No contracts
