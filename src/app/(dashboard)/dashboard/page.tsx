@@ -49,6 +49,8 @@ import {
   Shield,
   Share2,
   ExternalLink,
+  Bot,
+  Terminal,
 } from "lucide-react";
 import Link from "next/link";
 import { useCheckout } from "@/hooks/use-checkout";
@@ -364,6 +366,38 @@ function DashboardContent() {
                 Leaderboard
               </Link>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ CLAWBOT SKILL ═══ */}
+      {currentSite && (
+        <div className="bg-gradient-to-r from-blue-500/[0.06] via-zinc-900 to-blue-500/[0.06] border border-blue-500/20 rounded-2xl overflow-hidden">
+          <div className="p-5 flex flex-col sm:flex-row items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0">
+              <Bot className="w-5 h-5 text-blue-400" />
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <h3 className="text-white font-semibold text-sm mb-0.5">
+                Scan from ClawBot
+              </h3>
+              <p className="text-zinc-400 text-xs">
+                Free skill on ClawHub — check AI visibility from your agent
+              </p>
+            </div>
+            <div className="hidden md:flex items-center bg-zinc-950/60 border border-zinc-800 rounded-lg px-3 py-1.5 font-mono text-xs text-blue-400 shrink-0">
+              <Terminal className="w-3 h-3 text-zinc-500 mr-1.5" />
+              openclaw skills install cabbageseo-ai-visibility
+            </div>
+            <a
+              href="/clawbot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 flex items-center gap-1.5 px-4 py-2 bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 text-xs font-bold rounded-lg transition-colors border border-blue-500/25"
+            >
+              Learn more
+              <ArrowRight className="w-3 h-3" />
+            </a>
           </div>
         </div>
       )}

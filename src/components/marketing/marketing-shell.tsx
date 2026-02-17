@@ -27,6 +27,7 @@ import { StaggerGroup, StaggerItem } from "@/components/motion/stagger-group";
 const navLinks = [
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/clawbot", label: "ClawBot" },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/blog", label: "Blog" },
 ];
@@ -211,7 +212,7 @@ function Footer() {
     learn: [
       { href: "/what-is-geo", label: "What is GEO?" },
       { href: "/blog", label: "Blog" },
-      { href: "/moltbot", label: "Moltbot Skill" },
+      { href: "/clawbot", label: "ClawBot Skill" },
     ],
     community: [
       { href: "/feedback", label: "Feedback" },

@@ -1,7 +1,7 @@
 /**
- * /moltbot — Landing page for the CabbageSEO Moltbot skill
+ * /clawbot — Landing page for the CabbageSEO ClawBot skill
  *
- * Targeted at Moltbot users discovering us through ClawHub.
+ * Targeted at ClawBot users discovering us through ClawHub.
  * Shows how to install the skill, what it does, and upsells to paid plans.
  */
 
@@ -26,17 +26,17 @@ import {
 import { GradientOrbs } from "@/components/backgrounds/gradient-orbs";
 
 export const metadata: Metadata = {
-  title: "CabbageSEO for Moltbot — AI Visibility Scanner Skill",
+  title: "CabbageSEO for ClawBot — Free AI Visibility Scanner Skill",
   description:
-    "Check if ChatGPT, Perplexity & Google AI recommend any brand, right from your Moltbot. Free skill, no API key needed.",
+    "Check if ChatGPT, Perplexity & Google AI recommend any brand, right from your ClawBot. Free skill on ClawHub, no API key needed.",
   openGraph: {
-    title: "CabbageSEO for Moltbot",
+    title: "CabbageSEO for ClawBot",
     description:
-      "AI visibility scanning skill for Moltbot. Check any domain's AI visibility score without leaving your terminal.",
+      "AI visibility scanning skill for ClawBot. Check any domain's AI visibility score without leaving your terminal.",
   },
 };
 
-export default function MoltbotPage() {
+export default function ClawBotPage() {
   return (
     <div className="min-h-screen bg-zinc-950">
       {/* Hero */}
@@ -45,7 +45,7 @@ export default function MoltbotPage() {
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-sm font-medium mb-6">
             <Bot className="w-4 h-4" />
-            Free Moltbot Skill on ClawHub
+            Free ClawBot Skill on ClawHub
           </div>
 
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
@@ -56,7 +56,7 @@ export default function MoltbotPage() {
 
           <p className="text-lg text-zinc-400 max-w-2xl mx-auto mb-4">
             Scan any domain across ChatGPT, Perplexity &amp; Google AI — right
-            from your Moltbot. See your score. Find what&apos;s missing. Fix it.
+            from your ClawBot. See your score. Find what&apos;s missing. Fix it.
           </p>
 
           <p className="text-sm text-amber-400/80 font-medium mb-8 max-w-lg mx-auto">
@@ -83,7 +83,7 @@ export default function MoltbotPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href="/?ref=moltbot"
+              href="/?ref=clawbot"
               className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
             >
               <Search className="w-5 h-5" />
@@ -136,17 +136,17 @@ export default function MoltbotPage() {
                 <div className="space-y-1 text-sm mb-3">
                   <div className="flex items-center gap-2">
                     <span className="text-emerald-400">ChatGPT</span>
-                    <span className="text-zinc-400">—</span>
+                    <span className="text-zinc-400">&mdash;</span>
                     <span className="text-zinc-300">Cited</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-blue-400">Perplexity</span>
-                    <span className="text-zinc-400">—</span>
+                    <span className="text-zinc-400">&mdash;</span>
                     <span className="text-zinc-300">Cited</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-purple-400">Google AI</span>
-                    <span className="text-zinc-400">—</span>
+                    <span className="text-zinc-400">&mdash;</span>
                     <span className="text-zinc-300">Mentioned</span>
                   </div>
                 </div>
@@ -174,7 +174,7 @@ export default function MoltbotPage() {
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Bot className="w-5 h-5 text-blue-400" />
-                <h3 className="text-white font-bold text-lg">Free Moltbot Skill</h3>
+                <h3 className="text-white font-bold text-lg">Free ClawBot Skill</h3>
               </div>
               <p className="text-zinc-400 text-sm mb-5">What you get for free:</p>
               <ul className="space-y-3">

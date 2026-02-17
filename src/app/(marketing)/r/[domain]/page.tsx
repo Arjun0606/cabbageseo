@@ -2,7 +2,7 @@
  * /r/[domain] — Shareable AI Visibility Report
  *
  * Human-readable, SEO-friendly URL for any domain's AI visibility score.
- * This is the viral page — what gets shared on Twitter, embedded in Moltbot
+ * This is the viral page — what gets shared on Twitter, embedded in ClawBot
  * responses, and indexed by Google.
  *
  * - If a report exists: shows the full report with OG tags

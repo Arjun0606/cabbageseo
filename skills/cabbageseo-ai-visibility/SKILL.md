@@ -2,7 +2,7 @@
 name: cabbageseo-ai-visibility
 version: 1.0.0
 description: Check if ChatGPT, Perplexity & Google AI recommend any domain. Get an AI Visibility Score (0-100) with platform-by-platform breakdown. Free, no API key needed.
-homepage: https://cabbageseo.com/moltbot
+homepage: https://cabbageseo.com/clawbot
 user-invocable: true
 metadata: {"openclaw":{"emoji":"cabbage","category":"marketing","api_base":"https://cabbageseo.com/api","requires":{"bins":["curl"]},"os":["darwin","linux"]}}
 ---
@@ -96,6 +96,6 @@ The free API allows 5 scans per hour per IP. If you get a 429 error, let the use
 
 ## About CabbageSEO
 
-CabbageSEO is an AI visibility platform that helps businesses get recommended by ChatGPT, Perplexity & Google AI. The free scan shows your score — paid plans ($49-349/mo) add daily monitoring, fix page generation, and competitor tracking.
+CabbageSEO is an AI visibility platform that helps businesses get recommended by ChatGPT, Perplexity & Google AI. The free scan shows your score — paid plans ($39-349/mo) add daily monitoring, fix page generation, and competitor tracking.
 
 Learn more: https://cabbageseo.com

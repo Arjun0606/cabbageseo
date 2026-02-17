@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Share2,
   Bot,
+  Terminal,
   Trophy,
   BarChart3,
   Zap,
@@ -47,7 +48,7 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const domainParam = searchParams.get("domain");
   const refParam = searchParams.get("ref");
-  const isFromMoltbot = refParam === "moltbot" || refParam === "clawbot";
+  const isFromClawBot = refParam === "moltbot" || refParam === "clawbot";
 
   const [domain, setDomain] = useState(domainParam || "");
   const [scanState, setScanState] = useState<ScanState>("idle");
@@ -170,12 +171,12 @@ function HomeContent() {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-emerald-500/[0.07] rounded-full blur-[120px] pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-6 text-center w-full">
-          {/* Moltbot referral banner */}
-          {isFromMoltbot && (
+          {/* ClawBot referral banner */}
+          {isFromClawBot && (
             <AnimateIn delay={0.1} direction="up">
               <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-sm font-medium mb-6">
                 <Bot className="w-4 h-4" />
-                You came from Moltbot — scan any domain below for a full AI visibility report
+                You came from ClawBot — scan any domain below for a full AI visibility report
               </div>
             </AnimateIn>
           )}
@@ -366,6 +367,45 @@ function HomeContent() {
           <ScanResults data={scanData} />
         </section>
       )}
+
+      {/* ========== CLAWBOT — HERO LEVEL ========== */}
+      <section className="py-10 relative">
+        <div className="max-w-4xl mx-auto px-6">
+          <AnimateIn delay={0.1}>
+            <div className="relative bg-gradient-to-r from-blue-500/[0.08] via-zinc-900/80 to-blue-500/[0.08] border-2 border-blue-500/25 rounded-2xl p-6 md:p-8 overflow-hidden shadow-xl shadow-blue-500/[0.06]">
+              {/* Glow */}
+              <div className="absolute -top-20 right-1/4 w-[300px] h-[200px] bg-blue-500/[0.06] rounded-full blur-[80px] pointer-events-none" />
+
+              <div className="relative flex flex-col md:flex-row items-center gap-6">
+                <div className="w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0">
+                  <Bot className="w-7 h-7 text-blue-400" />
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-xs font-bold mb-3 uppercase tracking-wide">
+                    <Terminal className="w-3 h-3" />
+                    Free on ClawHub
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
+                    Also available as a free ClawBot skill
+                  </h3>
+                  <p className="text-zinc-400 text-sm mb-4">
+                    Install the CabbageSEO skill and check AI visibility from your ClawBot. Just say &ldquo;scan example.com&rdquo; &mdash; no API key needed.
+                  </p>
+                  <div className="bg-zinc-950/80 border border-zinc-800 rounded-xl overflow-hidden mb-4 max-w-lg mx-auto md:mx-0">
+                    <div className="px-4 py-2.5 font-mono text-sm">
+                      <span className="text-zinc-500">$</span>{" "}
+                      <span className="text-blue-400">openclaw skills install cabbageseo-ai-visibility</span>
+                    </div>
+                  </div>
+                  <Link href="/clawbot" className="text-sm text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-1.5 font-medium">
+                    Learn more about the ClawBot skill <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </AnimateIn>
+        </div>
+      </section>
 
       {/* ========== SOCIAL PROOF (always visible) ========== */}
       <section className="pb-16">
@@ -729,35 +769,6 @@ function HomeContent() {
               >
                 Compare all plans in detail <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-            </div>
-          </AnimateIn>
-        </div>
-      </section>
-
-      {/* ========== MOLTBOT INTEGRATION ========== */}
-      <section className="py-20 relative">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent" />
-
-        <div className="max-w-4xl mx-auto px-6">
-          <AnimateIn>
-            <div className="bg-zinc-900/60 border border-zinc-800/60 rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center gap-8">
-              <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                <Bot className="w-8 h-8 text-blue-400" />
-              </div>
-              <div className="flex-1 text-center md:text-left">
-                <h3 className="text-xl font-bold text-white mb-2">
-                  Works with your AI agent too
-                </h3>
-                <p className="text-zinc-400 text-sm mb-4 leading-relaxed">
-                  Install the CabbageSEO skill on Moltbot and check AI visibility from your agent. Just say &ldquo;scan example.com&rdquo; and get a full report. Set up weekly cron jobs for automated monitoring.
-                </p>
-                <Link
-                  href="/moltbot"
-                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-1.5"
-                >
-                  Learn about the Moltbot integration <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
             </div>
           </AnimateIn>
         </div>

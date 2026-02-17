@@ -73,9 +73,9 @@ const capabilities: Feature[] = [
     plan: "all",
   },
   {
-    name: "Moltbot Integration",
+    name: "ClawBot Skill",
     description:
-      'Check AI visibility from your Moltbot agent. Just say "scan example.com" and get a full report. Set up weekly cron jobs for automated monitoring. Free on ClawHub.',
+      'Check AI visibility from your ClawBot. Just say "scan example.com" and get a full report. Set up weekly cron jobs for automated monitoring. Free on ClawHub.',
     icon: <Bot className="w-5 h-5" />,
     plan: "all",
   },
