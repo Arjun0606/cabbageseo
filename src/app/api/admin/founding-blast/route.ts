@@ -113,7 +113,7 @@ function alertEmail(domain: string, score: number, email: string): { subject: st
       </div>
 
       <p style="text-align: center; color: #71717a; font-size: 12px;">
-        From $39/mo &bull; 14-day money-back guarantee &bull; Cancel anytime
+        From $39/mo &bull; Cancel anytime
       </p>
     `, email, domain),
   };

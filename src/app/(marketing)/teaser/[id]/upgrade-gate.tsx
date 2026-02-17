@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Lock, ListChecks, TrendingUp, Search, FileText, Bell, AlertTriangle, Zap, ShieldCheck } from "lucide-react";
+import { ArrowRight, Lock, ListChecks, TrendingUp, Search, FileText, Bell, AlertTriangle, Zap } from "lucide-react";
 
 interface UpgradeGateProps {
   domain: string;
@@ -143,14 +143,9 @@ export default function UpgradeGate({ domain, isInvisible, brandCount, visibilit
         </Link>
 
         {/* Trust signals */}
-        <div className="flex items-center justify-center gap-4 mt-3">
-          <span className="flex items-center gap-1 text-xs text-zinc-500">
-            <ShieldCheck className="w-3 h-3" />
-            14-day money-back guarantee
-          </span>
-          <span className="text-xs text-zinc-600">&middot;</span>
-          <span className="text-xs text-zinc-500">Cancel anytime</span>
-        </div>
+        <p className="text-center text-xs text-zinc-500 mt-3">
+          Cancel anytime &middot; No contracts
+        </p>
       </div>
     </div>
   );

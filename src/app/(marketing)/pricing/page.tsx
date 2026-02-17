@@ -17,7 +17,6 @@ import {
   Crown,
   ChevronDown,
   Sparkles,
-  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence, useInView } from "framer-motion";
@@ -449,24 +448,13 @@ export default function PricingPage() {
 
           {/* Trust line + guarantee */}
           <AnimateIn delay={0.2}>
-            <div className="mt-10 text-center space-y-4">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  <span className="text-emerald-400 text-sm font-medium">
-                    14-day money-back guarantee
-                  </span>
-                </div>
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.08]">
-                  <Check className="w-4 h-4 text-zinc-400" />
-                  <span className="text-zinc-400 text-sm font-medium">
-                    Cancel anytime, no contracts
-                  </span>
-                </div>
+            <div className="mt-10 text-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.08]">
+                <Check className="w-4 h-4 text-zinc-400" />
+                <span className="text-zinc-400 text-sm font-medium">
+                  Cancel anytime, no contracts
+                </span>
               </div>
-              <p className="text-sm text-zinc-600">
-                If you don&apos;t see improvements in AI visibility within 14 days, email us for a full refund. No questions asked.
-              </p>
             </div>
           </AnimateIn>
 
@@ -619,7 +607,7 @@ export default function PricingPage() {
               </Link>
             </div>
             <p className="mt-4 text-zinc-600 text-sm">
-              14-day money-back guarantee &middot; Cancel anytime
+              Cancel anytime &middot; No contracts
             </p>
           </AnimateIn>
         </div>

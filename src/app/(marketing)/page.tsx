@@ -1042,7 +1042,7 @@ function HomeContent() {
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <p className="mt-4 text-zinc-600 text-sm">
-                From $39/mo &middot; 14-day money-back guarantee &middot; Cancel anytime
+                From $39/mo &middot; Cancel anytime
               </p>
             </div>
           </AnimateIn>

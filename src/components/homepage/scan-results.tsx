@@ -20,7 +20,6 @@ import {
   HelpCircle,
   Search,
   Lock,
-  ShieldCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import ContentPreview from "@/app/(marketing)/teaser/[id]/content-preview";
@@ -800,7 +799,7 @@ export function ScanResults({ data }: ScanResultsProps) {
               </div>
 
               <p className="mt-3 text-black/60 text-sm">
-                From $39/mo &middot; 14-day money-back guarantee &middot; Cancel anytime
+                From $39/mo &middot; Cancel anytime
               </p>
             </div>
           </div>
