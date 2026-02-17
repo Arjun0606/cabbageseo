@@ -32,8 +32,8 @@ export const metadata: Metadata = {
   },
 };
 
-// Revalidate every 5 minutes
-export const revalidate = 300;
+// Dynamic — can't pre-render at build time (needs DB)
+export const dynamic = "force-dynamic";
 
 function ScoreBadge({ score }: { score: number }) {
   const color =
