@@ -28,6 +28,7 @@ import {
   Clock,
   Share2,
   Trophy,
+  Plug,
 } from "lucide-react";
 import { SiteProvider, useSite } from "@/context/site-context";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +43,7 @@ const navItems = [
   { href: "/dashboard/pages", label: "Fix Pages", icon: Sparkles },
   { href: "/dashboard/actions", label: "Actions", icon: Zap },
   { href: "/dashboard/history", label: "History", icon: Clock },
+  { href: "/dashboard/integrations", label: "API & OpenClaw", icon: Plug },
 ];
 
 // Sidebar component

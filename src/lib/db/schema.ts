@@ -1553,6 +1553,37 @@ export const referrals = pgTable(
 );
 
 // ============================================
+// WEBHOOKS (for external integrations)
+// ============================================
+
+export const webhooks = pgTable(
+  "webhooks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .references(() => organizations.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Config
+    url: text("url").notNull(),
+    secret: text("secret").notNull(), // HMAC-SHA256 signing secret
+    events: jsonb("events").$type<string[]>().default(["scan_complete"]),
+
+    // Status
+    isActive: boolean("is_active").default(true),
+    lastDeliveredAt: timestamp("last_delivered_at"),
+    lastStatus: integer("last_status"), // HTTP status of last delivery
+    failureCount: integer("failure_count").default(0),
+
+    // Timestamps
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("webhooks_org_idx").on(table.organizationId),
+  ]
+);
+
+// ============================================
 // RELATIONS
 // ============================================
 
@@ -1564,11 +1595,19 @@ export const organizationsRelations = relations(organizations, ({ one, many }) =
   integrations: many(integrations),
   creditBalance: one(creditBalance),
   apiKeys: many(apiKeys),
+  webhooks: many(webhooks),
 }));
 
 export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
   organization: one(organizations, {
     fields: [apiKeys.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
+export const webhooksRelations = relations(webhooks, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [webhooks.organizationId],
     references: [organizations.id],
   }),
 }));
@@ -1795,3 +1834,5 @@ export type TeaserReport = typeof teaserReports.$inferSelect;
 export type NewTeaserReport = typeof teaserReports.$inferInsert;
 export type TeaserSubscriber = typeof teaserSubscribers.$inferSelect;
 export type NewTeaserSubscriber = typeof teaserSubscribers.$inferInsert;
+export type Webhook = typeof webhooks.$inferSelect;
+export type NewWebhook = typeof webhooks.$inferInsert;
