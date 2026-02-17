@@ -75,18 +75,19 @@ const tiers: PricingTier[] = [
       "3 content ideas/month",
       "Site GEO Audit (10 pages, 2/month)",
       "Schema markup generation",
-      "30-day history",
+      "30-day score history",
       "Weekly reports + email alerts",
+      "OpenClaw skill (free commands)",
     ],
     promise: "Every day: scan runs, gaps found, fix pages generated. You wake up to a dashboard that's already working.",
   },
   {
     name: "Command",
-    tagline: "Full GEO intelligence with maximum coverage",
+    tagline: "Full GEO intelligence + developer API",
     monthlyPrice: 149,
     annualPrice: 119,
     period: "/mo",
-    description: "Deep intelligence + high-volume content generation",
+    description: "Deep intelligence, API access, and high-volume content",
     cta: "Get Command",
     href: "/signup?plan=command",
     popular: true,
@@ -99,19 +100,22 @@ const tiers: PricingTier[] = [
       "10 content ideas/month",
       "4 action plans/month",
       "Site GEO Audit (100 pages, 4/month)",
+      "REST API keys (200 calls/hr)",
+      "Webhooks (scan_complete, score_drop)",
+      "OpenClaw pro commands (deep scan, gaps, history)",
       "CSV exports + 365-day history",
       "Weekly reports + email alerts",
     ],
     highlight: "MOST POPULAR",
-    promise: "Every day: scans run, new gaps detected, 5 fix pages auto-generated per scan. Gaps close before you notice them.",
+    promise: "Everything runs automatically. Plus full API access — integrate AI visibility into your CI/CD, dashboards, or internal tools.",
   },
   {
     name: "Dominate",
-    tagline: "Maximum AI visibility for your brand",
+    tagline: "Maximum AI visibility + highest API limits",
     monthlyPrice: 349,
     annualPrice: 279,
     period: "/mo",
-    description: "Highest limits, fastest scans, nothing held back",
+    description: "Highest limits, fastest scans, full API, nothing held back",
     cta: "Get Dominate",
     href: "/signup?plan=dominate",
     icon: <Crown className="w-5 h-5 text-amber-400" />,
@@ -123,10 +127,13 @@ const tiers: PricingTier[] = [
       "20 content ideas/month",
       "8 action plans/month",
       "Site GEO Audit (500 pages, 4/month)",
+      "REST API keys (500 calls/hr) + bulk scan",
+      "Webhooks (all events)",
+      "OpenClaw pro commands (deep scan, gaps, history)",
       "CSV exports + 365-day history",
       "Weekly reports + email alerts",
     ],
-    promise: "Twice a day: scans run, 10 fix pages auto-generated, highest query coverage. The system never sleeps.",
+    promise: "Twice daily scans, 10 fix pages auto-generated, 500 API calls/hr, bulk scanning. The system never sleeps.",
   },
 ];
 
@@ -160,6 +167,16 @@ const faqs: FAQItem[] = [
     question: "What are action plans?",
     answer:
       "Action plans are AI-generated playbooks based on your scan data. They prioritize exactly what to do next to improve your AI visibility \u2014 which pages to publish, which trust sources to claim, which queries to target. Command gets 4/month, Dominate gets 8/month. Each plan is personalized to your specific gaps and industry.",
+  },
+  {
+    question: "What are API keys and who needs them?",
+    answer:
+      "API keys let you integrate CabbageSEO programmatically \u2014 run scans from CI/CD pipelines, pull scores into monitoring dashboards, or build custom integrations. Command gets 200 API calls/hour, Dominate gets 500/hour with bulk scanning. API keys also unlock pro commands in the OpenClaw skill (deep scan, gap analysis, score history). If you just want the dashboard, you don\u2019t need API keys \u2014 they\u2019re for developers and teams with technical workflows.",
+  },
+  {
+    question: "What is the OpenClaw skill?",
+    answer:
+      "OpenClaw is an AI agent platform with 145K+ GitHub stars. Our free skill lets anyone run AI visibility scans right from their terminal \u2014 scan domains, compare competitors head-to-head, view the leaderboard, and generate embeddable badges. No API key needed for basic commands. Paid users can set their API key to unlock pro commands like deep scans with fix recommendations, gap analysis, and score history. Install with: openclaw skills install cabbageseo-ai-visibility",
   },
   {
     question: "Can I cancel anytime?",
@@ -496,6 +513,7 @@ export default function PricingPage() {
                     auto: "2 fix pages per scan",
                     manual: "5 pages/mo total",
                     intel: "5 gap analyses/mo",
+                    api: "OpenClaw free commands",
                     color: "border-emerald-500/20",
                   },
                   {
@@ -504,6 +522,7 @@ export default function PricingPage() {
                     auto: "5 fix pages per scan",
                     manual: "25 pages/mo total",
                     intel: "15 gap analyses + 4 action plans/mo",
+                    api: "API (200/hr) + webhooks + pro commands",
                     color: "border-emerald-500/40",
                   },
                   {
@@ -512,6 +531,7 @@ export default function PricingPage() {
                     auto: "10 fix pages per scan",
                     manual: "50 pages/mo total",
                     intel: "30 gap analyses + 8 action plans/mo",
+                    api: "API (500/hr) + bulk scan + webhooks",
                     color: "border-amber-500/30",
                   },
                 ].map((t) => (
@@ -522,6 +542,7 @@ export default function PricingPage() {
                       <p>{t.auto}</p>
                       <p>{t.manual}</p>
                       <p>{t.intel}</p>
+                      <p>{t.api}</p>
                       <p>Alerts on any drop</p>
                     </div>
                   </div>

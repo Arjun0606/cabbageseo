@@ -10,6 +10,12 @@ import {
   Share2,
   Bot,
   Trophy,
+  Swords,
+  Key,
+  Webhook,
+  Terminal,
+  Code,
+  History,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AnimateIn } from "@/components/motion/animate-in";
@@ -35,6 +41,13 @@ const capabilities: Feature[] = [
     description:
       "See exactly what ChatGPT, Perplexity, and Google AI say when someone asks about your space. Know whether they mention you or not — and track how that changes over time.",
     icon: <Search className="w-5 h-5" />,
+    plan: "all",
+  },
+  {
+    name: "Competitor Compare",
+    description:
+      'Run "compare yourdomain.com vs competitor.com" and see who AI prefers — per platform. Score delta, per-platform winners, and a verdict that makes the gap impossible to ignore.',
+    icon: <Swords className="w-5 h-5" />,
     plan: "all",
   },
   {
@@ -66,17 +79,38 @@ const capabilities: Feature[] = [
     plan: "scout",
   },
   {
-    name: "Shareable Report Pages",
+    name: "OpenClaw Skill",
     description:
-      "Every scan creates a public report at cabbageseo.com/r/yourdomain.com — share it on Twitter, embed it in your README, or send it to your team. Complete with OG images and badge embeds.",
-    icon: <Share2 className="w-5 h-5" />,
+      'Scan, compare, and monitor from OpenClaw — 6 free commands including head-to-head battles, leaderboard, and embeddable badges. Set CBS_API_KEY to unlock pro commands.',
+    icon: <Bot className="w-5 h-5" />,
     plan: "all",
   },
   {
-    name: "OpenClaw Skill",
+    name: "REST API & API Keys",
     description:
-      'Check AI visibility from OpenClaw. Just say "scan example.com" and get a full report. Set up weekly cron jobs for automated monitoring. Free on OpenClaw.',
-    icon: <Bot className="w-5 h-5" />,
+      "Full programmatic access with API keys. Integrate AI visibility into CI/CD pipelines, monitoring dashboards, or internal tools. 200-500 calls/hour depending on plan.",
+    icon: <Key className="w-5 h-5" />,
+    plan: "command",
+  },
+  {
+    name: "Webhooks",
+    description:
+      "Receive HTTP POST notifications when scans complete, scores drop, or visibility improves. HMAC-SHA256 signed for security. Auto-disables after repeated failures.",
+    icon: <Webhook className="w-5 h-5" />,
+    plan: "command",
+  },
+  {
+    name: "Score History & Trends",
+    description:
+      "Track your AI visibility score over time. Scout gets 30 days, Command and Dominate get 365 days. See improving, declining, or stable trends at a glance.",
+    icon: <History className="w-5 h-5" />,
+    plan: "scout",
+  },
+  {
+    name: "Shareable Reports & Badges",
+    description:
+      "Every scan creates a public report at cabbageseo.com/r/yourdomain.com. Embed a live score badge in your README, docs, or website with Markdown or HTML.",
+    icon: <Share2 className="w-5 h-5" />,
     plan: "all",
   },
   {
@@ -164,8 +198,8 @@ export default function FeaturesPage() {
               What you get
             </h2>
             <p className="text-zinc-400 max-w-2xl">
-              Eight capabilities that work together: scan AI, find gaps, fix them, share your progress,
-              and stay visible with automated monitoring.
+              Scan AI, find gaps, fix them, compare competitors, monitor via API and webhooks,
+              and stay visible with automated tools that work while you sleep.
             </p>
           </AnimateIn>
           <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
