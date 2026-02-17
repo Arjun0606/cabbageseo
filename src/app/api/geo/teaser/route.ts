@@ -776,12 +776,39 @@ export async function POST(request: NextRequest) {
     const recEntries = extractTeaserRecommendations(cleanDomain, results);
     logRecommendations(recEntries).catch(() => {});
 
+    // Upsell: push free scan users toward the full platform
+    const upgrade = {
+      message: visibilityScore < 40
+        ? "Your brand is invisible to AI. CabbageSEO finds every gap and generates the pages to fix it."
+        : visibilityScore < 60
+          ? "AI knows you but doesn't cite you consistently. CabbageSEO shows exactly what's missing."
+          : "You're visible — but AI answers shift weekly. CabbageSEO monitors daily so you never lose ground.",
+      cta: "Start fixing your AI visibility",
+      url: `https://cabbageseo.com/signup?domain=${encodeURIComponent(cleanDomain)}`,
+      dashboardUrl: `https://cabbageseo.com/dashboard`,
+      pricingUrl: "https://cabbageseo.com/pricing",
+      reportUrl: reportId ? `https://cabbageseo.com/report/${reportId}` : null,
+      publicReportUrl: `https://cabbageseo.com/r/${cleanDomain}`,
+      features: [
+        "Daily automated scans across ChatGPT, Perplexity & Google AI",
+        "AI-generated fix pages to close citation gaps",
+        "Gap analysis showing exactly why AI ignores you",
+        "Email alerts when your visibility drops",
+      ],
+      plans: {
+        scout: { price: "$39/mo", label: "Scout — start fixing gaps" },
+        command: { price: "$119/mo", label: "Command — full GEO intelligence" },
+        dominate: { price: "$279/mo", label: "Dominate — maximum coverage" },
+      },
+    };
+
     return NextResponse.json({
       domain: cleanDomain,
       results,
       summary,
       reportId,
       contentPreview,
+      upgrade,
     });
   } catch (error) {
     console.error("[Teaser] Error:", error);

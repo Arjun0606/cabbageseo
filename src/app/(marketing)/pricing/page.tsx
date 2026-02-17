@@ -365,26 +365,32 @@ export default function PricingPage() {
       <section className="pt-20 pb-12 sm:pt-24 sm:pb-16 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <AnimateIn delay={0}>
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 mb-8">
-              <Sparkles className="w-4 h-4 text-emerald-400" />
-              <span className="text-emerald-400 text-sm font-medium">
-                Free scan available &middot; No credit card required
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/30 mb-4">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+              </span>
+              <span className="text-red-400 text-sm font-medium">
+                AI is replacing Google. Your competitors are already optimizing.
               </span>
             </div>
           </AnimateIn>
 
           <AnimateIn delay={0.1}>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-              Simple pricing.
+              Don&apos;t wait until you&apos;re
               <br className="hidden sm:block" />
-              <span className="text-emerald-400"> No surprises.</span>
+              <span className="text-emerald-400"> invisible.</span>
             </h1>
           </AnimateIn>
 
           <AnimateIn delay={0.2}>
-            <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto mb-10">
-              AI visibility shifts weekly. Every plan scans, finds gaps, and auto-generates
-              fix pages continuously. Higher tiers scan faster and generate more.
+            <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto mb-4">
+              AI answers change every week. Every plan scans daily, finds gaps, and auto-generates
+              fix pages so you never fall behind. The longer you wait, the further ahead competitors get.
+            </p>
+            <p className="text-sm text-amber-400/80 font-medium mb-10 max-w-lg mx-auto">
+              Brands that start monitoring now are 3x more likely to be cited within 30 days.
             </p>
           </AnimateIn>
 
@@ -564,12 +570,12 @@ export default function PricingPage() {
         <div className="relative z-10 max-w-2xl mx-auto text-center">
           <AnimateIn>
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Ready to see where you stand?
+              Every day without monitoring is a day competitors get ahead
             </h2>
           </AnimateIn>
           <AnimateIn delay={0.1}>
             <p className="text-lg text-zinc-400 mb-8 leading-relaxed">
-              Start with a free scan. Subscribe when you&apos;re ready.
+              AI models retrain weekly. You could be visible today and gone tomorrow. Start scanning now.
             </p>
           </AnimateIn>
           <AnimateIn delay={0.2}>

@@ -59,9 +59,16 @@ export default function ClawBotPage() {
             from your ClawBot. See your score. Find what&apos;s missing. Fix it.
           </p>
 
-          <p className="text-sm text-amber-400/80 font-medium mb-8 max-w-lg mx-auto">
+          <p className="text-sm text-amber-400/80 font-medium mb-4 max-w-lg mx-auto">
             Most brands score under 30/100. AI is recommending your competitors instead.
           </p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full text-red-400 text-xs font-medium mb-8">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
+            </span>
+            AI is replacing Google for buying decisions. Brands that aren&apos;t optimizing now will be invisible by Q2.
+          </div>
 
           {/* Install command */}
           <div className="max-w-xl mx-auto mb-8">
@@ -333,17 +340,36 @@ export default function ClawBotPage() {
       <section className="relative overflow-hidden py-16 bg-emerald-950/30 border-t border-emerald-900/30">
         <GradientOrbs variant="emerald" />
         <div className="relative z-10 max-w-2xl mx-auto px-6 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full text-red-400 text-xs font-medium mb-6">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
+            </span>
+            AI answers change every week — your competitors are already optimizing
+          </div>
           <h2 className="text-3xl font-bold text-white mb-3">
-            Your score is just the start
+            Scanning tells you the problem. CabbageSEO fixes it.
           </h2>
           <p className="text-zinc-400 mb-3 max-w-lg mx-auto">
-            Knowing your score doesn&apos;t fix it. CabbageSEO gives you the
-            daily monitoring, AI-generated fix pages, and action plans to
-            actually get recommended.
+            The free skill shows your score. The platform gives you daily monitoring,
+            AI-generated fix pages, gap analysis, and action plans to actually get cited.
           </p>
-          <p className="text-amber-400/80 text-sm font-medium mb-6">
-            AI models retrain weekly. Every day you wait, competitors get ahead.
-          </p>
+
+          {/* Value props */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto mb-6 text-left">
+            {[
+              "Daily scans — catch drops instantly",
+              "Fix pages — content built to get cited",
+              "Gap analysis — know exactly what to fix",
+              "Action plans — step-by-step playbook",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-2 text-sm text-zinc-300">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                {item}
+              </div>
+            ))}
+          </div>
+
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/signup"
@@ -356,11 +382,11 @@ export default function ClawBotPage() {
               href="/pricing"
               className="inline-flex items-center gap-2 px-8 py-4 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-xl transition-colors"
             >
-              See pricing
+              See all plans
             </Link>
           </div>
           <p className="text-xs text-zinc-600 mt-3">
-            From $39/mo &bull; Cancel anytime
+            From $39/mo &bull; Cancel anytime &bull; 7-day money-back guarantee
           </p>
         </div>
       </section>

@@ -161,6 +161,25 @@ function HomeContent() {
 
   return (
     <div className="min-h-screen bg-zinc-950">
+      {/* ========== WAVE BANNER — above everything ========== */}
+      <div className="relative bg-gradient-to-r from-emerald-500/[0.08] via-emerald-500/[0.15] to-emerald-500/[0.08] border-b border-emerald-500/20">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-center gap-3 text-sm">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          </span>
+          <span className="text-emerald-300 font-medium">
+            AI is replacing Google for buying decisions.
+          </span>
+          <span className="text-zinc-400 hidden sm:inline">
+            Are you showing up when buyers ask ChatGPT, Perplexity & Google AI?
+          </span>
+          <Link href="/signup" className="ml-2 px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold rounded-full transition-colors whitespace-nowrap">
+            Fix it now
+          </Link>
+        </div>
+      </div>
+
       {/* ========== HERO ========== */}
       <section className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden py-20">
         <GridAnimation className="opacity-40" />
